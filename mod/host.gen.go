@@ -586,6 +586,12 @@ func (p Player) StartingSouls(souls int32) error {
 	return invoke("StartingSouls", &wasm.StartingSoulsRequest{Player: p.Slot, Souls: souls}, nil)
 }
 
+// ResetHero rebuilds the player's hero as it first spawned, without items,
+// ability upgrades, levels or ability points, holding souls.
+func (p Player) ResetHero(souls int32) error {
+	return invoke("ResetHero", &wasm.ResetHeroRequest{Player: p.Slot, Souls: souls}, nil)
+}
+
 // Heal restores health to the player's hero, up to its maximum.
 func (p Player) Heal(amount int32) error {
 	return invoke("Heal", &wasm.HealRequest{Player: p.Slot, Amount: amount}, nil)

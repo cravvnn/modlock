@@ -198,6 +198,10 @@ service Host {
   // StartingSouls sets the souls the player's hero spawns with.
   rpc StartingSouls(StartingSoulsRequest) returns (Empty);
 
+  // ResetHero rebuilds the player's hero as it first spawned, without items,
+  // ability upgrades, levels or ability points, holding souls.
+  rpc ResetHero(ResetHeroRequest) returns (Empty);
+
   // Heal restores health to the player's hero, up to its maximum.
   rpc Heal(HealRequest) returns (Empty);
 
@@ -1251,6 +1255,14 @@ message StartingSoulsRequest {
   int32 player = 1;
 
   // Souls is the amount the player should hold at least.
+  int32 souls = 2;
+}
+
+// ResetHeroRequest rebuilds one player's hero with a fresh build.
+message ResetHeroRequest {
+  int32 player = 1;
+
+  // Souls is the amount the player holds after the reset.
   int32 souls = 2;
 }
 

@@ -103,6 +103,7 @@ class GameServices {
   std::expected<const gameinterop::AbilitySlots*, std::string> Slots();
   std::expected<gameinterop::CreateAbility, std::string> CreateAbility();
   std::expected<gameinterop::RespawnPawn, std::string> Respawn();
+  std::expected<gameinterop::ResetHeroPawn, std::string> ResetHero();
   std::expected<gameinterop::TeleportClientCamera, std::string> Teleport();
   std::expected<const gameinterop::PawnMotion*, std::string> Motion();
   std::expected<const gameinterop::BotCreation*, std::string> Bots();
@@ -166,6 +167,7 @@ class GameServices {
   std::optional<gameinterop::AbilitySlots> slots_;
   gameinterop::CreateAbility create_ability_ = nullptr;
   gameinterop::RespawnPawn respawn_ = nullptr;
+  gameinterop::ResetHeroPawn reset_hero_ = nullptr;
   gameinterop::TeleportClientCamera teleport_ = nullptr;
   std::optional<gameinterop::PawnMotion> motion_;
   std::optional<gameinterop::BotCreation> bots_;
@@ -337,6 +339,7 @@ class Game : public HostService {
   std::expected<void, std::string> Steer(const SteerRequest& request) override;
   std::expected<void, std::string> AdjustSouls(const AdjustSoulsRequest& request) override;
   std::expected<void, std::string> StartingSouls(const StartingSoulsRequest& request) override;
+  std::expected<void, std::string> ResetHero(const ResetHeroRequest& request) override;
   std::expected<void, std::string> Heal(const HealRequest& request) override;
   std::expected<void, std::string> Sound(const SoundRequest& request) override;
   std::expected<void, std::string> RestoreHero(const RestoreHeroRequest& request) override;

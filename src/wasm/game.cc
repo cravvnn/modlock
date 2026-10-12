@@ -478,6 +478,17 @@ std::expected<gameinterop::RespawnPawn, std::string> GameServices::Respawn() {
   return respawn_;
 }
 
+std::expected<gameinterop::ResetHeroPawn, std::string> GameServices::ResetHero() {
+  if (!reset_hero_) {
+    auto image = Image();
+    if (!image) return std::unexpected(image.error());
+    auto reset = gameinterop::ResolveResetHeroPawn(**image);
+    if (!reset) return std::unexpected(reset.error());
+    reset_hero_ = *reset;
+  }
+  return reset_hero_;
+}
+
 std::expected<gameinterop::TeleportClientCamera, std::string> GameServices::Teleport() {
   if (!teleport_) {
     auto image = Image();
@@ -1991,6 +2002,17 @@ std::expected<void, std::string> Game::StartingSouls(const StartingSoulsRequest&
   if (auto sample = Live(request.player()); !sample) return std::unexpected(sample.error());
   auto prepared = observer_.PrepareStartingSouls(request.player(), request.souls(), *currency);
   if (!prepared) return std::unexpected(prepared.error());
+  return {};
+}
+
+std::expected<void, std::string> Game::ResetHero(const ResetHeroRequest& request) {
+  auto currency = services_.Currency();
+  if (!currency) return std::unexpected(currency.error());
+  auto reset = services_.ResetHero();
+  if (!reset) return std::unexpected(reset.error());
+  if (auto sample = Live(request.player()); !sample) return std::unexpected(sample.error());
+  auto fresh = observer_.ResetStartingSouls(request.player(), request.souls(), *currency, *reset);
+  if (!fresh) return std::unexpected(fresh.error());
   return {};
 }
 

@@ -983,6 +983,9 @@ export type Player = {
 	adjustSouls: (self: Player, delta: number, silent: boolean?) -> boolean,
 	-- startingSouls sets the souls the player's hero spawns with.
 	startingSouls: (self: Player, souls: number) -> boolean,
+	-- resetHero rebuilds the player's hero as it first spawned, without items,
+	-- ability upgrades, levels or ability points, holding souls.
+	resetHero: (self: Player, souls: number) -> boolean,
 	-- heal restores health to the player's hero, up to its maximum.
 	heal: (self: Player, amount: number) -> boolean,
 	-- sound plays a game sound event, such as Damage.Send.Crit, on the
@@ -1220,6 +1223,12 @@ end
 -- startingSouls sets the souls the player's hero spawns with.
 function Player.startingSouls(self: Player, souls: number): boolean
 	return call("StartingSouls", "StartingSoulsRequest", { player = self, souls = souls }) ~= nil
+end
+
+-- resetHero rebuilds the player's hero as it first spawned, without items,
+-- ability upgrades, levels or ability points, holding souls.
+function Player.resetHero(self: Player, souls: number): boolean
+	return call("ResetHero", "ResetHeroRequest", { player = self, souls = souls }) ~= nil
 end
 
 -- heal restores health to the player's hero, up to its maximum.
@@ -1782,6 +1791,10 @@ schema.AdjustSoulsRequest = {
 	{ number = 3, name = "silent", kind = "bool", optional = true },
 }
 schema.StartingSoulsRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "souls", kind = "int32" },
+}
+schema.ResetHeroRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "souls", kind = "int32" },
 }

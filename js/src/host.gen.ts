@@ -1662,6 +1662,14 @@ export class Player {
     return call('StartingSouls', pb.StartingSoulsRequest.toBinary({ player: this.slot, souls })) !== undefined
   }
 
+  /**
+   * resetHero rebuilds the player's hero as it first spawned, without items,
+   * ability upgrades, levels or ability points, holding souls.
+   */
+  resetHero(souls: number): boolean {
+    return call('ResetHero', pb.ResetHeroRequest.toBinary({ player: this.slot, souls })) !== undefined
+  }
+
   /** heal restores health to the player's hero, up to its maximum. */
   heal(amount: number): boolean {
     return call('Heal', pb.HealRequest.toBinary({ player: this.slot, amount })) !== undefined

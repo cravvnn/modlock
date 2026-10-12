@@ -1231,6 +1231,12 @@ class Player:
         """starting_souls sets the souls the player's hero spawns with."""
         return _call("StartingSouls", "StartingSoulsRequest", {"player": self, "souls": souls}) is not None
 
+    def reset_hero(self, souls: int) -> bool:
+        """reset_hero rebuilds the player's hero as it first spawned, without items,
+        ability upgrades, levels or ability points, holding souls.
+        """
+        return _call("ResetHero", "ResetHeroRequest", {"player": self, "souls": souls}) is not None
+
     def heal(self, amount: int) -> bool:
         """heal restores health to the player's hero, up to its maximum."""
         return _call("Heal", "HealRequest", {"player": self, "amount": amount}) is not None
@@ -1899,6 +1905,13 @@ _SCHEMA: wire.Schema = {
         ],
     ),
     "StartingSoulsRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "souls", "int32"),
+        ],
+    ),
+    "ResetHeroRequest": (
         None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),

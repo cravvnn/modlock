@@ -268,6 +268,12 @@ class HostService {
     return std::unexpected("this host does not support StartingSouls");
   }
 
+  // ResetHero rebuilds the player's hero as it first spawned, without items,
+  // ability upgrades, levels or ability points, holding souls.
+  virtual std::expected<void, std::string> ResetHero(const ResetHeroRequest& /*request*/) {
+    return std::unexpected("this host does not support ResetHero");
+  }
+
   // Heal restores health to the player's hero, up to its maximum.
   virtual std::expected<void, std::string> Heal(const HealRequest& /*request*/) {
     return std::unexpected("this host does not support Heal");
@@ -898,6 +904,14 @@ class HostService {
              return detail::Fail("the StartingSouls request is malformed");
            }
            return detail::Answer(host.StartingSouls(request));
+         }},
+        {"ResetHero",
+         [](HostService& host, const std::string& bytes) {
+           ResetHeroRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ResetHero request is malformed");
+           }
+           return detail::Answer(host.ResetHero(request));
          }},
         {"Heal",
          [](HostService& host, const std::string& bytes) {

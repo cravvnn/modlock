@@ -2801,6 +2801,34 @@ export const StartingSoulsRequest: MessageType<StartingSoulsRequest> = /* @__PUR
 });
 
 /**
+ * ResetHeroRequest rebuilds one player's hero with a fresh build.
+ *
+ * @generated from message modlock.wasm.ResetHeroRequest
+ */
+export interface ResetHeroRequest {
+  /**
+   * @generated from field: int32 player = 1;
+   */
+  player?: number;
+  /**
+   * Souls is the amount the player holds after the reset.
+   *
+   * @generated from field: int32 souls = 2;
+   */
+  souls?: number;
+
+};
+
+export const ResetHeroRequest: MessageType<ResetHeroRequest> = /* @__PURE__ */ createMessageType({
+    typeName: "modlock.wasm.ResetHeroRequest",
+    fields: [
+        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
+        { no: 2, name: "souls", kind: "scalar", T: ScalarType.INT32 },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
+/**
  * HealRequest restores health to a player's hero.
  *
  * @generated from message modlock.wasm.HealRequest

@@ -2924,6 +2924,34 @@ func (x *StartingSoulsRequest) GetSouls() int32 {
 	return 0
 }
 
+// ResetHeroRequest rebuilds one player's hero with a fresh build.
+type ResetHeroRequest struct {
+	unknownFields []byte
+	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	// Souls is the amount the player holds after the reset.
+	Souls int32 `protobuf:"varint,2,opt,name=souls,proto3" json:"souls,omitempty"`
+}
+
+func (x *ResetHeroRequest) Reset() {
+	*x = ResetHeroRequest{}
+}
+
+func (*ResetHeroRequest) ProtoMessage() {}
+
+func (x *ResetHeroRequest) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *ResetHeroRequest) GetSouls() int32 {
+	if x != nil {
+		return x.Souls
+	}
+	return 0
+}
+
 // HealRequest restores health to a player's hero.
 type HealRequest struct {
 	unknownFields []byte
@@ -7511,6 +7539,23 @@ func (m *StartingSoulsRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *ResetHeroRequest) CloneVT() *ResetHeroRequest {
+	if m == nil {
+		return (*ResetHeroRequest)(nil)
+	}
+	r := new(ResetHeroRequest)
+	r.Player = m.Player
+	r.Souls = m.Souls
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *ResetHeroRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *HealRequest) CloneVT() *HealRequest {
 	if m == nil {
 		return (*HealRequest)(nil)
@@ -10767,6 +10812,28 @@ func (this *StartingSoulsRequest) EqualVT(that *StartingSoulsRequest) bool {
 
 func (this *StartingSoulsRequest) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*StartingSoulsRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *ResetHeroRequest) EqualVT(that *ResetHeroRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if this.Souls != that.Souls {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ResetHeroRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*ResetHeroRequest)
 	if !ok {
 		return false
 	}
@@ -17111,6 +17178,56 @@ func (x *StartingSoulsRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the StartingSoulsRequest from JSON.
 func (x *StartingSoulsRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ResetHeroRequest message to JSON.
+func (x *ResetHeroRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Souls != 0 || s.HasField("souls") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("souls")
+		s.WriteInt32(x.Souls)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ResetHeroRequest to JSON.
+func (x *ResetHeroRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ResetHeroRequest message from JSON.
+func (x *ResetHeroRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "souls":
+			s.AddField("souls")
+			x.Souls = s.ReadInt32()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ResetHeroRequest from JSON.
+func (x *ResetHeroRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -26271,6 +26388,48 @@ func (m *StartingSoulsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *ResetHeroRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ResetHeroRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ResetHeroRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Souls != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Souls))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *HealRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -31716,6 +31875,18 @@ func (m *StartingSoulsRequest) SizeVT() (n int) {
 	return n
 }
 
+func (m *ResetHeroRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Souls)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *HealRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -34525,6 +34696,23 @@ func (x *StartingSoulsRequest) MarshalProtoText() string {
 }
 
 func (x *StartingSoulsRequest) String() string {
+	return x.MarshalProtoText()
+}
+func (x *ResetHeroRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ResetHeroRequest")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Souls != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "souls")
+		protobuf_go_lite.TextWriteInt(&sb, x.Souls)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ResetHeroRequest) String() string {
 	return x.MarshalProtoText()
 }
 func (x *HealRequest) MarshalProtoText() string {
@@ -41062,6 +41250,66 @@ func (m *StartingSoulsRequest) UnmarshalVT(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: StartingSoulsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Souls", wireType)
+			}
+			m.Souls = 0
+			m.Souls, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ResetHeroRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ResetHeroRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ResetHeroRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
