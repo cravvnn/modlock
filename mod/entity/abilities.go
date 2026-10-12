@@ -134,10 +134,6 @@ func (e CAbility_Drifter_ShadowMark) field(name string) Field {
 	return Field{e.Handle, "CAbility_Drifter_ShadowMark", name}
 }
 
-func (e CAbility_Drifter_ShadowMark) VLastValidTeleportPosition() Vector {
-	return Vector{e.field("m_vLastValidTeleportPosition")}
-}
-
 func (e CAbility_Drifter_ShadowMark) HTeleportTarget() Handle[CBaseEntity] {
 	return Handle[CBaseEntity]{e.field("m_hTeleportTarget")}
 }
@@ -1108,14 +1104,6 @@ func (e CCitadel_Ability_Baba_BubblingBrew) EState() Number[uint32] {
 	return Number[uint32]{e.field("m_eState")}
 }
 
-func (e CCitadel_Ability_Baba_BubblingBrew) CurrentStacks() Number[int32] {
-	return Number[int32]{e.field("m_CurrentStacks")}
-}
-
-func (e CCitadel_Ability_Baba_BubblingBrew) TStackExpiryTime() Number[float32] {
-	return Number[float32]{e.field("m_tStackExpiryTime")}
-}
-
 type CCitadel_Ability_Baba_HexingBrew CEntityInstance
 
 func (e CCitadel_Ability_Baba_HexingBrew) field(name string) Field {
@@ -1553,6 +1541,96 @@ func (e CCitadel_Ability_ChargedTackle) NDistancePreview() Number[int32] {
 }
 
 type CCitadel_Ability_Charged_Bomb CEntityInstance
+
+type CCitadel_Ability_Chessmaster_ForkPiece CEntityInstance
+
+func (e CCitadel_Ability_Chessmaster_ForkPiece) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Chessmaster_ForkPiece", name}
+}
+
+func (e CCitadel_Ability_Chessmaster_ForkPiece) HCameraTarget() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hCameraTarget")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ForkPiece) CProjectileLeft() Handle[CCitadelProjectile] {
+	return Handle[CCitadelProjectile]{e.field("m_cProjectileLeft")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ForkPiece) CProjectileRight() Handle[CCitadelProjectile] {
+	return Handle[CCitadelProjectile]{e.field("m_cProjectileRight")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ForkPiece) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+type CCitadel_Ability_Chessmaster_KnightBuff CEntityInstance
+
+type CCitadel_Ability_Chessmaster_MoveChessPiece CEntityInstance
+
+func (e CCitadel_Ability_Chessmaster_MoveChessPiece) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Chessmaster_MoveChessPiece", name}
+}
+
+func (e CCitadel_Ability_Chessmaster_MoveChessPiece) TCancelHoverTime() Number[float32] {
+	return Number[float32]{e.field("m_tCancelHoverTime")}
+}
+
+func (e CCitadel_Ability_Chessmaster_MoveChessPiece) PSelectedPiece() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_pSelectedPiece")}
+}
+
+func (e CCitadel_Ability_Chessmaster_MoveChessPiece) FlCachedMoveDistance() Number[float32] {
+	return Number[float32]{e.field("m_flCachedMoveDistance")}
+}
+
+type CCitadel_Ability_Chessmaster_Queen CEntityInstance
+
+func (e CCitadel_Ability_Chessmaster_Queen) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Chessmaster_Queen", name}
+}
+
+func (e CCitadel_Ability_Chessmaster_Queen) IRemainingMoves() Number[int32] {
+	return Number[int32]{e.field("m_iRemainingMoves")}
+}
+
+func (e CCitadel_Ability_Chessmaster_Queen) PDeployedQueen() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_pDeployedQueen")}
+}
+
+func (e CCitadel_Ability_Chessmaster_Queen) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+type CCitadel_Ability_Chessmaster_ThrowBishop CEntityInstance
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Chessmaster_ThrowBishop", name}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) IBishopIndex() Number[int32] {
+	return Number[int32]{e.field("m_iBishopIndex")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) TRecastEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tRecastEndTime")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecLaunchPosition() Vector {
+	return Vector{e.field("m_vecLaunchPosition")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecLaunchVelocity() Vector {
+	return Vector{e.field("m_vecLaunchVelocity")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) QLaunchAngle() Angles {
+	return Angles{e.field("m_qLaunchAngle")}
+}
 
 type CCitadel_Ability_ChronoSwap CEntityInstance
 
@@ -3677,6 +3755,16 @@ func (e CCitadel_Ability_PrimaryWeapon) NClipSizeBeforeSwap() Number[int32] {
 type CCitadel_Ability_Boho_PrimaryWeapon CEntityInstance
 
 type CCitadel_Ability_BookWorm_PrimaryWeapon CEntityInstance
+
+type CCitadel_Ability_ChessMaster_PrimaryWeapon CEntityInstance
+
+func (e CCitadel_Ability_ChessMaster_PrimaryWeapon) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_ChessMaster_PrimaryWeapon", name}
+}
+
+func (e CCitadel_Ability_ChessMaster_PrimaryWeapon) ICurrentShotCount() Number[int32] {
+	return Number[int32]{e.field("m_iCurrentShotCount")}
+}
 
 type CCitadel_Ability_Drifter_PrimaryWeapon CEntityInstance
 

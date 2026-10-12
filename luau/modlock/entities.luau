@@ -1145,6 +1145,25 @@ describe("CNPC_Boss_Tier3", "CAI_CitadelNPC", {
 	m_vShrineAttackTargetPos = "vector",
 })
 
+export type CNPC_ChessPiece = CAI_CitadelNPC & {
+	m_tCooldownStartTime: number?,
+	m_tCooldownEndTime: number?,
+	m_hAbility: CCitadelBaseAbility?,
+	m_iChessPieceState: number?,
+	m_iChessPieceType: number?,
+	m_flMeleeDamage: number?,
+	m_flLifetime: number?,
+}
+describe("CNPC_ChessPiece", "CAI_CitadelNPC", {
+	m_tCooldownStartTime = "float32",
+	m_tCooldownEndTime = "float32",
+	m_hAbility = "CCitadelBaseAbility",
+	m_iChessPieceState = "int32",
+	m_iChessPieceType = "int32",
+	m_flMeleeDamage = "float32",
+	m_flLifetime = "float32",
+})
+
 export type CNPC_Escort = CAI_CitadelNPC
 describe("CNPC_Escort", "CAI_CitadelNPC", {})
 
@@ -4804,6 +4823,9 @@ describe("CProjectile_Boho_SkipGrenade", "CCitadelProjectile", {})
 export type CProjectile_BookwormDragon_Projectile = CCitadelProjectile
 describe("CProjectile_BookwormDragon_Projectile", "CCitadelProjectile", {})
 
+export type CProjectile_ChessMaster_Fork_Projectile = CCitadelProjectile
+describe("CProjectile_ChessMaster_Fork_Projectile", "CCitadelProjectile", {})
+
 export type CProjectile_Doorman_Cart_Projectile = CCitadelProjectile
 describe("CProjectile_Doorman_Cart_Projectile", "CCitadelProjectile", {})
 
@@ -6833,7 +6855,6 @@ export type CAbility_Drifter_Darkness = CCitadelBaseAbility
 describe("CAbility_Drifter_Darkness", "CCitadelBaseAbility", {})
 
 export type CAbility_Drifter_ShadowMark = CCitadelBaseAbility & {
-	m_vLastValidTeleportPosition: modlock.Vector?,
 	m_hTeleportTarget: CBaseEntity?,
 	m_bTeleported: boolean?,
 	m_qPostTeleportAngles: modlock.Angles?,
@@ -6841,7 +6862,6 @@ export type CAbility_Drifter_ShadowMark = CCitadelBaseAbility & {
 	m_flTeleportedTime: number?,
 }
 describe("CAbility_Drifter_ShadowMark", "CCitadelBaseAbility", {
-	m_vLastValidTeleportPosition = "vector",
 	m_hTeleportTarget = "CBaseEntity",
 	m_bTeleported = "bool",
 	m_qPostTeleportAngles = "angles",
@@ -7465,13 +7485,9 @@ describe("CCitadel_Ability_Baba_BenchRun", "CCitadelBaseAbility", {
 
 export type CCitadel_Ability_Baba_BubblingBrew = CCitadelBaseAbility & {
 	m_eState: number?,
-	m_CurrentStacks: number?,
-	m_tStackExpiryTime: number?,
 }
 describe("CCitadel_Ability_Baba_BubblingBrew", "CCitadelBaseAbility", {
 	m_eState = "uint32",
-	m_CurrentStacks = "int32",
-	m_tStackExpiryTime = "float32",
 })
 
 export type CCitadel_Ability_Baba_HexingBrew = CCitadelBaseAbility & {
@@ -7762,6 +7778,61 @@ describe("CCitadel_Ability_ChargedTackle", "CCitadelBaseAbility", {
 
 export type CCitadel_Ability_Charged_Bomb = CCitadelBaseAbility
 describe("CCitadel_Ability_Charged_Bomb", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Chessmaster_ForkPiece = CCitadelBaseAbility & {
+	m_hCameraTarget: CBaseEntity?,
+	m_cProjectileLeft: CCitadelProjectile?,
+	m_cProjectileRight: CCitadelProjectile?,
+	m_bActive: boolean?,
+}
+describe("CCitadel_Ability_Chessmaster_ForkPiece", "CCitadelBaseAbility", {
+	m_hCameraTarget = "CBaseEntity",
+	m_cProjectileLeft = "CCitadelProjectile",
+	m_cProjectileRight = "CCitadelProjectile",
+	m_bActive = "bool",
+})
+
+export type CCitadel_Ability_Chessmaster_KnightBuff = CCitadelBaseAbility
+describe("CCitadel_Ability_Chessmaster_KnightBuff", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Chessmaster_MoveChessPiece = CCitadelBaseAbility & {
+	m_tCancelHoverTime: number?,
+	m_pSelectedPiece: CBaseEntity?,
+	m_flCachedMoveDistance: number?,
+}
+describe("CCitadel_Ability_Chessmaster_MoveChessPiece", "CCitadelBaseAbility", {
+	m_tCancelHoverTime = "float32",
+	m_pSelectedPiece = "CBaseEntity",
+	m_flCachedMoveDistance = "float32",
+})
+
+export type CCitadel_Ability_Chessmaster_Queen = CCitadelBaseAbility & {
+	m_iRemainingMoves: number?,
+	m_pDeployedQueen: CBaseEntity?,
+	m_bActive: boolean?,
+}
+describe("CCitadel_Ability_Chessmaster_Queen", "CCitadelBaseAbility", {
+	m_iRemainingMoves = "int32",
+	m_pDeployedQueen = "CBaseEntity",
+	m_bActive = "bool",
+})
+
+export type CCitadel_Ability_Chessmaster_ThrowBishop = CCitadelBaseAbility & {
+	m_bActive: boolean?,
+	m_iBishopIndex: number?,
+	m_tRecastEndTime: number?,
+	m_vecLaunchPosition: modlock.Vector?,
+	m_vecLaunchVelocity: modlock.Vector?,
+	m_qLaunchAngle: modlock.Angles?,
+}
+describe("CCitadel_Ability_Chessmaster_ThrowBishop", "CCitadelBaseAbility", {
+	m_bActive = "bool",
+	m_iBishopIndex = "int32",
+	m_tRecastEndTime = "float32",
+	m_vecLaunchPosition = "vector",
+	m_vecLaunchVelocity = "vector",
+	m_qLaunchAngle = "angles",
+})
 
 export type CCitadel_Ability_ChronoSwap = CCitadelBaseAbility & {
 	m_bHitTarget: boolean?,
@@ -9108,6 +9179,13 @@ describe("CCitadel_Ability_Boho_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon"
 
 export type CCitadel_Ability_BookWorm_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon
 describe("CCitadel_Ability_BookWorm_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {})
+
+export type CCitadel_Ability_ChessMaster_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon & {
+	m_iCurrentShotCount: number?,
+}
+describe("CCitadel_Ability_ChessMaster_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {
+	m_iCurrentShotCount = "int32",
+})
 
 export type CCitadel_Ability_Drifter_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon
 describe("CCitadel_Ability_Drifter_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {})
@@ -16115,6 +16193,23 @@ export type CCitadelTriggerCapturePointKeys = CBaseTriggerKeys & {
 }
 keyMaps.CCitadelTriggerCapturePoint = { base = "CBaseTrigger", keys = { GroupName = "text" } }
 
+export type CAI_BaseNPCKeys = CBaseCombatCharacterKeys & {
+	NavRestrictionVolume: string?,
+	forcedynamichull: boolean?,
+	ai_lod: number?,
+}
+keyMaps.CAI_BaseNPC = { base = "CBaseCombatCharacter", keys = { NavRestrictionVolume = "text", forcedynamichull = "boolean", ai_lod = "integer" } }
+
+export type CAI_CitadelNPCKeys = CAI_BaseNPCKeys
+keyMaps.CAI_CitadelNPC = { base = "CAI_BaseNPC", keys = {  } }
+
+export type CNPC_ChessPieceKeys = CAI_CitadelNPCKeys & {
+	lifetime: number?,
+	chesspiece_state: number?,
+	chesspiece_type: number?,
+}
+keyMaps.CNPC_ChessPiece = { base = "CAI_CitadelNPC", keys = { lifetime = "number", chesspiece_state = "integer", chesspiece_type = "integer" } }
+
 export type CTriggerMultipleKeys = CBaseTriggerKeys
 keyMaps.CTriggerMultiple = { base = "CBaseTrigger", keys = {  } }
 
@@ -16208,18 +16303,6 @@ keyMaps.CCitadel_PickupItemSpawner = { base = "CBaseAnimGraph", keys = {  } }
 
 export type CCitadelItemPunchableNeutralGoldKeys = CCitadelItemPickupKeys
 keyMaps.CCitadelItemPunchableNeutralGold = { base = "CCitadelItemPickup", keys = {  } }
-
-export type CCitadelTriggerMultiCapturePointKeys = CBaseTriggerKeys & {
-	GroupName: string?,
-}
-keyMaps.CCitadelTriggerMultiCapturePoint = { base = "CBaseTrigger", keys = { GroupName = "text" } }
-
-export type CCitadel_KothCashInKeys = CCitadelTriggerMultiCapturePointKeys & {
-	m_nGold: number?,
-	m_nTeamBias: number?,
-	m_nKOTHIdx: number?,
-}
-keyMaps.CCitadel_KothCashIn = { base = "CCitadelTriggerMultiCapturePoint", keys = { m_nGold = "integer", m_nTeamBias = "integer", m_nKOTHIdx = "integer" } }
 
 export type CCitadel_NewYears_FireworksKeys = CDynamicPropKeys & {
 	ShowDurationSeconds: number?,
@@ -18106,16 +18189,6 @@ export type CMultiSourceKeys = CBaseEntityKeys & {
 }
 keyMaps.CMultiSource = { base = "CBaseEntity", keys = { globalstate = "text" } }
 
-export type CAI_BaseNPCKeys = CBaseCombatCharacterKeys & {
-	NavRestrictionVolume: string?,
-	forcedynamichull: boolean?,
-	ai_lod: number?,
-}
-keyMaps.CAI_BaseNPC = { base = "CBaseCombatCharacter", keys = { NavRestrictionVolume = "text", forcedynamichull = "boolean", ai_lod = "integer" } }
-
-export type CAI_CitadelNPCKeys = CAI_BaseNPCKeys
-keyMaps.CAI_CitadelNPC = { base = "CAI_BaseNPC", keys = {  } }
-
 export type CNPC_BarrackBossKeys = CAI_CitadelNPCKeys & {
 	LaneSide: number?,
 	LaneNum: number?,
@@ -19178,6 +19251,7 @@ type ClassName0 =
 	| "CNPC_BarrackBoss"
 	| "CNPC_Boss_Tier2"
 	| "CNPC_Boss_Tier3"
+	| "CNPC_ChessPiece"
 	| "CNPC_Escort"
 	| "CNPC_FamiliarHelper"
 	| "CNPC_MidBoss"
@@ -19443,6 +19517,7 @@ type ClassName0 =
 	| "CItemExplosiveBarrel"
 	| "CProjectile_Boho_SkipGrenade"
 	| "CProjectile_BookwormDragon_Projectile"
+	| "CProjectile_ChessMaster_Fork_Projectile"
 	| "CProjectile_Doorman_Cart_Projectile"
 	| "CProjectile_GraveStone_Projectile"
 	| "CProjectile_KnightCharge_Projectile"
@@ -19554,10 +19629,10 @@ type ClassName0 =
 	| "CAbility_Drifter_ShadowMark"
 	| "CAbility_Fathom_LurkersAmbush"
 	| "CAbility_Fathom_ReefdwellerHarpoon"
-	| "CAbility_Fencer_Lunge"
-	| "CAbility_Fencer_Ultimate"
 
 type ClassName1 =
+	| "CAbility_Fencer_Lunge"
+	| "CAbility_Fencer_Ultimate"
 	| "CAbility_Mirage_SandPhantom"
 	| "CAbility_Mirage_Tornado"
 	| "CAbility_Operative_Revelation"
@@ -19662,6 +19737,11 @@ type ClassName1 =
 	| "CCitadel_Ability_ChargedShot"
 	| "CCitadel_Ability_ChargedTackle"
 	| "CCitadel_Ability_Charged_Bomb"
+	| "CCitadel_Ability_Chessmaster_ForkPiece"
+	| "CCitadel_Ability_Chessmaster_KnightBuff"
+	| "CCitadel_Ability_Chessmaster_MoveChessPiece"
+	| "CCitadel_Ability_Chessmaster_Queen"
+	| "CCitadel_Ability_Chessmaster_ThrowBishop"
 	| "CCitadel_Ability_ChronoSwap"
 	| "CCitadel_Ability_Chrono_KineticCarbine"
 	| "CCitadel_Ability_Chrono_PulseGrenade"
@@ -19804,6 +19884,7 @@ type ClassName1 =
 	| "CCitadel_Ability_PrimaryWeapon"
 	| "CCitadel_Ability_Boho_PrimaryWeapon"
 	| "CCitadel_Ability_BookWorm_PrimaryWeapon"
+	| "CCitadel_Ability_ChessMaster_PrimaryWeapon"
 	| "CCitadel_Ability_Drifter_PrimaryWeapon"
 	| "CCitadel_Ability_Familiar_AltWeapon"
 	| "CCitadel_Ability_Familiar_PrimaryWeapon"
@@ -19950,6 +20031,8 @@ type ClassName1 =
 	| "CCitadel_CosmeticAbility"
 	| "CCitadel_CosmeticAbility_Emote"
 	| "CCitadel_CosmeticAbility_Snowball"
+
+type ClassName2 =
 	| "CCitadel_CosmeticAbility_VotingPoster"
 	| "CCitadel_Gunslinger_DemonMark"
 	| "CCitadel_Item"
@@ -19958,8 +20041,6 @@ type ClassName1 =
 	| "CCitadel_ArmorUpgrade_AblativeCoat"
 	| "CCitadel_ArmorUpgrade_ActiveBulletShield"
 	| "CCitadel_ArmorUpgrade_AutoCleanse"
-
-type ClassName2 =
 	| "CCitadel_ArmorUpgrade_BulletArmorReductionAura"
 	| "CCitadel_ArmorUpgrade_CloakingDevice"
 	| "CCitadel_ArmorUpgrade_CloakingDeviceActive"
@@ -20352,6 +20433,8 @@ type ClassName2 =
 	| "CSoundOpvarSetPointBase"
 	| "CSoundOpvarSetOBBWindEntity"
 	| "CSoundOpvarSetPointEntity"
+
+type ClassName3 =
 	| "CSoundOpvarSetAutoRoomEntity"
 	| "CSoundOpvarSetBoxEntity"
 	| "CSoundOpvarSetAABBEntity"
@@ -20360,8 +20443,6 @@ type ClassName2 =
 	| "CSoundOpvarSetPathCornerEntity"
 	| "CSoundOpvarSetPrecipitationEntity"
 	| "CSoundOpvarSetPrecipitationOBBEntity"
-
-type ClassName3 =
 	| "CTeam"
 	| "CCitadelTeam"
 	| "CTestEffect"
@@ -20411,6 +20492,7 @@ local designers = {
 	citadel_breakable_prop = { "CCitadel_BreakableProp", "CCitadel_BreakableProp", "citadel_breakable_prop_vase" },
 	citadel_capture_point_escort = { "CCitadelTriggerCapturePoint_Escort", "CCitadelTriggerCapturePoint", "capture_point_escort" },
 	citadel_cat_animating = { "CCitadel_CatAnimating", "CBaseAnimGraph", "citadel_cat_animating" },
+	citadel_chesspiece_entity = { "CNPC_ChessPiece", "CNPC_ChessPiece", "citadel_chesspiece_bishop" },
 	citadel_configurable_tracked_projectile = { "CCitadelConfigurableTrackedProjectile", "CBaseModelEntity" },
 	citadel_control_point = { "CCitadelControlPointTrigger", "CCitadelControlPointTrigger" },
 	citadel_dev_trigger = { "CCitadelDevTrigger", "CCitadelDevTrigger" },
@@ -20439,7 +20521,6 @@ local designers = {
 	citadel_item_pickup_rejuv_herotest_infospawn = { "CCitadelItemPickupRejuvHeroTestInfoSpawn", "CPointEntity" },
 	citadel_item_powerup_spawner = { "CCitadel_PickupItemSpawner", "CCitadel_PickupItemSpawner", "citadel_item_powerup_spawner_bounty_runes" },
 	citadel_item_punchable_gold = { "CCitadelItemPunchableNeutralGold", "CCitadelItemPunchableNeutralGold", "citadel_item_punchable_gold" },
-	citadel_koth_cashin = { "CCitadel_KothCashIn", "CCitadel_KothCashIn", "citadel_koth_cashin" },
 	citadel_local_player_ranked_badge_prop = { "CCitadelLocalPlayerRankedBadgeProp", "CBaseEntity" },
 	citadel_magic_beam_blocker = { "CCitadel_Magic_Beam_Blocker", "CBaseAnimGraph" },
 	citadel_minimap_boundary = { "CCitadelMinimapBoundary", "CBaseEntity" },
@@ -20823,6 +20904,7 @@ local designers = {
 	point_worldtext = { "CPointWorldText", "CPointWorldText" },
 	post_processing_volume = { "CPostProcessingVolume", "CPostProcessingVolume" },
 	projectile_boho_skipgrenade = { "CProjectile_Boho_SkipGrenade", "CBaseModelEntity" },
+	projectile_chessmaster_forkpiece = { "CProjectile_ChessMaster_Fork_Projectile", "CBaseModelEntity" },
 	projectile_cyclone = { "CCitadel_Projectile_Cyclone", "CBaseModelEntity" },
 	projectile_doorman_cart_projectile = { "CProjectile_Doorman_Cart_Projectile", "CBaseModelEntity" },
 	projectile_dust_storm = { "CCitadel_Projectile_DustStorm", "CBaseModelEntity" },

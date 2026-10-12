@@ -8826,10 +8826,6 @@ usage: <hero_target>. */
   unpause: true
   /** Show user info for players on server. */
   users: true
-  /** Clear buffered logging. */
-  vcon_clear_buffered_log: true
-  /** List connections. */
-  vcon_clients: true
   /** Show the current cluster number. */
   vis_debug_currentcluster: true
   /** Add cluster # to visualization, (-1) to clear. */

@@ -1,5 +1,5 @@
 {
- "build": "6759",
+ "build": "6774",
  "variables": [
   {
    "name": "adsp_alley_min",
@@ -15322,7 +15322,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15415,7 +15416,8 @@
    "default_value": "-1",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15503,7 +15505,8 @@
    "help": "Skip shadowmaps for offscreen dynamic bounce lights that indirect diffuse isn't going to sample",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15513,7 +15516,8 @@
    "help": "Skip shadowmaps for *onscreen* dynamic bounce lights which will probably not be visible",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15524,7 +15528,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15535,7 +15540,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15546,7 +15552,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15557,6 +15564,7 @@
     "developmentonly",
     "cheat",
     "menubar_item",
+    "gameinfo_cannot_override",
     "enum_value"
    ]
   },
@@ -15569,7 +15577,8 @@
    "help": "If we should draw normal silhouette or minkowski sum silhouette",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15580,6 +15589,7 @@
     "developmentonly",
     "cheat",
     "menubar_item",
+    "gameinfo_cannot_override",
     "enum_value"
    ]
   },
@@ -15591,7 +15601,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15602,7 +15613,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15611,7 +15623,8 @@
    "default_value": "false",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15622,7 +15635,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15710,7 +15724,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15731,7 +15746,8 @@
    "help": "Allows rendering dynamic lights",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15742,7 +15758,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15753,7 +15770,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15764,7 +15782,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15784,7 +15803,8 @@
    "help": "Allows rendering stationary/mixed lights",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15795,17 +15815,19 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
    "name": "lb_low_quality_shader_fade_region_rescale",
    "type": "CONSOLE_VARIABLE_TYPE_FLOAT32",
    "default_value": "0",
+   "min": "0",
+   "max": "1",
    "help": "For envmaps in low quality shader mode, how much of the fade region to scale the envmap box by.",
    "flags": [
-    "developmentonly",
-    "cheat"
+    "developmentonly"
    ]
   },
   {
@@ -15815,7 +15837,8 @@
    "help": "Override maximum visible barn lights",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15825,7 +15848,8 @@
    "help": "Override maximum visible envmaps",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15836,7 +15860,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15845,7 +15870,8 @@
    "default_value": "[0.05, 0.025]",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15854,7 +15880,8 @@
    "default_value": "false",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15863,7 +15890,8 @@
    "default_value": "[0.1, 0.05]",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15897,7 +15925,8 @@
    "default_value": "false",
    "help": "Don't render shadows for mixed shadowmaps with no dynamics objects in view",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -15905,7 +15934,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "true",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -16013,7 +16043,8 @@
    "default_value": "true",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -16024,7 +16055,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -16034,7 +16066,8 @@
    "help": "Disables use of illumination volume (may cause precomputed lighting errors)",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -21623,7 +21656,8 @@
    "default_value": "2",
    "help": "Scale factor for requested texture size (texture streaming) - used for geo that doesn't have a precomputed UV density measure",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -22712,7 +22746,8 @@
    "default_value": "1",
    "help": "Scale factor for requested texture size (texture streaming)",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23793,7 +23828,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "developmentonly",
+    "defensive"
    ]
   },
   {
@@ -23810,7 +23846,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23818,7 +23855,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23826,7 +23864,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "developmentonly",
+    "defensive"
    ]
   },
   {
@@ -23881,7 +23920,8 @@
    "name": "sc_dump_lists",
    "type": "CONSOLE_VARIABLE_TYPE_STRING",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23898,7 +23938,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23906,7 +23947,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_FLOAT32",
    "default_value": "-1",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23914,7 +23956,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "true",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23922,7 +23965,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_INT32",
    "default_value": "-1",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -23948,7 +23992,8 @@
    "default_value": "false",
    "help": "If enabled, the camera's translation will be included in the projection matrix.",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24274,7 +24319,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24282,7 +24328,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24301,7 +24348,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "developmentonly",
+    "defensive"
    ]
   },
   {
@@ -24319,7 +24367,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_FLOAT32",
    "default_value": "-1",
    "flags": [
-    "cheat"
+    "developmentonly",
+    "defensive"
    ]
   },
   {
@@ -24366,7 +24415,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24421,7 +24471,8 @@
    "flags": [
     "developmentonly",
     "cheat",
-    "menubar_item"
+    "menubar_item",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24431,7 +24482,8 @@
    "help": "SceneSystem/Virtual Texturing",
    "flags": [
     "developmentonly",
-    "cheat"
+    "cheat",
+    "gameinfo_cannot_override"
    ]
   },
   {
@@ -24439,7 +24491,8 @@
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
    "flags": [
-    "cheat"
+    "developmentonly",
+    "defensive"
    ]
   },
   {
@@ -38354,24 +38407,6 @@
    "help": "Show user info for players on server.",
    "flags": [
     "developmentonly",
-    "defensive"
-   ]
-  },
-  {
-   "name": "vcon_clear_buffered_log",
-   "help": "Clear buffered logging",
-   "flags": [
-    "developmentonly",
-    "dontrecord",
-    "defensive"
-   ]
-  },
-  {
-   "name": "vcon_clients",
-   "help": "List connections",
-   "flags": [
-    "developmentonly",
-    "dontrecord",
     "defensive"
    ]
   },

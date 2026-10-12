@@ -836,6 +836,40 @@ func (e CNPC_Boss_Tier3) VShrineAttackTargetPos() Vector {
 	return Vector{e.field("m_vShrineAttackTargetPos")}
 }
 
+type CNPC_ChessPiece CEntityInstance
+
+func (e CNPC_ChessPiece) field(name string) Field {
+	return Field{e.Handle, "CNPC_ChessPiece", name}
+}
+
+func (e CNPC_ChessPiece) TCooldownStartTime() Number[float32] {
+	return Number[float32]{e.field("m_tCooldownStartTime")}
+}
+
+func (e CNPC_ChessPiece) TCooldownEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tCooldownEndTime")}
+}
+
+func (e CNPC_ChessPiece) HAbility() Handle[CCitadelBaseAbility] {
+	return Handle[CCitadelBaseAbility]{e.field("m_hAbility")}
+}
+
+func (e CNPC_ChessPiece) IChessPieceState() Number[int32] {
+	return Number[int32]{e.field("m_iChessPieceState")}
+}
+
+func (e CNPC_ChessPiece) IChessPieceType() Number[int32] {
+	return Number[int32]{e.field("m_iChessPieceType")}
+}
+
+func (e CNPC_ChessPiece) FlMeleeDamage() Number[float32] {
+	return Number[float32]{e.field("m_flMeleeDamage")}
+}
+
+func (e CNPC_ChessPiece) FlLifetime() Number[float32] {
+	return Number[float32]{e.field("m_flLifetime")}
+}
+
 type CNPC_Escort CEntityInstance
 
 type CNPC_FamiliarHelper CEntityInstance
@@ -6189,6 +6223,8 @@ type CItemExplosiveBarrel CEntityInstance
 type CProjectile_Boho_SkipGrenade CEntityInstance
 
 type CProjectile_BookwormDragon_Projectile CEntityInstance
+
+type CProjectile_ChessMaster_Fork_Projectile CEntityInstance
 
 type CProjectile_Doorman_Cart_Projectile CEntityInstance
 

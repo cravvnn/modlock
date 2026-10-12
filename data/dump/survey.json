@@ -1,5 +1,5 @@
 {
- "build": "6759",
+ "build": "6774",
  "constructions": [
   {
    "designer_name": "abiilty_boho_channeltether",
@@ -168,6 +168,36 @@
    "subclass": "ability_charged_shot",
    "status": "CONSTRUCTION_STATUS_FAILED",
    "error": "ability_charged_shot is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "ability_chessmaster_forkpiece",
+   "subclass": "ability_chessmaster_forkpiece",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "ability_chessmaster_forkpiece is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "ability_chessmaster_knightbuff",
+   "subclass": "ability_chessmaster_knightbuff",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "ability_chessmaster_knightbuff is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "ability_chessmaster_movechesspiece",
+   "subclass": "ability_chessmaster_movechesspiece",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "ability_chessmaster_movechesspiece is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "ability_chessmaster_queen",
+   "subclass": "ability_chessmaster_queen",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "ability_chessmaster_queen is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "ability_chessmaster_throwbishop",
+   "subclass": "",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "ability_chessmaster_throwbishop is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
   },
   {
    "designer_name": "ability_crackshot",
@@ -1445,7 +1475,8 @@
   {
    "designer_name": "baseplayerpawn",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "baseplayerpawn crashes the server when created alone: it needs a player's controller: spawn a hero instead"
   },
   {
    "designer_name": "batswarm_extra_projectile",
@@ -1607,6 +1638,12 @@
    "subclass": "citadel_ability_charged_tackle",
    "status": "CONSTRUCTION_STATUS_FAILED",
    "error": "citadel_ability_charged_tackle is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
+  },
+  {
+   "designer_name": "citadel_ability_chessmaster_primaryweapon",
+   "subclass": "citadel_weapon_chessmaster_shotgun",
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_ability_chessmaster_primaryweapon is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
   },
   {
    "designer_name": "citadel_ability_chrono_kinetic_carbine",
@@ -2204,7 +2241,7 @@
    "designer_name": "citadel_base_ability",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "the server cannot create citadel_base_ability"
+   "error": "citadel_base_ability is an ability, which only a hero holds: give it with GiveItem or ReplaceAbility"
   },
   {
    "designer_name": "citadel_base_hero",
@@ -2246,14 +2283,9 @@
   },
   {
    "designer_name": "citadel_bounce_pad",
-   "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
-  },
-  {
-   "designer_name": "citadel_bounce_pad",
    "subclass": "citadel_bounce_pad",
-   "status": "CONSTRUCTION_STATUS_CRASHED",
-   "error": "lived, then crashed the server when a hero crossed it: it needs the ability that owns it"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_bounce_pad crashes the server when created alone: it needs the hero ability that makes it"
   },
   {
    "designer_name": "citadel_breakable_prop",
@@ -2268,7 +2300,8 @@
   {
    "designer_name": "citadel_capture_point",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_capture_point crashes the server when created alone: it needs a game mode's capture data"
   },
   {
    "designer_name": "citadel_capture_point_escort",
@@ -2291,6 +2324,16 @@
    "status": "CONSTRUCTION_STATUS_ALIVE"
   },
   {
+   "designer_name": "citadel_chesspiece_entity",
+   "subclass": "",
+   "status": "CONSTRUCTION_STATUS_CRASHED"
+  },
+  {
+   "designer_name": "citadel_chesspiece_entity",
+   "subclass": "citadel_chesspiece_bishop",
+   "status": "CONSTRUCTION_STATUS_ALIVE"
+  },
+  {
    "designer_name": "citadel_configurable_tracked_projectile",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_ALIVE"
@@ -2309,7 +2352,8 @@
   {
    "designer_name": "citadel_deployable_preview",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_deployable_preview crashes the server when created alone: it needs the hero ability that makes it"
   },
   {
    "designer_name": "citadel_dev_trigger",
@@ -2391,7 +2435,8 @@
   {
    "designer_name": "citadel_herotest_orbspawner",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_herotest_orbspawner crashes the server when created alone: it needs game data that only its map provides"
   },
   {
    "designer_name": "citadel_hideout_ball",
@@ -2426,7 +2471,8 @@
   {
    "designer_name": "citadel_hideout_prop_base",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_hideout_prop_base crashes the server when created alone: it needs the hero who owns it"
   },
   {
    "designer_name": "citadel_hideout_prop_slot",
@@ -2436,7 +2482,8 @@
   {
    "designer_name": "citadel_hideout_shootable_target_spawner",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_hideout_shootable_target_spawner crashes the server when created alone: it needs game data that only its map provides"
   },
   {
    "designer_name": "citadel_ice_dome_blocker",
@@ -2537,13 +2584,8 @@
   },
   {
    "designer_name": "citadel_koth_cashin",
-   "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
-  },
-  {
-   "designer_name": "citadel_koth_cashin",
    "subclass": "citadel_koth_cashin",
-   "status": "CONSTRUCTION_STATUS_ALIVE"
+   "status": "CONSTRUCTION_STATUS_CRASHED"
   },
   {
    "designer_name": "citadel_local_player_ranked_badge_prop",
@@ -2558,7 +2600,8 @@
   {
    "designer_name": "citadel_magician_turret_object",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_magician_turret_object crashes the server when created alone: it needs the hero ability that makes it"
   },
   {
    "designer_name": "citadel_minimap_boundary",
@@ -2568,7 +2611,8 @@
   {
    "designer_name": "citadel_mobile_resupply_object",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_mobile_resupply_object crashes the server when created alone: it needs the hero ability that makes it"
   },
   {
    "designer_name": "citadel_model_entity",
@@ -2578,12 +2622,14 @@
   {
    "designer_name": "citadel_multi_capture_point",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_multi_capture_point crashes the server when created alone: it needs a game mode's capture data"
   },
   {
    "designer_name": "citadel_nano_predatory_statue",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_nano_predatory_statue crashes the server when created alone: it needs the hero ability that makes it"
   },
   {
    "designer_name": "citadel_new_years_fireworks",
@@ -2821,7 +2867,8 @@
   {
    "designer_name": "citadel_trigger_capture_zipline",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "citadel_trigger_capture_zipline crashes the server when created alone: it needs the zipline that owns it"
   },
   {
    "designer_name": "citadel_trigger_climb_rope",
@@ -3159,7 +3206,8 @@
   {
    "designer_name": "env_laser",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "env_laser crashes the server when created alone: it needs a target its map names"
   },
   {
    "designer_name": "env_light_probe_volume",
@@ -3558,7 +3606,8 @@
   {
    "designer_name": "func_precipitation",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "func_precipitation crashes the server when created alone: it needs a brush model from its map"
   },
   {
    "designer_name": "func_precipitation_blocker",
@@ -3853,7 +3902,7 @@
    "designer_name": "info_hint",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "created NPC has no native identity"
+   "error": "info_hint has no native identity"
   },
   {
    "designer_name": "info_koth_spawn_location",
@@ -3904,25 +3953,25 @@
    "designer_name": "info_node",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "created NPC has no native identity"
+   "error": "info_node has no native identity"
   },
   {
    "designer_name": "info_node_air",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "created NPC has no native identity"
+   "error": "info_node_air has no native identity"
   },
   {
    "designer_name": "info_node_air_hint",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "created NPC has no native identity"
+   "error": "info_node_air_hint has no native identity"
   },
   {
    "designer_name": "info_node_hint",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_FAILED",
-   "error": "created NPC has no native identity"
+   "error": "info_node_hint has no native identity"
   },
   {
    "designer_name": "info_npc_spawn_destination",
@@ -4516,7 +4565,8 @@
   {
    "designer_name": "npc_familiar_helper",
    "subclass": "npc_familiar_helper",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "npc_familiar_helper crashes the server when created alone: it needs the hero who owns it"
   },
   {
    "designer_name": "npc_maker",
@@ -4567,12 +4617,14 @@
   {
    "designer_name": "npc_neutral_hideout_cat",
    "subclass": "npc_neutral_hideout_cat",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "npc_neutral_hideout_cat crashes the server when created alone: it needs the hideout map"
   },
   {
    "designer_name": "npc_neutral_hideout_rabbit",
    "subclass": "npc_neutral_hideout_rabbit",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "npc_neutral_hideout_rabbit crashes the server when created alone: it needs the hideout map"
   },
   {
    "designer_name": "npc_neutral_sinners_sacrifice",
@@ -4597,7 +4649,8 @@
   {
    "designer_name": "npc_player_bot_brain",
    "subclass": "npc_player_bot_brain",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "npc_player_bot_brain crashes the server when created alone: it needs a bot player: add a bot instead"
   },
   {
    "designer_name": "npc_ratking_rat",
@@ -4612,7 +4665,8 @@
   {
    "designer_name": "npc_shielded_sentry",
    "subclass": "npc_shielded_sentry",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "npc_shielded_sentry crashes the server when created alone: it needs the hero who owns it"
   },
   {
    "designer_name": "npc_super_neutral",
@@ -4725,12 +4779,14 @@
   {
    "designer_name": "path_node",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "path_node crashes the server when created alone: it needs a path track from its map"
   },
   {
    "designer_name": "path_node_mover",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "path_node_mover crashes the server when created alone: it needs a path track from its map"
   },
   {
    "designer_name": "path_particle_rope",
@@ -4880,7 +4936,8 @@
   {
    "designer_name": "physics_npc_solver",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "physics_npc_solver crashes the server when created alone: it needs an NPC and a physics object to join"
   },
   {
    "designer_name": "physics_prop_ragdoll",
@@ -5025,7 +5082,8 @@
   {
    "designer_name": "point_prefab",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "point_prefab crashes the server when created alone: it needs a prefab map"
   },
   {
    "designer_name": "point_proximity_sensor",
@@ -5096,6 +5154,11 @@
   },
   {
    "designer_name": "projectile_boho_skipgrenade",
+   "subclass": "",
+   "status": "CONSTRUCTION_STATUS_ALIVE"
+  },
+  {
+   "designer_name": "projectile_chessmaster_forkpiece",
    "subclass": "",
    "status": "CONSTRUCTION_STATUS_ALIVE"
   },
@@ -5349,7 +5412,8 @@
   {
    "designer_name": "simple_animating_ai",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "simple_animating_ai crashes the server when created alone: it needs game data that only its map provides"
   },
   {
    "designer_name": "sky_camera",
@@ -5512,7 +5576,8 @@
   {
    "designer_name": "spark_shower",
    "subclass": "",
-   "status": "CONSTRUCTION_STATUS_CRASHED"
+   "status": "CONSTRUCTION_STATUS_FAILED",
+   "error": "spark_shower crashes the server when created alone: it needs a model"
   },
   {
    "designer_name": "spider_projectile",

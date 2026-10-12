@@ -290,6 +290,24 @@ type CCitadelTriggerCapturePointKeys struct {
 	GroupName *string `key:"GroupName"`
 }
 
+type CAI_BaseNPCKeys struct {
+	CBaseCombatCharacterKeys
+	NavRestrictionVolume *string `key:"NavRestrictionVolume"`
+	Forcedynamichull     *bool   `key:"forcedynamichull"`
+	AiLod                *int32  `key:"ai_lod"`
+}
+
+type CAI_CitadelNPCKeys struct {
+	CAI_BaseNPCKeys
+}
+
+type CNPC_ChessPieceKeys struct {
+	CAI_CitadelNPCKeys
+	Lifetime        *float32 `key:"lifetime"`
+	ChesspieceState *int32   `key:"chesspiece_state"`
+	ChesspieceType  *int32   `key:"chesspiece_type"`
+}
+
 type CTriggerMultipleKeys struct {
 	CBaseTriggerKeys
 }
@@ -389,18 +407,6 @@ type CCitadel_PickupItemSpawnerKeys struct {
 
 type CCitadelItemPunchableNeutralGoldKeys struct {
 	CCitadelItemPickupKeys
-}
-
-type CCitadelTriggerMultiCapturePointKeys struct {
-	CBaseTriggerKeys
-	GroupName *string `key:"GroupName"`
-}
-
-type CCitadel_KothCashInKeys struct {
-	CCitadelTriggerMultiCapturePointKeys
-	NGold     *int32 `key:"m_nGold"`
-	NTeamBias *int32 `key:"m_nTeamBias"`
-	NKOTHIdx  *int32 `key:"m_nKOTHIdx"`
 }
 
 type CCitadel_NewYears_FireworksKeys struct {
@@ -2314,17 +2320,6 @@ type CMomentaryRotButtonKeys struct {
 type CMultiSourceKeys struct {
 	CBaseEntityKeys
 	Globalstate *string `key:"globalstate"`
-}
-
-type CAI_BaseNPCKeys struct {
-	CBaseCombatCharacterKeys
-	NavRestrictionVolume *string `key:"NavRestrictionVolume"`
-	Forcedynamichull     *bool   `key:"forcedynamichull"`
-	AiLod                *int32  `key:"ai_lod"`
-}
-
-type CAI_CitadelNPCKeys struct {
-	CAI_BaseNPCKeys
 }
 
 type CNPC_BarrackBossKeys struct {

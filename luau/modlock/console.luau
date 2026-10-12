@@ -4074,8 +4074,6 @@ type CommandName2 =
 	| "unbindall"
 	| "unpause"
 	| "users"
-	| "vcon_clear_buffered_log"
-	| "vcon_clients"
 	| "vis_debug_currentcluster"
 	| "vis_debug_drawcluster"
 	| "vis_debug_dumpvisibleclusters"

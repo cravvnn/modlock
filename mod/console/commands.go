@@ -3126,12 +3126,6 @@ var Unpause = Command{"unpause"}
 // Users: Show user info for players on server.
 var Users = Command{"users"}
 
-// VconClearBufferedLog: Clear buffered logging.
-var VconClearBufferedLog = Command{"vcon_clear_buffered_log"}
-
-// VconClients: List connections.
-var VconClients = Command{"vcon_clients"}
-
 // VisDebugCurrentcluster: Show the current cluster number.
 var VisDebugCurrentcluster = Command{"vis_debug_currentcluster"}
 

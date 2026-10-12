@@ -800,6 +800,19 @@ export class CNPC_Boss_Tier3 extends CAI_CitadelNPC {}
 export interface CNPC_Boss_Tier3 extends Fields<typeof fieldsCNPC_Boss_Tier3> {}
 define(CNPC_Boss_Tier3, 'CNPC_Boss_Tier3', fieldsCNPC_Boss_Tier3)
 
+const fieldsCNPC_ChessPiece = {
+  m_tCooldownStartTime: 'float32',
+  m_tCooldownEndTime: 'float32',
+  m_hAbility: 'CCitadelBaseAbility',
+  m_iChessPieceState: 'int32',
+  m_iChessPieceType: 'int32',
+  m_flMeleeDamage: 'float32',
+  m_flLifetime: 'float32',
+} as const
+export class CNPC_ChessPiece extends CAI_CitadelNPC {}
+export interface CNPC_ChessPiece extends Fields<typeof fieldsCNPC_ChessPiece> {}
+define(CNPC_ChessPiece, 'CNPC_ChessPiece', fieldsCNPC_ChessPiece)
+
 export class CNPC_Escort extends CAI_CitadelNPC {}
 define(CNPC_Escort, 'CNPC_Escort', {})
 
@@ -3433,6 +3446,9 @@ define(CProjectile_Boho_SkipGrenade, 'CProjectile_Boho_SkipGrenade', {})
 export class CProjectile_BookwormDragon_Projectile extends CCitadelProjectile {}
 define(CProjectile_BookwormDragon_Projectile, 'CProjectile_BookwormDragon_Projectile', {})
 
+export class CProjectile_ChessMaster_Fork_Projectile extends CCitadelProjectile {}
+define(CProjectile_ChessMaster_Fork_Projectile, 'CProjectile_ChessMaster_Fork_Projectile', {})
+
 export class CProjectile_Doorman_Cart_Projectile extends CCitadelProjectile {}
 define(CProjectile_Doorman_Cart_Projectile, 'CProjectile_Doorman_Cart_Projectile', {})
 
@@ -4804,7 +4820,6 @@ export class CAbility_Drifter_Darkness extends CCitadelBaseAbility {}
 define(CAbility_Drifter_Darkness, 'CAbility_Drifter_Darkness', {})
 
 const fieldsCAbility_Drifter_ShadowMark = {
-  m_vLastValidTeleportPosition: 'vector',
   m_hTeleportTarget: 'CBaseEntity',
   m_bTeleported: 'bool',
   m_qPostTeleportAngles: 'angles',
@@ -5298,8 +5313,6 @@ define(CCitadel_Ability_Baba_BenchRun, 'CCitadel_Ability_Baba_BenchRun', fieldsC
 
 const fieldsCCitadel_Ability_Baba_BubblingBrew = {
   m_eState: 'uint32',
-  m_CurrentStacks: 'int32',
-  m_tStackExpiryTime: 'float32',
 } as const
 export class CCitadel_Ability_Baba_BubblingBrew extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Baba_BubblingBrew extends Fields<typeof fieldsCCitadel_Ability_Baba_BubblingBrew> {}
@@ -5535,6 +5548,49 @@ define(CCitadel_Ability_ChargedTackle, 'CCitadel_Ability_ChargedTackle', fieldsC
 
 export class CCitadel_Ability_Charged_Bomb extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Charged_Bomb, 'CCitadel_Ability_Charged_Bomb', {})
+
+const fieldsCCitadel_Ability_Chessmaster_ForkPiece = {
+  m_hCameraTarget: 'CBaseEntity',
+  m_cProjectileLeft: 'CCitadelProjectile',
+  m_cProjectileRight: 'CCitadelProjectile',
+  m_bActive: 'bool',
+} as const
+export class CCitadel_Ability_Chessmaster_ForkPiece extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Chessmaster_ForkPiece extends Fields<typeof fieldsCCitadel_Ability_Chessmaster_ForkPiece> {}
+define(CCitadel_Ability_Chessmaster_ForkPiece, 'CCitadel_Ability_Chessmaster_ForkPiece', fieldsCCitadel_Ability_Chessmaster_ForkPiece)
+
+export class CCitadel_Ability_Chessmaster_KnightBuff extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Chessmaster_KnightBuff, 'CCitadel_Ability_Chessmaster_KnightBuff', {})
+
+const fieldsCCitadel_Ability_Chessmaster_MoveChessPiece = {
+  m_tCancelHoverTime: 'float32',
+  m_pSelectedPiece: 'CBaseEntity',
+  m_flCachedMoveDistance: 'float32',
+} as const
+export class CCitadel_Ability_Chessmaster_MoveChessPiece extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Chessmaster_MoveChessPiece extends Fields<typeof fieldsCCitadel_Ability_Chessmaster_MoveChessPiece> {}
+define(CCitadel_Ability_Chessmaster_MoveChessPiece, 'CCitadel_Ability_Chessmaster_MoveChessPiece', fieldsCCitadel_Ability_Chessmaster_MoveChessPiece)
+
+const fieldsCCitadel_Ability_Chessmaster_Queen = {
+  m_iRemainingMoves: 'int32',
+  m_pDeployedQueen: 'CBaseEntity',
+  m_bActive: 'bool',
+} as const
+export class CCitadel_Ability_Chessmaster_Queen extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Chessmaster_Queen extends Fields<typeof fieldsCCitadel_Ability_Chessmaster_Queen> {}
+define(CCitadel_Ability_Chessmaster_Queen, 'CCitadel_Ability_Chessmaster_Queen', fieldsCCitadel_Ability_Chessmaster_Queen)
+
+const fieldsCCitadel_Ability_Chessmaster_ThrowBishop = {
+  m_bActive: 'bool',
+  m_iBishopIndex: 'int32',
+  m_tRecastEndTime: 'float32',
+  m_vecLaunchPosition: 'vector',
+  m_vecLaunchVelocity: 'vector',
+  m_qLaunchAngle: 'angles',
+} as const
+export class CCitadel_Ability_Chessmaster_ThrowBishop extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Chessmaster_ThrowBishop extends Fields<typeof fieldsCCitadel_Ability_Chessmaster_ThrowBishop> {}
+define(CCitadel_Ability_Chessmaster_ThrowBishop, 'CCitadel_Ability_Chessmaster_ThrowBishop', fieldsCCitadel_Ability_Chessmaster_ThrowBishop)
 
 const fieldsCCitadel_Ability_ChronoSwap = {
   m_bHitTarget: 'bool',
@@ -6585,6 +6641,13 @@ define(CCitadel_Ability_Boho_PrimaryWeapon, 'CCitadel_Ability_Boho_PrimaryWeapon
 
 export class CCitadel_Ability_BookWorm_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 define(CCitadel_Ability_BookWorm_PrimaryWeapon, 'CCitadel_Ability_BookWorm_PrimaryWeapon', {})
+
+const fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon = {
+  m_iCurrentShotCount: 'int32',
+} as const
+export class CCitadel_Ability_ChessMaster_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
+export interface CCitadel_Ability_ChessMaster_PrimaryWeapon extends Fields<typeof fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon> {}
+define(CCitadel_Ability_ChessMaster_PrimaryWeapon, 'CCitadel_Ability_ChessMaster_PrimaryWeapon', fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon)
 
 export class CCitadel_Ability_Drifter_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 define(CCitadel_Ability_Drifter_PrimaryWeapon, 'CCitadel_Ability_Drifter_PrimaryWeapon', {})
@@ -11986,6 +12049,25 @@ const tableCCitadelTriggerCapturePoint = {
 export interface CCitadelTriggerCapturePointKeys extends CBaseTriggerKeys, Typed<typeof tableCCitadelTriggerCapturePoint> {}
 const keysCCitadelTriggerCapturePoint: KeyMap<CCitadelTriggerCapturePointKeys> = [keysCBaseTrigger, tableCCitadelTriggerCapturePoint]
 
+const tableCAI_BaseNPC = {
+  NavRestrictionVolume: 'text',
+  forcedynamichull: 'boolean',
+  ai_lod: 'integer',
+} as const
+export interface CAI_BaseNPCKeys extends CBaseCombatCharacterKeys, Typed<typeof tableCAI_BaseNPC> {}
+const keysCAI_BaseNPC: KeyMap<CAI_BaseNPCKeys> = [keysCBaseCombatCharacter, tableCAI_BaseNPC]
+
+export interface CAI_CitadelNPCKeys extends CAI_BaseNPCKeys {}
+const keysCAI_CitadelNPC: KeyMap<CAI_CitadelNPCKeys> = [keysCAI_BaseNPC, {}]
+
+const tableCNPC_ChessPiece = {
+  lifetime: 'number',
+  chesspiece_state: 'integer',
+  chesspiece_type: 'integer',
+} as const
+export interface CNPC_ChessPieceKeys extends CAI_CitadelNPCKeys, Typed<typeof tableCNPC_ChessPiece> {}
+const keysCNPC_ChessPiece: KeyMap<CNPC_ChessPieceKeys> = [keysCAI_CitadelNPC, tableCNPC_ChessPiece]
+
 export interface CTriggerMultipleKeys extends CBaseTriggerKeys {}
 const keysCTriggerMultiple: KeyMap<CTriggerMultipleKeys> = [keysCBaseTrigger, {}]
 
@@ -12088,20 +12170,6 @@ const keysCCitadel_PickupItemSpawner: KeyMap<CCitadel_PickupItemSpawnerKeys> = [
 
 export interface CCitadelItemPunchableNeutralGoldKeys extends CCitadelItemPickupKeys {}
 const keysCCitadelItemPunchableNeutralGold: KeyMap<CCitadelItemPunchableNeutralGoldKeys> = [keysCCitadelItemPickup, {}]
-
-const tableCCitadelTriggerMultiCapturePoint = {
-  GroupName: 'text',
-} as const
-export interface CCitadelTriggerMultiCapturePointKeys extends CBaseTriggerKeys, Typed<typeof tableCCitadelTriggerMultiCapturePoint> {}
-const keysCCitadelTriggerMultiCapturePoint: KeyMap<CCitadelTriggerMultiCapturePointKeys> = [keysCBaseTrigger, tableCCitadelTriggerMultiCapturePoint]
-
-const tableCCitadel_KothCashIn = {
-  m_nGold: 'integer',
-  m_nTeamBias: 'integer',
-  m_nKOTHIdx: 'integer',
-} as const
-export interface CCitadel_KothCashInKeys extends CCitadelTriggerMultiCapturePointKeys, Typed<typeof tableCCitadel_KothCashIn> {}
-const keysCCitadel_KothCashIn: KeyMap<CCitadel_KothCashInKeys> = [keysCCitadelTriggerMultiCapturePoint, tableCCitadel_KothCashIn]
 
 const tableCCitadel_NewYears_Fireworks = {
   ShowDurationSeconds: 'integer',
@@ -14177,17 +14245,6 @@ const tableCMultiSource = {
 export interface CMultiSourceKeys extends CBaseEntityKeys, Typed<typeof tableCMultiSource> {}
 const keysCMultiSource: KeyMap<CMultiSourceKeys> = [keysCBaseEntity, tableCMultiSource]
 
-const tableCAI_BaseNPC = {
-  NavRestrictionVolume: 'text',
-  forcedynamichull: 'boolean',
-  ai_lod: 'integer',
-} as const
-export interface CAI_BaseNPCKeys extends CBaseCombatCharacterKeys, Typed<typeof tableCAI_BaseNPC> {}
-const keysCAI_BaseNPC: KeyMap<CAI_BaseNPCKeys> = [keysCBaseCombatCharacter, tableCAI_BaseNPC]
-
-export interface CAI_CitadelNPCKeys extends CAI_BaseNPCKeys {}
-const keysCAI_CitadelNPC: KeyMap<CAI_CitadelNPCKeys> = [keysCAI_BaseNPC, {}]
-
 const tableCNPC_BarrackBoss = {
   LaneSide: 'integer',
   LaneNum: 'integer',
@@ -15380,6 +15437,7 @@ const designers = {
   citadel_breakable_prop: [CCitadel_BreakableProp, keysCCitadel_BreakableProp, 'citadel_breakable_prop_vase'],
   citadel_capture_point_escort: [CCitadelTriggerCapturePoint_Escort, keysCCitadelTriggerCapturePoint, 'capture_point_escort'],
   citadel_cat_animating: [CCitadel_CatAnimating, keysCBaseAnimGraph, 'citadel_cat_animating'],
+  citadel_chesspiece_entity: [CNPC_ChessPiece, keysCNPC_ChessPiece, 'citadel_chesspiece_bishop'],
   citadel_configurable_tracked_projectile: [CCitadelConfigurableTrackedProjectile, keysCBaseModelEntity],
   citadel_control_point: [CCitadelControlPointTrigger, keysCCitadelControlPointTrigger],
   citadel_dev_trigger: [CCitadelDevTrigger, keysCCitadelDevTrigger],
@@ -15408,7 +15466,6 @@ const designers = {
   citadel_item_pickup_rejuv_herotest_infospawn: [CCitadelItemPickupRejuvHeroTestInfoSpawn, keysCPointEntity],
   citadel_item_powerup_spawner: [CCitadel_PickupItemSpawner, keysCCitadel_PickupItemSpawner, 'citadel_item_powerup_spawner_bounty_runes'],
   citadel_item_punchable_gold: [CCitadelItemPunchableNeutralGold, keysCCitadelItemPunchableNeutralGold, 'citadel_item_punchable_gold'],
-  citadel_koth_cashin: [CCitadel_KothCashIn, keysCCitadel_KothCashIn, 'citadel_koth_cashin'],
   citadel_local_player_ranked_badge_prop: [CCitadelLocalPlayerRankedBadgeProp, keysCBaseEntity],
   citadel_magic_beam_blocker: [CCitadel_Magic_Beam_Blocker, keysCBaseAnimGraph],
   citadel_minimap_boundary: [CCitadelMinimapBoundary, keysCBaseEntity],
@@ -15792,6 +15849,7 @@ const designers = {
   point_worldtext: [CPointWorldText, keysCPointWorldText],
   post_processing_volume: [CPostProcessingVolume, keysCPostProcessingVolume],
   projectile_boho_skipgrenade: [CProjectile_Boho_SkipGrenade, keysCBaseModelEntity],
+  projectile_chessmaster_forkpiece: [CProjectile_ChessMaster_Fork_Projectile, keysCBaseModelEntity],
   projectile_cyclone: [CCitadel_Projectile_Cyclone, keysCBaseModelEntity],
   projectile_doorman_cart_projectile: [CProjectile_Doorman_Cart_Projectile, keysCBaseModelEntity],
   projectile_dust_storm: [CCitadel_Projectile_DustStorm, keysCBaseModelEntity],

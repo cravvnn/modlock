@@ -1,5 +1,5 @@
 {
- "build": "6759",
+ "build": "6774",
  "classes": [
   {
    "designer_name": "abiilty_boho_channeltether",
@@ -166,6 +166,36 @@
   {
    "designer_name": "ability_charged_shot",
    "class_name": "CCitadel_Ability_ChargedShot",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_chessmaster_forkpiece",
+   "class_name": "CCitadel_Ability_Chessmaster_ForkPiece",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_chessmaster_knightbuff",
+   "class_name": "CCitadel_Ability_Chessmaster_KnightBuff",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_chessmaster_movechesspiece",
+   "class_name": "CCitadel_Ability_Chessmaster_MoveChessPiece",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_chessmaster_queen",
+   "class_name": "CCitadel_Ability_Chessmaster_Queen",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_chessmaster_throwbishop",
+   "class_name": "CCitadel_Ability_Chessmaster_ThrowBishop",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
   },
@@ -1628,6 +1658,12 @@
    "base": "citadel_base_ability"
   },
   {
+   "designer_name": "citadel_ability_chessmaster_primaryweapon",
+   "class_name": "CCitadel_Ability_ChessMaster_PrimaryWeapon",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
    "designer_name": "citadel_ability_chrono_kinetic_carbine",
    "class_name": "CCitadel_Ability_Chrono_KineticCarbine",
    "data_map": "CCitadelBaseAbility",
@@ -2298,6 +2334,12 @@
    "class_name": "CCitadel_CatAnimating",
    "data_map": "CBaseAnimGraph",
    "base": "citadel_animating_model_entity"
+  },
+  {
+   "designer_name": "citadel_chesspiece_entity",
+   "class_name": "CNPC_ChessPiece",
+   "data_map": "CNPC_ChessPiece",
+   "base": "citadel_npc"
   },
   {
    "designer_name": "citadel_configurable_tracked_projectile",
@@ -5344,6 +5386,12 @@
   {
    "designer_name": "projectile_boho_skipgrenade",
    "class_name": "CProjectile_Boho_SkipGrenade",
+   "data_map": "CBaseModelEntity",
+   "base": "citadel_projectile"
+  },
+  {
+   "designer_name": "projectile_chessmaster_forkpiece",
+   "class_name": "CProjectile_ChessMaster_Fork_Projectile",
    "data_map": "CBaseModelEntity",
    "base": "citadel_projectile"
   },
@@ -16068,6 +16116,36 @@
      "name": "BackdoorProtectionTrigger",
      "field": "m_backdoorProtectionTrigger",
      "type": "KEY_TYPE_STRING",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "name": "CNPC_ChessPiece",
+   "base": "CAI_CitadelNPC",
+   "key_values": [
+    {
+     "name": "ability",
+     "field": "m_hAbility",
+     "type": "KEY_TYPE_EHANDLE",
+     "count": 1
+    },
+    {
+     "name": "lifetime",
+     "field": "m_flLifetime",
+     "type": "KEY_TYPE_FLOAT32",
+     "count": 1
+    },
+    {
+     "name": "chesspiece_state",
+     "field": "m_iChessPieceState",
+     "type": "KEY_TYPE_INT32",
+     "count": 1
+    },
+    {
+     "name": "chesspiece_type",
+     "field": "m_iChessPieceType",
+     "type": "KEY_TYPE_INT32",
      "count": 1
     }
    ]

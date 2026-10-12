@@ -1,5 +1,5 @@
 {
- "build": "6759",
+ "build": "6774",
  "classes": [
   {
    "name": "AnimationDecodeDebugDumpElement_t",
@@ -80328,6 +80328,90 @@
    ]
   },
   {
+   "name": "CAI_NPC_ChessPieceVData",
+   "module": "server",
+   "size": 3208,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CAI_CitadelNPCVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_ExpireModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 3152,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bShouldUseCooldownOutline",
+     "type": "bool",
+     "offset": 3168,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_cCooldownOutlineColor",
+     "type": "Color",
+     "offset": 3172
+    },
+    {
+     "name": "m_flCooldownOutlineWidth",
+     "type": "float32",
+     "offset": 3176
+    },
+    {
+     "name": "m_bShouldMove",
+     "type": "bool",
+     "offset": 3180,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bShouldKnockawayOnMelee",
+     "type": "bool",
+     "offset": 3181
+    },
+    {
+     "name": "m_flMeleeDuration",
+     "type": "float32",
+     "offset": 3184
+    },
+    {
+     "name": "m_flMeleeFireDelay",
+     "type": "float32",
+     "offset": 3188
+    },
+    {
+     "name": "m_flHopSpeed",
+     "type": "float32",
+     "offset": 3192
+    },
+    {
+     "name": "m_flMeleeKnockupStrength",
+     "type": "float32",
+     "offset": 3196
+    },
+    {
+     "name": "m_flMeleeKnockbackStrength",
+     "type": "float32",
+     "offset": 3200
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
    "name": "CAI_NPC_NecroSkeleVData",
    "module": "server",
    "size": 3232,
@@ -88452,7 +88536,7 @@
   {
    "name": "CAbility_Drifter_ShadowMark",
    "module": "server",
-   "size": 6032,
+   "size": 6016,
    "alignment": 8,
    "bases": [
     {
@@ -88462,34 +88546,29 @@
    ],
    "fields": [
     {
-     "name": "m_vLastValidTeleportPosition",
-     "type": "VectorWS",
-     "offset": 5280
-    },
-    {
      "name": "m_hTeleportTarget",
      "type": "CHandle\u003c CBaseEntity \u003e",
-     "offset": 5292
+     "offset": 5280
     },
     {
      "name": "m_bTeleported",
      "type": "bool",
-     "offset": 5296
+     "offset": 5284
     },
     {
      "name": "m_qPostTeleportAngles",
      "type": "QAngle",
-     "offset": 5300
+     "offset": 5288
     },
     {
      "name": "m_flExpireTime",
      "type": "GameTime_t",
-     "offset": 5316
+     "offset": 5304
     },
     {
      "name": "m_flTeleportedTime",
      "type": "GameTime_t",
-     "offset": 5320
+     "offset": 5308
     }
    ]
   },
@@ -98286,7 +98365,7 @@
   {
    "name": "CCitadelGameRules",
    "module": "server",
-   "size": 10688,
+   "size": 10704,
    "alignment": 255,
    "bases": [
     {
@@ -105562,7 +105641,7 @@
   {
    "name": "CCitadel_Ability_Baba_BenchRun_VData",
    "module": "server",
-   "size": 5864,
+   "size": 5888,
    "alignment": 8,
    "bases": [
     {
@@ -105580,9 +105659,19 @@
      ]
     },
     {
+     "name": "m_WeaponOffsetStand",
+     "type": "Vector",
+     "offset": 5100
+    },
+    {
+     "name": "m_WeaponOffsetCrouch",
+     "type": "Vector",
+     "offset": 5112
+    },
+    {
      "name": "m_BenchRunModifier",
      "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
-     "offset": 5104,
+     "offset": 5128,
      "metadata": [
       "MPropertyStartGroup"
      ]
@@ -105590,7 +105679,7 @@
     {
      "name": "m_CastParticle",
      "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
-     "offset": 5120,
+     "offset": 5144,
      "metadata": [
       "MPropertyStartGroup"
      ]
@@ -105598,22 +105687,22 @@
     {
      "name": "m_ChargedJumpParticle",
      "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
-     "offset": 5344
+     "offset": 5368
     },
     {
      "name": "m_ChargingJumpParticle",
      "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
-     "offset": 5568
+     "offset": 5592
     },
     {
      "name": "m_flChargeJumpAnimSpeedScale",
      "type": "float32",
-     "offset": 5792
+     "offset": 5816
     },
     {
      "name": "m_strChargingLoopSound",
      "type": "CSoundEventName",
-     "offset": 5800,
+     "offset": 5824,
      "metadata": [
       "MPropertyStartGroup"
      ]
@@ -105621,17 +105710,17 @@
     {
      "name": "m_strChargingStartSound",
      "type": "CSoundEventName",
-     "offset": 5816
+     "offset": 5840
     },
     {
      "name": "m_strChargedJumpSound",
      "type": "CSoundEventName",
-     "offset": 5832
+     "offset": 5856
     },
     {
      "name": "m_strFullyChargedSound",
      "type": "CSoundEventName",
-     "offset": 5848
+     "offset": 5872
     }
    ],
    "metadata": [
@@ -105644,7 +105733,7 @@
   {
    "name": "CCitadel_Ability_Baba_BubblingBrew",
    "module": "server",
-   "size": 10144,
+   "size": 10136,
    "alignment": 8,
    "bases": [
     {
@@ -105657,16 +105746,6 @@
      "name": "m_eState",
      "type": "CCitadel_Ability_Baba_BubblingBrew::EState",
      "offset": 7296
-    },
-    {
-     "name": "m_CurrentStacks",
-     "type": "int32",
-     "offset": 7300
-    },
-    {
-     "name": "m_tStackExpiryTime",
-     "type": "GameTime_t",
-     "offset": 7304
     }
    ]
   },
@@ -108474,6 +108553,973 @@
      "name": "CCitadelBaseAbility",
      "module": "server"
     }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_ChessMaster_PrimaryWeapon",
+   "module": "server",
+   "size": 5912,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadel_Ability_PrimaryWeapon",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_iCurrentShotCount",
+     "type": "int32",
+     "offset": 5904
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_ChessMaster_PrimaryWeaponVData",
+   "module": "server",
+   "size": 6112,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadel_Ability_PrimaryWeaponVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_strBishopTracer",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5848,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flMoveSlashThreshold",
+     "type": "float32",
+     "offset": 6072
+    },
+    {
+     "name": "m_strBishopCommandSound",
+     "type": "CSoundEventName",
+     "offset": 6080,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flHorizontalOffsetPerShot",
+     "type": "float32",
+     "offset": 6096,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flReshuffleHoldTime",
+     "type": "float32",
+     "offset": 6100,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strAG2HeroActionGainedBullets",
+     "type": "CGlobalSymbol",
+     "offset": 6104
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_ForkPiece",
+   "module": "server",
+   "size": 8672,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelBaseAbility",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_hCameraTarget",
+     "type": "CHandle\u003c CBaseEntity \u003e",
+     "offset": 8652
+    },
+    {
+     "name": "m_cProjectileLeft",
+     "type": "CHandle\u003c CCitadelProjectile \u003e",
+     "offset": 8656
+    },
+    {
+     "name": "m_cProjectileRight",
+     "type": "CHandle\u003c CCitadelProjectile \u003e",
+     "offset": 8660
+    },
+    {
+     "name": "m_bActive",
+     "type": "bool",
+     "offset": 8664
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_ForkPieceVData",
+   "module": "server",
+   "size": 5688,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CitadelAbilityVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_ImpactParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5096,
+     "metadata": [
+      "MPropertyGroupName"
+     ]
+    },
+    {
+     "name": "m_ForkParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5320
+    },
+    {
+     "name": "m_DebuffModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5544,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_HexModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5560
+    },
+    {
+     "name": "m_ImmunityModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5576
+    },
+    {
+     "name": "m_strForkSound",
+     "type": "CSoundEventName",
+     "offset": 5592,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strReflectSound",
+     "type": "CSoundEventName",
+     "offset": 5608
+    },
+    {
+     "name": "m_strExpireSound",
+     "type": "CSoundEventName",
+     "offset": 5624
+    },
+    {
+     "name": "m_bGrowImmobilizeDurationFromDistance",
+     "type": "bool",
+     "offset": 5640,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bOnlyDebuffOnFork",
+     "type": "bool",
+     "offset": 5641
+    },
+    {
+     "name": "m_bShouldDropEnemyAura",
+     "type": "bool",
+     "offset": 5642
+    },
+    {
+     "name": "m_bShouldDropAllyAura",
+     "type": "bool",
+     "offset": 5643
+    },
+    {
+     "name": "m_bAllowMultihitOnReverse",
+     "type": "bool",
+     "offset": 5644
+    },
+    {
+     "name": "m_flDeployGap",
+     "type": "float32",
+     "offset": 5648
+    },
+    {
+     "name": "m_flTraceRadius",
+     "type": "float32",
+     "offset": 5652
+    },
+    {
+     "name": "m_flDistanceAboveGround",
+     "type": "float32",
+     "offset": 5656
+    },
+    {
+     "name": "m_flFloatDownRate",
+     "type": "float32",
+     "offset": 5660
+    },
+    {
+     "name": "m_flClimbHeight",
+     "type": "float32",
+     "offset": 5664
+    },
+    {
+     "name": "m_flStepDownHeight",
+     "type": "float32",
+     "offset": 5668
+    },
+    {
+     "name": "m_flMinPitch",
+     "type": "float32",
+     "offset": 5672
+    },
+    {
+     "name": "m_flMaxPitch",
+     "type": "float32",
+     "offset": 5676
+    },
+    {
+     "name": "m_flReverseTraceDistance",
+     "type": "float32",
+     "offset": 5680
+    },
+    {
+     "name": "m_flImmunityDuration",
+     "type": "float32",
+     "offset": 5684
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_KnightBuff",
+   "module": "server",
+   "size": 7216,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelBaseAbility",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_KnightBuffVData",
+   "module": "server",
+   "size": 5400,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CitadelAbilityVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_ExplosionParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5096,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_AuraModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifierAura \u003e",
+     "offset": 5320,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_BuffModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5336
+    },
+    {
+     "name": "m_MoveBuffModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5352
+    },
+    {
+     "name": "m_SlowModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5368
+    },
+    {
+     "name": "m_strExplosionSound",
+     "type": "CSoundEventName",
+     "offset": 5384,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_MoveChessPiece",
+   "module": "server",
+   "size": 7240,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelBaseAbility",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_tCancelHoverTime",
+     "type": "GameTime_t",
+     "offset": 5280
+    },
+    {
+     "name": "m_pSelectedPiece",
+     "type": "CHandle\u003c CBaseEntity \u003e",
+     "offset": 5284
+    },
+    {
+     "name": "m_flCachedMoveDistance",
+     "type": "float32",
+     "offset": 5288
+    }
+   ],
+   "metadata": [
+    "MAbilityDynamicValuesSuppressCacheWhileActive"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_MoveChessPieceVData",
+   "module": "server",
+   "size": 6512,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CitadelAbilityVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_mapChessAbilities",
+     "type": "CUtlOrderedMap\u003c EChessPieceType, CSubclassName\u003c 4 \u003e \u003e",
+     "offset": 5096,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_MoveModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5136,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_MoveAllyModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5152
+    },
+    {
+     "name": "m_MoveKingModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5168
+    },
+    {
+     "name": "m_MoveQueenModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5184
+    },
+    {
+     "name": "m_CooldownModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5200
+    },
+    {
+     "name": "m_CooldownPlayerModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5216
+    },
+    {
+     "name": "m_cHoverOutlineColor",
+     "type": "Color",
+     "offset": 5232,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flHoverOutlineWidth",
+     "type": "float32",
+     "offset": 5236
+    },
+    {
+     "name": "m_TargetHoverParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5240
+    },
+    {
+     "name": "m_TargetPreviewBishopParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5464
+    },
+    {
+     "name": "m_TargetPreviewAllyParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5688
+    },
+    {
+     "name": "m_TargetPreviewQueenParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5912
+    },
+    {
+     "name": "m_TargetPreviewKingParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 6136
+    },
+    {
+     "name": "m_strHitConfirmSound",
+     "type": "CSoundEventName",
+     "offset": 6360,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strMoveBishopSound",
+     "type": "CSoundEventName",
+     "offset": 6376
+    },
+    {
+     "name": "m_strMoveKnightSound",
+     "type": "CSoundEventName",
+     "offset": 6392
+    },
+    {
+     "name": "m_strMoveQueenSound",
+     "type": "CSoundEventName",
+     "offset": 6408
+    },
+    {
+     "name": "m_strMoveKingSound",
+     "type": "CSoundEventName",
+     "offset": 6424
+    },
+    {
+     "name": "m_strSelectPieceSound",
+     "type": "CSoundEventName",
+     "offset": 6440
+    },
+    {
+     "name": "m_flHoverTime",
+     "type": "float32",
+     "offset": 6456,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flPassiveTargetingConeAngle",
+     "type": "float32",
+     "offset": 6460
+    },
+    {
+     "name": "m_flPassiveTargetingHalfWidth",
+     "type": "float32",
+     "offset": 6464
+    },
+    {
+     "name": "m_flPassiveTargetingNearbyCasterRadius",
+     "type": "float32",
+     "offset": 6468
+    },
+    {
+     "name": "m_flPassiveTargetingNearbyCrosshairRadius",
+     "type": "float32",
+     "offset": 6472
+    },
+    {
+     "name": "m_flSpawnPositionNavMeshSearchRange",
+     "type": "float32",
+     "offset": 6476
+    },
+    {
+     "name": "m_bCreateSatVolume",
+     "type": "bool",
+     "offset": 6480
+    },
+    {
+     "name": "m_bMoveAllFixedDistance",
+     "type": "bool",
+     "offset": 6481
+    },
+    {
+     "name": "m_bSweepToDestination",
+     "type": "bool",
+     "offset": 6482
+    },
+    {
+     "name": "m_bDebug",
+     "type": "bool",
+     "offset": 6483
+    },
+    {
+     "name": "m_vecPossibleClasses",
+     "type": "CUtlVector\u003c Class_T \u003e",
+     "offset": 6488
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_Queen",
+   "module": "server",
+   "size": 7512,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelBaseAbility",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_iRemainingMoves",
+     "type": "int32",
+     "offset": 5280
+    },
+    {
+     "name": "m_vecHitUnits",
+     "type": "CUtlVector\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 5288
+    },
+    {
+     "name": "m_vecStunnedUnits",
+     "type": "CUtlVector\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 5312
+    },
+    {
+     "name": "m_pDeployedQueen",
+     "type": "CHandle\u003c CBaseEntity \u003e",
+     "offset": 5336
+    },
+    {
+     "name": "m_bActive",
+     "type": "bool",
+     "offset": 5340
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_QueenVData",
+   "module": "server",
+   "size": 6208,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CitadelAbilityVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_LiftModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5096,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_SlowModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5112
+    },
+    {
+     "name": "m_TileModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5128
+    },
+    {
+     "name": "m_AOEExplodeParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5144,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_AreaWarningEffect",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5368
+    },
+    {
+     "name": "m_TileExplodeParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5592
+    },
+    {
+     "name": "m_PostExplodeParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5816
+    },
+    {
+     "name": "m_AOEExplodeSound",
+     "type": "CSoundEventName",
+     "offset": 6040,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strAOEWarningSound",
+     "type": "CSoundEventName",
+     "offset": 6056
+    },
+    {
+     "name": "m_strExpireSound",
+     "type": "CSoundEventName",
+     "offset": 6072
+    },
+    {
+     "name": "m_QueenRecallSound",
+     "type": "CSoundEventName",
+     "offset": 6088
+    },
+    {
+     "name": "m_QueenExpireSound",
+     "type": "CSoundEventName",
+     "offset": 6104
+    },
+    {
+     "name": "m_strCheckmateSound",
+     "type": "CSoundEventName",
+     "offset": 6120
+    },
+    {
+     "name": "m_strTileReleasedSound",
+     "type": "CSoundEventName",
+     "offset": 6136
+    },
+    {
+     "name": "m_strSlamSound",
+     "type": "CSoundEventName",
+     "offset": 6152
+    },
+    {
+     "name": "m_bOrientToWorldForward",
+     "type": "bool",
+     "offset": 6168,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bHaveLinesStun",
+     "type": "bool",
+     "offset": 6169
+    },
+    {
+     "name": "m_bOnlyStunOnce",
+     "type": "bool",
+     "offset": 6170
+    },
+    {
+     "name": "m_bOnlyStunThreat",
+     "type": "bool",
+     "offset": 6171
+    },
+    {
+     "name": "m_bDoLiftOnStun",
+     "type": "bool",
+     "offset": 6172
+    },
+    {
+     "name": "m_bDamageBeforeLift",
+     "type": "bool",
+     "offset": 6173
+    },
+    {
+     "name": "m_bHasLimitedMoves",
+     "type": "bool",
+     "offset": 6174
+    },
+    {
+     "name": "m_flInitialTileDelay",
+     "type": "float32",
+     "offset": 6176
+    },
+    {
+     "name": "m_flTimeBetweenTiles",
+     "type": "float32",
+     "offset": 6180
+    },
+    {
+     "name": "m_flTraceRadius",
+     "type": "float32",
+     "offset": 6184
+    },
+    {
+     "name": "m_flDistanceAboveGround",
+     "type": "float32",
+     "offset": 6188
+    },
+    {
+     "name": "m_flFloatDownRate",
+     "type": "float32",
+     "offset": 6192
+    },
+    {
+     "name": "m_flClimbHeight",
+     "type": "float32",
+     "offset": 6196
+    },
+    {
+     "name": "m_flStepDownHeight",
+     "type": "float32",
+     "offset": 6200
+    },
+    {
+     "name": "m_flSinclairModelSwapHold",
+     "type": "float32",
+     "offset": 6204
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_ThrowBishop",
+   "module": "server",
+   "size": 7880,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelBaseAbility",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_vecDeployedPieces",
+     "type": "CNetworkUtlVectorBase\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 5280
+    },
+    {
+     "name": "m_bActive",
+     "type": "bool",
+     "offset": 5304
+    },
+    {
+     "name": "m_iBishopIndex",
+     "type": "int32",
+     "offset": 5308
+    },
+    {
+     "name": "m_tRecastEndTime",
+     "type": "GameTime_t",
+     "offset": 5312
+    },
+    {
+     "name": "m_vecShotBishops",
+     "type": "CUtlVector\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 5328
+    },
+    {
+     "name": "m_vecHitTargets",
+     "type": "CUtlVector\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 5352
+    },
+    {
+     "name": "m_vecLaunchPosition",
+     "type": "VectorWS",
+     "offset": 5376
+    },
+    {
+     "name": "m_vecLaunchVelocity",
+     "type": "Vector",
+     "offset": 5388
+    },
+    {
+     "name": "m_qLaunchAngle",
+     "type": "QAngle",
+     "offset": 5400
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Ability_Chessmaster_ThrowBishopVData",
+   "module": "server",
+   "size": 5496,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CitadelAbilityVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_SpawnParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 5096,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_SummonModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5320,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_StackingModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5336
+    },
+    {
+     "name": "m_MoveBuffModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5352
+    },
+    {
+     "name": "m_ExpireModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5368
+    },
+    {
+     "name": "m_BlackPieceModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5384
+    },
+    {
+     "name": "m_SlowModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 5400
+    },
+    {
+     "name": "m_BishopSpawnSound",
+     "type": "CSoundEventName",
+     "offset": 5416,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_BishopRecallSound",
+     "type": "CSoundEventName",
+     "offset": 5432
+    },
+    {
+     "name": "m_strBishopExpireSound",
+     "type": "CSoundEventName",
+     "offset": 5448
+    },
+    {
+     "name": "m_bShouldCreateEnemyAura",
+     "type": "bool",
+     "offset": 5464,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bExpireOverTime",
+     "type": "bool",
+     "offset": 5465
+    },
+    {
+     "name": "m_bDebugTrace",
+     "type": "bool",
+     "offset": 5466
+    },
+    {
+     "name": "m_bShouldApplySlowOnImpact",
+     "type": "bool",
+     "offset": 5467
+    },
+    {
+     "name": "m_eChessPieceType",
+     "type": "EChessPieceType",
+     "offset": 5468
+    },
+    {
+     "name": "m_flRecallOnMeleeRange",
+     "type": "float32",
+     "offset": 5472
+    },
+    {
+     "name": "m_flCylinderTraceRadius",
+     "type": "float32",
+     "offset": 5476
+    },
+    {
+     "name": "m_flCylinderTraceLength",
+     "type": "float32",
+     "offset": 5480
+    },
+    {
+     "name": "m_flPopUpSpeed",
+     "type": "float32",
+     "offset": 5484
+    },
+    {
+     "name": "m_flVerticalOffset",
+     "type": "float32",
+     "offset": 5488
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
    ]
   },
   {
@@ -140038,6 +141084,643 @@
    ]
   },
   {
+   "name": "CCitadel_Modifier_ChessMaster_CheckWatcher",
+   "module": "server",
+   "size": 1208,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadel_Modifier_Intrinsic_Base",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_CheckWatcherVData",
+   "module": "server",
+   "size": 2000,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadel_Modifier_Intrinsic_BaseVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_StackModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_ImmobilizeModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 1952
+    },
+    {
+     "name": "m_CooldownModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 1968
+    },
+    {
+     "name": "m_strSuccessProcSound",
+     "type": "CSoundEventName",
+     "offset": 1984,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_GroundTile",
+   "module": "server",
+   "size": 1232,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_GroundTileVData",
+   "module": "server",
+   "size": 2896,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_GroundParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_GroundWarningParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2160
+    },
+    {
+     "name": "m_GroundExplosionParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2384
+    },
+    {
+     "name": "m_DamageParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2608
+    },
+    {
+     "name": "m_SlowModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 2832,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strActivationSound",
+     "type": "CSoundEventName",
+     "offset": 2848,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strAuraHitNPCSound",
+     "type": "CSoundEventName",
+     "offset": 2864
+    },
+    {
+     "name": "m_bDestroyOnParentMove",
+     "type": "bool",
+     "offset": 2880,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bDestroyOnParentLost",
+     "type": "bool",
+     "offset": 2881
+    },
+    {
+     "name": "m_bShouldApplySlow",
+     "type": "bool",
+     "offset": 2882
+    },
+    {
+     "name": "m_bDoDPS",
+     "type": "bool",
+     "offset": 2883
+    },
+    {
+     "name": "m_bDetonate",
+     "type": "bool",
+     "offset": 2884
+    },
+    {
+     "name": "m_bDetonateOnActivate",
+     "type": "bool",
+     "offset": 2885
+    },
+    {
+     "name": "m_bWaitUntilParentOffCooldown",
+     "type": "bool",
+     "offset": 2886
+    },
+    {
+     "name": "m_flActivationDelay",
+     "type": "float32",
+     "offset": 2888
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_Piece_Expire",
+   "module": "server",
+   "size": 520,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_Piece_ExpireVData",
+   "module": "server",
+   "size": 2168,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_bExpireOverTime",
+     "type": "bool",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bExpireFromDistanceToCaster",
+     "type": "bool",
+     "offset": 1937
+    },
+    {
+     "name": "m_bExpireWhenCasterDies",
+     "type": "bool",
+     "offset": 1938
+    },
+    {
+     "name": "m_MoveAvailableParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1944,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_RookAura",
+   "module": "server",
+   "size": 560,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifierAura",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_ChessMaster_RookAuraVData",
+   "module": "server",
+   "size": 2472,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierAuraVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_AuraParticleFriendly",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2024,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_AuraParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2248
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_BuffAlly_Buff",
+   "module": "server",
+   "size": 680,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_DamageAura",
+   "module": "server",
+   "size": 2104,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifierAura",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_hTarget",
+     "type": "CHandle\u003c CBaseEntity \u003e",
+     "offset": 384
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_DamageAuraVData",
+   "module": "server",
+   "size": 2992,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierAuraVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_bShouldDamageOnAura",
+     "type": "bool",
+     "offset": 2024,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bShouldPulseOnAuraCreation",
+     "type": "bool",
+     "offset": 2025
+    },
+    {
+     "name": "m_bShouldPulseOnlyOffCooldown",
+     "type": "bool",
+     "offset": 2026
+    },
+    {
+     "name": "m_flPulseDelay",
+     "type": "float32",
+     "offset": 2028
+    },
+    {
+     "name": "m_TargetModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 2032,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_AuraParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2048,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_LaserParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2272
+    },
+    {
+     "name": "m_PulseParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2496
+    },
+    {
+     "name": "m_DamageParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2720
+    },
+    {
+     "name": "m_strBeamLoopStartSound",
+     "type": "CSoundEventName",
+     "offset": 2944,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strBeamLoopSound",
+     "type": "CSoundEventName",
+     "offset": 2960
+    },
+    {
+     "name": "m_strBeamHitSound",
+     "type": "CSoundEventName",
+     "offset": 2976
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_MovingPieceDamage",
+   "module": "server",
+   "size": 1272,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_MovingPieceDamageVData",
+   "module": "server",
+   "size": 2200,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_ImpactParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_GroundAuraModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 2160,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strImpactSound",
+     "type": "CSoundEventName",
+     "offset": 2176,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bDropGroundAuras",
+     "type": "bool",
+     "offset": 2192,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_bAlignOnDiagonal",
+     "type": "bool",
+     "offset": 2193
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_NearbyCaster",
+   "module": "server",
+   "size": 864,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_nParticleIndexTether",
+     "type": "ParticleIndex_t",
+     "offset": 328
+    },
+    {
+     "name": "m_nParticleIndexAura",
+     "type": "ParticleIndex_t",
+     "offset": 332
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_NearbyCasterVData",
+   "module": "server",
+   "size": 2624,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_AuraParticleFriendly",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_AuraParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2160
+    },
+    {
+     "name": "m_TetherParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2384
+    },
+    {
+     "name": "m_BuffModifier",
+     "type": "CEmbeddedSubclass\u003c CCitadelModifier \u003e",
+     "offset": 2608,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_QueenHoldInPlace",
+   "module": "server",
+   "size": 936,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadel_Modifier_Stunned",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_vecFloatDest",
+     "type": "VectorWS",
+     "offset": 336
+    },
+    {
+     "name": "m_vecQueenPosition",
+     "type": "VectorWS",
+     "offset": 348
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_QueenHoldInPlaceVData",
+   "module": "server",
+   "size": 2696,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadel_Modifier_StunnedVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_bDoCheckmate",
+     "type": "bool",
+     "offset": 2160,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_flRiseHeight",
+     "type": "float32",
+     "offset": 2164
+    },
+    {
+     "name": "m_flSlamCurve",
+     "type": "CPiecewiseCurve",
+     "offset": 2168
+    },
+    {
+     "name": "m_strImpactSound",
+     "type": "CSoundEventName",
+     "offset": 2232,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_LiftParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2248,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_ImpactParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2472
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_Chessmaster_StackingSpiritResistReduction",
+   "module": "server",
+   "size": 504,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
    "name": "CCitadel_Modifier_ChronoSwap_BubbleMove",
    "module": "server",
    "size": 1272,
@@ -150730,6 +152413,187 @@
      "name": "CCitadel_Modifier_Silenced",
      "module": "server"
     }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_MoveChessPiece",
+   "module": "server",
+   "size": 408,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_vecHitUnits",
+     "type": "CUtlVector\u003c CHandle\u003c CBaseEntity \u003e \u003e",
+     "offset": 328
+    },
+    {
+     "name": "m_vecStartLocation",
+     "type": "VectorWS",
+     "offset": 368
+    },
+    {
+     "name": "m_vecEndLocation",
+     "type": "VectorWS",
+     "offset": 380
+    },
+    {
+     "name": "m_vecCornerLocation",
+     "type": "VectorWS",
+     "offset": 392
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_MoveChessPieceCooldown",
+   "module": "server",
+   "size": 328,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CCitadelModifier",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_MoveChessPieceCooldownVData",
+   "module": "server",
+   "size": 2192,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_StatusEffectParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strCooldownCompleteSound",
+     "type": "CSoundEventName",
+     "offset": 2160,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_strCooldownCompleteQueenSound",
+     "type": "CSoundEventName",
+     "offset": 2176
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CCitadel_Modifier_MoveChessPieceVData",
+   "module": "server",
+   "size": 3048,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelModifierVData",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_HoverParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 1936,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_PathParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2160
+    },
+    {
+     "name": "m_BishopPathParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2384
+    },
+    {
+     "name": "m_AdditionalPathParticle",
+     "type": "CResourceNameTyped\u003c CWeakHandle\u003c InfoForResourceTypeIParticleSystemDefinition \u003e \u003e",
+     "offset": 2608
+    },
+    {
+     "name": "m_MovementCurve",
+     "type": "CPiecewiseCurve",
+     "offset": 2832,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    },
+    {
+     "name": "m_VerticalOffsetCurve",
+     "type": "CPiecewiseCurve",
+     "offset": 2896
+    },
+    {
+     "name": "m_LeanCurve",
+     "type": "CPiecewiseCurve",
+     "offset": 2960
+    },
+    {
+     "name": "m_bDebug",
+     "type": "bool",
+     "offset": 3024
+    },
+    {
+     "name": "m_bMoveOnRightTriangle",
+     "type": "bool",
+     "offset": 3025
+    },
+    {
+     "name": "m_bMoveOnDiagonal",
+     "type": "bool",
+     "offset": 3026
+    },
+    {
+     "name": "m_bImmuneDuringMove",
+     "type": "bool",
+     "offset": 3027
+    },
+    {
+     "name": "m_bTryToGroundDuring",
+     "type": "bool",
+     "offset": 3028
+    },
+    {
+     "name": "m_strLandingSound",
+     "type": "CSoundEventName",
+     "offset": 3032,
+     "metadata": [
+      "MPropertyStartGroup"
+     ]
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
    ]
   },
   {
@@ -184960,7 +186824,7 @@
   {
    "name": "CModifierProperty",
    "module": "server",
-   "size": 15776,
+   "size": 15856,
    "alignment": 16,
    "fields": [
     {
@@ -184987,7 +186851,7 @@
     {
      "name": "m_bPredictedOwner",
      "type": "bool",
-     "offset": 15593,
+     "offset": 15681,
      "metadata": [
       "MNotSaved"
      ]
@@ -184995,12 +186859,12 @@
     {
      "name": "m_bAllowModifiersOnDeadEntities",
      "type": "bool",
-     "offset": 15594
+     "offset": 15682
     },
     {
      "name": "m_iLockRefCount",
      "type": "int8",
-     "offset": 15595,
+     "offset": 15683,
      "metadata": [
       "MNotSaved"
      ]
@@ -185008,7 +186872,7 @@
     {
      "name": "m_hHandle",
      "type": "ModifierPropRuntimeHandle_t",
-     "offset": 15596,
+     "offset": 15684,
      "metadata": [
       "MNotSaved"
      ]
@@ -185016,7 +186880,7 @@
     {
      "name": "m_nBroadcastEventListenerMask",
      "type": "uint32",
-     "offset": 15600,
+     "offset": 15688,
      "metadata": [
       "MNotSaved"
      ]
@@ -185024,7 +186888,7 @@
     {
      "name": "m_nCachedHighestParticleIndex",
      "type": "ParticleIndex_t",
-     "offset": 15604,
+     "offset": 15692,
      "metadata": [
       "MNotSaved"
      ]
@@ -185032,7 +186896,7 @@
     {
      "name": "m_pNotifyOwnerEvents",
      "type": "CUtlVector\u003c OwnerModifierEventListener_t \u003e*",
-     "offset": 15608,
+     "offset": 15696,
      "metadata": [
       "MKV3TransferSaveOpsForField"
      ]
@@ -185040,27 +186904,27 @@
     {
      "name": "m_nDisabledGroups",
      "type": "uint32",
-     "offset": 15616
+     "offset": 15704
     },
     {
      "name": "m_bvEnabledStateMask",
      "type": "uint32[11]",
-     "offset": 15620
+     "offset": 15708
     },
     {
      "name": "m_bvDisabledStateMask",
      "type": "uint32[11]",
-     "offset": 15664
+     "offset": 15752
     },
     {
      "name": "m_bvEnabledPredictedStateMask",
      "type": "uint32[11]",
-     "offset": 15708
+     "offset": 15796
     },
     {
      "name": "m_bParentWantsModifierStateChangeCallback",
      "type": "bool",
-     "offset": 15760
+     "offset": 15848
     }
    ],
    "metadata": [
@@ -191000,6 +192864,55 @@
    ],
    "flags": [
     "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
+   "name": "CNPC_ChessPiece",
+   "module": "server",
+   "size": 5968,
+   "alignment": 16,
+   "bases": [
+    {
+     "name": "CAI_CitadelNPC",
+     "module": "server"
+    }
+   ],
+   "fields": [
+    {
+     "name": "m_tCooldownStartTime",
+     "type": "GameTime_t",
+     "offset": 5904
+    },
+    {
+     "name": "m_tCooldownEndTime",
+     "type": "GameTime_t",
+     "offset": 5908
+    },
+    {
+     "name": "m_hAbility",
+     "type": "CHandle\u003c CCitadelBaseAbility \u003e",
+     "offset": 5912
+    },
+    {
+     "name": "m_iChessPieceState",
+     "type": "int32",
+     "offset": 5916
+    },
+    {
+     "name": "m_iChessPieceType",
+     "type": "int32",
+     "offset": 5920
+    },
+    {
+     "name": "m_flMeleeDamage",
+     "type": "float32",
+     "offset": 5924
+    },
+    {
+     "name": "m_flLifetime",
+     "type": "float32",
+     "offset": 5940
+    }
    ]
   },
   {
@@ -200039,6 +201952,18 @@
    ]
   },
   {
+   "name": "CProjectile_ChessMaster_Fork_Projectile",
+   "module": "server",
+   "size": 2616,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CCitadelProjectile",
+     "module": "server"
+    }
+   ]
+  },
+  {
    "name": "CProjectile_Doorman_Cart_Projectile",
    "module": "server",
    "size": 2440,
@@ -203110,6 +205035,36 @@
    ]
   },
   {
+   "name": "CScaleFunctionAbilityProperty_HealingWeaponScale",
+   "module": "server",
+   "size": 24,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CScaleFunctionBase",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CScaleFunctionAbilityProperty_HealingWeaponScaleVData",
+   "module": "server",
+   "size": 64,
+   "alignment": 8,
+   "bases": [
+    {
+     "name": "CScaleFunctionVData",
+     "module": "server"
+    }
+   ],
+   "metadata": [
+    "MGetKV3ClassDefaults"
+   ],
+   "flags": [
+    "MHasKV3TransferPolymorphicClassname"
+   ]
+  },
+  {
    "name": "CScaleFunctionAbilityProperty_KineticCarbine",
    "module": "server",
    "size": 24,
@@ -203171,6 +205126,18 @@
   },
   {
    "name": "CScaleFunctionAbilityProperty_TechRangeFloored",
+   "module": "server",
+   "size": 24,
+   "alignment": 255,
+   "bases": [
+    {
+     "name": "CScaleFunctionBase",
+     "module": "server"
+    }
+   ]
+  },
+  {
+   "name": "CScaleFunctionAbilityProperty_TechRangeRounded",
    "module": "server",
    "size": 24,
    "alignment": 255,
@@ -247362,6 +249329,24 @@
    ]
   },
   {
+   "name": "EBoardGrid",
+   "module": "server",
+   "size": 4,
+   "enumerators": [
+    {
+     "name": "kBoardGrid_All"
+    },
+    {
+     "name": "kBoardGrid_White",
+     "value": "1"
+    },
+    {
+     "name": "kBoardGrid_Black",
+     "value": "2"
+    }
+   ]
+  },
+  {
    "name": "EBotTestNodeType",
    "module": "server",
    "size": 4,
@@ -247436,6 +249421,46 @@
     {
      "name": "ECatStatue_InCooldown",
      "value": "4"
+    }
+   ]
+  },
+  {
+   "name": "EChessPieceState",
+   "module": "server",
+   "size": 4,
+   "enumerators": [
+    {
+     "name": "kChessPiece_State_Idle"
+    },
+    {
+     "name": "kChessPiece_State_PickedUp",
+     "value": "1"
+    },
+    {
+     "name": "kChessPiece_State_Moving",
+     "value": "2"
+    }
+   ]
+  },
+  {
+   "name": "EChessPieceType",
+   "module": "server",
+   "size": 4,
+   "enumerators": [
+    {
+     "name": "kChessPiece_Type_None"
+    },
+    {
+     "name": "kChessPiece_Type_Queen",
+     "value": "1"
+    },
+    {
+     "name": "kChessPiece_Type_Bishop",
+     "value": "2"
+    },
+    {
+     "name": "kChessPiece_Type_Knight",
+     "value": "3"
     }
    ]
   },
@@ -255209,8 +257234,12 @@
      "value": "245"
     },
     {
-     "name": "MODIFIER_VALUE_COUNT",
+     "name": "MODIFIER_VALUE_WEAPON_OBSTRUCTION_ORIGIN_OVERRIDE",
      "value": "246"
+    },
+    {
+     "name": "MODIFIER_VALUE_COUNT",
+     "value": "247"
     },
     {
      "name": "MODIFIER_VALUE_INVALID",
@@ -257856,12 +259885,16 @@
      "value": "106"
     },
     {
-     "name": "EStatsCount",
+     "name": "ETechPowerStolen",
      "value": "107"
     },
     {
+     "name": "EStatsCount",
+     "value": "108"
+    },
+    {
      "name": "EStatsInvalid",
-     "value": "107"
+     "value": "108"
     }
    ]
   },
