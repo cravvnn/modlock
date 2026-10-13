@@ -70,11 +70,11 @@ struct PawnMotion {
     void* pawn, const std::array<float, 3>& values);
 [[nodiscard]] MODLOCK_API std::optional<std::array<float, 3>> ReadPawnUpgradeBonuses(void* pawn);
 
-// CombatLayout carries the schema-resolved offsets of the owning
-// controller's inline PlayerDataGlobal_t lifetime counters: the struct's
+// ScoreLayout carries the schema-resolved offsets of the owning
+// controller's inline PlayerDataGlobal_t scoreboard counters: the struct's
 // offset inside CCitadelPlayerController and each int32 counter inside it.
 // Resolved as one capability; absent schema never disables the other fields.
-struct CombatLayout {
+struct ScoreLayout {
   size_t player_data_global = 0;
   size_t hero_damage = 0;
   size_t hero_healing = 0;
@@ -82,18 +82,24 @@ struct CombatLayout {
   size_t kills = 0;
   size_t deaths = 0;
   size_t assists = 0;
+  size_t last_hits = 0;
+  size_t denies = 0;
+  size_t net_worth = 0;
 };
 
-// CombatTotals preserves raw native counter values, without interpreting
-// overkill, shields or effective healing.
-struct CombatTotals {
+// ScoreTotals preserves the raw native scoreboard counters, without
+// interpreting overkill, shields or effective healing.
+struct ScoreTotals {
   int32_t hero_damage = 0;
   int32_t hero_healing = 0;
   int32_t self_healing = 0;
   int32_t kills = 0;
   int32_t deaths = 0;
   int32_t assists = 0;
-  friend bool operator==(const CombatTotals&, const CombatTotals&) = default;
+  int32_t last_hits = 0;
+  int32_t denies = 0;
+  int32_t net_worth = 0;
+  friend bool operator==(const ScoreTotals&, const ScoreTotals&) = default;
 };
 
 // MovementLayout carries optional schema-resolved offsets for direct movement
@@ -139,8 +145,8 @@ struct EntityLayout {
   std::optional<size_t> view_offset;
   // Optional inline EGold/EAbilityPoints/EAbilityUnlocks currency prefix.
   std::optional<size_t> currencies;
-  // Optional controller-relative PlayerDataGlobal_t combat counters.
-  std::optional<CombatLayout> combat;
+  // Optional controller-relative PlayerDataGlobal_t scoreboard counters.
+  std::optional<ScoreLayout> score;
   // Optional pawn-relative native stamina resource floats (AbilityResource_t
   // behind the inline ability component). Only the latch pair carries network
   // metadata; the plain floats are schema-resolved values the engine mutates
@@ -318,9 +324,9 @@ class MODLOCK_API PawnObserver {
     // Native GetMaxHealth result; absent when unavailable, never the network base.
     std::optional<int32_t> effective_max_health;
     std::optional<std::array<float, 3>> upgrade_bonuses;
-    // Raw native lifetime totals from the owning controller; absent when the
-    // schema capability did not resolve.
-    std::optional<CombatTotals> combat_totals;
+    // Raw native scoreboard counters from the owning controller; absent when
+    // the schema capability did not resolve.
+    std::optional<ScoreTotals> score;
     // Observed native stamina resource; absent when the schema capability did
     // not resolve or the values are not finite. Never a fabricated default.
     struct Stamina {

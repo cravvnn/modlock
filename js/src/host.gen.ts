@@ -716,6 +716,11 @@ export interface Pawn {
    * game's modifier states cannot be read.
    */
   readonly carryingUrn?: boolean
+  /**
+   * score is the player's scoreboard, absent when the game's scoreboard
+   * cannot be read.
+   */
+  readonly score?: Score
 }
 
 /** fromPawn decodes a Pawn. */
@@ -736,6 +741,43 @@ function fromPawn(message: pb.Pawn): Pawn {
     eyePosition: vector(message.eyePosition),
     velocity: vector(message.velocity),
     carryingUrn: message.carryingUrn,
+    score: message.score === undefined ? undefined : fromScore(message.score),
+  }
+}
+
+/**
+ * Score is one player's scoreboard counters since the match began, as the
+ * game counts them.
+ */
+export interface Score {
+  readonly kills: number
+  readonly deaths: number
+  readonly assists: number
+  /** lastHits counts enemy troopers and neutrals the player finished. */
+  readonly lastHits: number
+  /**
+   * denies counts allied troopers the player finished before an enemy could.
+   */
+  readonly denies: number
+  /** heroDamage is the damage the player dealt to enemy heroes. */
+  readonly heroDamage: number
+  /** heroHealing is the healing the player gave other heroes. */
+  readonly heroHealing: number
+  /** netWorth is the souls the player has earned, spent or not. */
+  readonly netWorth: number
+}
+
+/** fromScore decodes a Score. */
+function fromScore(message: pb.Score): Score {
+  return {
+    kills: message.kills ?? 0,
+    deaths: message.deaths ?? 0,
+    assists: message.assists ?? 0,
+    lastHits: message.lastHits ?? 0,
+    denies: message.denies ?? 0,
+    heroDamage: message.heroDamage ?? 0,
+    heroHealing: message.heroHealing ?? 0,
+    netWorth: message.netWorth ?? 0,
   }
 }
 

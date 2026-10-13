@@ -2056,6 +2056,9 @@ type Pawn struct {
 	// CarryingUrn is whether the hero carries the soul urn, absent when the
 	// game's modifier states cannot be read.
 	CarryingUrn *bool `protobuf:"varint,15,opt,name=carrying_urn,json=carryingUrn,proto3,oneof" json:"carryingUrn,omitempty"`
+	// Score is the player's scoreboard, absent when the game's scoreboard
+	// cannot be read.
+	Score *Score `protobuf:"bytes,16,opt,name=score,proto3,oneof" json:"score,omitempty"`
 }
 
 func (x *Pawn) Reset() {
@@ -2169,6 +2172,94 @@ func (x *Pawn) GetCarryingUrn() bool {
 	return false
 }
 
+func (x *Pawn) GetScore() *Score {
+	if x != nil {
+		return x.Score
+	}
+	return nil
+}
+
+// Score is one player's scoreboard counters since the match began, as the
+// game counts them.
+type Score struct {
+	unknownFields []byte
+	Kills         int32 `protobuf:"varint,1,opt,name=kills,proto3" json:"kills,omitempty"`
+	Deaths        int32 `protobuf:"varint,2,opt,name=deaths,proto3" json:"deaths,omitempty"`
+	Assists       int32 `protobuf:"varint,3,opt,name=assists,proto3" json:"assists,omitempty"`
+	// LastHits counts enemy troopers and neutrals the player finished.
+	LastHits int32 `protobuf:"varint,4,opt,name=last_hits,json=lastHits,proto3" json:"lastHits,omitempty"`
+	// Denies counts allied troopers the player finished before an enemy could.
+	Denies int32 `protobuf:"varint,5,opt,name=denies,proto3" json:"denies,omitempty"`
+	// HeroDamage is the damage the player dealt to enemy heroes.
+	HeroDamage int32 `protobuf:"varint,6,opt,name=hero_damage,json=heroDamage,proto3" json:"heroDamage,omitempty"`
+	// HeroHealing is the healing the player gave other heroes.
+	HeroHealing int32 `protobuf:"varint,7,opt,name=hero_healing,json=heroHealing,proto3" json:"heroHealing,omitempty"`
+	// NetWorth is the souls the player has earned, spent or not.
+	NetWorth int32 `protobuf:"varint,8,opt,name=net_worth,json=netWorth,proto3" json:"netWorth,omitempty"`
+}
+
+func (x *Score) Reset() {
+	*x = Score{}
+}
+
+func (*Score) ProtoMessage() {}
+
+func (x *Score) GetKills() int32 {
+	if x != nil {
+		return x.Kills
+	}
+	return 0
+}
+
+func (x *Score) GetDeaths() int32 {
+	if x != nil {
+		return x.Deaths
+	}
+	return 0
+}
+
+func (x *Score) GetAssists() int32 {
+	if x != nil {
+		return x.Assists
+	}
+	return 0
+}
+
+func (x *Score) GetLastHits() int32 {
+	if x != nil {
+		return x.LastHits
+	}
+	return 0
+}
+
+func (x *Score) GetDenies() int32 {
+	if x != nil {
+		return x.Denies
+	}
+	return 0
+}
+
+func (x *Score) GetHeroDamage() int32 {
+	if x != nil {
+		return x.HeroDamage
+	}
+	return 0
+}
+
+func (x *Score) GetHeroHealing() int32 {
+	if x != nil {
+		return x.HeroHealing
+	}
+	return 0
+}
+
+func (x *Score) GetNetWorth() int32 {
+	if x != nil {
+		return x.NetWorth
+	}
+	return 0
+}
+
 // SelectHeroRequest gives a player a hero.
 type SelectHeroRequest struct {
 	unknownFields []byte
@@ -2177,7 +2268,6 @@ type SelectHeroRequest struct {
 	// Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
-	//
 	//	*SelectHeroRequest_HeroName
 	//	*SelectHeroRequest_HeroId
 	Hero isSelectHeroRequest_Hero `protobuf_oneof:"hero"`
@@ -3650,7 +3740,6 @@ func (x *FieldResponse) GetValue() *FieldValue {
 type FieldValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
-	//
 	//	*FieldValue_Boolean
 	//	*FieldValue_Number
 	//	*FieldValue_Integer
@@ -4441,7 +4530,6 @@ type BotOptions struct {
 	// as Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
-	//
 	//	*BotOptions_HeroName
 	//	*BotOptions_HeroId
 	Hero isBotOptions_Hero `protobuf_oneof:"hero"`
@@ -4761,7 +4849,6 @@ func (x *KeyValue) GetValue() *EntityValue {
 type EntityValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
-	//
 	//	*EntityValue_Boolean
 	//	*EntityValue_Integer
 	//	*EntityValue_Number
@@ -7170,6 +7257,7 @@ func (m *Pawn) CloneVT() *Pawn {
 	r.EyePosition = protobuf_go_lite.CloneVTValue(m.EyePosition)
 	r.Velocity = protobuf_go_lite.CloneVTValue(m.Velocity)
 	r.CarryingUrn = protobuf_go_lite.ClonePtr(m.CarryingUrn)
+	r.Score = protobuf_go_lite.CloneVTValue(m.Score)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -7177,6 +7265,29 @@ func (m *Pawn) CloneVT() *Pawn {
 }
 
 func (m *Pawn) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Score) CloneVT() *Score {
+	if m == nil {
+		return (*Score)(nil)
+	}
+	r := new(Score)
+	r.Kills = m.Kills
+	r.Deaths = m.Deaths
+	r.Assists = m.Assists
+	r.LastHits = m.LastHits
+	r.Denies = m.Denies
+	r.HeroDamage = m.HeroDamage
+	r.HeroHealing = m.HeroHealing
+	r.NetWorth = m.NetWorth
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Score) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -10299,11 +10410,54 @@ func (this *Pawn) EqualVT(that *Pawn) bool {
 	if !protobuf_go_lite.EqualPtr(this.CarryingUrn, that.CarryingUrn) {
 		return false
 	}
+	if !protobuf_go_lite.IsEqualVT(this.Score, that.Score) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
 func (this *Pawn) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*Pawn)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *Score) EqualVT(that *Score) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Kills != that.Kills {
+		return false
+	}
+	if this.Deaths != that.Deaths {
+		return false
+	}
+	if this.Assists != that.Assists {
+		return false
+	}
+	if this.LastHits != that.LastHits {
+		return false
+	}
+	if this.Denies != that.Denies {
+		return false
+	}
+	if this.HeroDamage != that.HeroDamage {
+		return false
+	}
+	if this.HeroHealing != that.HeroHealing {
+		return false
+	}
+	if this.NetWorth != that.NetWorth {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Score) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Score)
 	if !ok {
 		return false
 	}
@@ -15877,6 +16031,11 @@ func (x *Pawn) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("carryingUrn")
 		s.WriteBool(*x.CarryingUrn)
 	}
+	if x.Score != nil || s.HasField("score") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("score")
+		x.Score.MarshalProtoJSON(s.WithField("score"))
+	}
 	s.WriteObjectEnd()
 }
 
@@ -15974,12 +16133,117 @@ func (x *Pawn) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			t := s.ReadBool()
 			x.CarryingUrn = &t
+		case "score":
+			if s.ReadNil() {
+				x.Score = nil
+				return
+			}
+			x.Score = &Score{}
+			x.Score.UnmarshalProtoJSON(s.WithField("score", true))
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the Pawn from JSON.
 func (x *Pawn) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Score message to JSON.
+func (x *Score) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Kills != 0 || s.HasField("kills") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("kills")
+		s.WriteInt32(x.Kills)
+	}
+	if x.Deaths != 0 || s.HasField("deaths") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("deaths")
+		s.WriteInt32(x.Deaths)
+	}
+	if x.Assists != 0 || s.HasField("assists") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("assists")
+		s.WriteInt32(x.Assists)
+	}
+	if x.LastHits != 0 || s.HasField("lastHits") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("lastHits")
+		s.WriteInt32(x.LastHits)
+	}
+	if x.Denies != 0 || s.HasField("denies") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("denies")
+		s.WriteInt32(x.Denies)
+	}
+	if x.HeroDamage != 0 || s.HasField("heroDamage") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("heroDamage")
+		s.WriteInt32(x.HeroDamage)
+	}
+	if x.HeroHealing != 0 || s.HasField("heroHealing") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("heroHealing")
+		s.WriteInt32(x.HeroHealing)
+	}
+	if x.NetWorth != 0 || s.HasField("netWorth") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("netWorth")
+		s.WriteInt32(x.NetWorth)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Score to JSON.
+func (x *Score) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Score message from JSON.
+func (x *Score) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "kills":
+			s.AddField("kills")
+			x.Kills = s.ReadInt32()
+		case "deaths":
+			s.AddField("deaths")
+			x.Deaths = s.ReadInt32()
+		case "assists":
+			s.AddField("assists")
+			x.Assists = s.ReadInt32()
+		case "last_hits", "lastHits":
+			s.AddField("last_hits")
+			x.LastHits = s.ReadInt32()
+		case "denies":
+			s.AddField("denies")
+			x.Denies = s.ReadInt32()
+		case "hero_damage", "heroDamage":
+			s.AddField("hero_damage")
+			x.HeroDamage = s.ReadInt32()
+		case "hero_healing", "heroHealing":
+			s.AddField("hero_healing")
+			x.HeroHealing = s.ReadInt32()
+		case "net_worth", "netWorth":
+			s.AddField("net_worth")
+			x.NetWorth = s.ReadInt32()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Score from JSON.
+func (x *Score) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -25324,6 +25588,18 @@ func (m *Pawn) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.Score != nil {
+		size, err := m.Score.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
+	}
 	if m.CarryingUrn != nil {
 		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.CarryingUrn)
 		i--
@@ -25421,6 +25697,78 @@ func (m *Pawn) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	if m.Entity != 0 {
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Entity))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Score) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Score) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Score) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.NetWorth != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.NetWorth))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.HeroHealing != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.HeroHealing))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.HeroDamage != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.HeroDamage))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Denies != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Denies))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.LastHits != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.LastHits))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Assists != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Assists))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Deaths != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Deaths))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Kills != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Kills))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -31576,6 +31924,28 @@ func (m *Pawn) SizeVT() (n int) {
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
 	n += protobuf_go_lite.SizeBoolPtr(1, m.CarryingUrn)
+	if m.Score != nil {
+		l = m.Score.SizeVT()
+		n += protobuf_go_lite.SizeMessage(2, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Score) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Kills)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Deaths)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Assists)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.LastHits)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Denies)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.HeroDamage)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.HeroHealing)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.NetWorth)
 	n += len(m.unknownFields)
 	return n
 }
@@ -34282,10 +34652,55 @@ func (x *Pawn) MarshalProtoText() string {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "carrying_urn")
 		protobuf_go_lite.TextWriteBool(&sb, *x.CarryingUrn)
 	}
+	if x.Score != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "score")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Score)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *Pawn) String() string {
+	return x.MarshalProtoText()
+}
+func (x *Score) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Score")
+	if x.Kills != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "kills")
+		protobuf_go_lite.TextWriteInt(&sb, x.Kills)
+	}
+	if x.Deaths != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "deaths")
+		protobuf_go_lite.TextWriteInt(&sb, x.Deaths)
+	}
+	if x.Assists != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "assists")
+		protobuf_go_lite.TextWriteInt(&sb, x.Assists)
+	}
+	if x.LastHits != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "last_hits")
+		protobuf_go_lite.TextWriteInt(&sb, x.LastHits)
+	}
+	if x.Denies != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "denies")
+		protobuf_go_lite.TextWriteInt(&sb, x.Denies)
+	}
+	if x.HeroDamage != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "hero_damage")
+		protobuf_go_lite.TextWriteInt(&sb, x.HeroDamage)
+	}
+	if x.HeroHealing != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "hero_healing")
+		protobuf_go_lite.TextWriteInt(&sb, x.HeroHealing)
+	}
+	if x.NetWorth != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "net_worth")
+		protobuf_go_lite.TextWriteInt(&sb, x.NetWorth)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Score) String() string {
 	return x.MarshalProtoText()
 }
 func (x *SelectHeroRequest) MarshalProtoText() string {
@@ -39863,6 +40278,135 @@ func (m *Pawn) UnmarshalVT(dAtA []byte) error {
 			}
 			b := bool(v)
 			m.CarryingUrn = &b
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Score", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Score == nil {
+				m.Score = &Score{}
+			}
+			if err := m.Score.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Score) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Score: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Score: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Kills", wireType)
+			}
+			m.Kills = 0
+			m.Kills, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Deaths", wireType)
+			}
+			m.Deaths = 0
+			m.Deaths, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Assists", wireType)
+			}
+			m.Assists = 0
+			m.Assists, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastHits", wireType)
+			}
+			m.LastHits = 0
+			m.LastHits, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denies", wireType)
+			}
+			m.Denies = 0
+			m.Denies, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HeroDamage", wireType)
+			}
+			m.HeroDamage = 0
+			m.HeroDamage, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HeroHealing", wireType)
+			}
+			m.HeroHealing = 0
+			m.HeroHealing, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NetWorth", wireType)
+			}
+			m.NetWorth = 0
+			m.NetWorth, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

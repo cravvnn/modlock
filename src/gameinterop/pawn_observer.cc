@@ -38,6 +38,27 @@ inline constexpr uint32_t kEfInvalidEHandle = 0x1;  // EF_IS_INVALID_EHANDLE
 // vptr and IEntityResourceManifest* m_pCurrentManifest precede it.
 inline constexpr size_t kEntityListOffset = 0x10;
 
+// ScoreCounter names one PlayerDataGlobal_t scoreboard counter, its offset in
+// ScoreLayout and its value in ScoreTotals.
+struct ScoreCounter {
+  const char* field_name;
+  size_t ScoreLayout::* offset;
+  int32_t ScoreTotals::* total;
+};
+
+// kScoreCounters lists every scoreboard counter the observer reads.
+constexpr ScoreCounter kScoreCounters[] = {
+    {"m_iHeroDamage", &ScoreLayout::hero_damage, &ScoreTotals::hero_damage},
+    {"m_iHeroHealing", &ScoreLayout::hero_healing, &ScoreTotals::hero_healing},
+    {"m_iSelfHealing", &ScoreLayout::self_healing, &ScoreTotals::self_healing},
+    {"m_iPlayerKills", &ScoreLayout::kills, &ScoreTotals::kills},
+    {"m_iDeaths", &ScoreLayout::deaths, &ScoreTotals::deaths},
+    {"m_iPlayerAssists", &ScoreLayout::assists, &ScoreTotals::assists},
+    {"m_iLastHits", &ScoreLayout::last_hits, &ScoreTotals::last_hits},
+    {"m_iDenies", &ScoreLayout::denies, &ScoreTotals::denies},
+    {"m_iGoldNetWorth", &ScoreLayout::net_worth, &ScoreTotals::net_worth},
+};
+
 // EntityListOf reads the concrete entity list out of one live CGameEntitySystem.
 unsigned char* EntityListOf(void* entity_system) {
   return static_cast<unsigned char*>(entity_system) + kEntityListOffset;
@@ -244,34 +265,26 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
   auto currencies =
       SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerPawn", "m_nCurrencies");
   if (currencies && currencies->size >= sizeof(int32_t) * 3) layout.currencies = currencies->offset;
-  // Missing combat schema leaves pose observation available. Each inline
+  // Missing scoreboard schema leaves pose observation available. Each inline
   // counter must fit both its own field and the controller's enclosing storage.
   const auto data =
       SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerController", "m_PlayerDataGlobal");
-  CombatLayout combat{};
-  const CoreField combat_fields[] = {
-      {"PlayerDataGlobal_t", "m_iHeroDamage", sizeof(int32_t), &combat.hero_damage},
-      {"PlayerDataGlobal_t", "m_iHeroHealing", sizeof(int32_t), &combat.hero_healing},
-      {"PlayerDataGlobal_t", "m_iSelfHealing", sizeof(int32_t), &combat.self_healing},
-      {"PlayerDataGlobal_t", "m_iPlayerKills", sizeof(int32_t), &combat.kills},
-      {"PlayerDataGlobal_t", "m_iDeaths", sizeof(int32_t), &combat.deaths},
-      {"PlayerDataGlobal_t", "m_iPlayerAssists", sizeof(int32_t), &combat.assists},
-  };
-  bool combat_available = data.has_value();
-  for (const auto& field_name : combat_fields) {
-    if (!combat_available) break;
+  ScoreLayout score{};
+  bool score_available = data.has_value();
+  for (const auto& counter : kScoreCounters) {
+    if (!score_available) break;
     const auto field =
-        SchemaFieldOf(*schema_system, "server.dll", field_name.class_name, field_name.field_name);
+        SchemaFieldOf(*schema_system, "server.dll", "PlayerDataGlobal_t", counter.field_name);
     if (!field || field->size < sizeof(int32_t) || field->offset > data->size ||
         data->size - field->offset < sizeof(int32_t)) {
-      combat_available = false;
+      score_available = false;
       break;
     }
-    *field_name.out = field->offset;
+    score.*counter.offset = field->offset;
   }
-  if (combat_available) {
-    combat.player_data_global = data->offset;
-    layout.combat = combat;
+  if (score_available) {
+    score.player_data_global = data->offset;
+    layout.score = score;
   }
   // Missing stamina schema leaves pose observation available.
   if (auto stamina = ResolveStaminaLayout()) layout.stamina = *stamina;
@@ -916,18 +929,13 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
   }
   // The totals borrow this frame's engine-owned controller instance; no
   // pointer survives Observe, and the read shares the pawn's lifetime.
-  std::optional<CombatTotals> combat_totals;
-  if (layout_.combat) {
-    const auto& combat = *layout_.combat;
-    const auto* data = static_cast<const unsigned char*>(controller);
-    const size_t base = combat.player_data_global;
-    combat_totals.emplace();
-    std::memcpy(&combat_totals->hero_damage, data + base + combat.hero_damage, sizeof(int32_t));
-    std::memcpy(&combat_totals->hero_healing, data + base + combat.hero_healing, sizeof(int32_t));
-    std::memcpy(&combat_totals->self_healing, data + base + combat.self_healing, sizeof(int32_t));
-    std::memcpy(&combat_totals->kills, data + base + combat.kills, sizeof(int32_t));
-    std::memcpy(&combat_totals->deaths, data + base + combat.deaths, sizeof(int32_t));
-    std::memcpy(&combat_totals->assists, data + base + combat.assists, sizeof(int32_t));
+  std::optional<ScoreTotals> score;
+  if (layout_.score) {
+    const ScoreLayout& offsets = *layout_.score;
+    const auto* data = static_cast<const unsigned char*>(controller) + offsets.player_data_global;
+    ScoreTotals& totals = score.emplace();
+    for (const auto& counter : kScoreCounters)
+      std::memcpy(&(totals.*counter.total), data + offsets.*counter.offset, sizeof(int32_t));
   }
   // Observed native stamina; absent when the schema capability did not
   // resolve or the values are not finite. Never a fabricated default.
@@ -990,7 +998,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
                 .effective_max_health =
                     seams_.effective_max_health ? seams_.effective_max_health(pawn) : std::nullopt,
                 .upgrade_bonuses = ReadPawnUpgradeBonuses(pawn),
-                .combat_totals = combat_totals,
+                .score = score,
                 .stamina = stamina};
 }
 

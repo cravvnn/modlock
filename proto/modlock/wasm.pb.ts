@@ -1968,6 +1968,73 @@ export const PlayersResponse: MessageType<PlayersResponse> = /* @__PURE__ */ cre
 });
 
 /**
+ * Score is one player's scoreboard counters since the match began, as the
+ * game counts them.
+ *
+ * @generated from message modlock.wasm.Score
+ */
+export interface Score {
+  /**
+   * @generated from field: int32 kills = 1;
+   */
+  kills?: number;
+  /**
+   * @generated from field: int32 deaths = 2;
+   */
+  deaths?: number;
+  /**
+   * @generated from field: int32 assists = 3;
+   */
+  assists?: number;
+  /**
+   * LastHits counts enemy troopers and neutrals the player finished.
+   *
+   * @generated from field: int32 last_hits = 4;
+   */
+  lastHits?: number;
+  /**
+   * Denies counts allied troopers the player finished before an enemy could.
+   *
+   * @generated from field: int32 denies = 5;
+   */
+  denies?: number;
+  /**
+   * HeroDamage is the damage the player dealt to enemy heroes.
+   *
+   * @generated from field: int32 hero_damage = 6;
+   */
+  heroDamage?: number;
+  /**
+   * HeroHealing is the healing the player gave other heroes.
+   *
+   * @generated from field: int32 hero_healing = 7;
+   */
+  heroHealing?: number;
+  /**
+   * NetWorth is the souls the player has earned, spent or not.
+   *
+   * @generated from field: int32 net_worth = 8;
+   */
+  netWorth?: number;
+
+};
+
+export const Score: MessageType<Score> = /* @__PURE__ */ createMessageType({
+    typeName: "modlock.wasm.Score",
+    fields: [
+        { no: 1, name: "kills", kind: "scalar", T: ScalarType.INT32 },
+        { no: 2, name: "deaths", kind: "scalar", T: ScalarType.INT32 },
+        { no: 3, name: "assists", kind: "scalar", T: ScalarType.INT32 },
+        { no: 4, name: "last_hits", kind: "scalar", T: ScalarType.INT32 },
+        { no: 5, name: "denies", kind: "scalar", T: ScalarType.INT32 },
+        { no: 6, name: "hero_damage", kind: "scalar", T: ScalarType.INT32 },
+        { no: 7, name: "hero_healing", kind: "scalar", T: ScalarType.INT32 },
+        { no: 8, name: "net_worth", kind: "scalar", T: ScalarType.INT32 },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
+/**
  * Pawn is one player's hero this frame.
  *
  * @generated from message modlock.wasm.Pawn
@@ -2064,6 +2131,13 @@ export interface Pawn {
    * @generated from field: optional bool carrying_urn = 15;
    */
   carryingUrn?: boolean;
+  /**
+   * Score is the player's scoreboard, absent when the game's scoreboard
+   * cannot be read.
+   *
+   * @generated from field: optional modlock.wasm.Score score = 16;
+   */
+  score?: Score;
 
 };
 
@@ -2085,6 +2159,7 @@ export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType({
         { no: 13, name: "eye_position", kind: "message", T: () => Vec3 },
         { no: 14, name: "velocity", kind: "message", T: () => Vec3 },
         { no: 15, name: "carrying_urn", kind: "scalar", T: ScalarType.BOOL, opt: true },
+        { no: 16, name: "score", kind: "message", T: () => Score, opt: true },
     ] satisfies readonly PartialFieldInfo[],
     packedByDefault: true,
 });

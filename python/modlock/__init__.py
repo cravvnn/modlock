@@ -554,6 +554,30 @@ class Pawn:
     # carrying_urn is whether the hero carries the soul urn, absent when the
     # game's modifier states cannot be read.
     carrying_urn: bool | None = None
+    # score is the player's scoreboard, absent when the game's scoreboard
+    # cannot be read.
+    score: Score | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class Score:
+    """Score is one player's scoreboard counters since the match began, as the
+    game counts them.
+    """
+
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+    # last_hits counts enemy troopers and neutrals the player finished.
+    last_hits: int = 0
+    # denies counts allied troopers the player finished before an enemy could.
+    denies: int = 0
+    # hero_damage is the damage the player dealt to enemy heroes.
+    hero_damage: int = 0
+    # hero_healing is the healing the player gave other heroes.
+    hero_healing: int = 0
+    # net_worth is the souls the player has earned, spent or not.
+    net_worth: int = 0
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -1759,6 +1783,20 @@ _SCHEMA: wire.Schema = {
             wire.Field(13, "eye_position", "message", message="Vec3"),
             wire.Field(14, "velocity", "message", message="Vec3"),
             wire.Field(15, "carrying_urn", "bool", optional=True),
+            wire.Field(16, "score", "message", optional=True, message="Score"),
+        ],
+    ),
+    "Score": (
+        Score,
+        [
+            wire.Field(1, "kills", "int32"),
+            wire.Field(2, "deaths", "int32"),
+            wire.Field(3, "assists", "int32"),
+            wire.Field(4, "last_hits", "int32"),
+            wire.Field(5, "denies", "int32"),
+            wire.Field(6, "hero_damage", "int32"),
+            wire.Field(7, "hero_healing", "int32"),
+            wire.Field(8, "net_worth", "int32"),
         ],
     ),
     "SelectHeroRequest": (

@@ -173,6 +173,10 @@ type Connection = wasm.Connection
 // Pawn is one player's hero this frame.
 type Pawn = wasm.Pawn
 
+// Score is one player's scoreboard counters since the match began, as the
+// game counts them.
+type Score = wasm.Score
+
 // Ability is one ability a hero owns.
 type Ability = wasm.Ability
 

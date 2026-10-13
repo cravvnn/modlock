@@ -1102,6 +1102,17 @@ std::expected<PawnResponse, std::string> Game::Pawn(const PlayerRequest& request
   if (sample->eye_position) SetVector(pawn->mutable_eye_position(), *sample->eye_position);
   if (sample->movement && sample->movement->abs_velocity)
     SetVector(pawn->mutable_velocity(), *sample->movement->abs_velocity);
+  if (sample->score) {
+    auto* score = pawn->mutable_score();
+    score->set_kills(sample->score->kills);
+    score->set_deaths(sample->score->deaths);
+    score->set_assists(sample->score->assists);
+    score->set_last_hits(sample->score->last_hits);
+    score->set_denies(sample->score->denies);
+    score->set_hero_damage(sample->score->hero_damage);
+    score->set_hero_healing(sample->score->hero_healing);
+    score->set_net_worth(sample->score->net_worth);
+  }
 
   // The game marks the hero carrying the urn with its holding-idol state.
   ModifierStateRequest holding;

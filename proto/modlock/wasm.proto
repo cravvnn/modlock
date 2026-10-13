@@ -1034,6 +1034,33 @@ message Pawn {
   // CarryingUrn is whether the hero carries the soul urn, absent when the
   // game's modifier states cannot be read.
   optional bool carrying_urn = 15;
+
+  // Score is the player's scoreboard, absent when the game's scoreboard
+  // cannot be read.
+  optional Score score = 16;
+}
+
+// Score is one player's scoreboard counters since the match began, as the
+// game counts them.
+message Score {
+  int32 kills = 1;
+  int32 deaths = 2;
+  int32 assists = 3;
+
+  // LastHits counts enemy troopers and neutrals the player finished.
+  int32 last_hits = 4;
+
+  // Denies counts allied troopers the player finished before an enemy could.
+  int32 denies = 5;
+
+  // HeroDamage is the damage the player dealt to enemy heroes.
+  int32 hero_damage = 6;
+
+  // HeroHealing is the healing the player gave other heroes.
+  int32 hero_healing = 7;
+
+  // NetWorth is the souls the player has earned, spent or not.
+  int32 net_worth = 8;
 }
 
 // SelectHeroRequest gives a player a hero.

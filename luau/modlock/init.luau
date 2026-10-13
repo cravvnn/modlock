@@ -464,6 +464,27 @@ export type Pawn = {
 	-- carryingUrn is whether the hero carries the soul urn, absent when the
 	-- game's modifier states cannot be read.
 	carryingUrn: boolean?,
+	-- score is the player's scoreboard, absent when the game's scoreboard
+	-- cannot be read.
+	score: Score?,
+}
+
+-- Score is one player's scoreboard counters since the match began, as the
+-- game counts them.
+export type Score = {
+	kills: number,
+	deaths: number,
+	assists: number,
+	-- lastHits counts enemy troopers and neutrals the player finished.
+	lastHits: number,
+	-- denies counts allied troopers the player finished before an enemy could.
+	denies: number,
+	-- heroDamage is the damage the player dealt to enemy heroes.
+	heroDamage: number,
+	-- heroHealing is the healing the player gave other heroes.
+	heroHealing: number,
+	-- netWorth is the souls the player has earned, spent or not.
+	netWorth: number,
 }
 
 -- Ability is one ability a hero owns.
@@ -1697,6 +1718,17 @@ schema.Pawn = {
 	{ number = 13, name = "eyePosition", kind = "message", message = "Vec3" },
 	{ number = 14, name = "velocity", kind = "message", message = "Vec3" },
 	{ number = 15, name = "carryingUrn", kind = "bool", optional = true },
+	{ number = 16, name = "score", kind = "message", optional = true, message = "Score" },
+}
+schema.Score = {
+	{ number = 1, name = "kills", kind = "int32" },
+	{ number = 2, name = "deaths", kind = "int32" },
+	{ number = 3, name = "assists", kind = "int32" },
+	{ number = 4, name = "lastHits", kind = "int32" },
+	{ number = 5, name = "denies", kind = "int32" },
+	{ number = 6, name = "heroDamage", kind = "int32" },
+	{ number = 7, name = "heroHealing", kind = "int32" },
+	{ number = 8, name = "netWorth", kind = "int32" },
 }
 schema.SelectHeroRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },

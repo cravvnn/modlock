@@ -89,16 +89,10 @@ constexpr size_t kHeroField = 0x50;
 constexpr size_t kTeamField = 0x54;
 constexpr size_t kHealthField = 0x58;
 constexpr size_t kHeroHandleField = 0x48;
-// Fake controller-side combat totals: PlayerDataGlobal_t inline in the
-// controller, then its int32 counters. Independent of any production
-// constant on purpose.
+// Fake controller-side scoreboard: PlayerDataGlobal_t inline in the
+// controller, then its int32 counters in ScoreTotals order. Independent of
+// any production constant on purpose.
 constexpr size_t kPlayerDataGlobalField = 0x80;
-constexpr size_t kHeroDamageField = 0x00;
-constexpr size_t kHeroHealingField = 0x04;
-constexpr size_t kSelfHealingField = 0x08;
-constexpr size_t kKillsField = 0x0c;
-constexpr size_t kDeathsField = 0x10;
-constexpr size_t kAssistsField = 0x14;
 
 uint32_t HandleOf(uint32_t index, uint32_t serial) {
   return (index & 0x7FFF) | ((serial & 0x1FFFF) << 15);
@@ -161,14 +155,17 @@ struct Fixture {
   uint32_t generation = 0;
 };
 
-modlock::gameinterop::CombatLayout FixtureCombat() {
+modlock::gameinterop::ScoreLayout FixtureScore() {
   return {.player_data_global = kPlayerDataGlobalField,
-          .hero_damage = kHeroDamageField,
-          .hero_healing = kHeroHealingField,
-          .self_healing = kSelfHealingField,
-          .kills = kKillsField,
-          .deaths = kDeathsField,
-          .assists = kAssistsField};
+          .hero_damage = 0x00,
+          .hero_healing = 0x04,
+          .self_healing = 0x08,
+          .kills = 0x0c,
+          .deaths = 0x10,
+          .assists = 0x14,
+          .last_hits = 0x18,
+          .denies = 0x1c,
+          .net_worth = 0x20};
 }
 
 EntityLayout FixtureLayout() {
@@ -359,29 +356,16 @@ TEST(PawnObserver, ResolvesAddressedSlotZeroControllerAndPawn) {
 
   const std::array<int32_t, 3> currencies{20000, 17, 2};
   std::memcpy(pawn.data() + 0x80, currencies.data(), sizeof(currencies));
-  // Combat totals live on the owning controller at index 1, not on the pawn.
-  const modlock::gameinterop::CombatTotals totals{45230, 8120, 3980, 21, 9, 17};
-  const auto write_totals = [&](unsigned char* controller) {
-    std::memcpy(controller + kPlayerDataGlobalField + kHeroDamageField, &totals.hero_damage,
-                sizeof(totals.hero_damage));
-    std::memcpy(controller + kPlayerDataGlobalField + kHeroHealingField, &totals.hero_healing,
-                sizeof(totals.hero_healing));
-    std::memcpy(controller + kPlayerDataGlobalField + kSelfHealingField, &totals.self_healing,
-                sizeof(totals.self_healing));
-    std::memcpy(controller + kPlayerDataGlobalField + kKillsField, &totals.kills,
-                sizeof(totals.kills));
-    std::memcpy(controller + kPlayerDataGlobalField + kDeathsField, &totals.deaths,
-                sizeof(totals.deaths));
-    std::memcpy(controller + kPlayerDataGlobalField + kAssistsField, &totals.assists,
-                sizeof(totals.assists));
-  };
-  write_totals(fixture.controller.data());
+  // The scoreboard lives on the owning controller at index 1, not on the
+  // pawn; the fixture lays its counters out in ScoreTotals order.
+  const modlock::gameinterop::ScoreTotals totals{45230, 8120, 3980, 21, 9, 17, 112, 14, 23650};
+  std::memcpy(fixture.controller.data() + kPlayerDataGlobalField, &totals, sizeof(totals));
   bool getter_available = true;
   auto seams = SeamsFor(fixture);
   seams.layout = []() -> std::expected<EntityLayout, std::string> {
     auto layout = FixtureLayout();
     layout.currencies = 0x80;
-    layout.combat = FixtureCombat();
+    layout.score = FixtureScore();
     return layout;
   };
   seams.ability_layout = []() -> std::expected<modlock::gameinterop::AbilityLayout, std::string> {
@@ -450,8 +434,8 @@ TEST(PawnObserver, ResolvesAddressedSlotZeroControllerAndPawn) {
   EXPECT_EQ((*prepared->currencies)[2], 4);
   ASSERT_TRUE(observer.PrepareAbilityPoints(0, ability_grant));
 
-  ASSERT_TRUE(sample->combat_totals);
-  EXPECT_EQ(*sample->combat_totals, totals);
+  ASSERT_TRUE(sample->score);
+  EXPECT_EQ(*sample->score, totals);
   EXPECT_EQ(sample->slot, 0);
   EXPECT_EQ(sample->hero_id, 14);
   EXPECT_EQ(sample->team, 2);
@@ -500,15 +484,15 @@ TEST(PawnObserver, ResolvesAddressedSlotZeroControllerAndPawn) {
   EXPECT_EQ(sample->slot, 7);
   EXPECT_EQ(sample->steam_id, fixture.xuid);
   // The totals follow the same owned controller/pawn identity as the pose.
-  ASSERT_TRUE(sample->combat_totals);
-  EXPECT_EQ(*sample->combat_totals, totals);
+  ASSERT_TRUE(sample->score);
+  EXPECT_EQ(*sample->score, totals);
   EXPECT_EQ(observer.PawnForSlot(7), pawn.data());
   EXPECT_EQ(observer.PawnForSlot(0), nullptr);
   EXPECT_FALSE(observer.Observe(0));
   EXPECT_EQ(observer.PawnForSlot(7), nullptr);
 }
 
-TEST(PawnObserver, MissingCombatSchemaLeavesTotalsAbsentAndPoseIntact) {
+TEST(PawnObserver, MissingScoreSchemaLeavesScoreAbsentAndPoseIntact) {
   Fixture fixture;
   fixture.occupied = true;
   const uint32_t pawn_handle = HandleOf(2, 7);
@@ -521,12 +505,12 @@ TEST(PawnObserver, MissingCombatSchemaLeavesTotalsAbsentAndPoseIntact) {
   fixture.image.SetIdentity(1, fixture.controller.data(), 5, 0);
   fixture.image.SetIdentity(2, pawn.data(), 7, 0);
 
-  // The default fixture layout carries no combat capability: the sample
-  // still resolves, with the totals absent rather than zero.
+  // The default fixture layout carries no scoreboard capability: the sample
+  // still resolves, with the score absent rather than zero.
   PawnObserver observer{SeamsFor(fixture)};
   auto sample = observer.Observe();
   ASSERT_TRUE(sample.has_value());
-  EXPECT_FALSE(sample->combat_totals);
+  EXPECT_FALSE(sample->score);
   EXPECT_EQ(sample->x, 5.0);
   EXPECT_EQ(sample->y, 6.0);
   EXPECT_EQ(sample->z, 7.0);
