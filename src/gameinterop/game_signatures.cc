@@ -1,6 +1,7 @@
-// The recorded signatures come from the game data file, data/game_signatures.txtpb.
-// The build embeds a copy so the host and the tests start with every entry;
-// a release ships the file beside modlock-host, which loads it at start.
+// The recorded signatures and virtual slots come from the game data file,
+// data/game_signatures.txtpb. The build embeds a copy so the host and the
+// tests start with every entry; a release ships the file beside modlock-host,
+// which loads it at start.
 
 #include <google/protobuf/io/tokenizer.h>
 #include <google/protobuf/text_format.h>
@@ -12,6 +13,7 @@
 
 #include "modlock/gameinterop/game_symbols.h"
 #include "modlock/gameinterop/signature.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "proto/modlock/game_signatures.pb.h"
 
 namespace modlock::gameinterop {
@@ -25,6 +27,7 @@ namespace {
 struct Table {
   gamedata::GameSignatureFile file;
   std::vector<GameSignature> entries;
+  std::vector<VirtualSlot> slots;
 };
 
 // FirstError keeps the text format parser's first error.
@@ -87,8 +90,26 @@ std::expected<GameSignature, std::string> Entry(const gamedata::GameSignature& e
   return signature;
 }
 
-// Parse reads a game data file, skipping the entries Entry rejects and every
-// repeat of an id.
+// Slot checks one file entry and views it as a VirtualSlot.
+std::expected<VirtualSlot, std::string> Slot(const gamedata::VirtualSlot& entry) {
+  if (entry.id().empty()) return std::unexpected("a slot has no id");
+  const std::string named = "slot '" + entry.id() + "'";
+  if (entry.module().empty() || entry.class_name().empty()) {
+    return std::unexpected(named + " names no module or class");
+  }
+  if (auto parsed = ParseSignature(entry.id(), entry.pattern()); !parsed) {
+    return std::unexpected(parsed.error());
+  }
+  return VirtualSlot{.id = entry.id(),
+                     .module = entry.module(),
+                     .class_name = entry.class_name(),
+                     .index = entry.index(),
+                     .pattern = entry.pattern(),
+                     .shape = entry.shape()};
+}
+
+// Parse reads a game data file, skipping the entries Entry and Slot reject and
+// every repeat of an id.
 std::expected<std::unique_ptr<const Table>, std::string> Parse(std::string_view text,
                                                                GameSignatureLoad& load) {
   auto table = std::make_unique<Table>();
@@ -111,7 +132,23 @@ std::expected<std::unique_ptr<const Table>, std::string> Parse(std::string_view 
     table->entries.push_back(*signature);
   }
   std::ranges::sort(table->entries, {}, &GameSignature::id);
+
+  for (const auto& entry : table->file.slots()) {
+    auto slot = Slot(entry);
+    if (!slot) {
+      load.skipped.push_back(std::move(slot.error()));
+      continue;
+    }
+    if (std::ranges::find(table->slots, slot->id, &VirtualSlot::id) != table->slots.end()) {
+      load.skipped.push_back("slot '" + entry.id() + "' is recorded twice");
+      continue;
+    }
+    table->slots.push_back(*slot);
+  }
+  std::ranges::sort(table->slots, {}, &VirtualSlot::id);
+
   load.loaded = table->entries.size();
+  load.slots = table->slots.size();
   return table;
 }
 
@@ -128,6 +165,14 @@ std::unique_ptr<const Table>& Recorded() {
 }  // namespace
 
 std::span<const GameSignature> GameSignatures() { return Recorded()->entries; }
+
+std::span<const VirtualSlot> GameVirtualSlots() { return Recorded()->slots; }
+
+const VirtualSlot* FindVirtualSlot(std::string_view id) {
+  const auto slots = GameVirtualSlots();
+  const auto found = std::ranges::find(slots, id, &VirtualSlot::id);
+  return found == slots.end() ? nullptr : &*found;
+}
 
 std::expected<GameSignatureLoad, std::string> LoadGameSignatures(
     const std::filesystem::path& path) {

@@ -1,26 +1,30 @@
 #include "modlock/gameinterop/engine_server.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <limits>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
 using modlock::gameinterop::EngineServer;
-using modlock::gameinterop::kServerCommandSlot;
-using modlock::gameinterop::kServerGlobalsSlot;
+using modlock::gameinterop::FindVirtualSlot;
+
+const size_t kCommand = FindVirtualSlot("engine-server.server-command")->index;
+const size_t kGlobals = FindVirtualSlot("engine-server.globals")->index;
 
 struct Fixture {
   void** table = nullptr;
-  std::array<void*, kServerGlobalsSlot.index + 1> functions{};
+  std::vector<void*> functions = std::vector<void*>(std::max(kCommand, kGlobals) + 1);
   std::array<unsigned char, 96> globals{};
   bool available = true;
   Fixture() {
     table = functions.data();
-    functions[kServerCommandSlot.index] = reinterpret_cast<void*>(+[](void*, const char*) {});
-    functions[kServerGlobalsSlot.index] = reinterpret_cast<void*>(+[](void* self) -> const void* {
+    functions[kCommand] = reinterpret_cast<void*>(+[](void*, const char*) {});
+    functions[kGlobals] = reinterpret_cast<void*>(+[](void* self) -> const void* {
       auto* fixture = static_cast<Fixture*>(self);
       return fixture->available ? fixture->globals.data() : nullptr;
     });
@@ -53,10 +57,10 @@ TEST(EngineServer, ReadsCopiedSimulationClockAndTracksPauseAndAdvance) {
   fixture.available = false;
   EXPECT_FALSE(engine->ReadClock());
   fixture.available = true;
-  fixture.functions[kServerGlobalsSlot.index] = nullptr;
+  fixture.functions[kGlobals] = nullptr;
   EXPECT_FALSE(engine->ReadClock());
   EXPECT_FALSE(EngineServer::Bind(nullptr));
-  fixture.functions[kServerCommandSlot.index] = nullptr;
+  fixture.functions[kCommand] = nullptr;
   EXPECT_FALSE(EngineServer::Bind(&fixture));
 }
 

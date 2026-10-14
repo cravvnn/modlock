@@ -52,6 +52,8 @@ using Post = void (*)(void*, int32_t, bool, int32_t, const uint64_t*, void*, con
                       unsigned long, int32_t);
 Post g_original = nullptr;
 void* g_messages = nullptr;
+// g_serialize_slot is INetworkMessages::SerializeAbstract's resolved index.
+size_t g_serialize_slot = 0;
 NativeChatHook::Handler* g_handler = nullptr;
 DWORD g_thread = 0;
 
@@ -75,8 +77,8 @@ std::optional<NativeChatHook::Message> ReadChat(void* serializer, const void* na
   BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                    static_cast<int32_t>(bytes.size() * 8)};
   using Serialize = bool (*)(void*, BitWriter&, const void*);
-  if (!NetworkMessagesMethod<Serialize>(g_messages, kNetworkMessagesSerializeSlot.index)(
-          g_messages, writer, native_message) ||
+  if (!NetworkMessagesMethod<Serialize>(g_messages, g_serialize_slot)(g_messages, writer,
+                                                                      native_message) ||
       writer.overflow || writer.cursor <= 0 || writer.cursor > writer.bits || writer.cursor % 8) {
     std::fprintf(stderr, "[modlock] native chat serialization failed\n");
     return {};
@@ -151,13 +153,17 @@ std::expected<NativeChatHook, std::string> NativeChatHook::Install(Handler handl
   void* events = *resolved;
   const auto messages = ResolveEngineInterface(L"networksystem.dll", "NetworkMessagesVersion001");
   if (!messages) return std::unexpected(messages.error());
+  const auto post_slot = ResolveVirtualSlot("game-event-system.post-event");
+  const auto serialize_slot = ResolveVirtualSlot("network-messages.serialize");
+  if (!post_slot) return std::unexpected(post_slot.error());
+  if (!serialize_slot) return std::unexpected(serialize_slot.error());
   auto impl = std::make_unique<Impl>();
   impl->handler = std::move(handler);
-  auto hook =
-      VtableSlotHook::Install(events, kPostEventSlot.index, reinterpret_cast<void*>(&PostThunk));
+  auto hook = VtableSlotHook::Install(events, *post_slot, reinterpret_cast<void*>(&PostThunk));
   if (!hook) return std::unexpected(hook.error());
   g_original = reinterpret_cast<Post>(hook->Original());
   g_messages = *messages;
+  g_serialize_slot = *serialize_slot;
   impl->owner.emplace(std::move(*hook), &ClearThunkState);
   g_thread = GetCurrentThreadId();
   g_handler = &impl->handler;

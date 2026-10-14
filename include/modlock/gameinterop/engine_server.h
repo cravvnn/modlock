@@ -43,6 +43,8 @@ class MODLOCK_API EngineServer {
 
  private:
   void* instance_ = nullptr;
+  // command_slot_ is ServerCommand's resolved dispatch table index.
+  size_t command_slot_ = 0;
 };
 
 }  // namespace modlock::gameinterop

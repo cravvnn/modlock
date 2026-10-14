@@ -8,15 +8,16 @@
 // of the signatures it was built with, so a repaired file is checked before
 // it ships.
 //
-// It then checks every virtual slot modlock calls by index: the class's
-// dispatch table, found through its RTTI name, must hold the slot's function
-// at the recorded index and nowhere else. A game update that inserts a
-// virtual ahead of the slot prints the index the function moved to.
+// It then checks every virtual slot in the game data: the class's dispatch
+// table, found through its RTTI name, must hold exactly one function that
+// matches the slot's pattern. Modlock finds that function wherever it sits, so
+// a slot that moved still holds; its line prints the new index to record.
 //
 //   modlock-sigcheck <deadlock-dir> [--baseline <old-deadlock-dir>]
 //                    [--signatures <game_signatures.txtpb>]
 //
 // Exit status is zero only when every signature resolves and every slot holds.
+// With --signatures, the slots also come from that file.
 #include <Zydis.h>
 
 #include <algorithm>
@@ -233,7 +234,8 @@ std::expected<Install, std::string> LoadInstall(const fs::path& root, bool slots
     }
   }
   if (slots) {
-    for (const auto& slot : modlock::gameinterop::kVirtualSlots) files.emplace_back(slot.module);
+    for (const auto& slot : modlock::gameinterop::GameVirtualSlots())
+      files.emplace_back(slot.module);
   }
 
   Install install{.root = root};
@@ -246,13 +248,23 @@ std::expected<Install, std::string> LoadInstall(const fs::path& root, bool slots
   return install;
 }
 
-// CheckSlot reports whether slot still holds its function in image.
+// CheckSlot reports whether exactly one function of slot's table matches its
+// pattern in image.
 bool CheckSlot(const ModuleImage& image, const modlock::gameinterop::VirtualSlot& slot) {
-  const auto where = std::string(slot.class_name) + "[" + std::to_string(slot.index) + "]";
+  const auto id = std::string(slot.id);
   const auto module = std::string(slot.module);
-  const auto matches = modlock::gameinterop::MatchingSlots(image, slot);
-  if (matches && matches->size() == 1 && matches->front() == slot.index) {
-    std::printf("ok    %-17s %s\n", module.c_str(), where.c_str());
+  const auto table = modlock::gameinterop::FindVtable(image, slot.class_name);
+  auto matches =
+      table ? modlock::gameinterop::MatchingSlots(image, *table, slot)
+            : std::expected<std::vector<size_t>, std::string>(std::unexpected(table.error()));
+  if (matches && matches->size() == 1) {
+    const size_t index = matches->front();
+    if (index == slot.index) {
+      std::printf("ok    %-17s %-40s [%zu]\n", module.c_str(), id.c_str(), index);
+    } else {
+      std::printf("ok    %-17s %-40s [%zu] moved from %zu; record the new index\n", module.c_str(),
+                  id.c_str(), index, slot.index);
+    }
     return true;
   }
 
@@ -260,15 +272,13 @@ bool CheckSlot(const ModuleImage& image, const modlock::gameinterop::VirtualSlot
   if (!matches) {
     reason = matches.error();
   } else if (matches->empty()) {
-    reason = "no function in the table matches; re-derive the pattern";
-  } else if (matches->size() == 1) {
-    reason = "moved to slot " + std::to_string(matches->front());
+    reason = "no function of the table matches; re-derive the pattern";
   } else {
     reason = "matches slots";
     for (const size_t index : *matches) reason += " " + std::to_string(index);
     reason += "; lengthen the pattern";
   }
-  std::printf("FAIL  %-17s %s %s\n      %s\n", module.c_str(), where.c_str(), reason.c_str(),
+  std::printf("FAIL  %-17s %-40s %s\n      %s\n", module.c_str(), id.c_str(), reason.c_str(),
               std::string(slot.shape).c_str());
   return false;
 }
@@ -356,11 +366,10 @@ int main(int argc, char** argv) {
   }
   std::printf("%zu of %zu signatures resolved\n", checked - failed, checked);
 
-  size_t moved = 0;
-  for (const auto& slot : modlock::gameinterop::kVirtualSlots) {
-    if (!CheckSlot(current->modules.at(std::string(slot.module)), slot)) ++moved;
-  }
-  const size_t slots = std::size(modlock::gameinterop::kVirtualSlots);
-  std::printf("%zu of %zu virtual slots hold\n", slots - moved, slots);
-  return failed == 0 && moved == 0 ? 0 : 1;
+  size_t broken = 0;
+  const auto slots = modlock::gameinterop::GameVirtualSlots();
+  for (const auto& slot : slots)
+    if (!CheckSlot(current->modules.at(std::string(slot.module)), slot)) ++broken;
+  std::printf("%zu of %zu virtual slots hold\n", slots.size() - broken, slots.size());
+  return failed == 0 && broken == 0 ? 0 : 1;
 }

@@ -54,7 +54,7 @@ TEST(VtableSlotHook, RedirectsSlotAndPreservesOriginal) {
 // the module's own, whatever its length.
 TEST(VtableSlotHook, LeavesUnnamedSlotsDispatchableThroughTheModuleTable) {
   constexpr size_t kSlots = 128;
-  constexpr size_t kHookedSlot = modlock::gameinterop::kGameFrameSlot.index;
+  const size_t kHookedSlot = modlock::gameinterop::FindVirtualSlot("game-server.game-frame")->index;
   constexpr size_t kEngineSlot = 0x300 / sizeof(void*);
 
   void* table[kSlots];

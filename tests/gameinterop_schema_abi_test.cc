@@ -7,6 +7,7 @@
 #include <array>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "modlock/gameinterop/entity_abi.h"
@@ -14,14 +15,19 @@
 
 namespace {
 
+using modlock::gameinterop::FindVirtualSlot;
 using modlock::gameinterop::SchemaField;
+
+const size_t kNetworkStateChanged = FindVirtualSlot("entity.network-state-changed")->index;
+const size_t kFindDeclaredClass = FindVirtualSlot("schema-type-scope.find-declared-class")->index;
+const size_t kFindTypeScope = FindVirtualSlot("schema-system.find-type-scope")->index;
 
 TEST(NotifyEntityStateChanged, PublishesFullChangeThroughTheCurrentEntityAbi) {
   struct Entity {
     void** vtable;
     bool notified = false;
   };
-  std::array<void*, modlock::gameinterop::kNetworkStateChangedSlot.index + 1> table{};
+  std::vector<void*> table(kNetworkStateChanged + 1);
   // The installed server's old slot returns RequiredEdictIndex through RDX.
   table[27] = reinterpret_cast<void*>(+[](void*, void* result) {
     const int32_t invalid_index = -1;
@@ -30,13 +36,12 @@ TEST(NotifyEntityStateChanged, PublishesFullChangeThroughTheCurrentEntityAbi) {
   Entity entity{table.data()};
   EXPECT_FALSE(modlock::gameinterop::CanNotifyEntityStateChanged(&entity));
   EXPECT_FALSE(modlock::gameinterop::NotifyEntityStateChanged(&entity));
-  table[modlock::gameinterop::kNetworkStateChangedSlot.index] =
-      reinterpret_cast<void*>(+[](void* self, const void* changed) {
-        uint32_t change_type = 1;
-        std::memcpy(&change_type, changed, sizeof(change_type));
-        EXPECT_EQ(change_type, 0u);
-        static_cast<Entity*>(self)->notified = true;
-      });
+  table[kNetworkStateChanged] = reinterpret_cast<void*>(+[](void* self, const void* changed) {
+    uint32_t change_type = 1;
+    std::memcpy(&change_type, changed, sizeof(change_type));
+    EXPECT_EQ(change_type, 0u);
+    static_cast<Entity*>(self)->notified = true;
+  });
   EXPECT_TRUE(modlock::gameinterop::CanNotifyEntityStateChanged(&entity));
   EXPECT_TRUE(modlock::gameinterop::NotifyEntityStateChanged(&entity));
   EXPECT_TRUE(entity.notified);
@@ -71,8 +76,7 @@ void FindDeclaredClassEntry(void* self, void* out_handle, const char* class_name
 TEST(FindDeclaredClassOf, UsesTheHiddenReturnAbiAndReturnsTheOutSlot) {
   alignas(16) void* table[3];
   std::memset(table, 0, sizeof(table));
-  table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&FindDeclaredClassEntry);
+  table[kFindDeclaredClass] = reinterpret_cast<void*>(&FindDeclaredClassEntry);
   FakeTypeScope type_scope{table};
 
   void* class_info = reinterpret_cast<void*>(0x12345678);
@@ -92,8 +96,7 @@ TEST(FindDeclaredClassOf, UsesTheHiddenReturnAbiAndReturnsTheOutSlot) {
 TEST(FindDeclaredClassOf, NullHandleReportsANamedErrorWithoutDereference) {
   alignas(16) void* table[3];
   std::memset(table, 0, sizeof(table));
-  table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&FindDeclaredClassEntry);
+  table[kFindDeclaredClass] = reinterpret_cast<void*>(&FindDeclaredClassEntry);
   FakeTypeScope type_scope{table};
 
   g_find_call.result = nullptr;
@@ -177,13 +180,11 @@ TEST(SchemaLayout, FieldWalkResolvesOffsetAndNetworkedFlag) {
 
   alignas(16) void* scope_table[3];
   std::memset(scope_table, 0, sizeof(scope_table));
-  scope_table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&ScopeFindDeclaredClassEntry);
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&ScopeFindDeclaredClassEntry);
   FakeTypeScope type_scope{scope_table};
   alignas(16) void* system_table[16];
   std::memset(system_table, 0, sizeof(system_table));
-  system_table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
   FakeTypeScope system{system_table};
 
   g_persistent_scope = &type_scope;
@@ -245,8 +246,7 @@ void* MissingScopeEntry(void* /*self*/, const char* /*module*/, const char** /*b
 // always refuses; table must hold 16 slots.
 void MakeMissingScopeSystem(void** table) {
   std::memset(table, 0, 16 * sizeof(void*));
-  table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&MissingScopeEntry);
+  table[kFindTypeScope] = reinterpret_cast<void*>(&MissingScopeEntry);
 }
 
 TEST(SchemaFieldOfPaths, ClosedTypeScopeNamesTheModule) {
@@ -263,13 +263,11 @@ TEST(SchemaFieldOfPaths, ClosedTypeScopeNamesTheModule) {
 TEST(SchemaFieldOfPaths, MissingClassNamesTheClass) {
   alignas(16) void* system_table[16];
   std::memset(system_table, 0, sizeof(system_table));
-  system_table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
   FakeTypeScope system{system_table};
   alignas(16) void* scope_table[3];
   std::memset(scope_table, 0, sizeof(scope_table));
-  scope_table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&ScopeEntry);
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&ScopeEntry);
   FakeTypeScope type_scope{scope_table};
 
   g_persistent_scope = &type_scope;
@@ -292,13 +290,11 @@ TEST(SchemaFieldOfPaths, MissingFieldNamesTheField) {
 
   alignas(16) void* system_table[16];
   std::memset(system_table, 0, sizeof(system_table));
-  system_table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
   FakeTypeScope system{system_table};
   alignas(16) void* scope_table[3];
   std::memset(scope_table, 0, sizeof(scope_table));
-  scope_table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&ScopeEntry);
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&ScopeEntry);
   FakeTypeScope type_scope{scope_table};
 
   g_persistent_scope = &type_scope;
@@ -339,13 +335,11 @@ TEST(SchemaFieldOfPaths, FieldOnTheBaseClassResolvesThroughTheWalk) {
 
   alignas(16) void* system_table[16];
   std::memset(system_table, 0, sizeof(system_table));
-  system_table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
   FakeTypeScope system{system_table};
   alignas(16) void* scope_table[3];
   std::memset(scope_table, 0, sizeof(scope_table));
-  scope_table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&ScopeEntry);
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&ScopeEntry);
   FakeTypeScope type_scope{scope_table};
 
   g_persistent_scope = &type_scope;
@@ -374,13 +368,11 @@ TEST(SchemaFieldOfPaths, ZeroSizedStorageSpanIsAnError) {
 
   alignas(16) void* system_table[16];
   std::memset(system_table, 0, sizeof(system_table));
-  system_table[modlock::gameinterop::kSchemaSystemFindTypeScopeSlot.index] =
-      reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
   FakeTypeScope system{system_table};
   alignas(16) void* scope_table[3];
   std::memset(scope_table, 0, sizeof(scope_table));
-  scope_table[modlock::gameinterop::kTypeScopeFindDeclaredClassSlot.index] =
-      reinterpret_cast<void*>(&ScopeEntry);
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&ScopeEntry);
   FakeTypeScope type_scope{scope_table};
 
   g_persistent_scope = &type_scope;

@@ -92,10 +92,11 @@ std::expected<ClientCommandHook, std::string> ClientCommandHook::Install(Handler
   const auto resolved = ResolveEngineInterface(L"server.dll", "Source2GameClients001");
   if (!resolved) return std::unexpected(resolved.error());
   void* clients = *resolved;
+  const auto slot = ResolveVirtualSlot("game-clients.command");
+  if (!slot) return std::unexpected(slot.error());
   auto impl = std::make_unique<Impl>();
   impl->handler = std::move(handler);
-  auto hook = VtableSlotHook::Install(clients, kClientCommandSlot.index,
-                                      reinterpret_cast<void*>(&CommandThunk));
+  auto hook = VtableSlotHook::Install(clients, *slot, reinterpret_cast<void*>(&CommandThunk));
   if (!hook) return std::unexpected(hook.error());
   g_original = reinterpret_cast<CommandFn>(hook->Original());
   impl->owner.emplace(std::move(*hook), &ClearThunkState);

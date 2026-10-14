@@ -64,10 +64,14 @@ struct PawnMotion {
                                                  int32_t network_max_health);
 // RestorePawnLevel restores the schema-checked level and requests replication.
 [[nodiscard]] MODLOCK_API bool RestorePawnLevel(void* pawn, int32_t level);
-// Restores the existing hero-upgrade modifier's serialized float1..3 state.
-// Refuses missing modifiers or an unsupported mapped implementation.
+// RestorePawnUpgradeBonuses restores the weapon, armor and tech bonuses of the
+// pawn's existing upgrade bonus modifier and notifies replication. It fails
+// when the pawn has no such modifier or the running build's layout is not
+// located.
 [[nodiscard]] MODLOCK_API std::expected<void, std::string> RestorePawnUpgradeBonuses(
     void* pawn, const std::array<float, 3>& values);
+// ReadPawnUpgradeBonuses reads the same three bonuses, or nothing when they
+// cannot be read.
 [[nodiscard]] MODLOCK_API std::optional<std::array<float, 3>> ReadPawnUpgradeBonuses(void* pawn);
 
 // ScoreLayout carries the schema-resolved offsets of the owning

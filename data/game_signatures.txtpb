@@ -1,10 +1,13 @@
 # proto-file: proto/modlock/game_signatures.proto
 # proto-message: modlock.gamedata.GameSignatureFile
 #
-# Every byte pattern modlock scans for in the game binaries. After a game
-# update, run modlock-sigcheck against the new binaries and repair the failing
-# entries here; callers resolve by id and need no change while the native
-# shapes hold. Entries sort by id.
+# Every byte pattern modlock scans for in the game binaries, then every
+# virtual function it calls through a dispatch table. After a game update, run
+# modlock-sigcheck against the new binaries and repair the failing entries
+# here; callers resolve by id and need no change while the native shapes hold.
+# A slot finds its function by pattern among its class's table entries, so a
+# slot whose function only moved keeps working and sigcheck reports the new
+# index to record. Entries sort by id.
 
 signatures {
   id: "ability.create-and-register"
@@ -341,6 +344,15 @@ signatures {
   shape: "CModifierProperty::AddModifier"
 }
 
+# A modifier's own deserializer calls this before it changes each networked
+# field.
+signatures {
+  id: "modifier.state-changed"
+  modules: GAME_MODULE_SERVER
+  pattern: "48 8B D1 45 33 C9 48 8B 0D ?? ?? ?? ?? 41 B8 FF FF FF FF E9 08 00 00 00"
+  shape: "void ModifierStateChanged(CBaseModifier* modifier)"
+}
+
 # The source line stored at +0x1b changes between builds.
 signatures {
   id: "movement.process"
@@ -447,4 +459,217 @@ signatures {
   modules: GAME_MODULE_CLIENT
   pattern: "40 53 48 83 EC ?? 89 54 24 ?? 8B D9"
   shape: "void* LookupVData(int kind, uint32 hash); EDX is the full 32-bit hash"
+}
+
+# IVEngineServer2 counts IAppSystem's eleven slots, ISource2Engine's seven,
+# then its own declarations (sourcesdk public/eiface.h).
+slots {
+  id: "engine-server.globals"
+  module: "engine2.dll"
+  class_name: "CEngineServer"
+  index: 76
+  pattern: "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 48 83 C0 58"
+  shape: "CGlobalVars* IVEngineServer2::GetServerGlobals()"
+}
+
+slots {
+  id: "engine-server.server-command"
+  module: "engine2.dll"
+  class_name: "CEngineServer"
+  index: 45
+  pattern: "48 8B 0D ?? ?? ?? ?? 4C 8B C2"
+  shape: "void IVEngineServer2::ServerCommand(const char* command)"
+}
+
+# The pawn overrides GetMaxHealth to evaluate progression and modifiers; the
+# base version reads m_iMaxHealth.
+slots {
+  id: "entity.max-health"
+  module: "server.dll"
+  class_name: "CBaseEntity"
+  index: 181
+  pattern: "8B 81 D4 02 00 00 C3"
+  shape: "int CBaseEntity::GetMaxHealth()"
+}
+
+# NetworkStateChanged follows RequiredEdictIndex in the current Windows ABI;
+# slot 27 writes an entity index to its hidden result.
+slots {
+  id: "entity.network-state-changed"
+  module: "server.dll"
+  class_name: "CBaseEntity"
+  index: 28
+  pattern: "48 8B C4 56 48 81 EC 40 01 00 00"
+  shape: "void CEntityInstance::NetworkStateChanged(const NetworkStateChangedData&)"
+}
+
+slots {
+  id: "entity.teleport"
+  module: "server.dll"
+  class_name: "CBaseEntity"
+  index: 163
+  pattern: "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 48 89 7C 24 20"
+  shape: "void CBaseEntity::Teleport(const Vector*, const QAngle*, const Vector*)"
+}
+
+slots {
+  id: "game-clients.command"
+  module: "server.dll"
+  class_name: "CSource2GameClients"
+  index: 17
+  pattern: "48 89 74 24 10 57 48 81 EC 80 00 00 00"
+  shape: "void ISource2GameClients::ClientCommand(CPlayerSlot, const CCommand&)"
+}
+
+slots {
+  id: "game-clients.disconnect"
+  module: "server.dll"
+  class_name: "CSource2GameClients"
+  index: 16
+  pattern: "48 89 5C 24 18 48 89 74 24 20"
+  shape: "void ISource2GameClients::ClientDisconnect(CPlayerSlot, ENetworkDisconnectionReason, ...)"
+}
+
+slots {
+  id: "game-clients.fully-connect"
+  module: "server.dll"
+  class_name: "CSource2GameClients"
+  index: 15
+  pattern: "40 53 48 83 EC 30 48 8B 0D ?? ?? ?? ??"
+  shape: "void ISource2GameClients::ClientFullyConnect(CPlayerSlot)"
+}
+
+slots {
+  id: "game-clients.put-in-server"
+  module: "server.dll"
+  class_name: "CSource2GameClients"
+  index: 13
+  pattern: "48 89 5C 24 10 48 89 6C 24 18 56 48 83 EC 30"
+  shape: "void ISource2GameClients::ClientPutInServer(CPlayerSlot, const char*, int, uint64)"
+}
+
+# ISource2GameEntities::CheckTransmit follows the eleven IAppSystem entries
+# and ApplyGameSettings.
+slots {
+  id: "game-entities.check-transmit"
+  module: "server.dll"
+  class_name: "CSource2GameEntities"
+  index: 12
+  pattern: "48 8B C4 4C 89 48 20 44 89 40 18"
+  shape: "void ISource2GameEntities::CheckTransmit(CCheckTransmitInfo**, int, CBitVec&, ...)"
+}
+
+slots {
+  id: "game-event-system.post-event"
+  module: "engine2.dll"
+  class_name: "CGameEventSystem"
+  index: 16
+  pattern: "48 89 5C 24 10 48 89 74 24 18"
+  shape: "void IGameEventSystem::PostEventAbstract(CSplitScreenSlot, bool, int, const uint64*, INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t)"
+}
+
+slots {
+  id: "game-server.game-frame"
+  module: "server.dll"
+  class_name: "CSource2Server"
+  index: 19
+  pattern: "48 89 5C 24 20 88 54 24 10"
+  shape: "void ISource2Server::GameFrame(bool simulating, bool first_tick, bool last_tick)"
+}
+
+# The Deadlock SDK's public/iserver.h declares Shutdown fifth.
+slots {
+  id: "network-game-server.shutdown"
+  module: "engine2.dll"
+  class_name: "CNetworkGameServer"
+  index: 4
+  pattern: "40 55 48 83 EC 20 80 3D ?? ?? ?? ?? 00"
+  shape: "void INetworkGameServer::Shutdown()"
+}
+
+# Since game build 6711 a message serializer is a plain record, and
+# INetworkMessages serializes and parses messages (sourcesdk
+# networksystem/inetworkmessages.h).
+slots {
+  id: "network-messages.find-by-id"
+  module: "networksystem.dll"
+  class_name: "CNetworkMessages"
+  index: 27
+  pattern: "48 89 5C 24 18 48 89 6C 24 20 56"
+  shape: "INetworkMessageInternal* INetworkMessages::FindNetworkMessageById(int)"
+}
+
+slots {
+  id: "network-messages.serialize"
+  module: "networksystem.dll"
+  class_name: "CNetworkMessages"
+  index: 4
+  pattern: "48 89 5C 24 18 56 48 83 EC 40"
+  shape: "bool INetworkMessages::SerializeAbstract(bf_write&, INetworkMessageInternal*, const CNetMessage*)"
+}
+
+slots {
+  id: "network-messages.unserialize"
+  module: "networksystem.dll"
+  class_name: "CNetworkMessages"
+  index: 3
+  pattern: "48 8B C4 53 48 81 EC 90 00 00 00"
+  shape: "bool INetworkMessages::UnserializeAbstract(bf_read&, INetworkMessageInternal*, CNetMessage*)"
+}
+
+slots {
+  id: "network-server-service.game-server"
+  module: "engine2.dll"
+  class_name: "CNetworkServerService"
+  index: 23
+  pattern: "48 8B 81 50 01 00 00 C3"
+  shape: "INetworkGameServer* INetworkServerService::GetIGameServer()"
+}
+
+slots {
+  id: "network-server-service.startup-server"
+  module: "engine2.dll"
+  class_name: "CNetworkServerService"
+  index: 26
+  pattern: "48 8B C4 55 57 41 57 48 83 EC 60"
+  shape: "void INetworkServerService::StartupServer(const GameSessionConfiguration_t&, ...)"
+}
+
+slots {
+  id: "player-controller.change-team"
+  module: "server.dll"
+  class_name: "CBasePlayerController"
+  index: 105
+  pattern: "40 55 56 41 57 48 8B EC"
+  shape: "void CBasePlayerController::ChangeTeam(int team)"
+}
+
+# ISchemaSystem appends FindTypeScopeForModule after IAppSystem's eleven
+# slots; ISchemaSystemTypeScope declares FindDeclaredClass third and
+# FindDeclaredEnum fourth.
+slots {
+  id: "schema-system.find-type-scope"
+  module: "schemasystem.dll"
+  class_name: "CSchemaSystem"
+  index: 13
+  pattern: "48 89 5C 24 10 48 89 74 24 18"
+  shape: "CSchemaSystemTypeScope* ISchemaSystem::FindTypeScopeForModule(const char*, int*)"
+}
+
+slots {
+  id: "schema-type-scope.find-declared-class"
+  module: "schemasystem.dll"
+  class_name: "CSchemaSystemTypeScope"
+  index: 2
+  pattern: "40 53 48 83 EC 20 48 8B 01 48 8B DA 49 8B D0 FF 90 C8 00 00 00"
+  shape: "SchemaClassInfoData_t* ISchemaSystemTypeScope::FindDeclaredClass(const char*)"
+}
+
+slots {
+  id: "schema-type-scope.find-declared-enum"
+  module: "schemasystem.dll"
+  class_name: "CSchemaSystemTypeScope"
+  index: 3
+  pattern: "40 53 48 83 EC 20 48 8B 01 48 8B DA 49 8B D0 FF 90 D8 00 00 00"
+  shape: "SchemaEnumInfoData_t* ISchemaSystemTypeScope::FindDeclaredEnum(const char*)"
 }

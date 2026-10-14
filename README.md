@@ -1172,6 +1172,7 @@ modlock-host --game-dir <Deadlock installation> --plugin <hello library>
 | `--plugin PATH`      | Load a built mod (a directory with `mod.json`, or a `.wasm` file) or a plugin library; repeat for several.                                       |
 | `--control ADDRESS`  | Report mod starts, logs, failures and player joins to the controller at `ADDRESS`, and take reloads from it. The `modlock` command line uses it. |
 | `--settings PATH`    | Keep players' mod settings in the JSON file at `PATH`; without it they last for the run. A native plugin may keep them instead.                  |
+| `--game-data PATH`   | Read game signatures and virtual slots from `PATH`, falling back to the `game_signatures.txtpb` beside the host when it cannot be read.          |
 | `--check-plugin`     | Load, start, and stop the plugins without opening game modules.                                                                                  |
 | `--game-dir DIR`     | Run a listen server from the Deadlock installation at `DIR` (or `DEADLOCK_DIR`).                                                                 |
 | `--map NAME`         | Start on `NAME` (default `dl_midtown`).                                                                                                          |

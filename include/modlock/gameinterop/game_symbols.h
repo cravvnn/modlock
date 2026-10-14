@@ -90,20 +90,22 @@ struct GameSignature {
 [[nodiscard]] MODLOCK_API std::span<const GameSignature> GameSignatures();
 
 // GameSignatureLoad reports a game data file that replaced the recorded
-// signatures.
+// signatures and virtual slots.
 struct GameSignatureLoad {
   // loaded counts the signatures now recorded.
   size_t loaded = 0;
+  // slots counts the virtual slots now recorded.
+  size_t slots = 0;
   // skipped explains each entry left out, naming its id when it has one.
   std::vector<std::string> skipped;
 };
 
-// LoadGameSignatures replaces the recorded signatures with the game data
-// file at path. A malformed entry is skipped, so only the features that
-// resolve its id fail; an unreadable or unparsable file is an error and keeps
-// the current signatures. Call it before any lookup: replacing the table
-// invalidates every earlier GameSignatures span and FindGameSignature
-// pointer, and it must not run concurrently with lookups.
+// LoadGameSignatures replaces the recorded signatures and virtual slots with
+// the game data file at path. A malformed entry is skipped, so only the
+// features that resolve its id fail; an unreadable or unparsable file is an
+// error and keeps the current entries. Call it before any lookup: replacing
+// the table invalidates every earlier span and pointer into it, and it must
+// not run concurrently with lookups.
 [[nodiscard]] MODLOCK_API std::expected<GameSignatureLoad, std::string> LoadGameSignatures(
     const std::filesystem::path& path);
 

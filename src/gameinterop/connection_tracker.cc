@@ -241,25 +241,26 @@ ConnectionTracker::SlotState ConnectionTracker::StateForSlot(int32_t slot) {
 
 std::expected<ConnectionTracker, std::string> ConnectionTracker::Install(
     std::shared_ptr<ConnectionEventSink> sink) {
-  if (sink == nullptr) {
-    return std::unexpected("connection tracker requires an event sink");
-  }
+  if (sink == nullptr) return std::unexpected("connection tracker requires an event sink");
   const auto resolved = ResolveEngineInterface(L"server.dll", kSource2GameClientsVersion);
   if (!resolved) return std::unexpected(resolved.error());
   void* clients = *resolved;
-  auto put_in_server = VtableSlotHook::Install(clients, kClientPutInServerSlot.index,
+  const auto put_in_server_slot = ResolveVirtualSlot("game-clients.put-in-server");
+  const auto fully_connect_slot = ResolveVirtualSlot("game-clients.fully-connect");
+  const auto disconnect_slot = ResolveVirtualSlot("game-clients.disconnect");
+  if (!put_in_server_slot) return std::unexpected(put_in_server_slot.error());
+  if (!fully_connect_slot) return std::unexpected(fully_connect_slot.error());
+  if (!disconnect_slot) return std::unexpected(disconnect_slot.error());
+
+  auto put_in_server = VtableSlotHook::Install(clients, *put_in_server_slot,
                                                reinterpret_cast<void*>(&PutInServerThunk));
-  if (!put_in_server.has_value()) {
-    return std::unexpected(put_in_server.error());
-  }
-  auto fully_connect = VtableSlotHook::Install(clients, kClientFullyConnectSlot.index,
+  if (!put_in_server) return std::unexpected(put_in_server.error());
+  auto fully_connect = VtableSlotHook::Install(clients, *fully_connect_slot,
                                                reinterpret_cast<void*>(&FullyConnectThunk));
   if (!fully_connect) return std::unexpected(fully_connect.error());
-  auto disconnect = VtableSlotHook::Install(clients, kClientDisconnectSlot.index,
-                                            reinterpret_cast<void*>(&DisconnectThunk));
-  if (!disconnect.has_value()) {
-    return std::unexpected(disconnect.error());
-  }
+  auto disconnect =
+      VtableSlotHook::Install(clients, *disconnect_slot, reinterpret_cast<void*>(&DisconnectThunk));
+  if (!disconnect) return std::unexpected(disconnect.error());
   g_put_in_server_original.store(put_in_server->Original(), std::memory_order_release);
   g_fully_connect_original.store(fully_connect->Original(), std::memory_order_release);
   g_disconnect_original.store(disconnect->Original(), std::memory_order_release);

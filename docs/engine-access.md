@@ -23,9 +23,9 @@ game signature is one entry in the game data file
 `data/game_signatures.txtpb`, a protobuf text file of
 `proto/modlock/game_signatures.proto`: a stable id, the modules that carry it,
 the pattern, what the match resolves to, and the native shape. The SDK embeds
-the file as of its build, and `modlock-host` loads the copy installed beside
-it at start, so a game patch that moves a pattern ships as a new file without
-a new host. A malformed entry is skipped with a log line, and only the
+the file as of its build, and `modlock-host` loads the file named by
+`--game-data`, else the copy installed beside it, at start, so a game patch
+that moves a pattern ships as a new file without a new host. A malformed entry is skipped with a log line, and only the
 features that resolve its id fail. Callers resolve
 an entry with `ResolveSignature(image, id)`. The target is the match itself,
 the `E8` call at a delta into the match, or the RIP-relative operand of a
@@ -49,16 +49,21 @@ branch targets become wildcards, and the shortest instruction-aligned prefix
 that resolves once in the new build is printed. Review each suggestion against
 the recorded shape before replacing the entry in the game data file.
 
-It also checks every virtual slot in `kVirtualSlots`
-(`modlock/gameinterop/virtual_slots.h`). A call through a slot index has no
-signature to fail: when an update inserts a virtual ahead of it, the index
-reaches the neighbouring function silently. Each slot names its class, index
-and entry-byte pattern. The check finds the class's dispatch table through its
-RTTI name and passes when the function at the index, and no other function in
-the table, matches the pattern. A failure prints the slot the function moved
-to, or every slot that matches when the pattern no longer tells them apart.
-Move the index, or lengthen the pattern, and record each new slot in
-`kVirtualSlots` so the check covers it.
+Virtual functions that modlock calls or hooks through a dispatch table are
+`slots` entries in the same file. Each names its module, its class's RTTI name,
+the index it held when recorded, and a pattern for the function's entry bytes.
+`ResolveVirtualSlot(id)` (`modlock/gameinterop/virtual_slots.h`) finds the
+class's table through its RTTI and returns the index of the one function that
+matches the pattern. A game update that inserts a virtual ahead of the slot
+moves the index without breaking the caller; the host logs the move once.
+Zero or several matches are an error naming the slot, and the feature that
+needs it stays off.
+
+`modlock-sigcheck` checks every slot the same way. A moved slot passes and
+prints its new index, which belongs in the data file so the hint stays
+current. A failure prints the reason: no function of the table matches, or the
+indexes of every match when the pattern no longer tells them apart. Re-derive
+or lengthen the pattern.
 
 An address is evidence of a pattern match, not proof that an arbitrary function
 signature is safe to call. Callers must use the recorded calling convention and

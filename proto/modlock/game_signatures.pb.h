@@ -67,6 +67,10 @@ class GameSignatureFile;
 struct GameSignatureFileDefaultTypeInternal;
 MODLOCK_API extern GameSignatureFileDefaultTypeInternal _GameSignatureFile_default_instance_;
 MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull GameSignatureFile_class_data_;
+class VirtualSlot;
+struct VirtualSlotDefaultTypeInternal;
+MODLOCK_API extern VirtualSlotDefaultTypeInternal _VirtualSlot_default_instance_;
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull VirtualSlot_class_data_;
 }  // namespace gamedata
 }  // namespace modlock
 namespace google {
@@ -121,6 +125,281 @@ inline bool GameModule_Parse(
 // ===================================================================
 
 
+// -------------------------------------------------------------------
+
+class MODLOCK_API VirtualSlot final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:modlock.gamedata.VirtualSlot) */ {
+ public:
+  inline VirtualSlot() : VirtualSlot(nullptr) {}
+  ~VirtualSlot() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(VirtualSlot* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(VirtualSlot));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR VirtualSlot(::google::protobuf::internal::ConstantInitialized);
+
+  inline VirtualSlot(const VirtualSlot& from) : VirtualSlot(nullptr, from) {}
+  inline VirtualSlot(VirtualSlot&& from) noexcept
+      : VirtualSlot(nullptr, ::std::move(from)) {}
+  inline VirtualSlot& operator=(const VirtualSlot& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline VirtualSlot& operator=(VirtualSlot&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const VirtualSlot& default_instance() {
+    return *reinterpret_cast<const VirtualSlot*>(
+        &_VirtualSlot_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 2;
+  friend void swap(VirtualSlot& a, VirtualSlot& b) { a.Swap(&b); }
+  inline void Swap(VirtualSlot* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(VirtualSlot* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  VirtualSlot* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<VirtualSlot>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const VirtualSlot& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const VirtualSlot& from) { VirtualSlot::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(VirtualSlot* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "modlock.gamedata.VirtualSlot"; }
+
+  explicit VirtualSlot(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  VirtualSlot(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const VirtualSlot& from);
+  VirtualSlot(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, VirtualSlot&& from) noexcept
+      : VirtualSlot(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kIdFieldNumber = 1,
+    kModuleFieldNumber = 2,
+    kClassNameFieldNumber = 3,
+    kPatternFieldNumber = 5,
+    kShapeFieldNumber = 6,
+    kIndexFieldNumber = 4,
+  };
+  // string id = 1;
+  void clear_id() ;
+  const ::std::string& id() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_id(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_id();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_id();
+  void set_allocated_id(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_id() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_id(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_id();
+
+  public:
+  // string module = 2;
+  void clear_module() ;
+  const ::std::string& module() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_module(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_module();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_module();
+  void set_allocated_module(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_module() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_module(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_module();
+
+  public:
+  // string class_name = 3;
+  void clear_class_name() ;
+  const ::std::string& class_name() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_class_name(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_class_name();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_class_name();
+  void set_allocated_class_name(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_class_name() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_class_name(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_class_name();
+
+  public:
+  // string pattern = 5;
+  void clear_pattern() ;
+  const ::std::string& pattern() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_pattern(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_pattern();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_pattern();
+  void set_allocated_pattern(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_pattern() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_pattern(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_pattern();
+
+  public:
+  // string shape = 6;
+  void clear_shape() ;
+  const ::std::string& shape() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_shape(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_shape();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_shape();
+  void set_allocated_shape(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_shape() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_shape(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_shape();
+
+  public:
+  // uint32 index = 4;
+  void clear_index() ;
+  ::uint32_t index() const;
+  void set_index(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_index() const;
+  void _internal_set_index(::uint32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:modlock.gamedata.VirtualSlot)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<3, 6,
+                                   0, 67,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const VirtualSlot& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::internal::ArenaStringPtr id_;
+    ::google::protobuf::internal::ArenaStringPtr module_;
+    ::google::protobuf::internal::ArenaStringPtr class_name_;
+    ::google::protobuf::internal::ArenaStringPtr pattern_;
+    ::google::protobuf::internal::ArenaStringPtr shape_;
+    ::uint32_t index_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto;
+};
+
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull VirtualSlot_class_data_;
 // -------------------------------------------------------------------
 
 class MODLOCK_API GameSignature final : public ::google::protobuf::Message
@@ -559,6 +838,7 @@ class MODLOCK_API GameSignatureFile final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kSignaturesFieldNumber = 1,
+    kSlotsFieldNumber = 2,
   };
   // repeated .modlock.gamedata.GameSignature signatures = 1;
   int signatures_size() const;
@@ -577,12 +857,29 @@ class MODLOCK_API GameSignatureFile final : public ::google::protobuf::Message
   const ::modlock::gamedata::GameSignature& signatures(int index) const;
   ::modlock::gamedata::GameSignature* PROTOBUF_NONNULL add_signatures();
   const ::google::protobuf::RepeatedPtrField<::modlock::gamedata::GameSignature>& signatures() const;
+  // repeated .modlock.gamedata.VirtualSlot slots = 2;
+  int slots_size() const;
+  private:
+  int _internal_slots_size() const;
+
+  public:
+  void clear_slots() ;
+  ::modlock::gamedata::VirtualSlot* PROTOBUF_NONNULL mutable_slots(int index);
+  ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>* PROTOBUF_NONNULL mutable_slots();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>& _internal_slots() const;
+  ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>* PROTOBUF_NONNULL _internal_mutable_slots();
+  public:
+  const ::modlock::gamedata::VirtualSlot& slots(int index) const;
+  ::modlock::gamedata::VirtualSlot* PROTOBUF_NONNULL add_slots();
+  const ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>& slots() const;
   // @@protoc_insertion_point(class_scope:modlock.gamedata.GameSignatureFile)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<0, 1,
-                                   1, 0,
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   2, 0,
                                    2>
       _table_;
 
@@ -604,6 +901,7 @@ class MODLOCK_API GameSignatureFile final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::RepeatedPtrField< ::modlock::gamedata::GameSignature > signatures_;
+    ::google::protobuf::RepeatedPtrField< ::modlock::gamedata::VirtualSlot > slots_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -682,6 +980,62 @@ inline ::google::protobuf::RepeatedPtrField<::modlock::gamedata::GameSignature>*
 GameSignatureFile::_internal_mutable_signatures() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.signatures_;
+}
+
+// repeated .modlock.gamedata.VirtualSlot slots = 2;
+inline int GameSignatureFile::_internal_slots_size() const {
+  return _internal_slots().size();
+}
+inline int GameSignatureFile::slots_size() const {
+  return _internal_slots_size();
+}
+inline void GameSignatureFile::clear_slots() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.slots_.Clear();
+  ClearHasBitForRepeated(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::modlock::gamedata::VirtualSlot* PROTOBUF_NONNULL GameSignatureFile::mutable_slots(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.GameSignatureFile.slots)
+  return _internal_mutable_slots()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>* PROTOBUF_NONNULL GameSignatureFile::mutable_slots()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000002U);
+  // @@protoc_insertion_point(field_mutable_list:modlock.gamedata.GameSignatureFile.slots)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_slots();
+}
+inline const ::modlock::gamedata::VirtualSlot& GameSignatureFile::slots(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.GameSignatureFile.slots)
+  return _internal_slots().Get(index);
+}
+inline ::modlock::gamedata::VirtualSlot* PROTOBUF_NONNULL GameSignatureFile::add_slots()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::modlock::gamedata::VirtualSlot* _add =
+      _internal_mutable_slots()->InternalAddWithArena(
+          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000002U);
+  // @@protoc_insertion_point(field_add:modlock.gamedata.GameSignatureFile.slots)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>& GameSignatureFile::slots() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:modlock.gamedata.GameSignatureFile.slots)
+  return _internal_slots();
+}
+inline const ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>&
+GameSignatureFile::_internal_slots() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.slots_;
+}
+inline ::google::protobuf::RepeatedPtrField<::modlock::gamedata::VirtualSlot>* PROTOBUF_NONNULL
+GameSignatureFile::_internal_mutable_slots() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.slots_;
 }
 
 // -------------------------------------------------------------------
@@ -1008,6 +1362,360 @@ inline void GameSignature::clear_has_target() {
 inline GameSignature::TargetCase GameSignature::target_case() const {
   return GameSignature::TargetCase(_impl_._oneof_case_[0]);
 }
+// -------------------------------------------------------------------
+
+// VirtualSlot
+
+// string id = 1;
+inline void VirtualSlot::clear_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline const ::std::string& VirtualSlot::id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.id)
+  return _internal_id();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void VirtualSlot::set_id(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  _impl_.id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.id)
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::mutable_id()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::std::string* _s = _internal_mutable_id();
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.VirtualSlot.id)
+  return _s;
+}
+inline const ::std::string& VirtualSlot::_internal_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_.Get();
+}
+inline void VirtualSlot::_internal_set_id(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::_internal_mutable_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.id_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE VirtualSlot::release_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.gamedata.VirtualSlot.id)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  auto* released = _impl_.id_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.id_.Set("", GetArena());
+  }
+  return released;
+}
+inline void VirtualSlot::set_allocated_id(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  _impl_.id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.id_.IsDefault()) {
+    _impl_.id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.gamedata.VirtualSlot.id)
+}
+
+// string module = 2;
+inline void VirtualSlot::clear_module() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.module_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline const ::std::string& VirtualSlot::module() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.module)
+  return _internal_module();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void VirtualSlot::set_module(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  _impl_.module_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.module)
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::mutable_module()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::std::string* _s = _internal_mutable_module();
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.VirtualSlot.module)
+  return _s;
+}
+inline const ::std::string& VirtualSlot::_internal_module() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.module_.Get();
+}
+inline void VirtualSlot::_internal_set_module(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.module_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::_internal_mutable_module() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.module_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE VirtualSlot::release_module() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.gamedata.VirtualSlot.module)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  auto* released = _impl_.module_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.module_.Set("", GetArena());
+  }
+  return released;
+}
+inline void VirtualSlot::set_allocated_module(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  _impl_.module_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.module_.IsDefault()) {
+    _impl_.module_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.gamedata.VirtualSlot.module)
+}
+
+// string class_name = 3;
+inline void VirtualSlot::clear_class_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.class_name_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline const ::std::string& VirtualSlot::class_name() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.class_name)
+  return _internal_class_name();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void VirtualSlot::set_class_name(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  _impl_.class_name_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.class_name)
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::mutable_class_name()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ::std::string* _s = _internal_mutable_class_name();
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.VirtualSlot.class_name)
+  return _s;
+}
+inline const ::std::string& VirtualSlot::_internal_class_name() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.class_name_.Get();
+}
+inline void VirtualSlot::_internal_set_class_name(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.class_name_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::_internal_mutable_class_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.class_name_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE VirtualSlot::release_class_name() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.gamedata.VirtualSlot.class_name)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000004U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  auto* released = _impl_.class_name_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.class_name_.Set("", GetArena());
+  }
+  return released;
+}
+inline void VirtualSlot::set_allocated_class_name(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  }
+  _impl_.class_name_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.class_name_.IsDefault()) {
+    _impl_.class_name_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.gamedata.VirtualSlot.class_name)
+}
+
+// uint32 index = 4;
+inline void VirtualSlot::clear_index() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.index_ = 0u;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000020U);
+}
+inline ::uint32_t VirtualSlot::index() const {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.index)
+  return _internal_index();
+}
+inline void VirtualSlot::set_index(::uint32_t value) {
+  _internal_set_index(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.index)
+}
+inline ::uint32_t VirtualSlot::_internal_index() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.index_;
+}
+inline void VirtualSlot::_internal_set_index(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.index_ = value;
+}
+
+// string pattern = 5;
+inline void VirtualSlot::clear_pattern() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.pattern_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000008U);
+}
+inline const ::std::string& VirtualSlot::pattern() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.pattern)
+  return _internal_pattern();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void VirtualSlot::set_pattern(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  _impl_.pattern_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.pattern)
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::mutable_pattern()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  ::std::string* _s = _internal_mutable_pattern();
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.VirtualSlot.pattern)
+  return _s;
+}
+inline const ::std::string& VirtualSlot::_internal_pattern() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.pattern_.Get();
+}
+inline void VirtualSlot::_internal_set_pattern(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.pattern_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::_internal_mutable_pattern() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.pattern_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE VirtualSlot::release_pattern() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.gamedata.VirtualSlot.pattern)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000008U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  auto* released = _impl_.pattern_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.pattern_.Set("", GetArena());
+  }
+  return released;
+}
+inline void VirtualSlot::set_allocated_pattern(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  }
+  _impl_.pattern_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.pattern_.IsDefault()) {
+    _impl_.pattern_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.gamedata.VirtualSlot.pattern)
+}
+
+// string shape = 6;
+inline void VirtualSlot::clear_shape() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.shape_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline const ::std::string& VirtualSlot::shape() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.gamedata.VirtualSlot.shape)
+  return _internal_shape();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void VirtualSlot::set_shape(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.shape_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.gamedata.VirtualSlot.shape)
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::mutable_shape()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ::std::string* _s = _internal_mutable_shape();
+  // @@protoc_insertion_point(field_mutable:modlock.gamedata.VirtualSlot.shape)
+  return _s;
+}
+inline const ::std::string& VirtualSlot::_internal_shape() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.shape_.Get();
+}
+inline void VirtualSlot::_internal_set_shape(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.shape_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL VirtualSlot::_internal_mutable_shape() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.shape_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE VirtualSlot::release_shape() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.gamedata.VirtualSlot.shape)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000010U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  auto* released = _impl_.shape_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.shape_.Set("", GetArena());
+  }
+  return released;
+}
+inline void VirtualSlot::set_allocated_shape(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  }
+  _impl_.shape_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.shape_.IsDefault()) {
+    _impl_.shape_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.gamedata.VirtualSlot.shape)
+}
+
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif  // __GNUC__

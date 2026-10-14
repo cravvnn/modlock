@@ -467,13 +467,14 @@ PawnObserver::Seams PawnObserver::LiveSeams(bool movement_enabled) {
   seams.ability_layout = [] { return ResolveAbilityLayout(); };
   seams.effective_max_health = [](void* pawn) -> std::optional<int32_t> {
     if (!pawn) return std::nullopt;
+    const auto slot = ResolveVirtualSlot("entity.max-health");
+    if (!slot) return std::nullopt;
     auto** table = *static_cast<void***>(pawn);
-    if (!table) return std::nullopt;
-    if (!table[kGetMaxHealthSlot.index]) return std::nullopt;
+    if (!table || !table[*slot]) return std::nullopt;
     // The pawn override evaluates progression and modifiers; m_iMaxHealth
     // can remain zero even while this calculated maximum is positive.
     using GetMaxHealth = int32_t (*)(void*);
-    const int32_t value = reinterpret_cast<GetMaxHealth>(table[kGetMaxHealthSlot.index])(pawn);
+    const int32_t value = reinterpret_cast<GetMaxHealth>(table[*slot])(pawn);
     return value > 0 ? std::optional<int32_t>{value} : std::nullopt;
   };
   // Resolve once per observer; the loaded server module outlives its pawn seams.
@@ -653,9 +654,10 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
   };
   auto current = borrow();
   if (!current) return std::unexpected(current.error());
+  const auto change_team = ResolveVirtualSlot("player-controller.change-team");
+  if (!change_team) return std::unexpected(change_team.error());
   auto* table = *static_cast<void***>(current->first);
-  if (!table || !table[kChangeTeamSlot.index])
-    return std::unexpected("native team selection unavailable");
+  if (!table || !table[*change_team]) return std::unexpected("native team selection unavailable");
   uint8_t current_team = 0;
   std::memcpy(&current_team, static_cast<const char*>(current->first) + layout_.team, 1);
   if (current_team != team && team == 1) {
@@ -676,7 +678,7 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
     if (!current) return std::unexpected(current.error());
   }
   if (current_team != team) {
-    reinterpret_cast<void (*)(void*, int)>(table[kChangeTeamSlot.index])(current->first, team);
+    reinterpret_cast<void (*)(void*, int)>(table[*change_team])(current->first, team);
     current = borrow();
     if (!current) return std::unexpected(current.error());
   }
@@ -1848,25 +1850,79 @@ bool RestorePawnLevel(void* pawn, int32_t level) {
 }
 
 namespace {
-std::expected<unsigned char*, std::string> UpgradeBonusModifier(void* pawn) {
+// UpgradeBonusLayout locates CCitadel_Modifier_HeroUpgradeBonuses on the
+// running build: its dispatch table, the schema offsets of its owner and its
+// three bonuses, and the change notification its own deserializer calls.
+struct UpgradeBonusLayout {
+  size_t modifier_property;
+  size_t modifier_rows;
+  uintptr_t table;
+  size_t owner;
+  std::array<size_t, 3> values;
+  void (*notify)(void* modifier);
+};
+
 #if defined(_WIN32)
-  if (!pawn) return std::unexpected("upgrade bonuses: pawn unavailable");
-  const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(L"server.dll"));
-  if (!base) return std::unexpected("upgrade bonuses: server module unavailable");
+std::expected<UpgradeBonusLayout, std::string> LocateUpgradeBonuses() {
+  constexpr const char* kClass = "CCitadel_Modifier_HeroUpgradeBonuses";
+  const auto server = MappedModuleImage::ForModule(L"server.dll");
+  if (!server) return std::unexpected(server.error());
+  const auto table = FindVtable(*server, kClass);
+  if (!table) return std::unexpected(table.error());
+  const auto notify = ResolveSignature(*server, "modifier.state-changed");
+  if (!notify) return std::unexpected(notify.error());
   auto schema = ResolveSchemaSystem();
   if (!schema) return std::unexpected(schema.error());
-  auto property = SchemaFieldOf(*schema, "server.dll", "CBaseEntity", "m_pModifierProp");
-  auto modifiers = SchemaFieldOf(*schema, "server.dll", "CModifierProperty", "m_vecModifiers");
-  if (!property) return std::unexpected("upgrade bonuses property: " + property.error());
-  if (!modifiers) return std::unexpected("upgrade bonuses vector: " + modifiers.error());
-  // SchemaField reports the span to the next declared field, including padding
-  // and undeclared members; it bounds a read rather than naming the type size.
-  if (property->size < sizeof(void*) || modifiers->size < 24)
-    return std::unexpected("upgrade bonuses: unsupported schema sizes " +
-                           std::to_string(property->size) + "/" + std::to_string(modifiers->size));
-  unsigned char* owner = nullptr;
-  std::memcpy(&owner, static_cast<unsigned char*>(pawn) + property->offset, sizeof(owner));
-  if (!owner) return std::unexpected("upgrade bonuses: modifier property unavailable");
+
+  const auto field = [&](const char* class_name, const char* name,
+                         size_t size) -> std::expected<size_t, std::string> {
+    auto found = SchemaFieldOf(*schema, "server.dll", class_name, name);
+    if (!found) return std::unexpected(found.error());
+    // SchemaField reports the span to the next declared field, including
+    // padding and undeclared members; it bounds a read rather than naming the
+    // type size.
+    if (found->size < size)
+      return std::unexpected(std::string(name) + " spans " + std::to_string(found->size) +
+                             " bytes");
+    return found->offset;
+  };
+  const auto property = field("CBaseEntity", "m_pModifierProp", sizeof(void*));
+  const auto rows = field("CModifierProperty", "m_vecModifiers", 24);
+  const auto owner = field(kClass, "m_pOwningPlayer", sizeof(void*));
+  const auto weapon = field(kClass, "m_flWeaponPower", sizeof(float));
+  const auto armor = field(kClass, "m_flArmorPower", sizeof(float));
+  const auto tech = field(kClass, "m_flTechPower", sizeof(float));
+  for (const auto* offset : {&property, &rows, &owner, &weapon, &armor, &tech})
+    if (!*offset) return std::unexpected(offset->error());
+  return UpgradeBonusLayout{
+      .modifier_property = *property,
+      .modifier_rows = *rows,
+      .table = server->base() + *table,
+      .owner = *owner,
+      .values = {*weapon, *armor, *tech},
+      .notify = reinterpret_cast<void (*)(void*)>(*notify),
+  };
+}
+#endif
+
+// UpgradeBonuses is the pawn's upgrade bonus modifier and the layout that
+// reads it.
+struct UpgradeBonuses {
+  unsigned char* modifier;
+  const UpgradeBonusLayout* layout;
+};
+
+std::expected<UpgradeBonuses, std::string> UpgradeBonusModifier(void* pawn) {
+#if defined(_WIN32)
+  if (!pawn) return std::unexpected("upgrade bonuses: pawn unavailable");
+  // A pawn exists only once server.dll and its schema are loaded, so the
+  // first lookup settles the layout for the process.
+  static const auto layout = LocateUpgradeBonuses();
+  if (!layout) return std::unexpected("upgrade bonuses: " + layout.error());
+  unsigned char* property = nullptr;
+  std::memcpy(&property, static_cast<unsigned char*>(pawn) + layout->modifier_property,
+              sizeof(property));
+  if (!property) return std::unexpected("upgrade bonuses: modifier property unavailable");
   struct PointerVector {
     int32_t count;
     uint32_t padding;
@@ -1875,44 +1931,36 @@ std::expected<unsigned char*, std::string> UpgradeBonusModifier(void* pawn) {
     uint32_t flags;
   } rows{};
   static_assert(sizeof(rows) == 24);
-  std::memcpy(&rows, owner + modifiers->offset, sizeof(rows));
+  std::memcpy(&rows, property + layout->modifier_rows, sizeof(rows));
   if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
       (rows.count && !rows.data))
     return std::unexpected("upgrade bonuses: invalid modifier vector");
-  unsigned char* found = nullptr;
   for (int32_t i = 0; i < rows.count; ++i) {
     auto* row = rows.data[i];
     if (!row) continue;
-    const auto table = *reinterpret_cast<uintptr_t**>(row);
-    // Installed CCitadel_Modifier_HeroUpgradeBonuses RTTI and its native
-    // serialization pair pin this layout, rather than a generic modifier cast.
-    if (reinterpret_cast<uintptr_t>(table) != base + 0x24cca80) continue;
-    if (table[42] != base + 0x49a510 || table[67] != base + 0x49a2f0 ||
-        table[68] != base + 0x49a340 || found)
-      return std::unexpected("upgrade bonuses: unsupported or duplicate modifier");
-    void* attached_owner = nullptr;
-    void* attached_pawn = nullptr;
-    std::memcpy(&attached_owner, row + 0x20, sizeof(attached_owner));
-    std::memcpy(&attached_pawn, row + 0xd0, sizeof(attached_pawn));
-    if (attached_owner != owner || attached_pawn != pawn || row[0x72])
-      return std::unexpected("upgrade bonuses: detached or inactive modifier");
-    found = row;
+    uintptr_t table = 0;
+    std::memcpy(&table, row, sizeof(table));
+    if (table != layout->table) continue;
+    void* owner = nullptr;
+    std::memcpy(&owner, row + layout->owner, sizeof(owner));
+    if (owner == pawn) return UpgradeBonuses{row, &*layout};
   }
-  if (!found) return std::unexpected("upgrade bonuses: verified modifier not found");
-  return found;
+  return std::unexpected("upgrade bonuses: modifier not found");
 #else
+  (void)pawn;
   return std::unexpected("upgrade bonuses require the Windows host");
 #endif
 }
 }  // namespace
 
 std::optional<std::array<float, 3>> ReadPawnUpgradeBonuses(void* pawn) {
-  auto modifier = UpgradeBonusModifier(pawn);
-  if (!modifier) return std::nullopt;
+  const auto bonuses = UpgradeBonusModifier(pawn);
+  if (!bonuses) return std::nullopt;
   std::array<float, 3> values;
-  std::memcpy(values.data(), *modifier + 0xd8, sizeof(values));
-  for (float value : values)
-    if (!std::isfinite(value)) return std::nullopt;
+  for (size_t i = 0; i < values.size(); ++i) {
+    std::memcpy(&values[i], bonuses->modifier + bonuses->layout->values[i], sizeof(float));
+    if (!std::isfinite(values[i])) return std::nullopt;
+  }
   return values;
 }
 
@@ -1920,22 +1968,19 @@ std::expected<void, std::string> RestorePawnUpgradeBonuses(void* pawn,
                                                            const std::array<float, 3>& values) {
   for (float value : values)
     if (!std::isfinite(value)) return std::unexpected("upgrade bonuses: nonfinite value");
-  auto modifier = UpgradeBonusModifier(pawn);
-  if (!modifier) return std::unexpected(modifier.error());
-#if defined(_WIN32)
-  const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(L"server.dll"));
-  using Notify = void (*)(void*);
-  const auto notify = reinterpret_cast<Notify>(base + 0x1513bc0);
-  // Native Deserialize (RVA 0x49a340) notifies before each changed scalar.
-  // Do not invoke it with a fabricated engine-protobuf object.
+  const auto bonuses = UpgradeBonusModifier(pawn);
+  if (!bonuses) return std::unexpected(bonuses.error());
+
+  // The modifier's own deserializer notifies before each changed field; this
+  // follows it instead of calling it with a fabricated engine message.
   for (size_t i = 0; i < values.size(); ++i) {
+    auto* field = bonuses->modifier + bonuses->layout->values[i];
     float current;
-    std::memcpy(&current, *modifier + 0xd8 + i * sizeof(float), sizeof(current));
+    std::memcpy(&current, field, sizeof(current));
     if (current == values[i]) continue;
-    notify(*modifier);
-    std::memcpy(*modifier + 0xd8 + i * sizeof(float), &values[i], sizeof(float));
+    bonuses->layout->notify(bonuses->modifier);
+    std::memcpy(field, &values[i], sizeof(float));
   }
-#endif
   const auto actual = ReadPawnUpgradeBonuses(pawn);
   if (!actual || *actual != values) return std::unexpected("upgrade bonuses: readback mismatch");
   return {};

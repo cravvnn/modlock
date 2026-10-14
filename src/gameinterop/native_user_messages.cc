@@ -101,11 +101,17 @@ std::expected<void, std::string> NativeUserMessages::Send(
   const auto size = message.ByteSizeLong();
   if (size == 0 || size > 4096) return std::unexpected("native user message size is invalid");
 #if defined(_WIN32)
+  const auto find_slot = ResolveVirtualSlot("network-messages.find-by-id");
+  const auto unserialize_slot = ResolveVirtualSlot("network-messages.unserialize");
+  const auto post_slot = ResolveVirtualSlot("game-event-system.post-event");
+  if (!find_slot) return std::unexpected(find_slot.error());
+  if (!unserialize_slot) return std::unexpected(unserialize_slot.error());
+  if (!post_slot) return std::unexpected(post_slot.error());
+
   // The installed engine compares all 32 bits of the message ID. A 16-bit
   // declaration leaves the upper argument bits unspecified on Windows x64.
   using Find = void* (*)(void*, int32_t);
-  auto* serializer =
-      NetworkMessagesMethod<Find>(messages_, kNetworkMessagesFindByIdSlot.index)(messages_, id);
+  auto* serializer = NetworkMessagesMethod<Find>(messages_, *find_slot)(messages_, id);
   if (!serializer) return std::unexpected("native user message serializer unavailable");
   using Allocate = void* (*)();
   Allocate allocate = nullptr;
@@ -136,8 +142,8 @@ std::expected<void, std::string> NativeUserMessages::Send(
   BitReader reader{bytes.data(), static_cast<int32_t>(encoded.size()),
                    static_cast<int32_t>(encoded.size() * 8)};
   using Unserialize = bool (*)(void*, BitReader&, void*, void*);
-  if (!NetworkMessagesMethod<Unserialize>(messages_, kNetworkMessagesUnserializeSlot.index)(
-          messages_, reader, native_message, nullptr) ||
+  if (!NetworkMessagesMethod<Unserialize>(messages_, *unserialize_slot)(messages_, reader,
+                                                                        native_message, nullptr) ||
       reader.overflow || reader.cursor != reader.bits)
     return std::unexpected("native user message decoding failed");
 
@@ -147,8 +153,8 @@ std::expected<void, std::string> NativeUserMessages::Send(
                         unsigned long, int32_t);
   // BUF_RELIABLE=1. PostEventAbstract copies the message before returning.
   // The client count is the mask's bit extent, including unselected lower slots.
-  reinterpret_cast<Post>(event_methods[kPostEventSlot.index])(
-      events_, -1, false, slot + 1, &recipients, serializer, native_message, 0, 1);
+  reinterpret_cast<Post>(event_methods[*post_slot])(events_, -1, false, slot + 1, &recipients,
+                                                    serializer, native_message, 0, 1);
   return {};
 #else
   (void)id;

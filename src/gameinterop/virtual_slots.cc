@@ -1,10 +1,14 @@
 #include "modlock/gameinterop/virtual_slots.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
 #include <functional>
+#include <map>
+#include <mutex>
 #include <optional>
 
+#include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/signature.h"
 
 namespace modlock::gameinterop {
@@ -105,15 +109,14 @@ std::vector<size_t> VtableEntries(const ModuleImage& image, size_t table) {
 }
 
 std::expected<std::vector<size_t>, std::string> MatchingSlots(const ModuleImage& image,
+                                                              size_t table,
                                                               const VirtualSlot& slot) {
-  const auto table = FindVtable(image, slot.class_name);
-  if (!table) return std::unexpected(table.error());
-  const auto pattern = ParseSignature(std::string(slot.shape), slot.pattern);
+  const auto pattern = ParseSignature(std::string(slot.id), slot.pattern);
   if (!pattern) return std::unexpected(pattern.error());
 
   // Match the pattern at each function's entry rather than scanning the image.
   const auto bytes = image.image_bytes();
-  const auto entries = VtableEntries(image, *table);
+  const auto entries = VtableEntries(image, table);
   std::vector<size_t> matches;
   for (size_t i = 0; i < entries.size(); ++i) {
     const auto entry = bytes.subspan(entries[i]);
@@ -122,6 +125,67 @@ std::expected<std::vector<size_t>, std::string> MatchingSlots(const ModuleImage&
     matches.push_back(i);
   }
   return matches;
+}
+
+#if defined(_WIN32)
+namespace {
+
+// Resolver keeps each slot's resolved index and each class's table, so every
+// table is found once per process. A module that is not mapped yet is not
+// kept, so a later call can still resolve it.
+class Resolver {
+ public:
+  std::expected<size_t, std::string> Resolve(const VirtualSlot& slot) {
+    const std::lock_guard lock(mutex_);
+    if (const auto found = slots_.find(slot.id); found != slots_.end()) return found->second;
+
+    const std::wstring module(slot.module.begin(), slot.module.end());
+    const auto image = MappedModuleImage::ForModule(module);
+    if (!image) return std::unexpected("slot '" + std::string(slot.id) + "': " + image.error());
+    auto index = Locate(*image, slot);
+    slots_.emplace(std::string(slot.id), index);
+    return index;
+  }
+
+ private:
+  std::expected<size_t, std::string> Locate(const ModuleImage& image, const VirtualSlot& slot) {
+    const std::string named = "slot '" + std::string(slot.id) + "'";
+    const auto key = std::string(slot.module) + ":" + std::string(slot.class_name);
+    auto table = tables_.find(key);
+    if (table == tables_.end())
+      table = tables_.emplace(key, FindVtable(image, slot.class_name)).first;
+    if (!table->second) return std::unexpected(named + ": " + table->second.error());
+
+    const auto matches = MatchingSlots(image, *table->second, slot);
+    if (!matches) return std::unexpected(named + ": " + matches.error());
+    if (matches->size() != 1) {
+      return std::unexpected(named + " matches " + std::to_string(matches->size()) +
+                             " functions of " + std::string(slot.class_name));
+    }
+    if (matches->front() != slot.index) {
+      std::fprintf(stderr, "[modlock] virtual slot %s moved from index %zu to %zu\n",
+                   std::string(slot.id).c_str(), slot.index, matches->front());
+    }
+    return matches->front();
+  }
+
+  std::mutex mutex_;
+  std::map<std::string, std::expected<size_t, std::string>, std::less<>> slots_;
+  std::map<std::string, std::expected<size_t, std::string>, std::less<>> tables_;
+};
+
+}  // namespace
+#endif
+
+std::expected<size_t, std::string> ResolveVirtualSlot(std::string_view id) {
+  const auto* slot = FindVirtualSlot(id);
+  if (!slot) return std::unexpected("slot '" + std::string(id) + "' is not recorded");
+#if defined(_WIN32)
+  static Resolver resolver;
+  return resolver.Resolve(*slot);
+#else
+  return slot->index;
+#endif
 }
 
 }  // namespace modlock::gameinterop

@@ -131,9 +131,73 @@ export const GameSignature: MessageType<GameSignature> = /* @__PURE__ */ createM
 });
 
 /**
+ * VirtualSlot is one virtual function modlock calls or hooks through its
+ * class's dispatch table. The function is the one table entry whose entry
+ * bytes match the pattern, so a game update that inserts a virtual ahead of it
+ * moves the index without breaking the slot.
+ *
+ * @generated from message modlock.gamedata.VirtualSlot
+ */
+export interface VirtualSlot {
+  /**
+   * Id is the stable name callers resolve, such as "engine-server.globals".
+   *
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+  /**
+   * Module is the file that defines the class, such as "server.dll".
+   *
+   * @generated from field: string module = 2;
+   */
+  module?: string;
+  /**
+   * ClassName is the implementing class's RTTI name, such as "CBaseEntity".
+   *
+   * @generated from field: string class_name = 3;
+   */
+  className?: string;
+  /**
+   * Index is the function's position in the class's primary table on the
+   * game build the pattern was taken from.
+   *
+   * @generated from field: uint32 index = 4;
+   */
+  index?: number;
+  /**
+   * Pattern matches the function's entry bytes in hex pairs; "??" marks a
+   * wildcard byte. It must match exactly one function of the table.
+   *
+   * @generated from field: string pattern = 5;
+   */
+  pattern?: string;
+  /**
+   * Shape names the function.
+   *
+   * @generated from field: string shape = 6;
+   */
+  shape?: string;
+
+};
+
+export const VirtualSlot: MessageType<VirtualSlot> = /* @__PURE__ */ createMessageType({
+    typeName: "modlock.gamedata.VirtualSlot",
+    fields: [
+        { no: 1, name: "id", kind: "scalar", T: ScalarType.STRING },
+        { no: 2, name: "module", kind: "scalar", T: ScalarType.STRING },
+        { no: 3, name: "class_name", kind: "scalar", T: ScalarType.STRING },
+        { no: 4, name: "index", kind: "scalar", T: ScalarType.UINT32 },
+        { no: 5, name: "pattern", kind: "scalar", T: ScalarType.STRING },
+        { no: 6, name: "shape", kind: "scalar", T: ScalarType.STRING },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
+/**
  * GameSignatureFile is the game data file modlock-host reads at start: every
- * byte pattern modlock scans for in the game binaries, keyed by the ids
- * callers resolve.
+ * byte pattern modlock scans for in the game binaries and every virtual
+ * function it calls through a dispatch table, keyed by the ids callers
+ * resolve.
  *
  * @generated from message modlock.gamedata.GameSignatureFile
  */
@@ -144,6 +208,12 @@ export interface GameSignatureFile {
    * @generated from field: repeated modlock.gamedata.GameSignature signatures = 1;
    */
   signatures?: GameSignature[];
+  /**
+   * Slots holds one entry per id, sorted by id.
+   *
+   * @generated from field: repeated modlock.gamedata.VirtualSlot slots = 2;
+   */
+  slots?: VirtualSlot[];
 
 };
 
@@ -151,6 +221,7 @@ export const GameSignatureFile: MessageType<GameSignatureFile> = /* @__PURE__ */
     typeName: "modlock.gamedata.GameSignatureFile",
     fields: [
         { no: 1, name: "signatures", kind: "message", T: () => GameSignature, repeated: true },
+        { no: 2, name: "slots", kind: "message", T: () => VirtualSlot, repeated: true },
     ] satisfies readonly PartialFieldInfo[],
     packedByDefault: true,
 });

@@ -23,7 +23,8 @@ struct EnumSchema {
   }
 
   EnumSchema() {
-    system_methods[kSchemaSystemFindTypeScopeSlot.index] = reinterpret_cast<void*>(&Scope);
+    system_methods[FindVirtualSlot("schema-system.find-type-scope")->index] =
+        reinterpret_cast<void*>(&Scope);
     scope_methods[3] = reinterpret_cast<void*>(&Enum);
     const uint16_t count = 2;
     std::memcpy(info.data() + 28, &count, sizeof(count));

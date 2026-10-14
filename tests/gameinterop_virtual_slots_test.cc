@@ -5,16 +5,13 @@
 #include <string>
 #include <vector>
 
-#include "modlock/gameinterop/signature.h"
 #include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
 
 using modlock::gameinterop::FindVtable;
-using modlock::gameinterop::kVirtualSlots;
 using modlock::gameinterop::MatchingSlots;
 using modlock::gameinterop::ModuleImage;
-using modlock::gameinterop::ParseSignature;
 using modlock::gameinterop::VirtualSlot;
 using modlock::gameinterop::VtableEntries;
 
@@ -64,17 +61,12 @@ class Image final : public ModuleImage {
 };
 
 VirtualSlot Slot(std::string_view class_name, size_t index, std::string_view pattern) {
-  return {.module = "test.dll",
+  return {.id = "test.method",
+          .module = "test.dll",
           .class_name = class_name,
           .index = index,
           .pattern = pattern,
           .shape = "void CThing::Method()"};
-}
-
-TEST(VirtualSlots, EveryPatternParses) {
-  for (const auto& slot : kVirtualSlots) {
-    EXPECT_TRUE(ParseSignature(std::string(slot.shape), slot.pattern)) << slot.shape;
-  }
 }
 
 TEST(VirtualSlots, FindsTableThroughTypeInformation) {
@@ -93,11 +85,11 @@ TEST(VirtualSlots, MissingClassIsAnError) {
 
 TEST(VirtualSlots, ReportsEveryMatchingIndex) {
   const Image image;
-  const auto unique = MatchingSlots(image, Slot("CThing", 1, "CC DD"));
+  const auto unique = MatchingSlots(image, kTable, Slot("CThing", 1, "CC DD"));
   ASSERT_TRUE(unique) << unique.error();
   EXPECT_EQ(*unique, (std::vector<size_t>{1}));
 
-  const auto shared = MatchingSlots(image, Slot("CThing", 0, "AA ??"));
+  const auto shared = MatchingSlots(image, kTable, Slot("CThing", 0, "AA ??"));
   ASSERT_TRUE(shared) << shared.error();
   EXPECT_EQ(*shared, (std::vector<size_t>{0, 2}));
 }

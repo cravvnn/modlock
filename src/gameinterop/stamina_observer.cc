@@ -175,6 +175,7 @@ struct StaminaObserver::Impl {
   static inline PostEvent original = nullptr;
   void* events = nullptr;
   void* messages = nullptr;
+  size_t serialize_slot = 0;
   DWORD frame_thread = 0;
   StaminaEvidenceTracker tracker;
   std::optional<ThunkOwner> owner;
@@ -219,8 +220,7 @@ struct StaminaObserver::Impl {
     BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                      static_cast<int32_t>(bytes.size() * 8)};
     using Serialize = bool (*)(void*, BitWriter&, const void*);
-    if (!NetworkMessagesMethod<Serialize>(messages, kNetworkMessagesSerializeSlot.index)(
-            messages, writer, message) ||
+    if (!NetworkMessagesMethod<Serialize>(messages, serialize_slot)(messages, writer, message) ||
         writer.overflow || writer.cursor <= 0 ||
         writer.cursor > static_cast<int32_t>(bytes.size() * 8) || writer.cursor % 8 != 0) {
       Trace("native event serialization failed");
@@ -251,11 +251,15 @@ std::expected<StaminaObserver, std::string> StaminaObserver::Install() {
   void* events = *resolved;
   const auto messages = ResolveEngineInterface(L"networksystem.dll", "NetworkMessagesVersion001");
   if (!messages) return std::unexpected(messages.error());
+  const auto post_slot = ResolveVirtualSlot("game-event-system.post-event");
+  const auto serialize_slot = ResolveVirtualSlot("network-messages.serialize");
+  if (!post_slot) return std::unexpected(post_slot.error());
+  if (!serialize_slot) return std::unexpected(serialize_slot.error());
   auto impl = std::make_unique<Impl>();
   impl->events = events;
   impl->messages = *messages;
-  auto hook = VtableSlotHook::Install(events, kPostEventSlot.index,
-                                      reinterpret_cast<void*>(&Impl::OnEvent));
+  impl->serialize_slot = *serialize_slot;
+  auto hook = VtableSlotHook::Install(events, *post_slot, reinterpret_cast<void*>(&Impl::OnEvent));
   if (!hook) return std::unexpected(hook.error());
   Impl::original = reinterpret_cast<Impl::PostEvent>(hook->Original());
   impl->owner.emplace(std::move(*hook), &Impl::Clear);

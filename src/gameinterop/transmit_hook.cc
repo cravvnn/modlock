@@ -62,8 +62,10 @@ TransmitHook::TransmitHook(ThunkOwner owner) : owner_(std::move(owner)) {}
 std::expected<TransmitHook, std::string> TransmitHook::Install(Handler handler) {
   const auto entities = ResolveEngineInterface(L"server.dll", kInterfaceVersion);
   if (!entities) return std::unexpected(entities.error());
-  auto hook = VtableSlotHook::Install(*entities, kCheckTransmitSlot.index,
-                                      reinterpret_cast<void*>(&CheckTransmitThunk));
+  const auto slot = ResolveVirtualSlot("game-entities.check-transmit");
+  if (!slot) return std::unexpected(slot.error());
+  auto hook =
+      VtableSlotHook::Install(*entities, *slot, reinterpret_cast<void*>(&CheckTransmitThunk));
   if (!hook) return std::unexpected(hook.error());
   g_check_transmit_original = hook->Original();
   g_on_transmit = std::move(handler);

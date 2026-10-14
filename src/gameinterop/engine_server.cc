@@ -24,23 +24,25 @@ std::expected<EngineServer, std::string> EngineServer::Resolve() {
 
 std::expected<EngineServer, std::string> EngineServer::Bind(void* instance) {
   if (!instance) return std::unexpected("engine server interface is null");
+  const auto slot = ResolveVirtualSlot("engine-server.server-command");
+  if (!slot) return std::unexpected(slot.error());
   auto** table = DispatchTableOf(instance);
-  if (!table || !table[kServerCommandSlot.index]) {
-    return std::unexpected("engine server command slot is unavailable");
-  }
+  if (!table || !table[*slot]) return std::unexpected("engine server command slot is unavailable");
   EngineServer server;
   server.instance_ = instance;
+  server.command_slot_ = *slot;
   return server;
 }
 
 std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadClock() const {
   if (!instance_) return std::unexpected("engine server interface is unavailable");
+  const auto slot = ResolveVirtualSlot("engine-server.globals");
+  if (!slot) return std::unexpected(slot.error());
   auto** table = DispatchTableOf(instance_);
-  if (!table || !table[kServerGlobalsSlot.index])
-    return std::unexpected("server globals slot is unavailable");
+  if (!table || !table[*slot]) return std::unexpected("server globals slot is unavailable");
   using GetGlobals = const void* (*)(void*);
-  const auto* globals = static_cast<const unsigned char*>(
-      reinterpret_cast<GetGlobals>(table[kServerGlobalsSlot.index])(instance_));
+  const auto* globals =
+      static_cast<const unsigned char*>(reinterpret_cast<GetGlobals>(table[*slot])(instance_));
   if (!globals) return std::unexpected("server simulation globals are unavailable");
   // CGlobalVarsBase x64 layout from the pinned SDK's globalvars_base.h:
   // curtime +0x30, tickcount +0x44, interval_per_tick +0x54. The callback's
@@ -66,15 +68,11 @@ std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadCloc
 
 bool EngineServer::ServerCommand(const char* command) const {
 #if defined(_WIN32)
-  if (instance_ == nullptr || command == nullptr) {
-    return false;
-  }
+  if (instance_ == nullptr || command == nullptr) return false;
   using ServerCommandFn = void (*)(void* self, const char* str);
   void** table = DispatchTableOf(instance_);
-  if (table == nullptr || table[kServerCommandSlot.index] == nullptr) {
-    return false;
-  }
-  reinterpret_cast<ServerCommandFn>(table[kServerCommandSlot.index])(instance_, command);
+  if (table == nullptr || table[command_slot_] == nullptr) return false;
+  reinterpret_cast<ServerCommandFn>(table[command_slot_])(instance_, command);
   return true;
 #else
   (void)command;

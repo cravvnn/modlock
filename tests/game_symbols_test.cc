@@ -11,13 +11,16 @@
 #include <string>
 
 #include "modlock/gameinterop/signature.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
 
 using modlock::gameinterop::FindGameSignature;
+using modlock::gameinterop::FindVirtualSlot;
 using modlock::gameinterop::GameModule;
 using modlock::gameinterop::GameSignature;
 using modlock::gameinterop::GameSignatures;
+using modlock::gameinterop::GameVirtualSlots;
 using modlock::gameinterop::LoadGameSignatures;
 using modlock::gameinterop::ModuleImage;
 using modlock::gameinterop::ResolveSignature;
@@ -142,11 +145,15 @@ signatures { id: "a.match" modules: GAME_MODULE_SERVER pattern: "DD" shape: "a r
 signatures { id: "c.no-module" pattern: "CC" }
 signatures { id: "d.bad-pattern" modules: GAME_MODULE_SERVER pattern: "ZZ" }
 signatures { modules: GAME_MODULE_SERVER pattern: "CC" }
+slots { id: "s.kept" module: "a.dll" class_name: "CThing" index: 3 pattern: "CC" }
+slots { id: "s.kept" module: "a.dll" class_name: "CThing" index: 4 pattern: "DD" }
+slots { id: "s.no-class" module: "a.dll" index: 3 pattern: "CC" }
 )"));
   ASSERT_TRUE(load) << load.error();
   EXPECT_EQ(load->loaded, 2);
-  ASSERT_EQ(load->skipped.size(), 4);
-  for (const auto id : {"a.match", "c.no-module", "d.bad-pattern"}) {
+  EXPECT_EQ(load->slots, 1);
+  ASSERT_EQ(load->skipped.size(), 6);
+  for (const auto id : {"a.match", "c.no-module", "d.bad-pattern", "s.kept", "s.no-class"}) {
     EXPECT_TRUE(std::ranges::any_of(load->skipped, [id](const auto& reason) {
       return reason.contains(id);
     })) << id;
@@ -161,6 +168,13 @@ signatures { modules: GAME_MODULE_SERVER pattern: "CC" }
   EXPECT_EQ(signatures[1].modules, GameModule::kClient | GameModule::kEngine);
   EXPECT_EQ(signatures[1].target, SignatureTarget::kCall);
   EXPECT_EQ(FindGameSignature("pawn.respawn"), nullptr);
+
+  ASSERT_EQ(GameVirtualSlots().size(), 1);
+  const auto* slot = FindVirtualSlot("s.kept");
+  ASSERT_NE(slot, nullptr);
+  EXPECT_EQ(slot->class_name, "CThing");
+  EXPECT_EQ(slot->index, 3);
+  EXPECT_EQ(slot->pattern, "CC");
 }
 
 TEST(GameSignatureLoad, UnreadableFilesKeepTheSignatures) {
@@ -179,7 +193,9 @@ TEST(GameSignatureLoad, ShippedFileLoadsWhole) {
   ASSERT_TRUE(load) << load.error();
   EXPECT_TRUE(load->skipped.empty()) << load->skipped.front();
   EXPECT_EQ(load->loaded, GameSignatures().size());
+  EXPECT_EQ(load->slots, GameVirtualSlots().size());
   EXPECT_NE(FindGameSignature("pawn.respawn"), nullptr);
+  EXPECT_NE(FindVirtualSlot("engine-server.globals"), nullptr);
 }
 
 }  // namespace

@@ -29,6 +29,46 @@ namespace _fl = ::google::protobuf::internal::field_layout;
 namespace modlock {
 namespace gamedata {
 
+inline constexpr VirtualSlot::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        id_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        module_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        class_name_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        pattern_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        shape_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        index_{0u} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR VirtualSlot::VirtualSlot(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(VirtualSlot_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct VirtualSlotDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR VirtualSlotDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~VirtualSlotDefaultTypeInternal() {}
+  union {
+    VirtualSlot _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT MODLOCK_API
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 VirtualSlotDefaultTypeInternal _VirtualSlot_default_instance_;
+
 inline constexpr GameSignature::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
@@ -69,7 +109,8 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT MODLOCK_API
 inline constexpr GameSignatureFile::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
-        signatures_{} {}
+        signatures_{},
+        slots_{} {}
 
 template <typename>
 PROTOBUF_CONSTEXPR GameSignatureFile::GameSignatureFile(::_pbi::ConstantInitialized)
@@ -101,9 +142,11 @@ const ::uint32_t
         protodesc_cold) = {
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::gamedata::GameSignatureFile, _impl_._has_bits_),
-        4, // hasbit index offset
+        5, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::modlock::gamedata::GameSignatureFile, _impl_.signatures_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::GameSignatureFile, _impl_.slots_),
         0,
+        1,
         0x085, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::gamedata::GameSignature, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::modlock::gamedata::GameSignature, _impl_._oneof_case_[0]),
@@ -121,44 +164,65 @@ const ::uint32_t
         ~0u,
         ~0u,
         3,
+        0x081, // bitmap
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_._has_bits_),
+        9, // hasbit index offset
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.id_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.module_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.class_name_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.index_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.pattern_),
+        PROTOBUF_FIELD_OFFSET(::modlock::gamedata::VirtualSlot, _impl_.shape_),
+        0,
+        1,
+        2,
+        5,
+        3,
+        4,
 };
 
 static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, sizeof(::modlock::gamedata::GameSignatureFile)},
-        {5, sizeof(::modlock::gamedata::GameSignature)},
+        {7, sizeof(::modlock::gamedata::GameSignature)},
+        {24, sizeof(::modlock::gamedata::VirtualSlot)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::modlock::gamedata::_GameSignatureFile_default_instance_._instance,
     &::modlock::gamedata::_GameSignature_default_instance_._instance,
+    &::modlock::gamedata::_VirtualSlot_default_instance_._instance,
 };
 const char descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     protodesc_cold) = {
     "\n>github.com/paralin/modlock/proto/modlo"
     "ck/game_signatures.proto\022\020modlock.gameda"
-    "ta\"H\n\021GameSignatureFile\0223\n\nsignatures\030\001 "
-    "\003(\0132\037.modlock.gamedata.GameSignature\"\242\001\n"
-    "\rGameSignature\022\n\n\002id\030\001 \001(\t\022-\n\007modules\030\002 "
-    "\003(\0162\034.modlock.gamedata.GameModule\022\017\n\007pat"
-    "tern\030\003 \001(\t\022\021\n\007call_at\030\004 \001(\rH\000\022\031\n\017rip_rel"
-    "ative_at\030\005 \001(\rH\000\022\r\n\005shape\030\006 \001(\tB\010\n\006targe"
-    "t*m\n\nGameModule\022\027\n\023GAME_MODULE_UNKNOWN\020\000"
-    "\022\026\n\022GAME_MODULE_SERVER\020\001\022\026\n\022GAME_MODULE_"
-    "CLIENT\020\002\022\026\n\022GAME_MODULE_ENGINE\020\003B3Z1gith"
-    "ub.com/paralin/modlock/proto/modlock/gam"
-    "edatab\006proto3"
+    "ta\"v\n\021GameSignatureFile\0223\n\nsignatures\030\001 "
+    "\003(\0132\037.modlock.gamedata.GameSignature\022,\n\005"
+    "slots\030\002 \003(\0132\035.modlock.gamedata.VirtualSl"
+    "ot\"\242\001\n\rGameSignature\022\n\n\002id\030\001 \001(\t\022-\n\007modu"
+    "les\030\002 \003(\0162\034.modlock.gamedata.GameModule\022"
+    "\017\n\007pattern\030\003 \001(\t\022\021\n\007call_at\030\004 \001(\rH\000\022\031\n\017r"
+    "ip_relative_at\030\005 \001(\rH\000\022\r\n\005shape\030\006 \001(\tB\010\n"
+    "\006target\"l\n\013VirtualSlot\022\n\n\002id\030\001 \001(\t\022\016\n\006mo"
+    "dule\030\002 \001(\t\022\022\n\nclass_name\030\003 \001(\t\022\r\n\005index\030"
+    "\004 \001(\r\022\017\n\007pattern\030\005 \001(\t\022\r\n\005shape\030\006 \001(\t*m\n"
+    "\nGameModule\022\027\n\023GAME_MODULE_UNKNOWN\020\000\022\026\n\022"
+    "GAME_MODULE_SERVER\020\001\022\026\n\022GAME_MODULE_CLIE"
+    "NT\020\002\022\026\n\022GAME_MODULE_ENGINE\020\003B3Z1github.c"
+    "om/paralin/modlock/proto/modlock/gamedat"
+    "ab\006proto3"
 };
 static ::absl::once_flag descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto = {
     false,
     false,
-    493,
+    649,
     descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto,
     "github.com/paralin/modlock/proto/modlock/game_signatures.proto",
     &descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto_once,
     nullptr,
     0,
-    2,
+    3,
     schemas,
     file_default_instances,
     TableStruct_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto::offsets,
@@ -198,7 +262,8 @@ PROTOBUF_NDEBUG_INLINE GameSignatureFile::Impl_::Impl_(
     [[maybe_unused]] const ::modlock::gamedata::GameSignatureFile& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
-        signatures_{visibility, arena, from.signatures_} {}
+        signatures_{visibility, arena, from.signatures_},
+        slots_{visibility, arena, from.slots_} {}
 
 GameSignatureFile::GameSignatureFile(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -220,7 +285,8 @@ PROTOBUF_NDEBUG_INLINE GameSignatureFile::Impl_::Impl_(
     [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
     [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
       : _cached_size_{0},
-        signatures_{visibility, arena} {}
+        signatures_{visibility, arena},
+        slots_{visibility, arena} {}
 
 inline void GameSignatureFile::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -248,6 +314,10 @@ constexpr auto GameSignatureFile::InternalNewImpl_() {
   constexpr auto arena_bits = ::google::protobuf::internal::EncodePlacementArenaOffsets({
       PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_.signatures_) +
           decltype(GameSignatureFile::_impl_.signatures_)::
+              InternalGetArenaOffset(
+                  ::google::protobuf::Message::internal_visibility()),
+      PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_.slots_) +
+          decltype(GameSignatureFile::_impl_.slots_)::
               InternalGetArenaOffset(
                   ::google::protobuf::Message::internal_visibility()),
   });
@@ -294,17 +364,17 @@ GameSignatureFile::GetClassData() const {
   return GameSignatureFile_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 1, 0, 2>
+const ::_pbi::TcParseTable<1, 2, 2, 0, 2>
 GameSignatureFile::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_._has_bits_),
     0, // no _extensions_
-    1, 0,  // max_field_number, fast_idx_mask
+    2, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967294,  // skipmap
+    4294967292,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    1,  // num_field_entries
-    1,  // num_aux_entries
+    2,  // num_field_entries
+    2,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     GameSignatureFile_class_data_.base(),
     nullptr,  // post_loop_handler
@@ -313,6 +383,10 @@ GameSignatureFile::_table_ = {
     ::_pbi::TcParser::GetTable<::modlock::gamedata::GameSignatureFile>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
+    // repeated .modlock.gamedata.VirtualSlot slots = 2;
+    {::_pbi::TcParser::FastMtR1,
+     {18, 1, 1,
+      PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_.slots_)}},
     // repeated .modlock.gamedata.GameSignature signatures = 1;
     {::_pbi::TcParser::FastMtR1,
      {10, 0, 0,
@@ -322,9 +396,12 @@ GameSignatureFile::_table_ = {
   }}, {{
     // repeated .modlock.gamedata.GameSignature signatures = 1;
     {PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_.signatures_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
+    // repeated .modlock.gamedata.VirtualSlot slots = 2;
+    {PROTOBUF_FIELD_OFFSET(GameSignatureFile, _impl_.slots_), _Internal::kHasBitsOffset + 1, 1, (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::modlock::gamedata::GameSignature>()},
+      {::_pbi::TcParser::GetTable<::modlock::gamedata::VirtualSlot>()},
   }},
   {{
   }},
@@ -337,8 +414,13 @@ PROTOBUF_NOINLINE void GameSignatureFile::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
-    _impl_.signatures_.Clear();
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
+      _impl_.signatures_.Clear();
+    }
+    if (CheckHasBitForRepeated(cached_has_bits, 0x00000002U)) {
+      _impl_.slots_.Clear();
+    }
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -376,6 +458,19 @@ PROTOBUF_NOINLINE void GameSignatureFile::Clear() {
     }
   }
 
+  // repeated .modlock.gamedata.VirtualSlot slots = 2;
+  if (CheckHasBitForRepeated(cached_has_bits, 0x00000002U)) {
+    for (unsigned i = 0, n = static_cast<unsigned>(
+                             this_._internal_slots_size());
+         i < n; i++) {
+      const auto& repfield = this_._internal_slots().Get(i);
+      target =
+          ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+              2, repfield, repfield.GetCachedSize(),
+              target, stream);
+    }
+  }
+
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
     target =
         ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -400,12 +495,19 @@ PROTOBUF_NOINLINE void GameSignatureFile::Clear() {
   (void)cached_has_bits;
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
-   {
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
     // repeated .modlock.gamedata.GameSignature signatures = 1;
-    cached_has_bits = this_._impl_._has_bits_[0];
     if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
       total_size += 1UL * this_._internal_signatures_size();
       for (const auto& msg : this_._internal_signatures()) {
+        total_size += ::google::protobuf::internal::WireFormatLite::MessageSize(msg);
+      }
+    }
+    // repeated .modlock.gamedata.VirtualSlot slots = 2;
+    if (CheckHasBitForRepeated(cached_has_bits, 0x00000002U)) {
+      total_size += 1UL * this_._internal_slots_size();
+      for (const auto& msg : this_._internal_slots()) {
         total_size += ::google::protobuf::internal::WireFormatLite::MessageSize(msg);
       }
     }
@@ -429,10 +531,17 @@ void GameSignatureFile::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
-    _this->_internal_mutable_signatures()->InternalMergeFromWithArena(
-        ::google::protobuf::MessageLite::internal_visibility(), arena,
-        from._internal_signatures());
+  if (BatchCheckHasBit(cached_has_bits, 0x00000003U)) {
+    if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
+      _this->_internal_mutable_signatures()->InternalMergeFromWithArena(
+          ::google::protobuf::MessageLite::internal_visibility(), arena,
+          from._internal_signatures());
+    }
+    if (CheckHasBitForRepeated(cached_has_bits, 0x00000002U)) {
+      _this->_internal_mutable_slots()->InternalMergeFromWithArena(
+          ::google::protobuf::MessageLite::internal_visibility(), arena,
+          from._internal_slots());
+    }
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
@@ -452,6 +561,7 @@ void GameSignatureFile::InternalSwap(GameSignatureFile* PROTOBUF_RESTRICT PROTOB
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   _impl_.signatures_.InternalSwap(&other->_impl_.signatures_);
+  _impl_.slots_.InternalSwap(&other->_impl_.slots_);
 }
 
 ::google::protobuf::Metadata GameSignatureFile::GetMetadata() const {
@@ -967,6 +1077,479 @@ void GameSignature::InternalSwap(GameSignature* PROTOBUF_RESTRICT PROTOBUF_NONNU
 }
 
 ::google::protobuf::Metadata GameSignature::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class VirtualSlot::_Internal {
+ public:
+  using HasBits =
+      decltype(::std::declval<VirtualSlot>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_._has_bits_);
+};
+
+VirtualSlot::VirtualSlot(::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, VirtualSlot_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:modlock.gamedata.VirtualSlot)
+}
+PROTOBUF_NDEBUG_INLINE VirtualSlot::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+    [[maybe_unused]] const ::modlock::gamedata::VirtualSlot& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        id_(arena, from.id_),
+        module_(arena, from.module_),
+        class_name_(arena, from.class_name_),
+        pattern_(arena, from.pattern_),
+        shape_(arena, from.shape_) {}
+
+VirtualSlot::VirtualSlot(
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
+    const VirtualSlot& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, VirtualSlot_class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  VirtualSlot* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  _impl_.index_ = from._impl_.index_;
+
+  // @@protoc_insertion_point(copy_constructor:modlock.gamedata.VirtualSlot)
+}
+PROTOBUF_NDEBUG_INLINE VirtualSlot::Impl_::Impl_(
+    [[maybe_unused]] ::google::protobuf::internal::InternalVisibility visibility,
+    [[maybe_unused]] ::google::protobuf::Arena* PROTOBUF_NULLABLE arena)
+      : _cached_size_{0},
+        id_(arena),
+        module_(arena),
+        class_name_(arena),
+        pattern_(arena),
+        shape_(arena) {}
+
+inline void VirtualSlot::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.index_ = {};
+}
+VirtualSlot::~VirtualSlot() {
+  // @@protoc_insertion_point(destructor:modlock.gamedata.VirtualSlot)
+  SharedDtor(*this);
+}
+inline void VirtualSlot::SharedDtor(MessageLite& self) {
+  VirtualSlot& this_ = static_cast<VirtualSlot&>(self);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.id_.Destroy();
+  this_._impl_.module_.Destroy();
+  this_._impl_.class_name_.Destroy();
+  this_._impl_.pattern_.Destroy();
+  this_._impl_.shape_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* PROTOBUF_NONNULL VirtualSlot::PlacementNew_(
+    const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+    ::google::protobuf::Arena* PROTOBUF_NULLABLE arena) {
+  return ::new (mem) VirtualSlot(arena);
+}
+constexpr auto VirtualSlot::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(VirtualSlot),
+                                            alignof(VirtualSlot));
+}
+constexpr auto VirtualSlot::InternalGenerateClassData_() {
+  return ::google::protobuf::internal::ClassDataFull{
+      ::google::protobuf::internal::ClassData{
+          &_VirtualSlot_default_instance_._instance,
+          &_table_.header,
+          nullptr,  // OnDemandRegisterArenaDtor
+          nullptr,  // IsInitialized
+          &VirtualSlot::MergeImpl,
+          ::google::protobuf::Message::GetNewImpl<VirtualSlot>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+          &VirtualSlot::SharedDtor,
+          ::google::protobuf::Message::GetClearImpl<VirtualSlot>(), &VirtualSlot::ByteSizeLong,
+              &VirtualSlot::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_._cached_size_),
+          false,
+      },
+      &VirtualSlot::kDescriptorMethods,
+      &descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fgame_5fsignatures_2eproto,
+      nullptr,  // tracker
+  };
+}
+
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 const
+    ::google::protobuf::internal::ClassDataFull VirtualSlot_class_data_ =
+        VirtualSlot::InternalGenerateClassData_();
+
+PROTOBUF_ATTRIBUTE_WEAK const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL
+VirtualSlot::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&VirtualSlot_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(VirtualSlot_class_data_.tc_table);
+  return VirtualSlot_class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<3, 6, 0, 67, 2>
+VirtualSlot::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_._has_bits_),
+    0, // no _extensions_
+    6, 56,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967232,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    6,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    VirtualSlot_class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::modlock::gamedata::VirtualSlot>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    {::_pbi::TcParser::MiniParse, {}},
+    // string id = 1;
+    {::_pbi::TcParser::FastUS1,
+     {10, 0, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.id_)}},
+    // string module = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 1, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.module_)}},
+    // string class_name = 3;
+    {::_pbi::TcParser::FastUS1,
+     {26, 2, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.class_name_)}},
+    // uint32 index = 4;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(VirtualSlot, _impl_.index_), 5>(),
+     {32, 5, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.index_)}},
+    // string pattern = 5;
+    {::_pbi::TcParser::FastUS1,
+     {42, 3, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.pattern_)}},
+    // string shape = 6;
+    {::_pbi::TcParser::FastUS1,
+     {50, 4, 0,
+      PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.shape_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string id = 1;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.id_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string module = 2;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.module_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string class_name = 3;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.class_name_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // uint32 index = 4;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.index_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kUInt32)},
+    // string pattern = 5;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.pattern_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string shape = 6;
+    {PROTOBUF_FIELD_OFFSET(VirtualSlot, _impl_.shape_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\34\2\6\12\0\7\5\0"
+    "modlock.gamedata.VirtualSlot"
+    "id"
+    "module"
+    "class_name"
+    "pattern"
+    "shape"
+  }},
+};
+PROTOBUF_NOINLINE void VirtualSlot::Clear() {
+// @@protoc_insertion_point(message_clear_start:modlock.gamedata.VirtualSlot)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      _impl_.id_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      _impl_.module_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      _impl_.class_name_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      _impl_.pattern_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      _impl_.shape_.ClearNonDefaultToEmpty();
+    }
+  }
+  _impl_.index_ = 0u;
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::uint8_t* PROTOBUF_NONNULL VirtualSlot::_InternalSerialize(
+    const ::google::protobuf::MessageLite& base, ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) {
+  const VirtualSlot& this_ = static_cast<const VirtualSlot&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::uint8_t* PROTOBUF_NONNULL VirtualSlot::_InternalSerialize(
+    ::uint8_t* PROTOBUF_NONNULL target,
+    ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+  const VirtualSlot& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    this_.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(serialize_to_array_start:modlock.gamedata.VirtualSlot)
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = this_._impl_._has_bits_[0];
+  // string id = 1;
+  if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+    if (!this_._internal_id().empty()) {
+      const ::std::string& _s = this_._internal_id();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.gamedata.VirtualSlot.id");
+      target = stream->WriteStringMaybeAliased(1, _s, target);
+    }
+  }
+
+  // string module = 2;
+  if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+    if (!this_._internal_module().empty()) {
+      const ::std::string& _s = this_._internal_module();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.gamedata.VirtualSlot.module");
+      target = stream->WriteStringMaybeAliased(2, _s, target);
+    }
+  }
+
+  // string class_name = 3;
+  if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+    if (!this_._internal_class_name().empty()) {
+      const ::std::string& _s = this_._internal_class_name();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.gamedata.VirtualSlot.class_name");
+      target = stream->WriteStringMaybeAliased(3, _s, target);
+    }
+  }
+
+  // uint32 index = 4;
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (this_._internal_index() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteUInt32ToArray(
+          4, this_._internal_index(), target);
+    }
+  }
+
+  // string pattern = 5;
+  if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+    if (!this_._internal_pattern().empty()) {
+      const ::std::string& _s = this_._internal_pattern();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.gamedata.VirtualSlot.pattern");
+      target = stream->WriteStringMaybeAliased(5, _s, target);
+    }
+  }
+
+  // string shape = 6;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (!this_._internal_shape().empty()) {
+      const ::std::string& _s = this_._internal_shape();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.gamedata.VirtualSlot.shape");
+      target = stream->WriteStringMaybeAliased(6, _s, target);
+    }
+  }
+
+  if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+    target =
+        ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+            this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:modlock.gamedata.VirtualSlot)
+  return target;
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+::size_t VirtualSlot::ByteSizeLong(const MessageLite& base) {
+  const VirtualSlot& this_ = static_cast<const VirtualSlot&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+::size_t VirtualSlot::ByteSizeLong() const {
+  const VirtualSlot& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(message_byte_size_start:modlock.gamedata.VirtualSlot)
+  ::size_t total_size = 0;
+
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void)cached_has_bits;
+
+  ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+  cached_has_bits = this_._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
+    // string id = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!this_._internal_id().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_id());
+      }
+    }
+    // string module = 2;
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!this_._internal_module().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_module());
+      }
+    }
+    // string class_name = 3;
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (!this_._internal_class_name().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_class_name());
+      }
+    }
+    // string pattern = 5;
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (!this_._internal_pattern().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_pattern());
+      }
+    }
+    // string shape = 6;
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!this_._internal_shape().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_shape());
+      }
+    }
+    // uint32 index = 4;
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+      if (this_._internal_index() != 0) {
+        total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(
+            this_._internal_index());
+      }
+    }
+  }
+  return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                             &this_._impl_._cached_size_);
+}
+
+void VirtualSlot::MergeImpl(::google::protobuf::MessageLite& to_msg,
+                            const ::google::protobuf::MessageLite& from_msg) {
+   auto* const _this =
+      static_cast<VirtualSlot*>(&to_msg);
+  auto& from = static_cast<const VirtualSlot&>(from_msg);
+  if constexpr (::_pbi::DebugHardenCheckHasBitConsistency()) {
+    from.CheckHasBitConsistency();
+  }
+  // @@protoc_insertion_point(class_specific_merge_from_start:modlock.gamedata.VirtualSlot)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void)cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
+    if (CheckHasBit(cached_has_bits, 0x00000001U)) {
+      if (!from._internal_id().empty()) {
+        _this->_internal_set_id(from._internal_id());
+      } else {
+        if (_this->_impl_.id_.IsDefault()) {
+          _this->_internal_set_id("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000002U)) {
+      if (!from._internal_module().empty()) {
+        _this->_internal_set_module(from._internal_module());
+      } else {
+        if (_this->_impl_.module_.IsDefault()) {
+          _this->_internal_set_module("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000004U)) {
+      if (!from._internal_class_name().empty()) {
+        _this->_internal_set_class_name(from._internal_class_name());
+      } else {
+        if (_this->_impl_.class_name_.IsDefault()) {
+          _this->_internal_set_class_name("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000008U)) {
+      if (!from._internal_pattern().empty()) {
+        _this->_internal_set_pattern(from._internal_pattern());
+      } else {
+        if (_this->_impl_.pattern_.IsDefault()) {
+          _this->_internal_set_pattern("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!from._internal_shape().empty()) {
+        _this->_internal_set_shape(from._internal_shape());
+      } else {
+        if (_this->_impl_.shape_.IsDefault()) {
+          _this->_internal_set_shape("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+      if (from._internal_index() != 0) {
+        _this->_impl_.index_ = from._impl_.index_;
+      }
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+}
+
+void VirtualSlot::CopyFrom(const VirtualSlot& from) {
+  // @@protoc_insertion_point(class_specific_copy_from_start:modlock.gamedata.VirtualSlot)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void VirtualSlot::InternalSwap(VirtualSlot* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
+  using ::std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.id_, &other->_impl_.id_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.module_, &other->_impl_.module_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.class_name_, &other->_impl_.class_name_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.pattern_, &other->_impl_.pattern_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.shape_, &other->_impl_.shape_, arena);
+  swap(_impl_.index_, other->_impl_.index_);
+}
+
+::google::protobuf::Metadata VirtualSlot::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // @@protoc_insertion_point(namespace_scope)

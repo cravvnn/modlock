@@ -1,6 +1,8 @@
 #include <charconv>
 #include <cstdlib>
+#include <expected>
 #include <filesystem>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -33,6 +35,8 @@ void Help() {
                "  --connect ADDRESS   Run a game client that joins ADDRESS instead of a server\n"
                "  --engine-args ARGS  Append engine command-line arguments\n"
                "  --settings PATH     Keep players' mod settings in the JSON file PATH\n"
+               "  --game-data PATH    Read signatures and virtual slots from PATH instead\n"
+               "                      of the game_signatures.txtpb beside the host\n"
                "  --control ADDRESS   Report to and take reloads from the controller at\n"
                "                      ADDRESS, a host and port\n"
                "  --dump DIRECTORY    Start the server, write its schemas, entity classes and\n"
@@ -51,19 +55,27 @@ std::optional<uint16_t> Port(std::string_view value) {
   return static_cast<uint16_t>(port);
 }
 
-// LoadSignatures reads the game data file and logs how many entries it loaded
-// and every entry it skips, so a broken entry disables only the features that
-// resolve it.
-void LoadSignatures(const std::filesystem::path& path) {
-  const auto load = modlock::gameinterop::LoadGameSignatures(path);
+// LoadSignatures reads the first readable game data file of paths and logs how
+// many entries it loaded and every entry it skips, so a broken entry disables
+// only the features that resolve it. With none readable, the built-in game data
+// stays.
+void LoadSignatures(std::initializer_list<std::filesystem::path> paths) {
+  std::expected<modlock::gameinterop::GameSignatureLoad, std::string> load =
+      std::unexpected("no game data file");
+  for (const auto& path : paths) {
+    if (path.empty()) continue;
+    load = modlock::gameinterop::LoadGameSignatures(path);
+    if (load) break;
+    std::cerr << "[modlock] " << load.error() << '\n';
+  }
   if (!load) {
-    std::cerr << "[modlock] " << load.error() << "; using the built-in signatures\n";
+    std::cerr << "[modlock] using the built-in game data\n";
     return;
   }
-  std::cerr << "[modlock] game signatures: " << load->loaded << " loaded, " << load->skipped.size()
-            << " skipped\n";
+  std::cerr << "[modlock] game data: " << load->loaded << " signatures and " << load->slots
+            << " virtual slots loaded, " << load->skipped.size() << " skipped\n";
   for (const auto& skipped : load->skipped) {
-    std::cerr << "[modlock] game signature skipped: " << skipped << '\n';
+    std::cerr << "[modlock] game data entry skipped: " << skipped << '\n';
   }
 }
 
@@ -91,6 +103,7 @@ int main(int argc, char** argv) {
   std::string_view control;
   std::filesystem::path settings_file;
   std::filesystem::path dump_directory;
+  std::filesystem::path game_data;
   modlock::net::LaunchConfig launch;
   bool check_only = false;
   int plugin_argc = 0;
@@ -125,7 +138,8 @@ int main(int argc, char** argv) {
     }
     if (argument != "--plugin" && argument != "--game-dir" && argument != "--hostport" &&
         argument != "--map" && argument != "--connect" && argument != "--engine-args" &&
-        argument != "--control" && argument != "--settings" && argument != "--dump") {
+        argument != "--control" && argument != "--settings" && argument != "--dump" &&
+        argument != "--game-data") {
       std::cerr << "Unknown option: " << argument << ". Use --help for usage.\n";
       return 2;
     }
@@ -139,6 +153,7 @@ int main(int argc, char** argv) {
     if (argument == "--control") control = value;
     if (argument == "--settings") settings_file = value;
     if (argument == "--dump") dump_directory = value;
+    if (argument == "--game-data") game_data = value;
     if (argument == "--connect") {
       if (value.empty() ||
           value.find_first_not_of(
@@ -173,9 +188,10 @@ int main(int argc, char** argv) {
     std::cerr << "Select a plugin with --plugin PATH. Use --help for usage.\n";
     return 2;
   }
-  // The game data file and the interpreter modules ship beside the executable.
+  // The game data file and the interpreter modules ship beside the executable;
+  // a newer game data file may come from the launcher.
   const auto directory = std::filesystem::absolute(argv[0]).parent_path();
-  LoadSignatures(directory / "game_signatures.txtpb");
+  LoadSignatures({game_data, directory / "game_signatures.txtpb"});
 
   modlock::EngineHost engine;
   if (!check_only) {

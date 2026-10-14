@@ -58,12 +58,15 @@ func (x GameModule) String() string {
 }
 
 // GameSignatureFile is the game data file modlock-host reads at start: every
-// byte pattern modlock scans for in the game binaries, keyed by the ids
-// callers resolve.
+// byte pattern modlock scans for in the game binaries and every virtual
+// function it calls through a dispatch table, keyed by the ids callers
+// resolve.
 type GameSignatureFile struct {
 	unknownFields []byte
 	// Signatures holds one entry per id, sorted by id.
 	Signatures []*GameSignature `protobuf:"bytes,1,rep,name=signatures,proto3" json:"signatures,omitempty"`
+	// Slots holds one entry per id, sorted by id.
+	Slots []*VirtualSlot `protobuf:"bytes,2,rep,name=slots,proto3" json:"slots,omitempty"`
 }
 
 func (x *GameSignatureFile) Reset() {
@@ -75,6 +78,13 @@ func (*GameSignatureFile) ProtoMessage() {}
 func (x *GameSignatureFile) GetSignatures() []*GameSignature {
 	if x != nil {
 		return x.Signatures
+	}
+	return nil
+}
+
+func (x *GameSignatureFile) GetSlots() []*VirtualSlot {
+	if x != nil {
+		return x.Slots
 	}
 	return nil
 }
@@ -177,12 +187,83 @@ func (*GameSignature_CallAt) isGameSignature_Target() {}
 
 func (*GameSignature_RipRelativeAt) isGameSignature_Target() {}
 
+// VirtualSlot is one virtual function modlock calls or hooks through its
+// class's dispatch table. The function is the one table entry whose entry
+// bytes match the pattern, so a game update that inserts a virtual ahead of it
+// moves the index without breaking the slot.
+type VirtualSlot struct {
+	unknownFields []byte
+	// Id is the stable name callers resolve, such as "engine-server.globals".
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Module is the file that defines the class, such as "server.dll".
+	Module string `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
+	// ClassName is the implementing class's RTTI name, such as "CBaseEntity".
+	ClassName string `protobuf:"bytes,3,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
+	// Index is the function's position in the class's primary table on the
+	// game build the pattern was taken from.
+	Index uint32 `protobuf:"varint,4,opt,name=index,proto3" json:"index,omitempty"`
+	// Pattern matches the function's entry bytes in hex pairs; "??" marks a
+	// wildcard byte. It must match exactly one function of the table.
+	Pattern string `protobuf:"bytes,5,opt,name=pattern,proto3" json:"pattern,omitempty"`
+	// Shape names the function.
+	Shape string `protobuf:"bytes,6,opt,name=shape,proto3" json:"shape,omitempty"`
+}
+
+func (x *VirtualSlot) Reset() {
+	*x = VirtualSlot{}
+}
+
+func (*VirtualSlot) ProtoMessage() {}
+
+func (x *VirtualSlot) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *VirtualSlot) GetModule() string {
+	if x != nil {
+		return x.Module
+	}
+	return ""
+}
+
+func (x *VirtualSlot) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *VirtualSlot) GetIndex() uint32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *VirtualSlot) GetPattern() string {
+	if x != nil {
+		return x.Pattern
+	}
+	return ""
+}
+
+func (x *VirtualSlot) GetShape() string {
+	if x != nil {
+		return x.Shape
+	}
+	return ""
+}
+
 func (m *GameSignatureFile) CloneVT() *GameSignatureFile {
 	if m == nil {
 		return (*GameSignatureFile)(nil)
 	}
 	r := new(GameSignatureFile)
 	r.Signatures = protobuf_go_lite.CloneVTSlice(m.Signatures)
+	r.Slots = protobuf_go_lite.CloneVTSlice(m.Slots)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -241,6 +322,27 @@ func (m *GameSignature_RipRelativeAt) CloneOneofVT() isGameSignature_Target {
 	return m.CloneVT()
 }
 
+func (m *VirtualSlot) CloneVT() *VirtualSlot {
+	if m == nil {
+		return (*VirtualSlot)(nil)
+	}
+	r := new(VirtualSlot)
+	r.Id = m.Id
+	r.Module = m.Module
+	r.ClassName = m.ClassName
+	r.Index = m.Index
+	r.Pattern = m.Pattern
+	r.Shape = m.Shape
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *VirtualSlot) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (this *GameSignatureFile) EqualVT(that *GameSignatureFile) bool {
 	if this == that {
 		return true
@@ -248,6 +350,9 @@ func (this *GameSignatureFile) EqualVT(that *GameSignatureFile) bool {
 		return false
 	}
 	if !protobuf_go_lite.EqualVTSliceImplicit(this.Signatures, that.Signatures, func() *GameSignature { return &GameSignature{} }) {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Slots, that.Slots, func() *VirtualSlot { return &VirtualSlot{} }) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -334,6 +439,41 @@ func (this *GameSignature_RipRelativeAt) EqualVT(thatIface isGameSignature_Targe
 	return true
 }
 
+func (this *VirtualSlot) EqualVT(that *VirtualSlot) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Id != that.Id {
+		return false
+	}
+	if this.Module != that.Module {
+		return false
+	}
+	if this.ClassName != that.ClassName {
+		return false
+	}
+	if this.Index != that.Index {
+		return false
+	}
+	if this.Pattern != that.Pattern {
+		return false
+	}
+	if this.Shape != that.Shape {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *VirtualSlot) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*VirtualSlot)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
 // MarshalProtoJSON marshals the GameModule to JSON.
 func (x GameModule) MarshalProtoJSON(s *json.MarshalState) {
 	s.WriteEnum(int32(x), GameModule_name)
@@ -393,6 +533,17 @@ func (x *GameSignatureFile) MarshalProtoJSON(s *json.MarshalState) {
 		}
 		s.WriteArrayEnd()
 	}
+	if len(x.Slots) > 0 || s.HasField("slots") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("slots")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Slots {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("slots"))
+		}
+		s.WriteArrayEnd()
+	}
 	s.WriteObjectEnd()
 }
 
@@ -427,6 +578,24 @@ func (x *GameSignatureFile) UnmarshalProtoJSON(s *json.UnmarshalState) {
 					return
 				}
 				x.Signatures = append(x.Signatures, v)
+			})
+		case "slots":
+			s.AddField("slots")
+			if s.ReadNil() {
+				x.Slots = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Slots = append(x.Slots, nil)
+					return
+				}
+				v := &VirtualSlot{}
+				v.UnmarshalProtoJSON(s.WithField("slots", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Slots = append(x.Slots, v)
 			})
 		}
 	})
@@ -539,6 +708,88 @@ func (x *GameSignature) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the VirtualSlot message to JSON.
+func (x *VirtualSlot) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Id != "" || s.HasField("id") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("id")
+		s.WriteString(x.Id)
+	}
+	if x.Module != "" || s.HasField("module") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("module")
+		s.WriteString(x.Module)
+	}
+	if x.ClassName != "" || s.HasField("className") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("className")
+		s.WriteString(x.ClassName)
+	}
+	if x.Index != 0 || s.HasField("index") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("index")
+		s.WriteUint32(x.Index)
+	}
+	if x.Pattern != "" || s.HasField("pattern") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("pattern")
+		s.WriteString(x.Pattern)
+	}
+	if x.Shape != "" || s.HasField("shape") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("shape")
+		s.WriteString(x.Shape)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the VirtualSlot to JSON.
+func (x *VirtualSlot) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the VirtualSlot message from JSON.
+func (x *VirtualSlot) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "id":
+			s.AddField("id")
+			x.Id = s.ReadString()
+		case "module":
+			s.AddField("module")
+			x.Module = s.ReadString()
+		case "class_name", "className":
+			s.AddField("class_name")
+			x.ClassName = s.ReadString()
+		case "index":
+			s.AddField("index")
+			x.Index = s.ReadUint32()
+		case "pattern":
+			s.AddField("pattern")
+			x.Pattern = s.ReadString()
+		case "shape":
+			s.AddField("shape")
+			x.Shape = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the VirtualSlot from JSON.
+func (x *VirtualSlot) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 func (m *GameSignatureFile) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -567,6 +818,18 @@ func (m *GameSignatureFile) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	_ = l
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Slots) > 0 {
+		for iNdEx := len(m.Slots) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Slots[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x12
+		}
 	}
 	if len(m.Signatures) > 0 {
 		for iNdEx := len(m.Signatures) - 1; iNdEx >= 0; iNdEx-- {
@@ -668,6 +931,68 @@ func (m *GameSignature_RipRelativeAt) MarshalToSizedBufferVT(dAtA []byte) (int, 
 	dAtA[i] = 0x28
 	return len(dAtA) - i, nil
 }
+func (m *VirtualSlot) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *VirtualSlot) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *VirtualSlot) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Shape) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Shape)
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Pattern) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Pattern)
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.Index != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Index))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.ClassName) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.ClassName)
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Module) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Module)
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Id) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Id)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *GameSignatureFile) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -675,6 +1000,10 @@ func (m *GameSignatureFile) SizeVT() (n int) {
 	var l int
 	_ = l
 	for _, e := range m.Signatures {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	for _, e := range m.Slots {
 		l = e.SizeVT()
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
@@ -717,6 +1046,22 @@ func (m *GameSignature_RipRelativeAt) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeVarintValue(1, m.RipRelativeAt)
 	return n
 }
+func (m *VirtualSlot) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Id)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Module)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.ClassName)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Index)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Pattern)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Shape)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (x GameModule) MarshalProtoText() string {
 	return x.String()
 }
@@ -729,6 +1074,18 @@ func (x *GameSignatureFile) MarshalProtoText() string {
 			protobuf_go_lite.TextWriteListSeparator(&sb, i)
 			if v == nil {
 				protobuf_go_lite.TextWriteTextMarshaler(&sb, &GameSignature{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if len(x.Slots) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "slots")
+		for i, v := range x.Slots {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &VirtualSlot{})
 			} else {
 				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
 			}
@@ -778,6 +1135,39 @@ func (x *GameSignature) MarshalProtoText() string {
 func (x *GameSignature) String() string {
 	return x.MarshalProtoText()
 }
+func (x *VirtualSlot) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "VirtualSlot")
+	if x.Id != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "id")
+		protobuf_go_lite.TextWriteString(&sb, x.Id)
+	}
+	if x.Module != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "module")
+		protobuf_go_lite.TextWriteString(&sb, x.Module)
+	}
+	if x.ClassName != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "class_name")
+		protobuf_go_lite.TextWriteString(&sb, x.ClassName)
+	}
+	if x.Index != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "index")
+		protobuf_go_lite.TextWriteUint(&sb, x.Index)
+	}
+	if x.Pattern != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "pattern")
+		protobuf_go_lite.TextWriteString(&sb, x.Pattern)
+	}
+	if x.Shape != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "shape")
+		protobuf_go_lite.TextWriteString(&sb, x.Shape)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *VirtualSlot) String() string {
+	return x.MarshalProtoText()
+}
 func (m *GameSignatureFile) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -808,6 +1198,19 @@ func (m *GameSignatureFile) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Signatures = append(m.Signatures, &GameSignature{})
 			if err := m.Signatures[len(m.Signatures)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Slots", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Slots = append(m.Slots, &VirtualSlot{})
+			if err := m.Slots[len(m.Slots)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -927,6 +1330,107 @@ func (m *GameSignature) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Target = &GameSignature_RipRelativeAt{RipRelativeAt: v}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shape", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Shape = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *VirtualSlot) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: VirtualSlot: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: VirtualSlot: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Id = v
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Module", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Module = v
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassName", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.ClassName = v
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
+			}
+			m.Index = 0
+			m.Index, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pattern", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Pattern = v
 		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Shape", wireType)
