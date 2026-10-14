@@ -38,13 +38,6 @@ inline constexpr size_t kResourceServiceEntitySystemOffset = 0x58;
 // public/interfaces/interfaces.h).
 inline constexpr char kGameResourceServiceServerVersion[] = "GameResourceServiceServerV001";
 
-// ISchemaSystem appends FindTypeScopeForModule after IAppSystem's eleven
-// slots. ISchemaSystemTypeScope declares FindDeclaredClass third and
-// FindDeclaredEnum fourth.
-inline constexpr size_t kSchemaSystemFindTypeScopeSlot = 13;
-inline constexpr size_t kTypeScopeFindDeclaredClassSlot = 2;
-inline constexpr size_t kTypeScopeFindDeclaredEnumSlot = 3;
-
 // FindTypeScopeOf returns the type scope of a loaded module, such as
 // "server.dll", or an error when the module declares no schema.
 [[nodiscard]] MODLOCK_API std::expected<void*, std::string> FindTypeScopeOf(

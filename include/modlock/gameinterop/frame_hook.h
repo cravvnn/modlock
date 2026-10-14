@@ -23,8 +23,6 @@ using FrameCallback = std::function<void()>;
 // move and destruction ordering is ThunkOwner's contract.
 class MODLOCK_API EngineFrameHook {
  public:
-  // ISource2Server::GameFrame dispatch slot in server.dll.
-  static constexpr size_t kGameFrameSlot = 19;
   // Server.dll's ISource2Server interface version string.
   static constexpr char kServerInterfaceVersion[] = "Source2Server001";
 

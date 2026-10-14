@@ -5,6 +5,7 @@
 
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -61,7 +62,7 @@ TransmitHook::TransmitHook(ThunkOwner owner) : owner_(std::move(owner)) {}
 std::expected<TransmitHook, std::string> TransmitHook::Install(Handler handler) {
   const auto entities = ResolveEngineInterface(L"server.dll", kInterfaceVersion);
   if (!entities) return std::unexpected(entities.error());
-  auto hook = VtableSlotHook::Install(*entities, kCheckTransmitSlot,
+  auto hook = VtableSlotHook::Install(*entities, kCheckTransmitSlot.index,
                                       reinterpret_cast<void*>(&CheckTransmitThunk));
   if (!hook) return std::unexpected(hook.error());
   g_check_transmit_original = hook->Original();

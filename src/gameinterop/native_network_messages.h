@@ -4,15 +4,14 @@
 #include <cstdint>
 #include <cstring>
 
+#include "modlock/gameinterop/virtual_slots.h"
+
 namespace modlock::gameinterop {
 
 // Since game build 6711 a message serializer is a plain record rather than a
 // virtual class: its allocator constructs messages, the message's deleting
 // destructor frees them, and INetworkMessages serializes and parses them.
-// Source SDK networksystem/inetworkmessages.h and inetworkserializer.h.
-inline constexpr size_t kNetworkMessagesUnserializeSlot = 3;
-inline constexpr size_t kNetworkMessagesSerializeSlot = 4;
-inline constexpr size_t kNetworkMessagesFindByIdSlot = 27;
+// Source SDK networksystem/inetworkserializer.h.
 inline constexpr size_t kSerializerAllocateOffset = 0x8;
 inline constexpr size_t kSerializerMessageIdOffset = 0x18;
 

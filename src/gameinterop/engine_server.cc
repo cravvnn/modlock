@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -24,7 +25,7 @@ std::expected<EngineServer, std::string> EngineServer::Resolve() {
 std::expected<EngineServer, std::string> EngineServer::Bind(void* instance) {
   if (!instance) return std::unexpected("engine server interface is null");
   auto** table = DispatchTableOf(instance);
-  if (!table || !table[kServerCommandSlot]) {
+  if (!table || !table[kServerCommandSlot.index]) {
     return std::unexpected("engine server command slot is unavailable");
   }
   EngineServer server;
@@ -35,11 +36,11 @@ std::expected<EngineServer, std::string> EngineServer::Bind(void* instance) {
 std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadClock() const {
   if (!instance_) return std::unexpected("engine server interface is unavailable");
   auto** table = DispatchTableOf(instance_);
-  if (!table || !table[kServerGlobalsSlot])
+  if (!table || !table[kServerGlobalsSlot.index])
     return std::unexpected("server globals slot is unavailable");
   using GetGlobals = const void* (*)(void*);
   const auto* globals = static_cast<const unsigned char*>(
-      reinterpret_cast<GetGlobals>(table[kServerGlobalsSlot])(instance_));
+      reinterpret_cast<GetGlobals>(table[kServerGlobalsSlot.index])(instance_));
   if (!globals) return std::unexpected("server simulation globals are unavailable");
   // CGlobalVarsBase x64 layout from the pinned SDK's globalvars_base.h:
   // curtime +0x30, tickcount +0x44, interval_per_tick +0x54. The callback's
@@ -70,10 +71,10 @@ bool EngineServer::ServerCommand(const char* command) const {
   }
   using ServerCommandFn = void (*)(void* self, const char* str);
   void** table = DispatchTableOf(instance_);
-  if (table == nullptr || table[kServerCommandSlot] == nullptr) {
+  if (table == nullptr || table[kServerCommandSlot.index] == nullptr) {
     return false;
   }
-  reinterpret_cast<ServerCommandFn>(table[kServerCommandSlot])(instance_, command);
+  reinterpret_cast<ServerCommandFn>(table[kServerCommandSlot.index])(instance_, command);
   return true;
 #else
   (void)command;

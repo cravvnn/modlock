@@ -133,12 +133,12 @@ add_library(modlock_sdk SHARED
   src/gameinterop/pawn_observer.cc
   src/gameinterop/player_selection.cc
   src/gameinterop/respawn_guard.cc
-  src/gameinterop/server_clock.cc
   src/gameinterop/setpawn_observe.cc
   src/gameinterop/signature.cc
   src/gameinterop/stamina_observer.cc
   src/gameinterop/startup_server_probe.cc
   src/gameinterop/teleport_pawn_control.cc
+  src/gameinterop/virtual_slots.cc
   src/gameinterop/vtable_slot_hook.cc
   src/gameinterop/thunk_owner.cc
   src/gameinterop/world_entities.cc
@@ -503,9 +503,9 @@ if(BUILD_TESTING)
   add_executable(gameinterop_schema_abi_test tests/gameinterop_schema_abi_test.cc tests/schema_enum_test.cc)
   target_link_libraries(gameinterop_schema_abi_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME gameinterop_schema_abi_test COMMAND gameinterop_schema_abi_test)
-  add_executable(gameinterop_server_clock_test tests/gameinterop_server_clock_test.cc)
-  target_link_libraries(gameinterop_server_clock_test PRIVATE modlock::sdk gtest_main)
-  add_test(NAME gameinterop_server_clock_test COMMAND gameinterop_server_clock_test)
+  add_executable(gameinterop_virtual_slots_test tests/gameinterop_virtual_slots_test.cc)
+  target_link_libraries(gameinterop_virtual_slots_test PRIVATE modlock::sdk gtest_main)
+  add_test(NAME gameinterop_virtual_slots_test COMMAND gameinterop_virtual_slots_test)
   add_executable(gameinterop_signature_test tests/gameinterop_signature_test.cc)
   target_link_libraries(gameinterop_signature_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME gameinterop_signature_test COMMAND gameinterop_signature_test)

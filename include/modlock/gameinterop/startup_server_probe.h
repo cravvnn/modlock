@@ -11,9 +11,6 @@
 
 namespace modlock::gameinterop {
 
-// kStartupServerSlot is INetworkServerService::StartupServer in engine2.dll.
-inline constexpr size_t kStartupServerSlot = 26;
-
 // Engine2's network-server-service interface version string.
 inline constexpr char kNetworkServerServiceVersion[] = "NetworkServerService_001";
 

@@ -6,6 +6,7 @@
 #include <span>
 
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "schema_layout.h"
 
 namespace modlock::gameinterop {
@@ -18,20 +19,12 @@ constexpr size_t kIdentityClass = 0x08;
 constexpr size_t kEntityClassInfo = 0x58;
 constexpr size_t kClassInfoSchemaBinding = 0x28;
 
-// CEntityInstance::NetworkStateChanged follows RequiredEdictIndex in the
-// current Windows ABI. Slot 27 writes an entity index to its hidden result;
-// calling it with a change record silently discards the notification.
-constexpr size_t kNetworkStateChangedSlot = 28;
-
-// kTeleportSlot is CBaseEntity::Teleport in the native entity dispatch table.
-constexpr size_t kTeleportSlot = 163;
-
 // Teleport calls CBaseEntity::Teleport. Null pose pointers preserve placement.
 void Teleport(void* entity, const float* position, const float* angles, const float* velocity) {
   if (entity == nullptr) return;
   using TeleportFn = void (*)(void*, const float*, const float*, const float*);
   auto** table = *static_cast<void***>(entity);
-  reinterpret_cast<TeleportFn>(table[kTeleportSlot])(entity, position, angles, velocity);
+  reinterpret_cast<TeleportFn>(table[kTeleportSlot.index])(entity, position, angles, velocity);
 }
 
 // NetworkStateNotificationOf resolves the shared replication entry for preflight
@@ -39,7 +32,7 @@ void Teleport(void* entity, const float* position, const float* angles, const fl
 void* NetworkStateNotificationOf(void* entity) {
   if (!entity) return nullptr;
   auto* table = *static_cast<void***>(entity);
-  return table ? table[kNetworkStateChangedSlot] : nullptr;
+  return table ? table[kNetworkStateChangedSlot.index] : nullptr;
 }
 
 // ReadPointer loads one aligned pointer from a live game object.
@@ -271,7 +264,7 @@ std::expected<void*, std::string> ResolveSchemaSystem() {
 std::expected<void*, std::string> FindTypeScopeOf(void* schema_system, const char* module_name) {
   if (!schema_system) return std::unexpected("the schema system instance is not resolved yet");
   using FindTypeScope = void* (*)(void*, const char*, const char**);
-  auto* scope = VtableCall<FindTypeScope>(schema_system, kSchemaSystemFindTypeScopeSlot)(
+  auto* scope = VtableCall<FindTypeScope>(schema_system, kSchemaSystemFindTypeScopeSlot.index)(
       schema_system, module_name, nullptr);
   if (!scope)
     return std::unexpected("schema type scope '" + std::string(module_name) + "' is not open");
@@ -299,11 +292,11 @@ std::expected<void*, std::string> FindDeclared(void* type_scope, size_t slot, co
 }  // namespace
 
 std::expected<void*, std::string> FindDeclaredClassOf(void* type_scope, const char* class_name) {
-  return FindDeclared(type_scope, kTypeScopeFindDeclaredClassSlot, "class", class_name);
+  return FindDeclared(type_scope, kTypeScopeFindDeclaredClassSlot.index, "class", class_name);
 }
 
 std::expected<void*, std::string> FindDeclaredEnumOf(void* type_scope, const char* enum_name) {
-  return FindDeclared(type_scope, kTypeScopeFindDeclaredEnumSlot, "enum", enum_name);
+  return FindDeclared(type_scope, kTypeScopeFindDeclaredEnumSlot.index, "enum", enum_name);
 }
 
 std::expected<SchemaField, std::string> SchemaFieldOf(void* schema_system, const char* module_name,

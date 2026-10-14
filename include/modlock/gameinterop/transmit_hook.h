@@ -46,9 +46,6 @@ class MODLOCK_API TransmitSet {
 // time; the move and destruction ordering is ThunkOwner's contract.
 class MODLOCK_API TransmitHook {
  public:
-  // ISource2GameEntities::CheckTransmit dispatch slot in server.dll, after
-  // the eleven IAppSystem entries and ApplyGameSettings.
-  static constexpr size_t kCheckTransmitSlot = 12;
   // Server.dll's ISource2GameEntities interface version string.
   static constexpr char kInterfaceVersion[] = "Source2GameEntities001";
 

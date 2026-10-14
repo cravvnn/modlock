@@ -14,6 +14,7 @@
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
 #include "proto/modlock/stamina_consumed.pb.h"
 
@@ -218,11 +219,10 @@ struct StaminaObserver::Impl {
     BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                      static_cast<int32_t>(bytes.size() * 8)};
     using Serialize = bool (*)(void*, BitWriter&, const void*);
-    if (!NetworkMessagesMethod<Serialize>(messages, kNetworkMessagesSerializeSlot)(
+    if (!NetworkMessagesMethod<Serialize>(messages, kNetworkMessagesSerializeSlot.index)(
             messages, writer, message) ||
-        writer.overflow ||
-        writer.cursor <= 0 || writer.cursor > static_cast<int32_t>(bytes.size() * 8) ||
-        writer.cursor % 8 != 0) {
+        writer.overflow || writer.cursor <= 0 ||
+        writer.cursor > static_cast<int32_t>(bytes.size() * 8) || writer.cursor % 8 != 0) {
       Trace("native event serialization failed");
       if (id == kStaminaConsumedMessageId) tracker.Invalidate();
       return;
@@ -254,7 +254,8 @@ std::expected<StaminaObserver, std::string> StaminaObserver::Install() {
   auto impl = std::make_unique<Impl>();
   impl->events = events;
   impl->messages = *messages;
-  auto hook = VtableSlotHook::Install(events, 16, reinterpret_cast<void*>(&Impl::OnEvent));
+  auto hook = VtableSlotHook::Install(events, kPostEventSlot.index,
+                                      reinterpret_cast<void*>(&Impl::OnEvent));
   if (!hook) return std::unexpected(hook.error());
   Impl::original = reinterpret_cast<Impl::PostEvent>(hook->Original());
   impl->owner.emplace(std::move(*hook), &Impl::Clear);

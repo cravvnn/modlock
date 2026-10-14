@@ -42,16 +42,27 @@ modlock-sigcheck <deadlock-dir> [--baseline <previous-deadlock-dir>] \
 ```
 
 It resolves every entry in every module it names and exits nonzero when any
-fails. `--signatures` checks an edited game data file without a rebuild. With a copy of the previous build as the baseline, each failed entry
-also gets a suggested pattern: the old match is decoded, its relative
-displacements and branch targets become wildcards, and the shortest
-instruction-aligned prefix that resolves once in the new build is printed.
-Review each suggestion against the recorded shape before replacing the entry
-in the game data file.
+fails. `--signatures` checks an edited game data file without a rebuild. With a
+copy of the previous build as the baseline, each failed entry also gets a
+suggested pattern: the old match is decoded, its relative displacements and
+branch targets become wildcards, and the shortest instruction-aligned prefix
+that resolves once in the new build is printed. Review each suggestion against
+the recorded shape before replacing the entry in the game data file.
+
+It also checks every virtual slot in `kVirtualSlots`
+(`modlock/gameinterop/virtual_slots.h`). A call through a slot index has no
+signature to fail: when an update inserts a virtual ahead of it, the index
+reaches the neighbouring function silently. Each slot names its class, index
+and entry-byte pattern. The check finds the class's dispatch table through its
+RTTI name and passes when the function at the index, and no other function in
+the table, matches the pattern. A failure prints the slot the function moved
+to, or every slot that matches when the pattern no longer tells them apart.
+Move the index, or lengthen the pattern, and record each new slot in
+`kVirtualSlots` so the check covers it.
 
 An address is evidence of a pattern match, not proof that an arbitrary function
 signature is safe to call. Callers must use the recorded calling convention and
-layout. Schema offsets and virtual slots remain separate resolution paths.
+layout. Schema offsets remain a separate resolution path.
 
 ## Hook lifetime
 

@@ -12,6 +12,7 @@
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
 #include "proto/modlock/chat.pb.h"
 
@@ -74,7 +75,7 @@ std::optional<NativeChatHook::Message> ReadChat(void* serializer, const void* na
   BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                    static_cast<int32_t>(bytes.size() * 8)};
   using Serialize = bool (*)(void*, BitWriter&, const void*);
-  if (!NetworkMessagesMethod<Serialize>(g_messages, kNetworkMessagesSerializeSlot)(
+  if (!NetworkMessagesMethod<Serialize>(g_messages, kNetworkMessagesSerializeSlot.index)(
           g_messages, writer, native_message) ||
       writer.overflow || writer.cursor <= 0 || writer.cursor > writer.bits || writer.cursor % 8) {
     std::fprintf(stderr, "[modlock] native chat serialization failed\n");
@@ -152,7 +153,8 @@ std::expected<NativeChatHook, std::string> NativeChatHook::Install(Handler handl
   if (!messages) return std::unexpected(messages.error());
   auto impl = std::make_unique<Impl>();
   impl->handler = std::move(handler);
-  auto hook = VtableSlotHook::Install(events, 16, reinterpret_cast<void*>(&PostThunk));
+  auto hook =
+      VtableSlotHook::Install(events, kPostEventSlot.index, reinterpret_cast<void*>(&PostThunk));
   if (!hook) return std::unexpected(hook.error());
   g_original = reinterpret_cast<Post>(hook->Original());
   g_messages = *messages;

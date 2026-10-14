@@ -3,8 +3,11 @@
 #include <cstring>
 
 #include "modlock/gameinterop/entity_abi.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
+
+using modlock::gameinterop::kTeleportSlot;
 
 // FakeTeleport records the exact arguments the CBaseEntity::Teleport vtable
 // call receives: three float[3] array pointers (position, angles, velocity).
@@ -30,10 +33,10 @@ void RecordTeleport(void* self, const float* position, const float* angles, cons
   entity->teleport.calls++;
 }
 
-TEST(TeleportEntity, DispatchesTheExactFloatTripletOnVtableSlot163) {
-  alignas(16) void* table[164];
+TEST(TeleportEntity, DispatchesTheExactFloatTripletOnTheTeleportSlot) {
+  alignas(16) void* table[kTeleportSlot.index + 1];
   std::memset(table, 0, sizeof(table));
-  table[163] = reinterpret_cast<void*>(&RecordTeleport);
+  table[kTeleportSlot.index] = reinterpret_cast<void*>(&RecordTeleport);
 
   FakeEntity entity{table, {}};
   modlock::gameinterop::TeleportEntity(&entity, 12.5f, -3.25f, 1024.0f);
@@ -55,8 +58,8 @@ TEST(TeleportEntity, IgnoresANullEntity) {
 }
 
 TEST(TeleportEntity, PreservesReplayOrientationAndVelocity) {
-  void* table[164]{};
-  table[163] = reinterpret_cast<void*>(&RecordTeleport);
+  void* table[kTeleportSlot.index + 1]{};
+  table[kTeleportSlot.index] = reinterpret_cast<void*>(&RecordTeleport);
   FakeEntity entity{table, {}};
   const std::array<float, 3> position{10.5f, -20.25f, 704.0f};
   const std::array<float, 3> angles{7.5f, 120.0f, -3.0f};
@@ -71,8 +74,8 @@ TEST(TeleportEntity, PreservesReplayOrientationAndVelocity) {
 }
 
 TEST(TeleportEntity, EmptyVelocityStopsAMovingPawn) {
-  void* table[164]{};
-  table[163] = reinterpret_cast<void*>(&RecordTeleport);
+  void* table[kTeleportSlot.index + 1]{};
+  table[kTeleportSlot.index] = reinterpret_cast<void*>(&RecordTeleport);
   FakeEntity entity{table, {}};
   entity.teleport.velocity[0] = 800.0f;
   entity.teleport.velocity[1] = -600.0f;

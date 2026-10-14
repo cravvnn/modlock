@@ -8,10 +8,15 @@
 // of the signatures it was built with, so a repaired file is checked before
 // it ships.
 //
+// It then checks every virtual slot modlock calls by index: the class's
+// dispatch table, found through its RTTI name, must hold the slot's function
+// at the recorded index and nowhere else. A game update that inserts a
+// virtual ahead of the slot prints the index the function moved to.
+//
 //   modlock-sigcheck <deadlock-dir> [--baseline <old-deadlock-dir>]
 //                    [--signatures <game_signatures.txtpb>]
 //
-// Exit status is zero only when every entry loads and resolves.
+// Exit status is zero only when every signature resolves and every slot holds.
 #include <Zydis.h>
 
 #include <algorithm>
@@ -22,6 +27,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <optional>
 #include <span>
 #include <string>
@@ -30,6 +36,7 @@
 
 #include "modlock/gameinterop/game_symbols.h"
 #include "modlock/gameinterop/signature.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
 
@@ -44,7 +51,8 @@ using modlock::gameinterop::SignatureTarget;
 constexpr size_t kSearchSlack = 96;
 
 // PeImage is one PE file laid out as the loader maps it: every section is
-// copied to its virtual address, so scan offsets are RVAs. base() is zero.
+// copied to its virtual address, so scan offsets are RVAs. base() is zero, and
+// pointer_base() is the preferred base the file's absolute pointers count from.
 class PeImage final : public ModuleImage {
  public:
   static std::expected<PeImage, std::string> Load(const fs::path& path) {
@@ -70,13 +78,17 @@ class PeImage final : public ModuleImage {
     const auto section_count = read16(coff + 2);
     const auto optional_size = read16(coff + 16);
     const size_t optional = coff + 20;
+    const auto image_base_low = read32(optional + 24);
+    const auto image_base_high = read32(optional + 28);
     const auto image_size = read32(optional + 56);
     const auto header_size = read32(optional + 60);
-    if (!section_count || !optional_size || !image_size || !header_size) {
+    if (!section_count || !optional_size || !image_base_low || !image_base_high || !image_size ||
+        !header_size) {
       return std::unexpected(path.string() + " has a truncated PE header");
     }
 
     PeImage image;
+    image.image_base_ = uint64_t{*image_base_high} << 32 | *image_base_low;
     image.bytes_.assign(*image_size, 0);
     std::memcpy(image.bytes_.data(), file.data(),
                 std::min<size_t>({*header_size, file.size(), image.bytes_.size()}));
@@ -98,17 +110,21 @@ class PeImage final : public ModuleImage {
   }
 
   std::uintptr_t base() const override { return 0; }
+  std::uintptr_t pointer_base() const override { return image_base_; }
   std::span<const uint8_t> image_bytes() const override { return bytes_; }
 
  private:
+  std::uintptr_t image_base_ = 0;
   std::vector<uint8_t> bytes_;
 };
 
-// ModulePath returns where module lives under a Deadlock install.
-fs::path ModulePath(const fs::path& game, GameModule module) {
-  const auto file = std::string(modlock::gameinterop::GameModuleFile(module));
-  if (module == GameModule::kEngine) return game / "game" / "bin" / "win64" / file;
-  return game / "game" / "citadel" / "bin" / "win64" / file;
+// ModulePath returns where the module named file lives under a Deadlock
+// install: the game's own modules beside its content, the rest in the engine.
+fs::path ModulePath(const fs::path& game, std::string_view file) {
+  if (file == "server.dll" || file == "client.dll") {
+    return game / "game" / "citadel" / "bin" / "win64" / file;
+  }
+  return game / "game" / "bin" / "win64" / file;
 }
 
 // BuildVersion reads the ClientVersion line of the install's steam.inf.
@@ -198,38 +214,63 @@ std::optional<std::string> Suggest(const GameSignature& signature, const PeImage
   return std::nullopt;
 }
 
+// Install maps each module file a check reads to its image.
 struct Install {
   fs::path root;
-  std::optional<PeImage> modules[3];
+  std::map<std::string, PeImage> modules;
 };
-
-// ModuleIndex maps a GameModule bit to its slot in Install::modules.
-size_t ModuleIndex(GameModule module) {
-  switch (module) {
-    case GameModule::kServer:
-      return 0;
-    case GameModule::kClient:
-      return 1;
-    case GameModule::kEngine:
-      return 2;
-  }
-  return 0;
-}
 
 constexpr GameModule kModules[] = {GameModule::kServer, GameModule::kClient, GameModule::kEngine};
 
-// LoadInstall maps every module the signature table names.
-std::expected<Install, std::string> LoadInstall(const fs::path& root) {
-  Install install{.root = root};
+// LoadInstall maps every module the signature table names and, with slots,
+// every module a virtual slot names.
+std::expected<Install, std::string> LoadInstall(const fs::path& root, bool slots) {
+  std::vector<std::string> files;
   for (const auto module : kModules) {
-    const bool named = std::ranges::any_of(modlock::gameinterop::GameSignatures(),
-                                           [module](const auto& s) { return s.In(module); });
-    if (!named) continue;
-    auto image = PeImage::Load(ModulePath(root, module));
+    if (std::ranges::any_of(modlock::gameinterop::GameSignatures(),
+                            [module](const auto& s) { return s.In(module); })) {
+      files.emplace_back(modlock::gameinterop::GameModuleFile(module));
+    }
+  }
+  if (slots) {
+    for (const auto& slot : modlock::gameinterop::kVirtualSlots) files.emplace_back(slot.module);
+  }
+
+  Install install{.root = root};
+  for (const auto& file : files) {
+    if (install.modules.contains(file)) continue;
+    auto image = PeImage::Load(ModulePath(root, file));
     if (!image) return std::unexpected(image.error());
-    install.modules[ModuleIndex(module)] = std::move(*image);
+    install.modules.emplace(file, std::move(*image));
   }
   return install;
+}
+
+// CheckSlot reports whether slot still holds its function in image.
+bool CheckSlot(const ModuleImage& image, const modlock::gameinterop::VirtualSlot& slot) {
+  const auto where = std::string(slot.class_name) + "[" + std::to_string(slot.index) + "]";
+  const auto module = std::string(slot.module);
+  const auto matches = modlock::gameinterop::MatchingSlots(image, slot);
+  if (matches && matches->size() == 1 && matches->front() == slot.index) {
+    std::printf("ok    %-17s %s\n", module.c_str(), where.c_str());
+    return true;
+  }
+
+  std::string reason;
+  if (!matches) {
+    reason = matches.error();
+  } else if (matches->empty()) {
+    reason = "no function in the table matches; re-derive the pattern";
+  } else if (matches->size() == 1) {
+    reason = "moved to slot " + std::to_string(matches->front());
+  } else {
+    reason = "matches slots";
+    for (const size_t index : *matches) reason += " " + std::to_string(index);
+    reason += "; lengthen the pattern";
+  }
+  std::printf("FAIL  %-17s %s %s\n      %s\n", module.c_str(), where.c_str(), reason.c_str(),
+              std::string(slot.shape).c_str());
+  return false;
 }
 
 }  // namespace
@@ -270,14 +311,14 @@ int main(int argc, char** argv) {
     failed = load->skipped.size();
   }
 
-  auto current = LoadInstall(*game);
+  auto current = LoadInstall(*game, true);
   if (!current) {
     std::fprintf(stderr, "%s\n", current.error().c_str());
     return 2;
   }
   std::optional<Install> baseline;
   if (baseline_root) {
-    auto loaded = LoadInstall(*baseline_root);
+    auto loaded = LoadInstall(*baseline_root, false);
     if (!loaded) {
       std::fprintf(stderr, "baseline: %s\n", loaded.error().c_str());
       return 2;
@@ -292,8 +333,8 @@ int main(int argc, char** argv) {
     for (const auto module : kModules) {
       if (!signature.In(module)) continue;
       ++checked;
-      const auto& image = *current->modules[ModuleIndex(module)];
       const auto file = std::string(modlock::gameinterop::GameModuleFile(module));
+      const auto& image = current->modules.at(file);
       const auto id = std::string(signature.id);
       auto resolved = modlock::gameinterop::ResolveSignature(image, signature);
       if (resolved) {
@@ -305,7 +346,7 @@ int main(int argc, char** argv) {
       std::printf("FAIL  %-12s %-44s hits=%zu %s\n", file.c_str(), id.c_str(),
                   Hits(image, signature.pattern), resolved.error().c_str());
       if (!baseline) continue;
-      const auto& old = *baseline->modules[ModuleIndex(module)];
+      const auto& old = baseline->modules.at(file);
       if (auto suggestion = Suggest(signature, old, image)) {
         std::printf("      suggest \"%s\"\n", suggestion->c_str());
       } else {
@@ -314,5 +355,12 @@ int main(int argc, char** argv) {
     }
   }
   std::printf("%zu of %zu signatures resolved\n", checked - failed, checked);
-  return failed == 0 ? 0 : 1;
+
+  size_t moved = 0;
+  for (const auto& slot : modlock::gameinterop::kVirtualSlots) {
+    if (!CheckSlot(current->modules.at(std::string(slot.module)), slot)) ++moved;
+  }
+  const size_t slots = std::size(modlock::gameinterop::kVirtualSlots);
+  std::printf("%zu of %zu virtual slots hold\n", slots - moved, slots);
+  return failed == 0 && moved == 0 ? 0 : 1;
 }

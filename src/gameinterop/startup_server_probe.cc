@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -52,16 +53,15 @@ void ShutdownServerThunk(void* self) {
 }
 
 std::expected<void, std::string> ArmShutdown(void* service) {
-  // The existing ServerClock uses this same GetIGameServer slot.
   auto table = *static_cast<void***>(service);
-  auto server = reinterpret_cast<void* (*)(void*)>(table[23])(service);
+  auto server = reinterpret_cast<void* (*)(void*)>(table[kGetGameServerSlot.index])(service);
   if (!server) return std::unexpected("network game server unavailable after startup");
   g_shutdown_hook.reset();
   auto server_table = *static_cast<void***>(server);
   // The engine calls this implementation directly during normal quit, so an
   // inline hook is required; replacing only the virtual slot misses teardown.
-  auto hook =
-      safetyhook::create_inline(server_table[4], reinterpret_cast<void*>(&ShutdownServerThunk));
+  auto hook = safetyhook::create_inline(server_table[kGameServerShutdownSlot.index],
+                                        reinterpret_cast<void*>(&ShutdownServerThunk));
   if (!hook) return std::unexpected("could not hook network game server shutdown");
   g_shutdown_hook.emplace(std::move(hook));
   return {};
@@ -114,7 +114,7 @@ std::expected<StartupServerProbe, std::string> StartupServerProbe::Install(
   const auto resolved = ResolveEngineInterface(L"engine2.dll", kNetworkServerServiceVersion);
   if (!resolved) return std::unexpected(resolved.error());
   void* service = *resolved;
-  auto hook = VtableSlotHook::Install(service, kStartupServerSlot,
+  auto hook = VtableSlotHook::Install(service, kStartupServerSlot.index,
                                       reinterpret_cast<void*>(&StartupServerThunk));
   if (!hook.has_value()) {
     return std::unexpected(hook.error());

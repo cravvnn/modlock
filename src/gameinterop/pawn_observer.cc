@@ -9,6 +9,7 @@
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/native_damage.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -468,12 +469,11 @@ PawnObserver::Seams PawnObserver::LiveSeams(bool movement_enabled) {
     if (!pawn) return std::nullopt;
     auto** table = *static_cast<void***>(pawn);
     if (!table) return std::nullopt;
-    if (!table[181]) return std::nullopt;
-    // CBaseEntity::GetMaxHealth is virtual slot 181.
+    if (!table[kGetMaxHealthSlot.index]) return std::nullopt;
     // The pawn override evaluates progression and modifiers; m_iMaxHealth
     // can remain zero even while this calculated maximum is positive.
     using GetMaxHealth = int32_t (*)(void*);
-    const int32_t value = reinterpret_cast<GetMaxHealth>(table[181])(pawn);
+    const int32_t value = reinterpret_cast<GetMaxHealth>(table[kGetMaxHealthSlot.index])(pawn);
     return value > 0 ? std::optional<int32_t>{value} : std::nullopt;
   };
   // Resolve once per observer; the loaded server module outlives its pawn seams.
@@ -654,8 +654,8 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
   auto current = borrow();
   if (!current) return std::unexpected(current.error());
   auto* table = *static_cast<void***>(current->first);
-  // CBasePlayerController::ChangeTeam occupies vtable slot 105.
-  if (!table || !table[105]) return std::unexpected("native team selection unavailable");
+  if (!table || !table[kChangeTeamSlot.index])
+    return std::unexpected("native team selection unavailable");
   uint8_t current_team = 0;
   std::memcpy(&current_team, static_cast<const char*>(current->first) + layout_.team, 1);
   if (current_team != team && team == 1) {
@@ -676,7 +676,7 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
     if (!current) return std::unexpected(current.error());
   }
   if (current_team != team) {
-    reinterpret_cast<void (*)(void*, int)>(table[105])(current->first, team);
+    reinterpret_cast<void (*)(void*, int)>(table[kChangeTeamSlot.index])(current->first, team);
     current = borrow();
     if (!current) return std::unexpected(current.error());
   }

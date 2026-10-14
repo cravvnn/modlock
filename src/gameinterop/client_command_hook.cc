@@ -12,6 +12,7 @@
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/native_memory.h"
 #include "modlock/gameinterop/thunk_owner.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -93,7 +94,8 @@ std::expected<ClientCommandHook, std::string> ClientCommandHook::Install(Handler
   void* clients = *resolved;
   auto impl = std::make_unique<Impl>();
   impl->handler = std::move(handler);
-  auto hook = VtableSlotHook::Install(clients, 17, reinterpret_cast<void*>(&CommandThunk));
+  auto hook = VtableSlotHook::Install(clients, kClientCommandSlot.index,
+                                      reinterpret_cast<void*>(&CommandThunk));
   if (!hook) return std::unexpected(hook.error());
   g_original = reinterpret_cast<CommandFn>(hook->Original());
   impl->owner.emplace(std::move(*hook), &ClearThunkState);

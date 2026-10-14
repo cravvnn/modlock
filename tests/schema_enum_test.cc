@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "modlock/gameinterop/entity_abi.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -22,7 +23,7 @@ struct EnumSchema {
   }
 
   EnumSchema() {
-    system_methods[kSchemaSystemFindTypeScopeSlot] = reinterpret_cast<void*>(&Scope);
+    system_methods[kSchemaSystemFindTypeScopeSlot.index] = reinterpret_cast<void*>(&Scope);
     scope_methods[3] = reinterpret_cast<void*>(&Enum);
     const uint16_t count = 2;
     std::memcpy(info.data() + 28, &count, sizeof(count));

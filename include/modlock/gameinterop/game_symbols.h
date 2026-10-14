@@ -25,6 +25,11 @@ class MODLOCK_API ModuleImage {
 
   // image_bytes returns the borrowed mapped bytes available to the scanner.
   virtual std::span<const uint8_t> image_bytes() const = 0;
+
+  // pointer_base returns the address the image's stored absolute pointers,
+  // such as dispatch table entries, count from: the load base once the loader
+  // has relocated the image, the preferred base in an unrelocated file.
+  virtual std::uintptr_t pointer_base() const { return base(); }
 };
 
 // GameModule is one game binary that carries scanned code. The values are

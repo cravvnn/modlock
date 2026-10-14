@@ -7,6 +7,7 @@
 #include "modlock/gameinterop/frame_timing.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -50,8 +51,8 @@ EngineFrameHook::EngineFrameHook(ThunkOwner owner) : owner_(std::move(owner)) {}
 std::expected<EngineFrameHook, std::string> EngineFrameHook::Install(FrameCallback on_frame) {
   const auto server = ResolveEngineInterface(L"server.dll", kServerInterfaceVersion);
   if (!server) return std::unexpected(server.error());
-  auto hook =
-      VtableSlotHook::Install(*server, kGameFrameSlot, reinterpret_cast<void*>(&GameFrameThunk));
+  auto hook = VtableSlotHook::Install(*server, kGameFrameSlot.index,
+                                      reinterpret_cast<void*>(&GameFrameThunk));
   if (!hook.has_value()) {
     return std::unexpected(hook.error());
   }

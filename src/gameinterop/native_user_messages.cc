@@ -8,6 +8,7 @@
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl_lite.h"
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
 #include "proto/modlock/chat.pb.h"
 #include "proto/modlock/hud.pb.h"
@@ -104,7 +105,7 @@ std::expected<void, std::string> NativeUserMessages::Send(
   // declaration leaves the upper argument bits unspecified on Windows x64.
   using Find = void* (*)(void*, int32_t);
   auto* serializer =
-      NetworkMessagesMethod<Find>(messages_, kNetworkMessagesFindByIdSlot)(messages_, id);
+      NetworkMessagesMethod<Find>(messages_, kNetworkMessagesFindByIdSlot.index)(messages_, id);
   if (!serializer) return std::unexpected("native user message serializer unavailable");
   using Allocate = void* (*)();
   Allocate allocate = nullptr;
@@ -135,7 +136,7 @@ std::expected<void, std::string> NativeUserMessages::Send(
   BitReader reader{bytes.data(), static_cast<int32_t>(encoded.size()),
                    static_cast<int32_t>(encoded.size() * 8)};
   using Unserialize = bool (*)(void*, BitReader&, void*, void*);
-  if (!NetworkMessagesMethod<Unserialize>(messages_, kNetworkMessagesUnserializeSlot)(
+  if (!NetworkMessagesMethod<Unserialize>(messages_, kNetworkMessagesUnserializeSlot.index)(
           messages_, reader, native_message, nullptr) ||
       reader.overflow || reader.cursor != reader.bits)
     return std::unexpected("native user message decoding failed");
@@ -146,8 +147,8 @@ std::expected<void, std::string> NativeUserMessages::Send(
                         unsigned long, int32_t);
   // BUF_RELIABLE=1. PostEventAbstract copies the message before returning.
   // The client count is the mask's bit extent, including unselected lower slots.
-  reinterpret_cast<Post>(event_methods[16])(events_, -1, false, slot + 1, &recipients, serializer,
-                                            native_message, 0, 1);
+  reinterpret_cast<Post>(event_methods[kPostEventSlot.index])(
+      events_, -1, false, slot + 1, &recipients, serializer, native_message, 0, 1);
   return {};
 #else
   (void)id;

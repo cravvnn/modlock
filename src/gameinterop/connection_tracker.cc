@@ -9,6 +9,7 @@
 
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/virtual_slots.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -18,11 +19,6 @@ inline constexpr int32_t kMaxSlots = 64;
 
 // Server.dll's game-clients interface version (sourcesdk public/eiface.h).
 inline constexpr char kSource2GameClientsVersion[] = "Source2GameClients001";
-
-// Source2GameClients001 dispatch slots for the three connection transitions.
-inline constexpr size_t kClientPutInServerSlot = 13;
-inline constexpr size_t kClientFullyConnectSlot = 15;
-inline constexpr size_t kClientDisconnectSlot = 16;
 
 std::array<std::atomic<bool>, kMaxSlots> g_occupied{};
 std::array<std::atomic<bool>, kMaxSlots> g_disconnect_claimed{};
@@ -251,15 +247,15 @@ std::expected<ConnectionTracker, std::string> ConnectionTracker::Install(
   const auto resolved = ResolveEngineInterface(L"server.dll", kSource2GameClientsVersion);
   if (!resolved) return std::unexpected(resolved.error());
   void* clients = *resolved;
-  auto put_in_server = VtableSlotHook::Install(clients, kClientPutInServerSlot,
+  auto put_in_server = VtableSlotHook::Install(clients, kClientPutInServerSlot.index,
                                                reinterpret_cast<void*>(&PutInServerThunk));
   if (!put_in_server.has_value()) {
     return std::unexpected(put_in_server.error());
   }
-  auto fully_connect = VtableSlotHook::Install(clients, kClientFullyConnectSlot,
+  auto fully_connect = VtableSlotHook::Install(clients, kClientFullyConnectSlot.index,
                                                reinterpret_cast<void*>(&FullyConnectThunk));
   if (!fully_connect) return std::unexpected(fully_connect.error());
-  auto disconnect = VtableSlotHook::Install(clients, kClientDisconnectSlot,
+  auto disconnect = VtableSlotHook::Install(clients, kClientDisconnectSlot.index,
                                             reinterpret_cast<void*>(&DisconnectThunk));
   if (!disconnect.has_value()) {
     return std::unexpected(disconnect.error());
