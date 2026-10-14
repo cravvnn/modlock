@@ -90,10 +90,12 @@ class MODLOCK_API WorldEntities {
   std::expected<uint32_t, std::string> Spawn(const Target& target, const Prepare& prepare = {});
   void FinishSpawns();
   // CreateEntity creates any designer name the server knows, applies
-  // key_values as its spawn key values, and returns its handle. The target's
-  // subclass, team and placement apply as for Spawn; its health and velocity
-  // are ignored. Prepare runs as for Spawn. It refuses an ability, item or
-  // weapon, which only a hero holds.
+  // key_values as its spawn key values, and returns its handle. A
+  // point_clientui_world_text_panel receives the client's stock layout and
+  // geometry for each key it does not set. The target's subclass, team and
+  // placement apply as for Spawn; its health and velocity are ignored.
+  // Prepare runs as for Spawn. It refuses an ability, item or weapon, which
+  // only a hero holds.
   std::expected<uint32_t, std::string> CreateEntity(const Target& target,
                                                     std::span<const EntityKeyValue> key_values,
                                                     const Prepare& prepare = {});

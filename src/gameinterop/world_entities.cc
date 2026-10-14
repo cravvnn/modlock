@@ -7,6 +7,7 @@
 #include <string_view>
 #include <type_traits>
 #include <variant>
+#include <vector>
 
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/native_damage.h"
@@ -98,6 +99,39 @@ constexpr Unmade kUnmade[] = {
 std::string_view UnmadeNeed(std::string_view name) {
   const auto* found = std::ranges::find(kUnmade, name, &Unmade::name);
   return found == std::end(kUnmade) ? std::string_view{} : found->need;
+}
+
+// kWorldTextPanel is the stock text panel the client draws in the world.
+constexpr std::string_view kWorldTextPanel = "point_clientui_world_text_panel";
+
+// kWorldTextPanelDefaults are the layout and geometry the client's own spawner
+// gives a text panel. A panel spawned without them crashes the client.
+constexpr EntityKeyValue kWorldTextPanelDefaults[] = {
+    {.key = "enabled", .value = true},
+    {.key = "width", .value = 128.0f},
+    {.key = "height", .value = 32.0f},
+    {.key = "panel_dpi", .value = 1.0f},
+    {.key = "interact_distance", .value = 0.0f},
+    {.key = "ignore_input", .value = true},
+    {.key = "dialog_layout_name",
+     .value =
+         std::string_view("file://{resources}/layout/hideout/hideout_in_world_text_label.xml")},
+    {.key = "owner_context", .value = 0},
+    {.key = "horizontal_align", .value = 1},
+    {.key = "vertical_align", .value = 0},
+    {.key = "orientation", .value = 1},
+    {.key = "ignore_parent_orientation", .value = true},
+};
+
+// WithWorldTextPanelDefaults returns values followed by each stock default
+// whose key values does not set.
+std::vector<EntityKeyValue> WithWorldTextPanelDefaults(std::span<const EntityKeyValue> values) {
+  std::vector<EntityKeyValue> result(values.begin(), values.end());
+  for (const auto& fallback : kWorldTextPanelDefaults) {
+    if (std::ranges::find(values, fallback.key, &EntityKeyValue::key) == values.end())
+      result.push_back(fallback);
+  }
+  return result;
 }
 
 std::string DesignerName(void* entity) {
@@ -261,6 +295,11 @@ std::expected<void*, std::string> WorldEntities::Create(const Target& target,
   if (!handle) {
     calls_.remove(entity);
     return std::unexpected(target.designer_name + " has no native identity");
+  }
+  std::vector<EntityKeyValue> panel_values;
+  if (target.designer_name == kWorldTextPanel) {
+    panel_values = WithWorldTextPanelDefaults(key_values);
+    key_values = panel_values;
   }
   auto built = BuildEntityKeyValues(calls_.key_values, key_values);
   if (!built) {

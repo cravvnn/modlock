@@ -2,12 +2,16 @@
 
 #include <array>
 #include <cstring>
+#include <map>
 #include <string>
+#include <string_view>
+#include <variant>
 
 #include "modlock/gameinterop/world_entities.h"
 
 namespace {
 
+using modlock::gameinterop::EntityKeyValue;
 using modlock::gameinterop::MakeMemberName;
 using modlock::gameinterop::WorldEntities;
 
@@ -34,6 +38,7 @@ class NativeWorld : public testing::Test {
   static inline uint32_t prepared;
   static inline std::string designer;
   static inline std::array<float, 3> position;
+  static inline std::map<std::string, std::variant<bool, int, float, std::string>> key_values;
   static constexpr size_t kSubclassOffset = 0x314;
   static constexpr uint32_t kHandle = 0x18000;
   static constexpr size_t kPreparedOffset = 0x200;
@@ -61,6 +66,7 @@ class NativeWorld : public testing::Test {
     subclass = 0;
     designer.clear();
     position = {};
+    key_values.clear();
     system[2] = identity.data();
     Write(identity.data(), entity.data());
     Write(identity.data() + 0x10, kHandle);
@@ -92,21 +98,34 @@ class NativeWorld : public testing::Test {
       return entity.data();
     };
     calls.key_values.create_key_values = []() -> void* { return definition.data(); };
+    calls.key_values.set_string = [](void*, const modlock::gameinterop::MemberName* name,
+                                     const char* value) {
+      key_values[name->string] = std::string(value);
+    };
+    calls.key_values.set_bool = [](void*, const modlock::gameinterop::MemberName* name,
+                                   unsigned char value) { key_values[name->string] = value != 0; };
+    calls.key_values.set_int = [](void*, const modlock::gameinterop::MemberName* name, int value) {
+      key_values[name->string] = value;
+    };
+    calls.key_values.set_float = [](void*, const modlock::gameinterop::MemberName* name,
+                                    float value) { key_values[name->string] = value; };
     calls.queue = [](void* world, void* id, void* properties) {
       EXPECT_EQ(world, system.data());
       EXPECT_EQ(id, identity.data());
       EXPECT_NE(properties, nullptr);
     };
     calls.execute = [](void*) {
-      uint32_t token = 0;
-      void* vdata = nullptr;
-      std::memcpy(&token, entity.data() + kSubclassOffset, sizeof(token));
-      std::memcpy(&vdata, entity.data() + kSubclassOffset + sizeof(token), sizeof(vdata));
       // Native urn Spawn dereferences VData + 0x118 to install its pickup aura.
-      // Both the token and its resolved pointer must exist before queued creation.
-      EXPECT_NE(token, 0u);
-      EXPECT_EQ(token, subclass);
-      EXPECT_EQ(vdata, definition.data());
+      // A subclassed entity's token and resolved pointer must both exist
+      // before queued creation.
+      if (subclass != 0) {
+        uint32_t token = 0;
+        void* vdata = nullptr;
+        std::memcpy(&token, entity.data() + kSubclassOffset, sizeof(token));
+        std::memcpy(&vdata, entity.data() + kSubclassOffset + sizeof(token), sizeof(vdata));
+        EXPECT_EQ(token, subclass);
+        EXPECT_EQ(vdata, definition.data());
+      }
       std::memcpy(&prepared, entity.data() + kPreparedOffset, sizeof(prepared));
       ++spawned;
     };
@@ -142,6 +161,47 @@ TEST_F(NativeWorld, MissingDefinitionNeverReachesNativeSpawn) {
   EXPECT_EQ(pickup.error(), "entity subclass is absent from this game build");
   EXPECT_EQ(created, 0);
   EXPECT_EQ(spawned, 0);
+}
+
+TEST_F(NativeWorld, WorldTextPanelGetsStockClientDefaults) {
+  auto world = World();
+  const std::array values{
+      EntityKeyValue{.key = "message", .value = std::string_view("TEXT PANEL")},
+  };
+  const auto panel =
+      world.CreateEntity({.designer_name = "point_clientui_world_text_panel"}, values);
+  ASSERT_TRUE(panel) << panel.error();
+  EXPECT_EQ(std::get<bool>(key_values.at("enabled")), true);
+  EXPECT_EQ(std::get<float>(key_values.at("width")), 128.0f);
+  EXPECT_EQ(std::get<float>(key_values.at("height")), 32.0f);
+  EXPECT_EQ(std::get<float>(key_values.at("panel_dpi")), 1.0f);
+  EXPECT_EQ(std::get<float>(key_values.at("interact_distance")), 0.0f);
+  EXPECT_EQ(std::get<bool>(key_values.at("ignore_input")), true);
+  EXPECT_EQ(std::get<std::string>(key_values.at("dialog_layout_name")),
+            "file://{resources}/layout/hideout/hideout_in_world_text_label.xml");
+  EXPECT_EQ(std::get<int>(key_values.at("owner_context")), 0);
+  EXPECT_EQ(std::get<int>(key_values.at("horizontal_align")), 1);
+  EXPECT_EQ(std::get<int>(key_values.at("vertical_align")), 0);
+  EXPECT_EQ(std::get<int>(key_values.at("orientation")), 1);
+  EXPECT_EQ(std::get<bool>(key_values.at("ignore_parent_orientation")), true);
+  EXPECT_EQ(std::get<std::string>(key_values.at("message")), "TEXT PANEL");
+}
+
+TEST_F(NativeWorld, WorldTextPanelKeepsExplicitSpawnValues) {
+  auto world = World();
+  const std::array values{
+      EntityKeyValue{.key = "message", .value = std::string_view("CUSTOM TEXT")},
+      EntityKeyValue{.key = "width", .value = 240.0f},
+      EntityKeyValue{.key = "dialog_layout_name",
+                     .value = std::string_view("file://{resources}/layout/custom.xml")},
+  };
+  const auto panel =
+      world.CreateEntity({.designer_name = "point_clientui_world_text_panel"}, values);
+  ASSERT_TRUE(panel) << panel.error();
+  EXPECT_EQ(std::get<float>(key_values.at("width")), 240.0f);
+  EXPECT_EQ(std::get<std::string>(key_values.at("dialog_layout_name")),
+            "file://{resources}/layout/custom.xml");
+  EXPECT_EQ(std::get<std::string>(key_values.at("message")), "CUSTOM TEXT");
 }
 
 TEST_F(NativeWorld, AnAbilityIsRefusedBeforeItExists) {
