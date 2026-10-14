@@ -130,9 +130,14 @@ std::expected<std::vector<size_t>, std::string> MatchingSlots(const ModuleImage&
 #if defined(_WIN32)
 namespace {
 
-// Resolver keeps each slot's resolved index and each class's table, so every
-// table is found once per process. A module that is not mapped yet is not
-// kept, so a later call can still resolve it.
+// Resolver keeps each slot's resolved index for the life of the process. A
+// module that is not mapped yet is not kept, so a later call can still
+// resolve it.
+//
+// A hook installed through one slot rewrites that entry of the live table to
+// point outside the module, which ends any later walk of the table there and
+// hides the entries after it. So the first slot resolved in a class resolves
+// every recorded slot of that class, before any of them can be hooked.
 class Resolver {
  public:
   std::expected<size_t, std::string> Resolve(const VirtualSlot& slot) {
@@ -142,21 +147,23 @@ class Resolver {
     const std::wstring module(slot.module.begin(), slot.module.end());
     const auto image = MappedModuleImage::ForModule(module);
     if (!image) return std::unexpected("slot '" + std::string(slot.id) + "': " + image.error());
-    auto index = Locate(*image, slot);
-    slots_.emplace(std::string(slot.id), index);
-    return index;
+
+    const auto table = FindVtable(*image, slot.class_name);
+    for (const auto& sibling : GameVirtualSlots()) {
+      if (sibling.module != slot.module || sibling.class_name != slot.class_name) continue;
+      slots_.emplace(std::string(sibling.id), Locate(*image, table, sibling));
+    }
+    return slots_.find(slot.id)->second;
   }
 
  private:
-  std::expected<size_t, std::string> Locate(const ModuleImage& image, const VirtualSlot& slot) {
+  static std::expected<size_t, std::string> Locate(const ModuleImage& image,
+                                                   const std::expected<size_t, std::string>& table,
+                                                   const VirtualSlot& slot) {
     const std::string named = "slot '" + std::string(slot.id) + "'";
-    const auto key = std::string(slot.module) + ":" + std::string(slot.class_name);
-    auto table = tables_.find(key);
-    if (table == tables_.end())
-      table = tables_.emplace(key, FindVtable(image, slot.class_name)).first;
-    if (!table->second) return std::unexpected(named + ": " + table->second.error());
+    if (!table) return std::unexpected(named + ": " + table.error());
 
-    const auto matches = MatchingSlots(image, *table->second, slot);
+    const auto matches = MatchingSlots(image, *table, slot);
     if (!matches) return std::unexpected(named + ": " + matches.error());
     if (matches->size() != 1) {
       return std::unexpected(named + " matches " + std::to_string(matches->size()) +
@@ -171,7 +178,6 @@ class Resolver {
 
   std::mutex mutex_;
   std::map<std::string, std::expected<size_t, std::string>, std::less<>> slots_;
-  std::map<std::string, std::expected<size_t, std::string>, std::less<>> tables_;
 };
 
 }  // namespace
