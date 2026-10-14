@@ -407,6 +407,9 @@ class WasmPlugin final : public Plugin {
   wasm::Manifest manifest_;
   std::vector<uint8_t> collision_;
   bool tuned_ = false;
+  // clock_error_ is the last reason the server clock could not be read, so
+  // each new reason is logged once.
+  std::string clock_error_;
   // held_ is true while the running instance keeps itself through reloads,
   // and waiting_ holds the newest build a reload brought meanwhile.
   bool held_ = false;
@@ -669,9 +672,15 @@ void WasmPlugin::Tick() {
   wasm::FrameEvent frame;
   if (!check_only_) {
     if (auto server = host_.game.Server()) {
+      // A frame without a clock reads tick zero, which stalls every timer a
+      // mod keeps, so log each new reason the clock is unreadable.
       if (auto clock = (*server)->ReadClock()) {
         frame.set_tick(static_cast<uint64_t>(clock->tick));
         frame.set_time_seconds(clock->current_time);
+        clock_error_.clear();
+      } else if (clock.error() != clock_error_) {
+        clock_error_ = clock.error();
+        Log("the server clock is unreadable: " + clock_error_);
       }
     }
     if (map_ && game_.Moving()) ListenToCombat();

@@ -22,7 +22,9 @@ inline constexpr char kEngineToServerVersion[] = "Source2EngineToServer001";
 // game build 6711).
 inline constexpr size_t kServerCommandSlot = 45;
 // Same SDK declaration: GetServerGlobals follows IsClientFullyAuthenticated.
-inline constexpr size_t kServerGlobalsSlot = 75;
+// Game build 6779 added one virtual between ServerCommand and
+// IsClientFullyAuthenticated, which moved this slot from 75 to 76.
+inline constexpr size_t kServerGlobalsSlot = 76;
 
 // EngineServer is a resolved live IVEngineServer2 instance. It issues console
 // commands through the engine's own parser - identical to typing them at the
