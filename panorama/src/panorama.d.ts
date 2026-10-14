@@ -16,6 +16,12 @@ interface Panel {
   SetImage(path: string): void
   SetURL(url: string): void
   SetPanelEvent(event: string, handler: () => void): void
+  SetAttributeString(name: string, value: string): void
+  BLoadLayout(
+    path: string,
+    overrideExisting: boolean,
+    partial: boolean,
+  ): boolean
   FindChildTraverse(id: string): Panel | null
   DeleteAsync(seconds: number): void
 }

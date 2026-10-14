@@ -3,7 +3,7 @@ import { beforeEach, expect, test } from 'bun:test'
 
 import { Screen } from '../../proto/modlock/ui.pb.js'
 import { Bridge } from './bridge.js'
-import { Drawing } from './draw.js'
+import { Drawing, layoutDataChanged } from './draw.js'
 
 /** FakePanel records what the renderer does to one panel. */
 class FakePanel {
@@ -13,9 +13,11 @@ class FakePanel {
   text = ''
   image = ''
   url = ''
+  layout = ''
   valid = true
   style: Record<string, string> = {}
   events = new Map<string, () => void>()
+  attributes = new Map<string, string>()
 
   constructor(
     readonly paneltype: string,
@@ -51,6 +53,13 @@ class FakePanel {
   SetPanelEvent(event: string, handler: () => void) {
     this.events.set(event, handler)
   }
+  SetAttributeString(name: string, value: string) {
+    this.attributes.set(name, value)
+  }
+  BLoadLayout(path: string) {
+    this.layout = path
+    return !path.includes('missing')
+  }
   FindChildTraverse() {
     return null
   }
@@ -69,9 +78,14 @@ const handlers = new Map<
 /** scheduled holds the callbacks $.Schedule holds. */
 const scheduled = new Map<number, () => void>()
 
+/** dispatched holds each event $.DispatchEvent sent, with its arguments. */
+const dispatched: string[][] = []
+
 beforeEach(() => {
+  // Forget the last test's calls and install a fake $.
   handlers.clear()
   scheduled.clear()
+  dispatched.length = 0
   let handles = 0
   Object.assign(globalThis, {
     $: {
@@ -101,6 +115,9 @@ beforeEach(() => {
       },
       CancelScheduled(handle: number) {
         scheduled.delete(handle)
+      },
+      DispatchEvent(...args: string[]) {
+        dispatched.push(args)
       },
     },
   })
@@ -202,6 +219,58 @@ test('draws a tree, keeps panels that stay and reports presses', () => {
   expect(tree.children[0]!.children).toEqual([])
   drawing.draw(null)
   expect(root.children).toEqual([])
+})
+
+test('loads layouts a host allows and hands them data', () => {
+  // Draw with a host that loads only arena's layouts.
+  const root = new FakePanel('Panel', 'ModlockUi')
+  let unloaded = 0
+  const drawing = new Drawing($, root, () => {}, {
+    url: (mod, path) => (mod === 'arena' ? `file://arena/${path}` : null),
+    unloaded: () => unloaded++,
+  })
+  const layout = (path: string, data: string) =>
+    screen(
+      { id: '', children: ['a'] },
+      { id: 'a', kind: 'KIND_LAYOUT', layout: path, data, children: ['b'] },
+      { id: 'b', kind: 'KIND_LABEL' },
+    )
+
+  // The layout loads with its data, and its children come from its file.
+  drawing.draw(layout('shop.xml', '{"gold":1}'))
+  const panel = root.children[0]!.children[0]!
+  expect(panel.layout).toBe('file://arena/shop.xml')
+  expect(panel.attributes.get('modlock_data')).toBe('{"gold":1}')
+  expect(panel.children).toEqual([])
+  expect(dispatched).toEqual([])
+
+  // New data reaches the loaded layout and announces itself.
+  drawing.draw(layout('shop.xml', '{"gold":2}'))
+  expect(root.children[0]!.children[0]).toBe(panel)
+  expect(panel.attributes.get('modlock_data')).toBe('{"gold":2}')
+  expect(dispatched).toEqual([['PlaySoundEffect', layoutDataChanged]])
+
+  // A layout that failed to load tries again on the next draw.
+  drawing.draw(layout('missing.xml', ''))
+  expect(panel.valid).toBe(false)
+  expect(unloaded).toBe(1)
+  const missing = root.children[0]!.children[0]!
+  drawing.draw(layout('missing.xml', ''))
+  expect(root.children[0]!.children[0]).toBe(missing)
+  expect(missing.layout).toBe('file://arena/missing.xml')
+
+  // A path leaving the addon and a host that refuses the mod both draw an
+  // empty panel.
+  drawing.draw(layout('../session.xml', ''))
+  expect(root.children[0]!.children[0]!.layout).toBe('')
+  new Drawing($, root, () => {}).draw(layout('shop.xml', ''))
+  expect(root.children[root.children.length - 1]!.children[0]!.layout).toBe('')
+
+  // Removing the tree deletes the layout's panel and lets the host rebind.
+  drawing.draw(layout('shop.xml', ''))
+  unloaded = 0
+  drawing.draw(null)
+  expect(unloaded).toBe(1)
 })
 
 test('reads screens in acknowledged parts', () => {

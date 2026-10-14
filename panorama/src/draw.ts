@@ -1,8 +1,10 @@
 // Drawing turns each mod's tree into stock panels. It runs no mod code: every
 // property it writes comes from a typed field of the tree, and a node becomes
-// one of four stock panel types. It reaches the game only through the
-// Panorama it is given, so a host's own interface script may draw the screens
-// it receives another way.
+// one of four stock panel types. A layout node is the one exception: a host
+// that has reviewed a mod's content addon passes Layouts, and the drawing
+// loads the mod's layout into the node's panel; without Layouts the panel
+// stays empty. It reaches the game only through the Panorama it is given, so a
+// host's own interface script may draw the screens it receives another way.
 
 import {
   Align,
@@ -27,17 +29,66 @@ export interface Panel {
   MoveChildAfter(child: Panel, after: Panel): void
   SetImage(path: string): void
   SetPanelEvent(event: string, handler: () => void): void
+  SetAttributeString(name: string, value: string): void
+  BLoadLayout(
+    path: string,
+    overrideExisting: boolean,
+    partial: boolean,
+  ): boolean
   DeleteAsync(seconds: number): void
 }
 
 /** Panorama is the part of the game's script API the drawing uses. */
 export interface Panorama {
   CreatePanel(type: string, parent: Panel, id: string): Panel
+  DispatchEvent(event: string, value: string): void
   Msg(...values: unknown[]): void
 }
 
 /** Press reports a press on a mod's button. */
 export type Press = (mod: string, node: string) => void
+
+/**
+ * Layouts lets a host load the layouts of mods whose content it has reviewed.
+ * A layout's script runs in the player's game, so only a host that checked
+ * the mod's addon passes one.
+ */
+export interface Layouts {
+  /**
+   * url returns the URL of mod's layout at path, a path isLayoutPath accepts,
+   * or null when the host does not load that mod's layouts.
+   */
+  url(mod: string, path: string): string | null
+  /**
+   * unloaded runs after the drawing deletes one or more layouts' panels. A
+   * layout's key binds replaced the host's for the whole game process, so the
+   * host binds its keys again.
+   */
+  unloaded(): void
+}
+
+/** layoutDataAttribute names the attribute holding a layout node's data. */
+export const layoutDataAttribute = 'modlock_data'
+
+/**
+ * layoutDataChanged is the sound event the drawing plays after it changes a
+ * layout's data. The game refuses custom events and delivers the stock
+ * PlaySoundEffect to every script; no sound has this name, so none plays.
+ */
+export const layoutDataChanged = 'modlock_data_changed'
+
+/**
+ * isLayoutPath reports whether path names a layout inside a mod's addon: one
+ * or more segments of letters, digits, '_', '-' and '.', none of them "..",
+ * ending in ".xml". The screen comes from the game server, so the drawing
+ * checks the path before a host joins it to the addon's layout directory.
+ */
+export function isLayoutPath(path: string): boolean {
+  return (
+    path.endsWith('.xml') &&
+    path.split('/').every((part) => /^[\w.-]+$/.test(part) && part !== '..')
+  )
+}
 
 /**
  * pressCommand is the console command that presses node in mod's interface.
@@ -54,13 +105,21 @@ const panelTypes: Record<Kind, string> = {
   [Kind.LABEL]: 'Label',
   [Kind.IMAGE]: 'Image',
   [Kind.BUTTON]: 'Button',
+  [Kind.LAYOUT]: 'Panel',
 }
 
-/** Drawn is one node's panel, its parent and the style written to it. */
+/**
+ * Drawn is one node's panel, its parent and the style written to it. A layout
+ * node's panel also records the layout's URL, whether it loaded, and the data
+ * set on it.
+ */
 interface Drawn {
   panel: Panel
   parent: Panel
   style: Record<string, string>
+  layout: string | null
+  loaded: boolean
+  data: string
 }
 
 /** Drawing keeps the panels of every mod's tree under one parent. */
@@ -72,21 +131,37 @@ export class Drawing {
     private readonly panorama: Panorama,
     private readonly parent: Panel,
     private readonly press: Press,
+    private readonly layouts?: Layouts,
   ) {}
+
+  /** unloaded records that this draw deleted a layout's panel. */
+  private unloaded = false
 
   /** draw makes the panels match screen, keeping each panel whose node stays. */
   draw(screen: Screen | null): void {
+    // Delete the trees of mods the screen no longer holds.
     const trees = new Map(
       (screen?.trees ?? []).map((tree) => [tree.mod ?? '', tree.nodes ?? []]),
     )
     for (const [mod, drawn] of this.mods) {
       if (!trees.has(mod)) {
         drawn.get('')?.panel.DeleteAsync(0)
+        this.unloaded ||= [...drawn.values()].some(
+          (each) => each.layout !== null,
+        )
         this.mods.delete(mod)
       }
     }
+
+    // Draw each mod's tree.
     for (const [mod, nodes] of trees) {
       this.drawTree(mod, new Map(nodes.map((node) => [node.id ?? '', node])))
+    }
+
+    // Let the host bind its keys again once layouts are gone.
+    if (this.unloaded) {
+      this.unloaded = false
+      this.layouts?.unloaded()
     }
   }
 
@@ -101,10 +176,16 @@ export class Drawing {
     // A node no parent reaches is not drawn; its panel goes with its old parent.
     for (const [id, old] of previous) {
       if (!drawn.has(id) && old.panel.IsValid()) {
-        old.panel.DeleteAsync(0)
+        this.delete(old)
       }
     }
     this.mods.set(mod, drawn)
+  }
+
+  /** delete deletes a drawn node's panel and notes a layout's. */
+  private delete(drawn: Drawn): void {
+    drawn.panel.DeleteAsync(0)
+    this.unloaded ||= drawn.layout !== null
   }
 
   /** drawNode draws node under parent, then its children in order. */
@@ -116,25 +197,34 @@ export class Drawing {
     drawn: Map<string, Drawn>,
     nodes: Map<string, Node>,
   ): Panel {
-    // Resolve the node's id, panel type, and style.
+    // Resolve the node's id, panel type, style, and the URL of its layout.
     const id = node.id ?? ''
-    const kind = node.kind ?? Kind.PANEL
-    const type = id === '' ? 'Panel' : (panelTypes[kind] ?? 'Panel')
+    const kind = id === '' ? Kind.PANEL : (node.kind ?? Kind.PANEL)
+    const type = panelTypes[kind] ?? 'Panel'
     const style = styleOf(node.style, id === '')
+    const path = node.layout ?? ''
+    const layout =
+      kind === Kind.LAYOUT && isLayoutPath(path)
+        ? (this.layouts?.url(mod, path) ?? null)
+        : null
+    const data = node.data ?? ''
 
-    // Reuse the node's panel when its type and parent stay and its style
-    // keeps every property, since Panorama cannot unset some of them; or make
-    // one.
+    // Reuse the node's panel when its type, parent and layout stay and its
+    // style keeps every property, since Panorama cannot unset some of them;
+    // or make one.
     const old = previous.get(id)
     let panel = old?.panel
     let written = old?.style ?? {}
+    let loaded = old?.loaded ?? false
+    let given = old?.data ?? ''
     const kept =
       old &&
       old.parent === parent &&
+      old.layout === layout &&
       Object.keys(written).every((name) => name in style)
     if (!panel || !kept || !panel.IsValid() || panel.paneltype !== type) {
-      if (panel?.IsValid()) {
-        panel.DeleteAsync(0)
+      if (old?.panel.IsValid()) {
+        this.delete(old)
       }
       panel = this.panorama.CreatePanel(
         type,
@@ -142,14 +232,32 @@ export class Drawing {
         id === '' ? `ModlockUi_${mod.replace(/\W/g, '_')}` : 'ModlockUiNode',
       )
       written = {}
-      if (kind === Kind.BUTTON && id !== '') {
+      loaded = false
+      given = ''
+      if (kind === Kind.BUTTON) {
         panel.SetPanelEvent('onactivate', () => this.press(mod, id))
       }
     }
-    drawn.set(id, { panel, parent, style })
 
-    // Write the node's content and the style properties that changed.
-    panel.hittest = kind === Kind.BUTTON && id !== ''
+    // Load the node's layout with its data, or hand a loaded layout its new
+    // data. A layout whose addon has not mounted yet loads on a later draw.
+    if (layout && !loaded) {
+      panel.SetAttributeString(layoutDataAttribute, data)
+      loaded = panel.BLoadLayout(layout, false, false)
+      if (!loaded) {
+        this.panorama.Msg(`[Modlock] ${mod} layout ${path} is unavailable`)
+      }
+    } else if (layout && data !== given) {
+      panel.SetAttributeString(layoutDataAttribute, data)
+      this.panorama.DispatchEvent('PlaySoundEffect', layoutDataChanged)
+    }
+    drawn.set(id, { panel, parent, style, layout, loaded, data })
+
+    // Write the node's content and the style properties that changed. A
+    // layout's own root decides whether it takes clicks.
+    if (!layout) {
+      panel.hittest = kind === Kind.BUTTON
+    }
     if (kind === Kind.LABEL) {
       panel.text = node.text ?? ''
     } else if (kind === Kind.IMAGE) {
@@ -162,8 +270,9 @@ export class Drawing {
     }
 
     // Draw each child once, in order; a child seen before would make a cycle.
+    // A layout's panels come from its file, not from the tree.
     let last: Panel | undefined
-    for (const child of node.children ?? []) {
+    for (const child of kind === Kind.LAYOUT ? [] : (node.children ?? [])) {
       const childNode = nodes.get(child)
       if (!childNode || drawn.has(child) || child === '') {
         continue

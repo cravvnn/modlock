@@ -14,6 +14,13 @@
 // for that player, so a mod may call it whenever its state changes, or every
 // frame.
 //
+// A layout element loads a layout from the mod's content addon, such as
+// <layout src="shop.xml" data={JSON.stringify(stock)} />. Its script runs in
+// the player's game, so only a host that has reviewed the mod's content loads
+// it; elsewhere it draws nothing. The script reads data from its panel's
+// modlock_data attribute and reads it again on each unhandled PlaySoundEffect
+// event named modlock_data_changed.
+//
 // toast shows a player a short notice at the lower left, above the game's
 // health and stats, which fades after a few seconds; a mod answers a command
 // or refuses one with it.
@@ -116,6 +123,16 @@ export interface ButtonProps {
   onPress?: (player: Player) => void
 }
 
+/**
+ * LayoutProps load a layout from the mod's content addon: src is its path
+ * there, such as 'shop.xml', and data is the string its script reads.
+ */
+export interface LayoutProps {
+  style?: Style
+  src: string
+  data?: string
+}
+
 /** JSX types the elements a mod's JSX may use. */
 export declare namespace JSX {
   type Element = UiElement
@@ -126,6 +143,7 @@ export declare namespace JSX {
     label: LabelProps & IntrinsicAttributes
     image: ImageProps & IntrinsicAttributes
     button: ButtonProps & IntrinsicAttributes
+    layout: LayoutProps & IntrinsicAttributes
   }
   interface IntrinsicAttributes {
     key?: string | number
@@ -392,6 +410,11 @@ function render(previous: Screen | undefined, root: Child): Screen {
           )
         }
         node.children = place(props.children as Child, `${at}/`)
+        break
+      case 'layout':
+        node.kind = Kind.LAYOUT
+        node.layout = typeof props.src === 'string' ? props.src : ''
+        node.data = typeof props.data === 'string' ? props.data : ''
         break
       default:
         node.kind = Kind.PANEL

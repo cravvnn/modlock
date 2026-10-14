@@ -1,5 +1,7 @@
 #include "wasm/ui.h"
 
+#include <cctype>
+#include <ranges>
 #include <string>
 #include <utility>
 
@@ -16,8 +18,30 @@ constexpr size_t kMaxNodes = 512;
 constexpr size_t kMaxId = 64;
 constexpr size_t kMaxText = 1024;
 
+// kMaxData bounds the data a layout reads, in bytes. A layout that holds more,
+// such as a whole inventory, splits it across several layout nodes.
+constexpr size_t kMaxData = 8192;
+
 // kImageRoots lists where an image may come from: the game's own content.
 constexpr std::string_view kImageRoots[] = {"file://{images}/", "s2r://panorama/images/"};
+
+// IsLayoutPath reports whether path names a layout inside the mod's addon: one or
+// more segments of letters, digits, '_', '-' and '.', none of them "..", ending
+// in ".xml". The renderer joins it to the addon's layout directory, so a path
+// that could leave that directory never reaches it.
+bool IsLayoutPath(std::string_view path) {
+  if (!path.ends_with(".xml")) return false;
+  for (auto part : std::views::split(path, '/')) {
+    std::string_view segment(part.begin(), part.end());
+    if (segment.empty() || segment == "..") return false;
+    for (char c : segment) {
+      bool allowed =
+          std::isalnum(static_cast<unsigned char>(c)) || c == '_' || c == '-' || c == '.';
+      if (!allowed) return false;
+    }
+  }
+  return true;
+}
 
 // Check returns why node cannot be drawn, if it cannot.
 std::expected<void, std::string> Check(const ui::Node& node) {
@@ -26,6 +50,12 @@ std::expected<void, std::string> Check(const ui::Node& node) {
     return std::unexpected("node " + node.id() + ": text is too long");
   if (node.children_size() > static_cast<int>(kMaxNodes)) {
     return std::unexpected("node " + node.id() + ": too many children");
+  }
+  if (node.data().size() > kMaxData)
+    return std::unexpected("node " + node.id() + ": data is too long");
+  if (node.kind() == ui::KIND_LAYOUT && !IsLayoutPath(node.layout())) {
+    return std::unexpected("node " + node.id() +
+                           ": a layout is a path ending in .xml in the mod's addon");
   }
   if (!node.image().empty()) {
     bool allowed = false;

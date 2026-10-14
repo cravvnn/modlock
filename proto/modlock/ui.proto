@@ -8,7 +8,9 @@ option go_package = "github.com/paralin/modlock/proto/modlock/ui;ui";
 // the player's game draws each mod's tree under a root of its own with stock
 // panels, so no mod code runs in the client. Every property is typed: the
 // renderer writes nothing a mod could turn into script, a style string or a
-// console command.
+// console command. The one exception is a layout node, which a host's
+// renderer may load from the mod's own content addon and which Modlock's
+// renderer leaves empty.
 
 // Node is one panel in a tree. The root's id is empty; it is a full-screen
 // panel that lets clicks through to the game.
@@ -32,6 +34,18 @@ message Node {
 
   // Style lays out and paints the node.
   Style style = 6;
+
+  // Layout is a layout's path within the mod's content addon, such as
+  // "inventory.xml": one or more segments of letters, digits, '_', '-' and
+  // '.', none of them "..", ending in ".xml".
+  string layout = 7;
+
+  // Data is the string a layout's script reads. The renderer sets it as the
+  // modlock_data attribute of the layout's panel before loading the layout,
+  // and after each change it plays the sound event "modlock_data_changed",
+  // which no sound has, so a script that registers for the unhandled
+  // PlaySoundEffect event hears it and reads the attribute again.
+  string data = 8;
 }
 
 // Kind selects the panel a node draws.
@@ -48,6 +62,12 @@ enum Kind {
   // KIND_BUTTON holds its children and reports each press to the mod. A
   // button takes clicks only while the player has a cursor.
   KIND_BUTTON = 3;
+
+  // KIND_LAYOUT loads the node's layout from the mod's content addon, whose
+  // script runs in the player's game and talks to the mod through its own
+  // console commands. Only a host that has reviewed the mod's content loads
+  // it; Modlock's renderer draws an empty panel.
+  KIND_LAYOUT = 4;
 }
 
 // Style is the closed set of layout and paint properties a node may set. A

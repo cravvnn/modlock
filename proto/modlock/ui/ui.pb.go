@@ -27,6 +27,11 @@ const (
 	// KIND_BUTTON holds its children and reports each press to the mod. A
 	// button takes clicks only while the player has a cursor.
 	Kind_KIND_BUTTON Kind = 3
+	// KIND_LAYOUT loads the node's layout from the mod's content addon, whose
+	// script runs in the player's game and talks to the mod through its own
+	// console commands. Only a host that has reviewed the mod's content loads
+	// it; Modlock's renderer draws an empty panel.
+	Kind_KIND_LAYOUT Kind = 4
 )
 
 // Enum value maps for Kind.
@@ -36,12 +41,14 @@ var (
 		1: "KIND_LABEL",
 		2: "KIND_IMAGE",
 		3: "KIND_BUTTON",
+		4: "KIND_LAYOUT",
 	}
 	Kind_value = map[string]int32{
 		"KIND_PANEL":  0,
 		"KIND_LABEL":  1,
 		"KIND_IMAGE":  2,
 		"KIND_BUTTON": 3,
+		"KIND_LAYOUT": 4,
 	}
 )
 
@@ -157,6 +164,16 @@ type Node struct {
 	Image string `protobuf:"bytes,5,opt,name=image,proto3" json:"image,omitempty"`
 	// Style lays out and paints the node.
 	Style *Style `protobuf:"bytes,6,opt,name=style,proto3" json:"style,omitempty"`
+	// Layout is a layout's path within the mod's content addon, such as
+	// "inventory.xml": one or more segments of letters, digits, '_', '-' and
+	// '.', none of them "..", ending in ".xml".
+	Layout string `protobuf:"bytes,7,opt,name=layout,proto3" json:"layout,omitempty"`
+	// Data is the string a layout's script reads. The renderer sets it as the
+	// modlock_data attribute of the layout's panel before loading the layout,
+	// and after each change it plays the sound event "modlock_data_changed",
+	// which no sound has, so a script that registers for the unhandled
+	// PlaySoundEffect event hears it and reads the attribute again.
+	Data string `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 }
 
 func (x *Node) Reset() {
@@ -205,6 +222,20 @@ func (x *Node) GetStyle() *Style {
 		return x.Style
 	}
 	return nil
+}
+
+func (x *Node) GetLayout() string {
+	if x != nil {
+		return x.Layout
+	}
+	return ""
+}
+
+func (x *Node) GetData() string {
+	if x != nil {
+		return x.Data
+	}
+	return ""
 }
 
 // Style is the closed set of layout and paint properties a node may set. A
@@ -351,7 +382,6 @@ type Length struct {
 	// Value selects the unit.
 	//
 	// Types that are assignable to Value:
-	//
 	//	*Length_Pixels
 	//	*Length_Percent
 	//	*Length_FitChildren
@@ -577,6 +607,8 @@ func (m *Node) CloneVT() *Node {
 	r.Kind = m.Kind
 	r.Text = m.Text
 	r.Image = m.Image
+	r.Layout = m.Layout
+	r.Data = m.Data
 	r.Children = protobuf_go_lite.CloneSlice(m.Children)
 	r.Style = protobuf_go_lite.CloneVTValue(m.Style)
 	if len(m.unknownFields) > 0 {
@@ -780,6 +812,12 @@ func (this *Node) EqualVT(that *Node) bool {
 		return false
 	}
 	if !protobuf_go_lite.IsEqualVT(this.Style, that.Style) {
+		return false
+	}
+	if this.Layout != that.Layout {
+		return false
+	}
+	if this.Data != that.Data {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -1197,6 +1235,16 @@ func (x *Node) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("style")
 		x.Style.MarshalProtoJSON(s.WithField("style"))
 	}
+	if x.Layout != "" || s.HasField("layout") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("layout")
+		s.WriteString(x.Layout)
+	}
+	if x.Data != "" || s.HasField("data") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("data")
+		s.WriteString(x.Data)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1240,6 +1288,12 @@ func (x *Node) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			x.Style = &Style{}
 			x.Style.UnmarshalProtoJSON(s.WithField("style", true))
+		case "layout":
+			s.AddField("layout")
+			x.Layout = s.ReadString()
+		case "data":
+			s.AddField("data")
+			x.Data = s.ReadString()
 		}
 	})
 }
@@ -1802,6 +1856,16 @@ func (m *Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if len(m.Data) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Data)
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.Layout) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Layout)
+		i--
+		dAtA[i] = 0x3a
+	}
 	if m.Style != nil {
 		size, err := m.Style.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -2269,6 +2333,8 @@ func (m *Node) SizeVT() (n int) {
 		l = m.Style.SizeVT()
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Layout)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Data)
 	n += len(m.unknownFields)
 	return n
 }
@@ -2456,6 +2522,14 @@ func (x *Node) MarshalProtoText() string {
 	if x.Style != nil {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "style")
 		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Style)
+	}
+	if x.Layout != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "layout")
+		protobuf_go_lite.TextWriteString(&sb, x.Layout)
+	}
+	if x.Data != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "data")
+		protobuf_go_lite.TextWriteString(&sb, x.Data)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -2741,6 +2815,26 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Layout", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Layout = v
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Data", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Data = v
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

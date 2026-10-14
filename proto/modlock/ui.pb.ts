@@ -44,6 +44,16 @@ export enum Kind {
    * @generated from enum value: KIND_BUTTON = 3;
    */
   BUTTON = 3,
+
+  /**
+   * KIND_LAYOUT loads the node's layout from the mod's content addon, whose
+   * script runs in the player's game and talks to the mod through its own
+   * console commands. Only a host that has reviewed the mod's content loads
+   * it; Modlock's renderer draws an empty panel.
+   *
+   * @generated from enum value: KIND_LAYOUT = 4;
+   */
+  LAYOUT = 4,
 }
 
 export const Kind_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Kind", [
@@ -51,6 +61,7 @@ export const Kind_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Kind", [
   [1, "KIND_LABEL"],
   [2, "KIND_IMAGE"],
   [3, "KIND_BUTTON"],
+  [4, "KIND_LAYOUT"],
 ]);
 
 /**
@@ -387,6 +398,24 @@ export interface Node {
    * @generated from field: modlock.ui.Style style = 6;
    */
   style?: Style;
+  /**
+   * Layout is a layout's path within the mod's content addon, such as
+   * "inventory.xml": one or more segments of letters, digits, '_', '-' and
+   * '.', none of them "..", ending in ".xml".
+   *
+   * @generated from field: string layout = 7;
+   */
+  layout?: string;
+  /**
+   * Data is the string a layout's script reads. The renderer sets it as the
+   * modlock_data attribute of the layout's panel before loading the layout,
+   * and after each change it plays the sound event "modlock_data_changed",
+   * which no sound has, so a script that registers for the unhandled
+   * PlaySoundEffect event hears it and reads the attribute again.
+   *
+   * @generated from field: string data = 8;
+   */
+  data?: string;
 
 };
 
@@ -399,6 +428,8 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType({
         { no: 4, name: "text", kind: "scalar", T: ScalarType.STRING },
         { no: 5, name: "image", kind: "scalar", T: ScalarType.STRING },
         { no: 6, name: "style", kind: "message", T: () => Style },
+        { no: 7, name: "layout", kind: "scalar", T: ScalarType.STRING },
+        { no: 8, name: "data", kind: "scalar", T: ScalarType.STRING },
     ] satisfies readonly PartialFieldInfo[],
     packedByDefault: true,
 });

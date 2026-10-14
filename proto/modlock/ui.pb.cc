@@ -134,6 +134,12 @@ inline constexpr Node::Impl_::Impl_(
         image_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        layout_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        data_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         style_{nullptr},
         kind_{static_cast< ::modlock::ui::Kind >(0)} {}
 
@@ -247,19 +253,23 @@ const ::uint32_t
         protodesc_cold) = {
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_._has_bits_),
-        9, // hasbit index offset
+        11, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.id_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.kind_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.children_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.text_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.image_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.style_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.layout_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Node, _impl_.data_),
         1,
-        5,
+        7,
         0,
         2,
         3,
+        6,
         4,
+        5,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_._has_bits_),
         17, // hasbit index offset
@@ -335,12 +345,12 @@ const ::uint32_t
 static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, sizeof(::modlock::ui::Node)},
-        {15, sizeof(::modlock::ui::Style)},
-        {46, sizeof(::modlock::ui::Length)},
-        {53, sizeof(::modlock::ui::Edges)},
-        {64, sizeof(::modlock::ui::Change)},
-        {73, sizeof(::modlock::ui::Tree)},
-        {80, sizeof(::modlock::ui::Screen)},
+        {19, sizeof(::modlock::ui::Style)},
+        {50, sizeof(::modlock::ui::Length)},
+        {57, sizeof(::modlock::ui::Edges)},
+        {68, sizeof(::modlock::ui::Change)},
+        {77, sizeof(::modlock::ui::Tree)},
+        {84, sizeof(::modlock::ui::Screen)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::modlock::ui::_Node_default_instance_._instance,
@@ -354,42 +364,43 @@ static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
 const char descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     protodesc_cold) = {
     "\n1github.com/paralin/modlock/proto/modlo"
-    "ck/ui.proto\022\nmodlock.ui\"\203\001\n\004Node\022\n\n\002id\030\001"
+    "ck/ui.proto\022\nmodlock.ui\"\241\001\n\004Node\022\n\n\002id\030\001"
     " \001(\t\022\036\n\004kind\030\002 \001(\0162\020.modlock.ui.Kind\022\020\n\010"
     "children\030\003 \003(\t\022\014\n\004text\030\004 \001(\t\022\r\n\005image\030\005 "
-    "\001(\t\022 \n\005style\030\006 \001(\0132\021.modlock.ui.Style\"\261\003"
-    "\n\005Style\022!\n\005width\030\001 \001(\0132\022.modlock.ui.Leng"
-    "th\022\"\n\006height\030\002 \001(\0132\022.modlock.ui.Length\022\036"
-    "\n\004flow\030\003 \001(\0162\020.modlock.ui.Flow\022+\n\020horizo"
-    "ntal_align\030\004 \001(\0162\021.modlock.ui.Align\022)\n\016v"
-    "ertical_align\030\005 \001(\0162\021.modlock.ui.Align\022!"
-    "\n\006margin\030\006 \001(\0132\021.modlock.ui.Edges\022\"\n\007pad"
-    "ding\030\007 \001(\0132\021.modlock.ui.Edges\022\022\n\nbackgro"
-    "und\030\010 \001(\007\022\r\n\005color\030\t \001(\007\022\021\n\tfont_size\030\n "
-    "\001(\002\022\014\n\004bold\030\013 \001(\010\022%\n\ntext_align\030\014 \001(\0162\021."
-    "modlock.ui.Align\022\025\n\rborder_radius\030\r \001(\002\022"
-    "\024\n\007opacity\030\016 \001(\002H\000\210\001\001B\n\n\010_opacity\"^\n\006Len"
-    "gth\022\020\n\006pixels\030\001 \001(\002H\000\022\021\n\007percent\030\002 \001(\002H\000"
-    "\022\026\n\014fit_children\030\003 \001(\010H\000\022\016\n\004fill\030\004 \001(\002H\000"
-    "B\007\n\005value\"A\n\005Edges\022\013\n\003top\030\001 \001(\002\022\r\n\005right"
-    "\030\002 \001(\002\022\016\n\006bottom\030\003 \001(\002\022\014\n\004left\030\004 \001(\002\"G\n\006"
-    "Change\022\r\n\005reset\030\001 \001(\010\022\035\n\003set\030\002 \003(\0132\020.mod"
-    "lock.ui.Node\022\017\n\007removed\030\003 \003(\t\"4\n\004Tree\022\013\n"
-    "\003mod\030\001 \001(\t\022\037\n\005nodes\030\002 \003(\0132\020.modlock.ui.N"
-    "ode\")\n\006Screen\022\037\n\005trees\030\001 \003(\0132\020.modlock.u"
-    "i.Tree*G\n\004Kind\022\016\n\nKIND_PANEL\020\000\022\016\n\nKIND_L"
-    "ABEL\020\001\022\016\n\nKIND_IMAGE\020\002\022\017\n\013KIND_BUTTON\020\003*"
-    "4\n\004Flow\022\r\n\tFLOW_NONE\020\000\022\r\n\tFLOW_DOWN\020\001\022\016\n"
-    "\nFLOW_RIGHT\020\002*9\n\005Align\022\017\n\013ALIGN_START\020\000\022"
-    "\020\n\014ALIGN_CENTER\020\001\022\r\n\tALIGN_END\020\002B0Z.gith"
-    "ub.com/paralin/modlock/proto/modlock/ui;"
-    "uib\006proto3"
+    "\001(\t\022 \n\005style\030\006 \001(\0132\021.modlock.ui.Style\022\016\n"
+    "\006layout\030\007 \001(\t\022\014\n\004data\030\010 \001(\t\"\261\003\n\005Style\022!\n"
+    "\005width\030\001 \001(\0132\022.modlock.ui.Length\022\"\n\006heig"
+    "ht\030\002 \001(\0132\022.modlock.ui.Length\022\036\n\004flow\030\003 \001"
+    "(\0162\020.modlock.ui.Flow\022+\n\020horizontal_align"
+    "\030\004 \001(\0162\021.modlock.ui.Align\022)\n\016vertical_al"
+    "ign\030\005 \001(\0162\021.modlock.ui.Align\022!\n\006margin\030\006"
+    " \001(\0132\021.modlock.ui.Edges\022\"\n\007padding\030\007 \001(\013"
+    "2\021.modlock.ui.Edges\022\022\n\nbackground\030\010 \001(\007\022"
+    "\r\n\005color\030\t \001(\007\022\021\n\tfont_size\030\n \001(\002\022\014\n\004bol"
+    "d\030\013 \001(\010\022%\n\ntext_align\030\014 \001(\0162\021.modlock.ui"
+    ".Align\022\025\n\rborder_radius\030\r \001(\002\022\024\n\007opacity"
+    "\030\016 \001(\002H\000\210\001\001B\n\n\010_opacity\"^\n\006Length\022\020\n\006pix"
+    "els\030\001 \001(\002H\000\022\021\n\007percent\030\002 \001(\002H\000\022\026\n\014fit_ch"
+    "ildren\030\003 \001(\010H\000\022\016\n\004fill\030\004 \001(\002H\000B\007\n\005value\""
+    "A\n\005Edges\022\013\n\003top\030\001 \001(\002\022\r\n\005right\030\002 \001(\002\022\016\n\006"
+    "bottom\030\003 \001(\002\022\014\n\004left\030\004 \001(\002\"G\n\006Change\022\r\n\005"
+    "reset\030\001 \001(\010\022\035\n\003set\030\002 \003(\0132\020.modlock.ui.No"
+    "de\022\017\n\007removed\030\003 \003(\t\"4\n\004Tree\022\013\n\003mod\030\001 \001(\t"
+    "\022\037\n\005nodes\030\002 \003(\0132\020.modlock.ui.Node\")\n\006Scr"
+    "een\022\037\n\005trees\030\001 \003(\0132\020.modlock.ui.Tree*X\n\004"
+    "Kind\022\016\n\nKIND_PANEL\020\000\022\016\n\nKIND_LABEL\020\001\022\016\n\n"
+    "KIND_IMAGE\020\002\022\017\n\013KIND_BUTTON\020\003\022\017\n\013KIND_LA"
+    "YOUT\020\004*4\n\004Flow\022\r\n\tFLOW_NONE\020\000\022\r\n\tFLOW_DO"
+    "WN\020\001\022\016\n\nFLOW_RIGHT\020\002*9\n\005Align\022\017\n\013ALIGN_S"
+    "TART\020\000\022\020\n\014ALIGN_CENTER\020\001\022\r\n\tALIGN_END\020\002B"
+    "0Z.github.com/paralin/modlock/proto/modl"
+    "ock/ui;uib\006proto3"
 };
 static ::absl::once_flag descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto = {
     false,
     false,
-    1210,
+    1257,
     descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto,
     "github.com/paralin/modlock/proto/modlock/ui.proto",
     &descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto_once,
@@ -409,7 +420,7 @@ const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Kind_descriptor() {
   return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t Kind_internal_data_[] = {
-    262144u, 0u, };
+    327680u, 0u, };
 const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Flow_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto);
   return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[1];
@@ -450,7 +461,9 @@ PROTOBUF_NDEBUG_INLINE Node::Impl_::Impl_(
         children_{visibility, arena, from.children_},
         id_(arena, from.id_),
         text_(arena, from.text_),
-        image_(arena, from.image_) {}
+        image_(arena, from.image_),
+        layout_(arena, from.layout_),
+        data_(arena, from.data_) {}
 
 Node::Node(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -466,7 +479,7 @@ Node::Node(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
   ::uint32_t cached_has_bits = _impl_._has_bits_[0];
-  _impl_.style_ = (CheckHasBit(cached_has_bits, 0x00000010U))
+  _impl_.style_ = (CheckHasBit(cached_has_bits, 0x00000040U))
                 ? ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.style_)
                 : nullptr;
   _impl_.kind_ = from._impl_.kind_;
@@ -480,7 +493,9 @@ PROTOBUF_NDEBUG_INLINE Node::Impl_::Impl_(
         children_{visibility, arena},
         id_(arena),
         text_(arena),
-        image_(arena) {}
+        image_(arena),
+        layout_(arena),
+        data_(arena) {}
 
 inline void Node::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -505,6 +520,8 @@ inline void Node::SharedDtor(MessageLite& self) {
   this_._impl_.id_.Destroy();
   this_._impl_.text_.Destroy();
   this_._impl_.image_.Destroy();
+  this_._impl_.layout_.Destroy();
+  this_._impl_.data_.Destroy();
   delete this_._impl_.style_;
   this_._impl_.~Impl_();
 }
@@ -564,16 +581,16 @@ Node::GetClassData() const {
   return Node_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 1, 43, 2>
+const ::_pbi::TcParseTable<3, 8, 1, 61, 2>
 Node::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(Node, _impl_._has_bits_),
     0, // no _extensions_
-    6, 56,  // max_field_number, fast_idx_mask
+    8, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967232,  // skipmap
+    4294967040,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    6,  // num_field_entries
+    8,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     Node_class_data_.base(),
@@ -583,14 +600,17 @@ Node::_table_ = {
     ::_pbi::TcParser::GetTable<::modlock::ui::Node>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    {::_pbi::TcParser::MiniParse, {}},
+    // string data = 8;
+    {::_pbi::TcParser::FastUS1,
+     {66, 5, 0,
+      PROTOBUF_FIELD_OFFSET(Node, _impl_.data_)}},
     // string id = 1;
     {::_pbi::TcParser::FastUS1,
      {10, 1, 0,
       PROTOBUF_FIELD_OFFSET(Node, _impl_.id_)}},
     // .modlock.ui.Kind kind = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Node, _impl_.kind_), 5>(),
-     {16, 5, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Node, _impl_.kind_), 7>(),
+     {16, 7, 0,
       PROTOBUF_FIELD_OFFSET(Node, _impl_.kind_)}},
     // repeated string children = 3;
     {::_pbi::TcParser::FastUR1,
@@ -606,16 +626,19 @@ Node::_table_ = {
       PROTOBUF_FIELD_OFFSET(Node, _impl_.image_)}},
     // .modlock.ui.Style style = 6;
     {::_pbi::TcParser::FastMtS1,
-     {50, 4, 0,
+     {50, 6, 0,
       PROTOBUF_FIELD_OFFSET(Node, _impl_.style_)}},
-    {::_pbi::TcParser::MiniParse, {}},
+    // string layout = 7;
+    {::_pbi::TcParser::FastUS1,
+     {58, 4, 0,
+      PROTOBUF_FIELD_OFFSET(Node, _impl_.layout_)}},
   }}, {{
     65535, 65535
   }}, {{
     // string id = 1;
     {PROTOBUF_FIELD_OFFSET(Node, _impl_.id_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // .modlock.ui.Kind kind = 2;
-    {PROTOBUF_FIELD_OFFSET(Node, _impl_.kind_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kOpenEnum)},
+    {PROTOBUF_FIELD_OFFSET(Node, _impl_.kind_), _Internal::kHasBitsOffset + 7, 0, (0 | ::_fl::kFcOptional | ::_fl::kOpenEnum)},
     // repeated string children = 3;
     {PROTOBUF_FIELD_OFFSET(Node, _impl_.children_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcRepeated | ::_fl::kUtf8String | ::_fl::kRepSString)},
     // string text = 4;
@@ -623,18 +646,24 @@ Node::_table_ = {
     // string image = 5;
     {PROTOBUF_FIELD_OFFSET(Node, _impl_.image_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // .modlock.ui.Style style = 6;
-    {PROTOBUF_FIELD_OFFSET(Node, _impl_.style_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    {PROTOBUF_FIELD_OFFSET(Node, _impl_.style_), _Internal::kHasBitsOffset + 6, 0, (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+    // string layout = 7;
+    {PROTOBUF_FIELD_OFFSET(Node, _impl_.layout_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string data = 8;
+    {PROTOBUF_FIELD_OFFSET(Node, _impl_.data_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::modlock::ui::Style>()},
   }},
   {{
-    "\17\2\0\10\4\5\0\0"
+    "\17\2\0\10\4\5\0\6\4\0\0\0\0\0\0\0"
     "modlock.ui.Node"
     "id"
     "children"
     "text"
     "image"
+    "layout"
+    "data"
   }},
 };
 PROTOBUF_NOINLINE void Node::Clear() {
@@ -645,7 +674,7 @@ PROTOBUF_NOINLINE void Node::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000007fU)) {
     if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
       _impl_.children_.Clear();
     }
@@ -659,6 +688,12 @@ PROTOBUF_NOINLINE void Node::Clear() {
       _impl_.image_.ClearNonDefaultToEmpty();
     }
     if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      _impl_.layout_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+      _impl_.data_.ClearNonDefaultToEmpty();
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       ABSL_DCHECK(_impl_.style_ != nullptr);
       _impl_.style_->Clear();
     }
@@ -698,7 +733,7 @@ PROTOBUF_NOINLINE void Node::Clear() {
   }
 
   // .modlock.ui.Kind kind = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000080U)) {
     if (this_._internal_kind() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteEnumToArray(
@@ -737,10 +772,30 @@ PROTOBUF_NOINLINE void Node::Clear() {
   }
 
   // .modlock.ui.Style style = 6;
-  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000040U)) {
     target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
         6, *this_._impl_.style_, this_._impl_.style_->GetCachedSize(), target,
         stream);
+  }
+
+  // string layout = 7;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (!this_._internal_layout().empty()) {
+      const ::std::string& _s = this_._internal_layout();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.ui.Node.layout");
+      target = stream->WriteStringMaybeAliased(7, _s, target);
+    }
+  }
+
+  // string data = 8;
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (!this_._internal_data().empty()) {
+      const ::std::string& _s = this_._internal_data();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "modlock.ui.Node.data");
+      target = stream->WriteStringMaybeAliased(8, _s, target);
+    }
   }
 
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -768,7 +823,7 @@ PROTOBUF_NOINLINE void Node::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x000000ffU)) {
     // repeated string children = 3;
     if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
       total_size +=
@@ -799,13 +854,27 @@ PROTOBUF_NOINLINE void Node::Clear() {
                                         this_._internal_image());
       }
     }
-    // .modlock.ui.Style style = 6;
+    // string layout = 7;
     if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!this_._internal_layout().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_layout());
+      }
+    }
+    // string data = 8;
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+      if (!this_._internal_data().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_data());
+      }
+    }
+    // .modlock.ui.Style style = 6;
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       total_size += 1 +
                     ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.style_);
     }
     // .modlock.ui.Kind kind = 2;
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (this_._internal_kind() != 0) {
         total_size += 1 +
                       ::_pbi::WireFormatLite::EnumSize(this_._internal_kind());
@@ -831,7 +900,7 @@ void Node::MergeImpl(::google::protobuf::MessageLite& to_msg,
   (void)cached_has_bits;
 
   cached_has_bits = from._impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000003fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x000000ffU)) {
     if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
       _this->_internal_mutable_children()->InternalMergeFromWithArena(
           ::google::protobuf::MessageLite::internal_visibility(), arena,
@@ -865,6 +934,24 @@ void Node::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!from._internal_layout().empty()) {
+        _this->_internal_set_layout(from._internal_layout());
+      } else {
+        if (_this->_impl_.layout_.IsDefault()) {
+          _this->_internal_set_layout("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+      if (!from._internal_data().empty()) {
+        _this->_internal_set_data(from._internal_data());
+      } else {
+        if (_this->_impl_.data_.IsDefault()) {
+          _this->_internal_set_data("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       ABSL_DCHECK(from._impl_.style_ != nullptr);
       if (_this->_impl_.style_ == nullptr) {
         _this->_impl_.style_ = ::google::protobuf::Message::CopyConstruct(arena, *from._impl_.style_);
@@ -872,7 +959,7 @@ void Node::MergeImpl(::google::protobuf::MessageLite& to_msg,
         _this->_impl_.style_->MergeFrom(*from._impl_.style_);
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (from._internal_kind() != 0) {
         _this->_impl_.kind_ = from._impl_.kind_;
       }
@@ -901,6 +988,8 @@ void Node::InternalSwap(Node* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.id_, &other->_impl_.id_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.text_, &other->_impl_.text_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.image_, &other->_impl_.image_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.layout_, &other->_impl_.layout_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.data_, &other->_impl_.data_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(Node, _impl_.kind_)
       + sizeof(Node::_impl_.kind_)

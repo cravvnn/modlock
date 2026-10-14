@@ -57,6 +57,7 @@ export {
   jsx,
   jsxs,
   type LabelProps,
+  type LayoutProps,
   type Length,
   type PanelProps,
   show,

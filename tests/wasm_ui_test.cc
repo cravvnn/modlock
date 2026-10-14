@@ -1,6 +1,6 @@
 // Contract tests for a mod's interface trees: changes apply in order, a change
-// that breaks a limit leaves the tree as it was, and only a shown button takes
-// presses. A departed player's slot takes only a reset.
+// that breaks a limit leaves the tree as it was, a layout stays inside the
+// mod's addon, and only a shown button takes presses. A departed player's slot takes only a reset.
 #include <string>
 
 #include "gtest/gtest.h"
@@ -51,6 +51,17 @@ TEST(UiTrees, RefusesWhatCannotBeDrawn) {
   EXPECT_TRUE(trees.Apply(0, web));
   EXPECT_FALSE(trees.Apply(0, Set(std::string(65, 'x'), modlock::ui::KIND_PANEL)));
   EXPECT_FALSE(trees.Apply(64, Set("ready", modlock::ui::KIND_BUTTON)));
+
+  // A layout names an .xml file inside the mod's addon and nothing outside it.
+  auto layout = Set("inventory", modlock::ui::KIND_LAYOUT);
+  for (const char* path : {"", "inventory.js", "../hyperline/session.xml", "a//b.xml", "a b.xml"}) {
+    layout.mutable_set(0)->set_layout(path);
+    EXPECT_FALSE(trees.Apply(0, layout)) << path;
+  }
+  layout.mutable_set(0)->set_layout("menus/inventory.xml");
+  EXPECT_TRUE(trees.Apply(0, layout));
+  layout.mutable_set(0)->set_data(std::string(8193, 'x'));
+  EXPECT_FALSE(trees.Apply(0, layout));
 
   // A change that grows the tree past its bound applies none of its nodes.
   Change large;

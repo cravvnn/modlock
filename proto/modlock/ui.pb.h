@@ -114,6 +114,7 @@ enum Kind : int {
   KIND_LABEL = 1,
   KIND_IMAGE = 2,
   KIND_BUTTON = 3,
+  KIND_LAYOUT = 4,
   Kind_INT_MIN_SENTINEL_DO_NOT_USE_ =
       ::std::numeric_limits<::int32_t>::min(),
   Kind_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -124,11 +125,11 @@ extern const uint32_t Kind_internal_data_[];
 inline constexpr Kind Kind_MIN =
     static_cast<Kind>(0);
 inline constexpr Kind Kind_MAX =
-    static_cast<Kind>(3);
+    static_cast<Kind>(4);
 inline bool Kind_IsValid(int value) {
-  return 0 <= value && value <= 3;
+  return 0 <= value && value <= 4;
 }
-inline constexpr int Kind_ARRAYSIZE = 3 + 1;
+inline constexpr int Kind_ARRAYSIZE = 4 + 1;
 const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Kind_descriptor();
 template <typename T>
 const ::std::string& Kind_Name(T value) {
@@ -139,7 +140,7 @@ const ::std::string& Kind_Name(T value) {
 }
 template <>
 inline const ::std::string& Kind_Name(Kind value) {
-  return ::google::protobuf::internal::NameOfDenseEnum<Kind_descriptor, 0, 3>(
+  return ::google::protobuf::internal::NameOfDenseEnum<Kind_descriptor, 0, 4>(
       static_cast<int>(value));
 }
 inline bool Kind_Parse(
@@ -1215,6 +1216,8 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
     kIdFieldNumber = 1,
     kTextFieldNumber = 4,
     kImageFieldNumber = 5,
+    kLayoutFieldNumber = 7,
+    kDataFieldNumber = 8,
     kStyleFieldNumber = 6,
     kKindFieldNumber = 2,
   };
@@ -1285,6 +1288,36 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_image();
 
   public:
+  // string layout = 7;
+  void clear_layout() ;
+  const ::std::string& layout() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_layout(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_layout();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_layout();
+  void set_allocated_layout(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_layout() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_layout(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_layout();
+
+  public:
+  // string data = 8;
+  void clear_data() ;
+  const ::std::string& data() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_data(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_data();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_data();
+  void set_allocated_data(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_data() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_data(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_data();
+
+  public:
   // .modlock.ui.Style style = 6;
   bool has_style() const;
   void clear_style() ;
@@ -1314,8 +1347,8 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
-                                   1, 43,
+  static const ::google::protobuf::internal::TcParseTable<3, 8,
+                                   1, 61,
                                    2>
       _table_;
 
@@ -1340,6 +1373,8 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr id_;
     ::google::protobuf::internal::ArenaStringPtr text_;
     ::google::protobuf::internal::ArenaStringPtr image_;
+    ::google::protobuf::internal::ArenaStringPtr layout_;
+    ::google::protobuf::internal::ArenaStringPtr data_;
     ::modlock::ui::Style* PROTOBUF_NULLABLE style_;
     int kind_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -2080,7 +2115,7 @@ inline void Node::clear_kind() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.kind_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000080U);
 }
 inline ::modlock::ui::Kind Node::kind() const {
   // @@protoc_insertion_point(field_get:modlock.ui.Node.kind)
@@ -2088,7 +2123,7 @@ inline ::modlock::ui::Kind Node::kind() const {
 }
 inline void Node::set_kind(::modlock::ui::Kind value) {
   _internal_set_kind(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:modlock.ui.Node.kind)
 }
 inline ::modlock::ui::Kind Node::_internal_kind() const {
@@ -2304,7 +2339,7 @@ inline void Node::set_allocated_image(::std::string* PROTOBUF_NULLABLE value) {
 
 // .modlock.ui.Style style = 6;
 inline bool Node::has_style() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
   PROTOBUF_ASSUME(!value || _impl_.style_ != nullptr);
   return value;
 }
@@ -2312,7 +2347,7 @@ inline void Node::clear_style() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.style_ != nullptr) _impl_.style_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000040U);
 }
 inline const ::modlock::ui::Style& Node::_internal_style() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -2331,16 +2366,16 @@ inline void Node::unsafe_arena_set_allocated_style(
   }
   _impl_.style_ = reinterpret_cast<::modlock::ui::Style*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.ui.Node.style)
 }
 inline ::modlock::ui::Style* PROTOBUF_NULLABLE Node::release_style() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
   ::modlock::ui::Style* released = _impl_.style_;
   _impl_.style_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -2360,7 +2395,7 @@ inline ::modlock::ui::Style* PROTOBUF_NULLABLE Node::unsafe_arena_release_style(
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.ui.Node.style)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
   ::modlock::ui::Style* temp = _impl_.style_;
   _impl_.style_ = nullptr;
   return temp;
@@ -2375,7 +2410,7 @@ inline ::modlock::ui::Style* PROTOBUF_NONNULL Node::_internal_mutable_style() {
 }
 inline ::modlock::ui::Style* PROTOBUF_NONNULL Node::mutable_style()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   ::modlock::ui::Style* _msg = _internal_mutable_style();
   // @@protoc_insertion_point(field_mutable:modlock.ui.Node.style)
   return _msg;
@@ -2392,13 +2427,143 @@ inline void Node::set_allocated_style(::modlock::ui::Style* PROTOBUF_NULLABLE va
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
   }
 
   _impl_.style_ = reinterpret_cast<::modlock::ui::Style*>(value);
   // @@protoc_insertion_point(field_set_allocated:modlock.ui.Node.style)
+}
+
+// string layout = 7;
+inline void Node::clear_layout() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.layout_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline const ::std::string& Node::layout() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.ui.Node.layout)
+  return _internal_layout();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void Node::set_layout(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.layout_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.ui.Node.layout)
+}
+inline ::std::string* PROTOBUF_NONNULL Node::mutable_layout()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ::std::string* _s = _internal_mutable_layout();
+  // @@protoc_insertion_point(field_mutable:modlock.ui.Node.layout)
+  return _s;
+}
+inline const ::std::string& Node::_internal_layout() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.layout_.Get();
+}
+inline void Node::_internal_set_layout(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.layout_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL Node::_internal_mutable_layout() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.layout_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE Node::release_layout() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.ui.Node.layout)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000010U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  auto* released = _impl_.layout_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.layout_.Set("", GetArena());
+  }
+  return released;
+}
+inline void Node::set_allocated_layout(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  }
+  _impl_.layout_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.layout_.IsDefault()) {
+    _impl_.layout_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.ui.Node.layout)
+}
+
+// string data = 8;
+inline void Node::clear_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000020U);
+}
+inline const ::std::string& Node::data() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.ui.Node.data)
+  return _internal_data();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void Node::set_data(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  _impl_.data_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.ui.Node.data)
+}
+inline ::std::string* PROTOBUF_NONNULL Node::mutable_data()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  ::std::string* _s = _internal_mutable_data();
+  // @@protoc_insertion_point(field_mutable:modlock.ui.Node.data)
+  return _s;
+}
+inline const ::std::string& Node::_internal_data() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.data_.Get();
+}
+inline void Node::_internal_set_data(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL Node::_internal_mutable_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.data_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE Node::release_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.ui.Node.data)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000020U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000020U);
+  auto* released = _impl_.data_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.data_.Set("", GetArena());
+  }
+  return released;
+}
+inline void Node::set_allocated_data(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000020U);
+  }
+  _impl_.data_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.data_.IsDefault()) {
+    _impl_.data_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.ui.Node.data)
 }
 
 // -------------------------------------------------------------------

@@ -652,14 +652,24 @@ vector or a color has no typed setter; set it with `serverCommand`.
 | `show(player, element)`, `hide(player)` | Show a player an interface written in JSX, or remove it. |
 | `toast(player, text, seconds?)`         | Show a player a short notice that fades.                 |
 
-Style `panel`, `label`, `image` and `button` with `width`, `height`, `flow`,
-`horizontalAlign`, `verticalAlign`, `margin`, `padding`, `background`, `color`,
-`fontSize`, `bold`, `textAlign`, `borderRadius` and `opacity`.
+Style `panel`, `label`, `image`, `button` and `layout` with `width`,
+`height`, `flow`, `horizontalAlign`, `verticalAlign`, `margin`, `padding`,
+`background`, `color`, `fontSize`, `bold`, `textAlign`, `borderRadius` and
+`opacity`.
 
 An interface travels as the typed tree in
 [`proto/modlock/ui.proto`](proto/modlock/ui.proto). The player's game draws it
 and runs no mod code, and a button press comes back to its `onPress`. The host
 clears it when the player leaves or the mod stops.
+
+`<layout src="shop.xml" data={JSON.stringify(stock)} />` is the one element
+that runs code in the player's game: it loads a layout from the mod's content
+addon. Only a host that has reviewed the mod's content loads it, by passing
+`Layouts` to the `Drawing` in `panorama/src/draw.ts`; Modlock's own renderer
+draws an empty panel. The layout's script reads `data` from its panel's
+`modlock_data` attribute and reads it again whenever it hears the unhandled
+`PlaySoundEffect` event `modlock_data_changed`. It answers the mod with its own
+console commands.
 
 The game draws interfaces with the renderer in [`panorama/`](panorama):
 
