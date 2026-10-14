@@ -322,6 +322,10 @@ func (e CAI_GoalEntity) IszConceptModifiers() Text {
 	return Text{e.field("m_iszConceptModifiers")}
 }
 
+func (e CAI_GoalEntity) Actors() List[uint32] {
+	return List[uint32]{e.field("m_actors")}
+}
+
 func (e CAI_GoalEntity) HGoalEntity() Handle[CBaseEntity] {
 	return Handle[CBaseEntity]{e.field("m_hGoalEntity")}
 }
@@ -672,6 +676,10 @@ func (e CBasePlayerController) HSplitOwner() Handle[CBasePlayerController] {
 	return Handle[CBasePlayerController]{e.field("m_hSplitOwner")}
 }
 
+func (e CBasePlayerController) HSplitScreenPlayers() List[uint32] {
+	return List[uint32]{e.field("m_hSplitScreenPlayers")}
+}
+
 func (e CBasePlayerController) BIsHLTV() Bool {
 	return Bool{e.field("m_bIsHLTV")}
 }
@@ -826,6 +834,18 @@ func (e CCitadelPlayerController) BLaneSwapLocked() Bool {
 	return Bool{e.field("m_bLaneSwapLocked")}
 }
 
+func (e CCitadelPlayerController) VecLaneSwapRequests() List[uint32] {
+	return List[uint32]{e.field("m_vecLaneSwapRequests")}
+}
+
+func (e CCitadelPlayerController) VecLaneSwapRejects() List[uint32] {
+	return List[uint32]{e.field("m_vecLaneSwapRejects")}
+}
+
+func (e CCitadelPlayerController) VecMutedPlayers() List[int32] {
+	return List[int32]{e.field("m_vecMutedPlayers")}
+}
+
 func (e CCitadelPlayerController) BCommsRestricted() Bool {
 	return Bool{e.field("m_bCommsRestricted")}
 }
@@ -864,6 +884,10 @@ func (e CCitadelPlayerController) FlNextAllowedCommsTime() Number[float32] {
 
 func (e CCitadelPlayerController) FlLastFailedCommsTime() Number[float32] {
 	return Number[float32]{e.field("m_flLastFailedCommsTime")}
+}
+
+func (e CCitadelPlayerController) VecRecentCommAttempts() List[float32] {
+	return List[float32]{e.field("m_vecRecentCommAttempts")}
 }
 
 func (e CCitadelPlayerController) NTotalCommsAttempted() Number[int32] {
@@ -1866,6 +1890,10 @@ func (e CFishPool) IsDormant() Bool {
 	return Bool{e.field("m_isDormant")}
 }
 
+func (e CFishPool) Fishes() List[uint32] {
+	return List[uint32]{e.field("m_fishes")}
+}
+
 type CFogController CEntityInstance
 
 func (e CFogController) field(name string) Field {
@@ -2282,6 +2310,10 @@ func (e CPathParticleRope) IszEffectName() Text {
 	return Text{e.field("m_iszEffectName")}
 }
 
+func (e CPathParticleRope) PathNodes_Name() TextList {
+	return TextList{e.field("m_PathNodes_Name")}
+}
+
 func (e CPathParticleRope) FlParticleSpacing() Number[float32] {
 	return Number[float32]{e.field("m_flParticleSpacing")}
 }
@@ -2296,6 +2328,30 @@ func (e CPathParticleRope) FlRadius() Number[float32] {
 
 func (e CPathParticleRope) NEffectState() Number[int32] {
 	return Number[int32]{e.field("m_nEffectState")}
+}
+
+func (e CPathParticleRope) PathNodes_Position() VectorList {
+	return VectorList{e.field("m_PathNodes_Position")}
+}
+
+func (e CPathParticleRope) PathNodes_TangentIn() VectorList {
+	return VectorList{e.field("m_PathNodes_TangentIn")}
+}
+
+func (e CPathParticleRope) PathNodes_TangentOut() VectorList {
+	return VectorList{e.field("m_PathNodes_TangentOut")}
+}
+
+func (e CPathParticleRope) PathNodes_Color() VectorList {
+	return VectorList{e.field("m_PathNodes_Color")}
+}
+
+func (e CPathParticleRope) PathNodes_PinEnabled() BoolList {
+	return BoolList{e.field("m_PathNodes_PinEnabled")}
+}
+
+func (e CPathParticleRope) PathNodes_RadiusScale() List[float32] {
+	return List[float32]{e.field("m_PathNodes_RadiusScale")}
 }
 
 type CCitadelZiplinePath CEntityInstance
@@ -2330,6 +2386,10 @@ func (e CPathWithDynamicNodes) field(name string) Field {
 	return Field{e.Handle, "CPathWithDynamicNodes", name}
 }
 
+func (e CPathWithDynamicNodes) VecPathNodes() List[uint32] {
+	return List[uint32]{e.field("m_vecPathNodes")}
+}
+
 func (e CPathWithDynamicNodes) EDesiredDirection() Number[uint32] {
 	return Number[uint32]{e.field("m_eDesiredDirection")}
 }
@@ -2342,6 +2402,14 @@ type CPathMover CEntityInstance
 
 func (e CPathMover) field(name string) Field {
 	return Field{e.Handle, "CPathMover", name}
+}
+
+func (e CPathMover) VecMovers() List[uint32] {
+	return List[uint32]{e.field("m_vecMovers")}
+}
+
+func (e CPathMover) VecSpawners() List[uint32] {
+	return List[uint32]{e.field("m_vecSpawners")}
 }
 
 func (e CPathMover) IszMoverSpawnerName() Text {
@@ -2650,6 +2718,10 @@ func (e CAI_VolumetricEventSensor) IszListenFilter() Text {
 
 func (e CAI_VolumetricEventSensor) HListenFilter() Handle[CBaseFilter] {
 	return Handle[CBaseFilter]{e.field("m_hListenFilter")}
+}
+
+func (e CAI_VolumetricEventSensor) HSensedEvents() List[uint64] {
+	return List[uint64]{e.field("m_hSensedEvents")}
 }
 
 type CAmbientGeneric CEntityInstance
@@ -3180,12 +3252,24 @@ func (e CInfoOffscreenPanoramaTexture) RenderAttrName() Text {
 	return Text{e.field("m_RenderAttrName")}
 }
 
+func (e CInfoOffscreenPanoramaTexture) TargetEntities() List[uint32] {
+	return List[uint32]{e.field("m_TargetEntities")}
+}
+
 func (e CInfoOffscreenPanoramaTexture) NTargetChangeCount() Number[int32] {
 	return Number[int32]{e.field("m_nTargetChangeCount")}
 }
 
+func (e CInfoOffscreenPanoramaTexture) VecCSSClasses() TextList {
+	return TextList{e.field("m_vecCSSClasses")}
+}
+
 func (e CInfoOffscreenPanoramaTexture) SzTargetsName() Text {
 	return Text{e.field("m_szTargetsName")}
+}
+
+func (e CInfoOffscreenPanoramaTexture) AdditionalTargetEntities() List[uint32] {
+	return List[uint32]{e.field("m_AdditionalTargetEntities")}
 }
 
 type CInfoParticleTarget CEntityInstance
@@ -4084,6 +4168,14 @@ func (e CSceneEntity) BSceneFinished() Bool {
 	return Bool{e.field("m_bSceneFinished")}
 }
 
+func (e CSceneEntity) HActorList() List[uint32] {
+	return List[uint32]{e.field("m_hActorList")}
+}
+
+func (e CSceneEntity) HRemoveActorList() List[uint32] {
+	return List[uint32]{e.field("m_hRemoveActorList")}
+}
+
 func (e CSceneEntity) NSceneStringIndex() Number[uint16] {
 	return Number[uint16]{e.field("m_nSceneStringIndex")}
 }
@@ -4122,6 +4214,14 @@ func (e CSceneEntity) BInterruptSceneFinished() Bool {
 
 func (e CSceneEntity) BRestoring() Bool {
 	return Bool{e.field("m_bRestoring")}
+}
+
+func (e CSceneEntity) HNotifySceneCompletion() List[uint32] {
+	return List[uint32]{e.field("m_hNotifySceneCompletion")}
+}
+
+func (e CSceneEntity) HListManagers() List[uint32] {
+	return List[uint32]{e.field("m_hListManagers")}
 }
 
 func (e CSceneEntity) IszSoundName() Text {
@@ -4368,6 +4468,10 @@ func (e CPointValueRemapper) IszOutputEntity3Name() Text {
 
 func (e CPointValueRemapper) IszOutputEntity4Name() Text {
 	return Text{e.field("m_iszOutputEntity4Name")}
+}
+
+func (e CPointValueRemapper) HOutputEntities() List[uint32] {
+	return List[uint32]{e.field("m_hOutputEntities")}
 }
 
 func (e CPointValueRemapper) NHapticsType() Number[uint32] {
@@ -5252,10 +5356,18 @@ func (e CLogicBranch) BInValue() Bool {
 	return Bool{e.field("m_bInValue")}
 }
 
+func (e CLogicBranch) Listeners() List[uint32] {
+	return List[uint32]{e.field("m_Listeners")}
+}
+
 type CLogicBranchList CEntityInstance
 
 func (e CLogicBranchList) field(name string) Field {
 	return Field{e.Handle, "CLogicBranchList", name}
+}
+
+func (e CLogicBranchList) LogicBranchList() List[uint32] {
+	return List[uint32]{e.field("m_LogicBranchList")}
 }
 
 func (e CLogicBranchList) ELastState() Number[uint32] {
@@ -5634,6 +5746,10 @@ func (e CMultiLightProxy) FlCurrentBrightnessMultiplier() Number[float32] {
 	return Number[float32]{e.field("m_flCurrentBrightnessMultiplier")}
 }
 
+func (e CMultiLightProxy) VecLights() List[uint32] {
+	return List[uint32]{e.field("m_vecLights")}
+}
+
 type CMultiSource CEntityInstance
 
 func (e CMultiSource) field(name string) Field {
@@ -5730,6 +5846,10 @@ func (e CPathMoverEntitySpawner) BEnabled() Bool {
 
 func (e CPathMoverEntitySpawner) BDestroyMoverOnArrivedAtEnd() Bool {
 	return Bool{e.field("m_bDestroyMoverOnArrivedAtEnd")}
+}
+
+func (e CPathMoverEntitySpawner) VecQueuedRemovals() List[uint32] {
+	return List[uint32]{e.field("m_vecQueuedRemovals")}
 }
 
 func (e CPathMoverEntitySpawner) IszPathMoverName() Text {
@@ -6496,7 +6616,23 @@ func (e CPointTemplate) OwnerSpawnGroupType() Number[uint32] {
 	return Number[uint32]{e.field("m_ownerSpawnGroupType")}
 }
 
+func (e CPointTemplate) CreatedSpawnGroupHandles() List[uint32] {
+	return List[uint32]{e.field("m_createdSpawnGroupHandles")}
+}
+
+func (e CPointTemplate) SpawnedEntityHandles() List[uint32] {
+	return List[uint32]{e.field("m_SpawnedEntityHandles")}
+}
+
 type CSceneListManager CEntityInstance
+
+func (e CSceneListManager) field(name string) Field {
+	return Field{e.Handle, "CSceneListManager", name}
+}
+
+func (e CSceneListManager) HListManagers() List[uint32] {
+	return List[uint32]{e.field("m_hListManagers")}
+}
 
 type CSoundStackSave CEntityInstance
 
@@ -6738,6 +6874,10 @@ func (e CPointPrefab) BLoadDynamic() Bool {
 
 func (e CPointPrefab) AssociatedRelayEntity() Handle[CPointPrefab] {
 	return Handle[CPointPrefab]{e.field("m_associatedRelayEntity")}
+}
+
+func (e CPointPrefab) ProceduralRelaySources() List[uint32] {
+	return List[uint32]{e.field("m_ProceduralRelaySources")}
 }
 
 type CPointTeleport CEntityInstance
@@ -7316,8 +7456,36 @@ func (e CSoundOpvarSetDomeEntity) field(name string) Field {
 	return Field{e.Handle, "CSoundOpvarSetDomeEntity", name}
 }
 
+func (e CSoundOpvarSetDomeEntity) ArDirections() VectorList {
+	return VectorList{e.field("m_arDirections")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArOpenness() List[float32] {
+	return List[float32]{e.field("m_arOpenness")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArNeighbors() List[int32] {
+	return List[int32]{e.field("m_arNeighbors")}
+}
+
 func (e CSoundOpvarSetDomeEntity) NCurrentIndex() Number[int32] {
 	return Number[int32]{e.field("m_nCurrentIndex")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArClusterParent() List[int32] {
+	return List[int32]{e.field("m_arClusterParent")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArClusterSize() List[int32] {
+	return List[int32]{e.field("m_arClusterSize")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArClusterWeight() List[float32] {
+	return List[float32]{e.field("m_arClusterWeight")}
+}
+
+func (e CSoundOpvarSetDomeEntity) ArClusterDirSum() VectorList {
+	return VectorList{e.field("m_arClusterDirSum")}
 }
 
 func (e CSoundOpvarSetDomeEntity) NClusterIndex() Number[int32] {
@@ -7440,6 +7608,14 @@ func (e CSoundOpvarSetPrecipitationEntity) field(name string) Field {
 	return Field{e.Handle, "CSoundOpvarSetPrecipitationEntity", name}
 }
 
+func (e CSoundOpvarSetPrecipitationEntity) ArDirections() VectorList {
+	return VectorList{e.field("m_arDirections")}
+}
+
+func (e CSoundOpvarSetPrecipitationEntity) ArSky() List[float32] {
+	return List[float32]{e.field("m_arSky")}
+}
+
 func (e CSoundOpvarSetPrecipitationEntity) NCurrentIndex() Number[int32] {
 	return Number[int32]{e.field("m_nCurrentIndex")}
 }
@@ -7510,6 +7686,14 @@ type CTeam CEntityInstance
 
 func (e CTeam) field(name string) Field {
 	return Field{e.Handle, "CTeam", name}
+}
+
+func (e CTeam) APlayerControllers() List[uint32] {
+	return List[uint32]{e.field("m_aPlayerControllers")}
+}
+
+func (e CTeam) APlayers() List[uint32] {
+	return List[uint32]{e.field("m_aPlayers")}
 }
 
 func (e CTeam) IScore() Number[int32] {
@@ -7762,6 +7946,10 @@ func (e CCitadelGameRules) IWinningTeam() Number[int32] {
 	return Number[int32]{e.field("m_iWinningTeam")}
 }
 
+func (e CCitadelGameRules) VecBannedHeroes() List[uint32] {
+	return List[uint32]{e.field("m_vecBannedHeroes")}
+}
+
 func (e CCitadelGameRules) NCorruptedPenaltySeed() Number[uint32] {
 	return Number[uint32]{e.field("m_nCorruptedPenaltySeed")}
 }
@@ -7836,6 +8024,10 @@ func (e CCitadelGameRules) TimeNextKothSpawnWindowTime() Number[float32] {
 
 func (e CCitadelGameRules) VNextKothLocation() Vector {
 	return Vector{e.field("m_vNextKothLocation")}
+}
+
+func (e CCitadelGameRules) VKothSpawnLocationDeck() VectorList {
+	return VectorList{e.field("m_vKothSpawnLocationDeck")}
 }
 
 func (e CCitadelGameRules) NKothSpawnWarnings() Number[int32] {
@@ -7920,6 +8112,18 @@ func (e CCitadelGameRules) ISapphireRejuvCount() Number[int32] {
 
 func (e CCitadelGameRules) TNextMidBossSpawnTime() Number[float32] {
 	return Number[float32]{e.field("m_tNextMidBossSpawnTime")}
+}
+
+func (e CCitadelGameRules) VecNeutralCampTimerOrigins() VectorList {
+	return VectorList{e.field("m_vecNeutralCampTimerOrigins")}
+}
+
+func (e CCitadelGameRules) VecNeutralCampNextSpawnTimes() List[float32] {
+	return List[float32]{e.field("m_vecNeutralCampNextSpawnTimes")}
+}
+
+func (e CCitadelGameRules) VecNeutralCampTimerIsMidBoss() BoolList {
+	return BoolList{e.field("m_vecNeutralCampTimerIsMidBoss")}
 }
 
 func (e CCitadelGameRules) BServerPaused() Bool {

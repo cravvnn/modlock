@@ -2111,6 +2111,22 @@ _SCHEMA: wire.Schema = {
             wire.Field(5, "vector", "message", oneof="value", message="Vec3"),
         ],
     ),
+    "FieldListResponse": (
+        None,
+        [
+            wire.Field(1, "values", "message", repeated=True, message="FieldValue", union="value"),
+        ],
+    ),
+    "WriteFieldListRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "class_name", "string"),
+            wire.Field(3, "field", "string"),
+            wire.Field(4, "type", "enum", enum=_FieldType),
+            wire.Field(5, "values", "message", repeated=True, message="FieldValue", union="value"),
+        ],
+    ),
     "WriteFieldRequest": (
         None,
         [
@@ -2608,6 +2624,25 @@ def write_field(entity: int, class_name: str, field: str, type: FieldType, value
     it, so players already in the match see the change.
     """
     return _call("WriteField", "WriteFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type, "value": value}) is not None
+
+
+def read_field_list(entity: int, class_name: str, field: str, type: FieldType) -> list[FieldValue]:
+    """read_field_list reads a field that holds a list, such as the m_vecBannedHeroes
+    of CCitadelGameRules. The type is the type of one element: a number, a
+    handle, a boolean or a vector. A list of structures cannot be read.
+    """
+    response = _call("ReadFieldList", "ReadFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type}, "FieldListResponse")
+    if response is None:
+        return []
+    return response["values"]
+
+
+def write_field_list(entity: int, class_name: str, field: str, type: FieldType, values: list[FieldValue] | None = None) -> bool:
+    """write_field_list replaces the elements of a list field and sends the change
+    to the players, growing the list when it holds fewer elements than the
+    new ones.
+    """
+    return _call("WriteFieldList", "WriteFieldListRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type, "values": values}) is not None
 
 
 def entity_class(entity: int) -> EntityClassName | None:

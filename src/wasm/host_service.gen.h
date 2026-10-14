@@ -325,6 +325,22 @@ class HostService {
     return std::unexpected("this host does not support WriteField");
   }
 
+  // ReadFieldList reads a field that holds a list, such as the m_vecBannedHeroes
+  // of CCitadelGameRules. The type is the type of one element: a number, a
+  // handle, a boolean or a vector. A list of structures cannot be read.
+  virtual std::expected<FieldListResponse, std::string> ReadFieldList(
+      const ReadFieldRequest& /*request*/) {
+    return std::unexpected("this host does not support ReadFieldList");
+  }
+
+  // WriteFieldList replaces the elements of a list field and sends the change
+  // to the players, growing the list when it holds fewer elements than the
+  // new ones.
+  virtual std::expected<void, std::string> WriteFieldList(
+      const WriteFieldListRequest& /*request*/) {
+    return std::unexpected("this host does not support WriteFieldList");
+  }
+
   // EntityClass returns a live entity's schema class, such as
   // CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
   virtual std::expected<EntityClassResponse, std::string> EntityClass(
@@ -971,6 +987,22 @@ class HostService {
              return detail::Fail("the WriteField request is malformed");
            }
            return detail::Answer(host.WriteField(request));
+         }},
+        {"ReadFieldList",
+         [](HostService& host, const std::string& bytes) {
+           ReadFieldRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ReadFieldList request is malformed");
+           }
+           return detail::Answer(host.ReadFieldList(request));
+         }},
+        {"WriteFieldList",
+         [](HostService& host, const std::string& bytes) {
+           WriteFieldListRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the WriteFieldList request is malformed");
+           }
+           return detail::Answer(host.WriteFieldList(request));
          }},
         {"EntityClass",
          [](HostService& host, const std::string& bytes) {

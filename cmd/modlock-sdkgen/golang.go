@@ -219,6 +219,10 @@ func (w *goWriter) writeCall(c *call) error {
 			switch {
 			case p.oneof != nil:
 				later = append(later, w.oneofCases(m, p.oneof, arg, fail))
+			case p.field.repeated && p.field.message != nil && p.field.message.isUnion():
+				later = append(later, indent(fmt.Sprintf(
+					"for _, value := range %s {\n\tencoded, err := to%s(value)\n\tif err != nil {\n\t\t%s\n\t}\n\trequest.%s = append(request.%s, encoded)\n}\n",
+					arg, p.field.message.name, fail, camel(p.field.name), camel(p.field.name))))
 			case p.field.message != nil && p.field.message.isUnion():
 				// A nil value leaves an optional union out.
 				encode := fmt.Sprintf("encoded, err := to%s(%s)\nif err != nil {\n\t%s\n}\nrequest.%s = encoded\n",
@@ -249,6 +253,12 @@ func (w *goWriter) writeCall(c *call) error {
 	}
 	fmt.Fprintf(&w.out, "\tresponse := &wasm.%s{}\n", c.method.response.name)
 	fmt.Fprintf(&w.out, "\tif err := invoke(%q, %s, response); err != nil {\n\t\treturn %s, err\n\t}\n", c.method.name, request, failure)
+	if f := c.result; f.repeated && f.message != nil && f.message.isUnion() {
+		fmt.Fprintf(&w.out, "\tdecoded := make([]any, 0, len(response.Get%s()))\n", camel(f.name))
+		fmt.Fprintf(&w.out, "\tfor _, message := range response.Get%s() {\n\t\tdecoded = append(decoded, from%s(message))\n\t}\n", camel(f.name), f.message.name)
+		w.out.WriteString("\treturn decoded, nil\n}\n\n")
+		return nil
+	}
 	fmt.Fprintf(&w.out, "\treturn %s, nil\n}\n\n", w.fromField(c.result, "response"))
 	return nil
 }

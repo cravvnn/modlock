@@ -4,7 +4,9 @@ import {
   createEntity,
   fireInput,
   readField,
+  readFieldList,
   writeField,
+  writeFieldList,
   type Angles,
   type EntityOptions,
   type EntityValue,
@@ -66,6 +68,19 @@ function define(
  * undefined leaves a field unchanged, but clears a handle field.
  */
 function accessor(className: string, field: string, type: string): PropertyDescriptor {
+  if (type.startsWith('list:')) {
+    const element = type.slice('list:'.length) as FieldType
+    return {
+      get(this: CEntityInstance) {
+        return readFieldList(this.handle, className, field, element)
+      },
+      set(this: CEntityInstance, value: never) {
+        if (value !== undefined) {
+          writeFieldList(this.handle, className, field, element, value)
+        }
+      },
+    }
+  }
   if (type === 'angles') {
     return {
       get(this: CEntityInstance): Angles | undefined {
@@ -151,7 +166,13 @@ interface FieldTypes {
 }
 
 /** FieldOf is the type a field of table entry T holds. */
-type FieldOf<T> = T extends keyof FieldTypes ? FieldTypes[T] : T extends keyof Targets ? Targets[T] : never
+type FieldOf<T> = T extends keyof FieldTypes
+  ? FieldTypes[T]
+  : T extends `list:${infer Element extends keyof FieldTypes}`
+    ? FieldTypes[Element][]
+    : T extends keyof Targets
+      ? Targets[T]
+      : never
 
 /**
  * Fields declares the fields a table installs. A string field is read only,
@@ -386,6 +407,7 @@ const fieldsCAI_GoalEntity = {
   m_fStartActive: 'bool',
   m_SearchType: 'uint32',
   m_iszConceptModifiers: 'string',
+  m_actors: 'list:handle',
   m_hGoalEntity: 'CBaseEntity',
   m_flags: 'uint32',
 } as const
@@ -556,6 +578,9 @@ const fieldsCBarnLight = {
   m_flLuminaireAnisotropy: 'float32',
   m_LightStyleString: 'string',
   m_flLightStyleStartTime: 'float32',
+  m_QueuedLightStyleStrings: 'list:string',
+  m_LightStyleEvents: 'list:string',
+  m_LightStyleTargets: 'list:handle',
   m_flShape: 'float32',
   m_flSoftX: 'float32',
   m_flSoftY: 'float32',
@@ -612,6 +637,7 @@ const fieldsCBarnLight = {
   m_vPrecomputedOBBExtent5: 'vector',
   m_bPvsModifyEntity: 'bool',
   m_bTransmitAlways: 'bool',
+  m_VisClusters: 'list:uint16',
 } as const
 const inputsCBarnLight = {
   CastDynamicShadows: 'boolean',
@@ -682,6 +708,7 @@ define(CBaseAnimGraphAlias_baseanimating, 'CBaseAnimGraphAlias_baseanimating', {
 
 const fieldsCBaseCombatCharacter = {
   m_bForceServerRagdoll: 'bool',
+  m_hMyWearables: 'list:handle',
   m_impactEnergyScale: 'float32',
   m_bApplyStressDamage: 'bool',
   m_bDeathEventsDispatched: 'bool',
@@ -701,6 +728,7 @@ const fieldsCAI_BaseNPC = {
   m_bCheckContacts: 'bool',
   m_bForceDynamicHull: 'bool',
   m_hSynchronizedPrimaryNPC: 'CAI_BaseNPC',
+  m_vecSynchronizedSecondaryNPCs: 'list:handle',
   m_NPCState: 'uint32',
   m_nPreModifierNPCState: 'uint32',
   m_IdealNPCState: 'uint32',
@@ -734,6 +762,7 @@ const fieldsCAI_BaseNPC = {
   m_nPrevHealthDuringModifyDamage: 'int32',
   m_flWaitFinished: 'float32',
   m_fNoDamageDecal: 'bool',
+  m_vecAttachments: 'list:handle',
   m_nAITraceMask: 'uint64',
   m_bDynamicAILOD: 'bool',
   m_aiLOD: 'uint32',
@@ -1150,6 +1179,7 @@ define(CDynamicProp, 'CDynamicProp', fieldsCDynamicProp, inputsCDynamicProp)
 
 const fieldsCBasePropDoor = {
   m_flAutoReturnDelay: 'float32',
+  m_hDoorList: 'list:handle',
   m_nHardwareType: 'int32',
   m_bNeedsHardware: 'bool',
   m_eDoorState: 'uint32',
@@ -1215,6 +1245,7 @@ const fieldsCPropDoorRotatingBreakable = {
   m_bBreakable: 'bool',
   m_isAbleToCloseAreaPortals: 'bool',
   m_currentDamageState: 'int32',
+  m_damageStates: 'list:string',
 } as const
 const inputsCPropDoorRotatingBreakable = {
   SetBreakable: '',
@@ -1497,6 +1528,7 @@ const fieldsCCitadel_Bounce_Pad = {
   m_flBarrelBounceVelocity: 'float32',
   m_flBarrelUpFactor: 'float32',
   m_bSpeedOnLand: 'bool',
+  m_vBouncedPlayerBefore: 'list:handle',
 } as const
 export class CCitadel_Bounce_Pad extends CCitadelAnimatingModelEntity {}
 export interface CCitadel_Bounce_Pad extends Fields<typeof fieldsCCitadel_Bounce_Pad> {}
@@ -1972,6 +2004,9 @@ const fieldsCRagdollProp = {
   m_bStartDisabled: 'bool',
   m_massScale: 'float32',
   m_buoyancyScale: 'float32',
+  m_ragEnabled: 'list:bool',
+  m_ragPos: 'list:vector',
+  m_ragAngles: 'list:vector',
   m_lastUpdateTickCount: 'uint32',
   m_allAsleep: 'bool',
   m_bFirstCollisionAfterLaunch: 'bool',
@@ -1994,6 +2029,8 @@ const fieldsCRagdollProp = {
   m_bAllowStretch: 'bool',
   m_flBlendWeight: 'float32',
   m_flDefaultFadeScale: 'float32',
+  m_ragdollMins: 'list:vector',
+  m_ragdollMaxs: 'list:vector',
   m_bShouldDeleteActivationRecord: 'bool',
 } as const
 const inputsCRagdollProp = {
@@ -2062,6 +2099,7 @@ const fieldsCPointClientUIWorldPanel = {
   m_unVerticalAlign: 'uint32',
   m_unOrientation: 'uint32',
   m_bAllowInteractionFromAllSceneWorlds: 'bool',
+  m_vecCSSClasses: 'list:string',
   m_bOpaque: 'bool',
   m_bNoDepth: 'bool',
   m_bVisibleWhenParentNoDraw: 'bool',
@@ -2288,6 +2326,7 @@ export interface CFuncTrain extends Fields<typeof fieldsCFuncTrain>, Inputs<type
 define(CFuncTrain, 'CFuncTrain', fieldsCFuncTrain, inputsCFuncTrain)
 
 const fieldsCBaseTrigger = {
+  m_hTouchingEntities: 'list:handle',
   m_iFilterName: 'string',
   m_hFilter: 'CBaseFilter',
   m_bDisabled: 'bool',
@@ -2564,8 +2603,12 @@ export class CTriggerAddModifier extends CBaseTrigger {}
 export interface CTriggerAddModifier extends Fields<typeof fieldsCTriggerAddModifier> {}
 define(CTriggerAddModifier, 'CTriggerAddModifier', fieldsCTriggerAddModifier)
 
+const fieldsCTriggerBurrowUnderground = {
+  m_pTouchedEntities: 'list:handle',
+} as const
 export class CTriggerBurrowUnderground extends CBaseTrigger {}
-define(CTriggerBurrowUnderground, 'CTriggerBurrowUnderground', {})
+export interface CTriggerBurrowUnderground extends Fields<typeof fieldsCTriggerBurrowUnderground> {}
+define(CTriggerBurrowUnderground, 'CTriggerBurrowUnderground', fieldsCTriggerBurrowUnderground)
 
 export class CTriggerCallback extends CBaseTrigger {}
 define(CTriggerCallback, 'CTriggerCallback', {})
@@ -2637,6 +2680,7 @@ const fieldsCTriggerHurt = {
   m_vDamageForce: 'vector',
   m_thinkAlways: 'bool',
   m_hurtThinkPeriod: 'float32',
+  m_hurtEntities: 'list:handle',
 } as const
 const inputsCTriggerHurt = {
   SetDamage: 'number',
@@ -2817,8 +2861,13 @@ export class CTriggerLook extends CTriggerOnce {}
 export interface CTriggerLook extends Fields<typeof fieldsCTriggerLook>, Inputs<typeof inputsCTriggerLook> {}
 define(CTriggerLook, 'CTriggerLook', fieldsCTriggerLook, inputsCTriggerLook)
 
+const fieldsCTriggerNeutralShield = {
+  m_vecPlayers: 'list:handle',
+  m_vecNeutrals: 'list:handle',
+} as const
 export class CTriggerNeutralShield extends CBaseTrigger {}
-define(CTriggerNeutralShield, 'CTriggerNeutralShield', {})
+export interface CTriggerNeutralShield extends Fields<typeof fieldsCTriggerNeutralShield> {}
+define(CTriggerNeutralShield, 'CTriggerNeutralShield', fieldsCTriggerNeutralShield)
 
 export class CTriggerMidBossShield extends CTriggerNeutralShield {}
 define(CTriggerMidBossShield, 'CTriggerMidBossShield', {})
@@ -2939,6 +2988,7 @@ export interface CTriggerSave extends Fields<typeof fieldsCTriggerSave> {}
 define(CTriggerSave, 'CTriggerSave', fieldsCTriggerSave)
 
 const fieldsCTriggerSndSosOpvar = {
+  m_hTouchingPlayers: 'list:handle',
   m_flPosition: 'vector',
   m_flCenterSize: 'float32',
   m_flMinVal: 'float32',
@@ -2957,6 +3007,7 @@ define(CTriggerSndSosOpvar, 'CTriggerSndSosOpvar', fieldsCTriggerSndSosOpvar)
 const fieldsCTriggerSoundscape = {
   m_hSoundscape: 'CEnvSoundscapeTriggerable',
   m_SoundscapeName: 'string',
+  m_spectators: 'list:handle',
 } as const
 export class CTriggerSoundscape extends CBaseTrigger {}
 export interface CTriggerSoundscape extends Fields<typeof fieldsCTriggerSoundscape> {}
@@ -3239,6 +3290,7 @@ const fieldsCCitadelProjectile = {
   m_nDetonationsLeft: 'int32',
   m_vLastAbsOrigin: 'vector',
   m_vLastAbsVelocity: 'vector',
+  m_vecTargetToIgnore: 'list:handle',
   m_bDetonateStarted: 'bool',
   m_bTouchDisabled: 'bool',
   m_vInitialVelocity: 'vector',
@@ -3342,6 +3394,7 @@ const fieldsCCitadel_Projectile_BloodBomb = {
   m_flBeepSoundIntervalBias: 'float32',
   m_flBeepSoundMaxFrequency: 'float32',
   m_flArmingDuration: 'float32',
+  m_vecBeepIntervals: 'list:float32',
 } as const
 export class CCitadel_Projectile_BloodBomb extends CCitadelProjectile {}
 export interface CCitadel_Projectile_BloodBomb extends Fields<typeof fieldsCCitadel_Projectile_BloodBomb> {}
@@ -3407,6 +3460,8 @@ define(CCitadel_Projectile_SpiderProjectile, 'CCitadel_Projectile_SpiderProjecti
 const fieldsCCitadel_Projectile_Viscous_GooGrenade = {
   m_nBounces: 'int32',
   m_tNextDetonateTime: 'float32',
+  m_vecLastHitTargets: 'list:handle',
+  m_vecProjectileHitTargets: 'list:handle',
 } as const
 export class CCitadel_Projectile_Viscous_GooGrenade extends CCitadelProjectile {}
 export interface CCitadel_Projectile_Viscous_GooGrenade extends Fields<typeof fieldsCCitadel_Projectile_Viscous_GooGrenade> {}
@@ -3443,8 +3498,12 @@ define(CItemExplosiveBarrel, 'CItemExplosiveBarrel', {})
 export class CProjectile_Boho_SkipGrenade extends CCitadelProjectile {}
 define(CProjectile_Boho_SkipGrenade, 'CProjectile_Boho_SkipGrenade', {})
 
+const fieldsCProjectile_BookwormDragon_Projectile = {
+  m_vecHitUnits: 'list:handle',
+} as const
 export class CProjectile_BookwormDragon_Projectile extends CCitadelProjectile {}
-define(CProjectile_BookwormDragon_Projectile, 'CProjectile_BookwormDragon_Projectile', {})
+export interface CProjectile_BookwormDragon_Projectile extends Fields<typeof fieldsCProjectile_BookwormDragon_Projectile> {}
+define(CProjectile_BookwormDragon_Projectile, 'CProjectile_BookwormDragon_Projectile', fieldsCProjectile_BookwormDragon_Projectile)
 
 export class CProjectile_ChessMaster_Fork_Projectile extends CCitadelProjectile {}
 define(CProjectile_ChessMaster_Fork_Projectile, 'CProjectile_ChessMaster_Fork_Projectile', {})
@@ -3474,8 +3533,12 @@ define(CProjectile_Necro_HauntProjectile, 'CProjectile_Necro_HauntProjectile', {
 export class CProjectile_Necro_ZombieWall_Projectile extends CCitadelProjectile {}
 define(CProjectile_Necro_ZombieWall_Projectile, 'CProjectile_Necro_ZombieWall_Projectile', {})
 
+const fieldsCProjectile_Perched_Predator = {
+  m_vecHitEntities: 'list:handle',
+} as const
 export class CProjectile_Perched_Predator extends CCitadelProjectile {}
-define(CProjectile_Perched_Predator, 'CProjectile_Perched_Predator', {})
+export interface CProjectile_Perched_Predator extends Fields<typeof fieldsCProjectile_Perched_Predator> {}
+define(CProjectile_Perched_Predator, 'CProjectile_Perched_Predator', fieldsCProjectile_Perched_Predator)
 
 const fieldsCProjectile_Rolling_FireBall = {
   m_bHitWorld: 'bool',
@@ -3533,6 +3596,8 @@ export interface CCitadelTunnelNode extends Fields<typeof fieldsCCitadelTunnelNo
 define(CCitadelTunnelNode, 'CCitadelTunnelNode', fieldsCCitadelTunnelNode)
 
 const fieldsCCitadelZipLineNode = {
+  m_vecConnections: 'list:handle',
+  m_vecConnectionDir: 'list:int32',
   m_vTangentIn: 'vector',
   m_vTangentOut: 'vector',
   m_flCumulativeDistance: 'float32',
@@ -3548,6 +3613,7 @@ const fieldsCCitadelZipLineNode = {
   m_bDisableZippingToByPlayers: 'bool',
   m_flSpeedMultiplierToBaseBonus: 'float32',
   m_flSpeedMultiplierFromBaseBonus: 'float32',
+  m_hGuardingBosses: 'list:handle',
   m_flRopeRadius: 'float32',
 } as const
 export class CCitadelZipLineNode extends CBaseModelEntity {}
@@ -3747,6 +3813,7 @@ define(CFuncInteractionLayerClip, 'CFuncInteractionLayerClip', fieldsCFuncIntera
 
 const fieldsCFuncLadder = {
   m_vecLadderDir: 'vector',
+  m_Dismounts: 'list:handle',
   m_vecLocalTop: 'vector',
   m_vecPlayerMountPositionTop: 'vector',
   m_vecPlayerMountPositionBottom: 'vector',
@@ -4009,6 +4076,7 @@ export interface CFuncRotator extends Fields<typeof fieldsCFuncRotator>, Inputs<
 define(CFuncRotator, 'CFuncRotator', fieldsCFuncRotator, inputsCFuncRotator)
 
 const fieldsCFuncShatterglass = {
+  m_vecShatterGlassShards: 'list:uint32',
   m_flLastShatterSoundEmitTime: 'float32',
   m_flLastCleanupTime: 'float32',
   m_flInitAtTime: 'float32',
@@ -4025,6 +4093,8 @@ const fieldsCFuncShatterglass = {
   m_szDamagePositioningEntityName02: 'string',
   m_szDamagePositioningEntityName03: 'string',
   m_szDamagePositioningEntityName04: 'string',
+  m_vInitialDamagePositions: 'list:vector',
+  m_vExtraDamagePositions: 'list:vector',
   m_iSurfaceType: 'uint8',
 } as const
 const inputsCFuncShatterglass = {
@@ -4680,6 +4750,7 @@ const fieldsCBasePlayerController = {
   m_hPawn: 'CBasePlayerPawn',
   m_bKnownTeamMismatch: 'bool',
   m_hSplitOwner: 'CBasePlayerController',
+  m_hSplitScreenPlayers: 'list:handle',
   m_bIsHLTV: 'bool',
   m_iConnected: 'uint32',
   m_iMostConnected: 'uint32',
@@ -4723,6 +4794,9 @@ const fieldsCCitadelPlayerController = {
   m_bInTeamChat: 'bool',
   m_bInPartyChat: 'bool',
   m_bLaneSwapLocked: 'bool',
+  m_vecLaneSwapRequests: 'list:handle',
+  m_vecLaneSwapRejects: 'list:handle',
+  m_vecMutedPlayers: 'list:int32',
   m_bCommsRestricted: 'bool',
   m_bPriorCommsAbuse: 'bool',
   m_bIsNewPlayer: 'bool',
@@ -4733,6 +4807,7 @@ const fieldsCCitadelPlayerController = {
   m_flLastCommsTime: 'float32',
   m_flNextAllowedCommsTime: 'float32',
   m_flLastFailedCommsTime: 'float32',
+  m_vecRecentCommAttempts: 'list:float32',
   m_nTotalCommsAttempted: 'int32',
   m_nGuideBotNumTasksComplete: 'int32',
 } as const
@@ -4811,6 +4886,7 @@ define(CCitadelBaseAbility, 'CCitadelBaseAbility', fieldsCCitadelBaseAbility)
 
 const fieldsCAbility_Drifter_BloodBlast = {
   m_SandEffect: 'int32',
+  m_vecHitTargets: 'list:handle',
 } as const
 export class CAbility_Drifter_BloodBlast extends CCitadelBaseAbility {}
 export interface CAbility_Drifter_BloodBlast extends Fields<typeof fieldsCAbility_Drifter_BloodBlast> {}
@@ -4871,6 +4947,7 @@ const fieldsCAbility_Fencer_Lunge = {
   m_RecastEndTime: 'float32',
   m_eLungeDirection: 'uint8',
   m_flHeldTime: 'float32',
+  m_vecHitEnemies: 'list:handle',
   m_vLastPosition: 'vector',
   m_flStuckTime: 'float32',
   m_nGlintParticleIndex: 'int32',
@@ -4888,6 +4965,8 @@ const fieldsCAbility_Fencer_Ultimate = {
   m_eUltState: 'uint8',
   m_flStateStartTime: 'float32',
   m_bHitSomeone: 'bool',
+  m_vecHitEnemies: 'list:handle',
+  m_vecHitHeroes: 'list:handle',
   m_flStuckTime: 'float32',
   m_UltHoldVFX: 'int32',
   m_DirPreviewVFX: 'int32',
@@ -4958,6 +5037,7 @@ define(CAbility_Synth_Barrage, 'CAbility_Synth_Barrage', fieldsCAbility_Synth_Ba
 
 const fieldsCAbility_Synth_PlasmaFlux = {
   m_bTeleported: 'bool',
+  m_vecUniqueHitList: 'list:handle',
   m_vLastValidTeleportPosition: 'vector',
   m_flProjectileLaunchTime: 'float32',
   m_flProjectileExpireTime: 'float32',
@@ -4981,6 +5061,7 @@ define(CAbility_TestHero_SpookyHide, 'CAbility_TestHero_SpookyHide', fieldsCAbil
 
 const fieldsCAbility_Werewolf_Frenzy = {
   m_SandEffect: 'int32',
+  m_vecHitTargets: 'list:handle',
 } as const
 export class CAbility_Werewolf_Frenzy extends CCitadelBaseAbility {}
 export interface CAbility_Werewolf_Frenzy extends Fields<typeof fieldsCAbility_Werewolf_Frenzy> {}
@@ -5067,6 +5148,7 @@ define(CCitadel_Ability_Tier3Boss_AoEWave, 'CCitadel_Ability_Tier3Boss_AoEWave',
 
 const fieldsCCitadel_Ability_Tier3Boss_DropBombs = {
   m_tNextBombTime: 'float32',
+  m_vHitTargets: 'list:handle',
   m_hShootPos: 'uint8',
   m_flDetonationTime: 'float32',
 } as const
@@ -5155,6 +5237,7 @@ export interface CCitadel_Ability_Shiv_Defer_Damage extends Fields<typeof fields
 define(CCitadel_Ability_Shiv_Defer_Damage, 'CCitadel_Ability_Shiv_Defer_Damage', fieldsCCitadel_Ability_Shiv_Defer_Damage)
 
 const fieldsCCitadel_Ability_Shiv_KillingBlow = {
+  m_vHitEnts: 'list:handle',
   m_bDamagedAnyHero: 'bool',
   m_bActive: 'bool',
   m_bStartedOnGround: 'bool',
@@ -5269,6 +5352,7 @@ define(CCitadel_Ability_InfinitySlash, 'CCitadel_Ability_InfinitySlash', fieldsC
 
 const fieldsCCitadel_Ability_PowerSlash = {
   m_nPowerLevel: 'int32',
+  m_vecHitTargets: 'list:handle',
   m_nCastParticle: 'int32',
 } as const
 export class CCitadel_Ability_PowerSlash extends CCitadelBaseYamatoAbility {}
@@ -5378,8 +5462,12 @@ define(CCitadel_Ability_Boho_BouncyProjectile, 'CCitadel_Ability_Boho_BouncyProj
 export class CCitadel_Ability_Boho_ChannelTether extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Boho_ChannelTether, 'CCitadel_Ability_Boho_ChannelTether', {})
 
+const fieldsCCitadel_Ability_Boho_DamageShare = {
+  m_vecLinkedEnemies: 'list:handle',
+} as const
 export class CCitadel_Ability_Boho_DamageShare extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Boho_DamageShare, 'CCitadel_Ability_Boho_DamageShare', {})
+export interface CCitadel_Ability_Boho_DamageShare extends Fields<typeof fieldsCCitadel_Ability_Boho_DamageShare> {}
+define(CCitadel_Ability_Boho_DamageShare, 'CCitadel_Ability_Boho_DamageShare', fieldsCCitadel_Ability_Boho_DamageShare)
 
 export class CCitadel_Ability_Boho_DoubleHit extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Boho_DoubleHit, 'CCitadel_Ability_Boho_DoubleHit', {})
@@ -5433,6 +5521,7 @@ export interface CCitadel_Ability_Bookworm_KnightBarrier extends Fields<typeof f
 define(CCitadel_Ability_Bookworm_KnightBarrier, 'CCitadel_Ability_Bookworm_KnightBarrier', fieldsCCitadel_Ability_Bookworm_KnightBarrier)
 
 const fieldsCCitadel_Ability_Bookworm_KnightCharge = {
+  m_vecHitUnits: 'list:handle',
   m_bAffectedAnyTargets: 'bool',
 } as const
 export class CCitadel_Ability_Bookworm_KnightCharge extends CCitadelBaseAbility {}
@@ -5451,6 +5540,7 @@ export interface CCitadel_Ability_Bounce_Pad extends Fields<typeof fieldsCCitade
 define(CCitadel_Ability_Bounce_Pad, 'CCitadel_Ability_Bounce_Pad', fieldsCCitadel_Ability_Bounce_Pad)
 
 const fieldsCCitadel_Ability_Bull_Charge = {
+  m_vecHitEntities: 'list:handle',
   m_bGainedWeaponPowerBuff: 'bool',
   m_anglesCharging: 'angles',
   m_flChargeStartTime: 'float32',
@@ -5475,6 +5565,7 @@ const fieldsCCitadel_Ability_Bull_Leap = {
   m_eLeapState: 'uint8',
   m_flStateEnterTime: 'float32',
   m_vPrevPos: 'vector',
+  m_vecDraggedEntities: 'list:handle',
   m_vecLastVel: 'vector',
   m_vecCrashDownLastPos: 'vector',
   m_bInputBufferCrash: 'bool',
@@ -5485,6 +5576,7 @@ define(CCitadel_Ability_Bull_Leap, 'CCitadel_Ability_Bull_Leap', fieldsCCitadel_
 
 const fieldsCCitadel_Ability_BulletFlurry = {
   m_flNextAttackTime: 'float32',
+  m_vecShootTargets: 'list:handle',
   m_nNumPlayersKilled: 'int32',
   m_nShootIndex: 'int32',
   m_nShootIndexNPC: 'int32',
@@ -5519,6 +5611,7 @@ define(CCitadel_Ability_Cadence_Lullaby, 'CCitadel_Ability_Cadence_Lullaby', {})
 
 const fieldsCCitadel_Ability_CardToss = {
   m_nPreviousMaxCharges: 'int32',
+  m_vCardList: 'list:uint32',
   m_bCardIsFlying: 'bool',
 } as const
 export class CCitadel_Ability_CardToss extends CCitadelBaseAbility {}
@@ -5540,6 +5633,7 @@ const fieldsCCitadel_Ability_ChargedTackle = {
   m_vecTackleDir: 'vector',
   m_vecLastPosition: 'vector',
   m_nStuckFramesCount: 'int32',
+  m_vecHitEnemies: 'list:handle',
   m_nDistancePreview: 'int32',
 } as const
 export class CCitadel_Ability_ChargedTackle extends CCitadelBaseAbility {}
@@ -5573,6 +5667,8 @@ define(CCitadel_Ability_Chessmaster_MoveChessPiece, 'CCitadel_Ability_Chessmaste
 
 const fieldsCCitadel_Ability_Chessmaster_Queen = {
   m_iRemainingMoves: 'int32',
+  m_vecHitUnits: 'list:handle',
+  m_vecStunnedUnits: 'list:handle',
   m_pDeployedQueen: 'CBaseEntity',
   m_bActive: 'bool',
 } as const
@@ -5581,9 +5677,12 @@ export interface CCitadel_Ability_Chessmaster_Queen extends Fields<typeof fields
 define(CCitadel_Ability_Chessmaster_Queen, 'CCitadel_Ability_Chessmaster_Queen', fieldsCCitadel_Ability_Chessmaster_Queen)
 
 const fieldsCCitadel_Ability_Chessmaster_ThrowBishop = {
+  m_vecDeployedPieces: 'list:handle',
   m_bActive: 'bool',
   m_iBishopIndex: 'int32',
   m_tRecastEndTime: 'float32',
+  m_vecShotBishops: 'list:handle',
+  m_vecHitTargets: 'list:handle',
   m_vecLaunchPosition: 'vector',
   m_vecLaunchVelocity: 'vector',
   m_qLaunchAngle: 'angles',
@@ -5717,11 +5816,16 @@ export class CCitadel_Ability_Doorman_Hotel extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Doorman_Hotel extends Fields<typeof fieldsCCitadel_Ability_Doorman_Hotel> {}
 define(CCitadel_Ability_Doorman_Hotel, 'CCitadel_Ability_Doorman_Hotel', fieldsCCitadel_Ability_Doorman_Hotel)
 
+const fieldsCCitadel_Ability_Drifter_Hunger = {
+  m_vecCurrentTargets: 'list:handle',
+} as const
 export class CCitadel_Ability_Drifter_Hunger extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Drifter_Hunger, 'CCitadel_Ability_Drifter_Hunger', {})
+export interface CCitadel_Ability_Drifter_Hunger extends Fields<typeof fieldsCCitadel_Ability_Drifter_Hunger> {}
+define(CCitadel_Ability_Drifter_Hunger, 'CCitadel_Ability_Drifter_Hunger', fieldsCCitadel_Ability_Drifter_Hunger)
 
 const fieldsCCitadel_Ability_Dust_Storm = {
   m_hSpinningBladeAbility: 'CCitadel_Ability_Spinning_Blade',
+  m_vTargets: 'list:handle',
 } as const
 export class CCitadel_Ability_Dust_Storm extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Dust_Storm extends Fields<typeof fieldsCCitadel_Ability_Dust_Storm> {}
@@ -5740,8 +5844,12 @@ export class CCitadel_Ability_ExplosiveBarrel extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_ExplosiveBarrel extends Fields<typeof fieldsCCitadel_Ability_ExplosiveBarrel> {}
 define(CCitadel_Ability_ExplosiveBarrel, 'CCitadel_Ability_ExplosiveBarrel', fieldsCCitadel_Ability_ExplosiveBarrel)
 
+const fieldsCCitadel_Ability_Familiar_Ability01 = {
+  m_vecTargetsInCone: 'list:handle',
+} as const
 export class CCitadel_Ability_Familiar_Ability01 extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Familiar_Ability01, 'CCitadel_Ability_Familiar_Ability01', {})
+export interface CCitadel_Ability_Familiar_Ability01 extends Fields<typeof fieldsCCitadel_Ability_Familiar_Ability01> {}
+define(CCitadel_Ability_Familiar_Ability01, 'CCitadel_Ability_Familiar_Ability01', fieldsCCitadel_Ability_Familiar_Ability01)
 
 const fieldsCCitadel_Ability_Familiar_Ability02 = {
   m_bCastWhileAttached: 'bool',
@@ -5751,6 +5859,7 @@ export interface CCitadel_Ability_Familiar_Ability02 extends Fields<typeof field
 define(CCitadel_Ability_Familiar_Ability02, 'CCitadel_Ability_Familiar_Ability02', fieldsCCitadel_Ability_Familiar_Ability02)
 
 const fieldsCCitadel_Ability_Familiar_Attach = {
+  m_vecTagAlongVisitedAllies: 'list:handle',
   m_hLastAttachedTo: 'CBaseEntity',
 } as const
 export class CCitadel_Ability_Familiar_Attach extends CCitadelBaseAbility {}
@@ -5780,6 +5889,7 @@ export interface CCitadel_Ability_Familiar_HealHost extends Fields<typeof fields
 define(CCitadel_Ability_Familiar_HealHost, 'CCitadel_Ability_Familiar_HealHost', fieldsCCitadel_Ability_Familiar_HealHost)
 
 const fieldsCCitadel_Ability_Familiar_HelpingHands = {
+  m_vecHelpers: 'list:handle',
   m_tChoreUseCooldownEndTime: 'float32',
   m_tSoonestHelperCooldownEndTime: 'float32',
 } as const
@@ -5823,6 +5933,7 @@ const fieldsCCitadel_Ability_Fencer_Riposte = {
   m_flStateStartTime: 'float32',
   m_nCurrentRiposteState: 'uint8',
   m_flSuccessfulRiposteTime: 'float32',
+  m_vecHitEnemies: 'list:handle',
   m_vecLastPosition: 'vector',
   m_flStuckTime: 'float32',
   m_nParriedFXIndex: 'int32',
@@ -5867,6 +5978,7 @@ export interface CCitadel_Ability_FissureWall extends Fields<typeof fieldsCCitad
 define(CCitadel_Ability_FissureWall, 'CCitadel_Ability_FissureWall', fieldsCCitadel_Ability_FissureWall)
 
 const fieldsCCitadel_Ability_FlameDash = {
+  m_vecHitEntities: 'list:handle',
   m_bIsSpeedBursting: 'bool',
 } as const
 export class CCitadel_Ability_FlameDash extends CCitadelBaseAbility {}
@@ -5910,6 +6022,7 @@ export interface CCitadel_Ability_Frank_SelfZap extends Fields<typeof fieldsCCit
 define(CCitadel_Ability_Frank_SelfZap, 'CCitadel_Ability_Frank_SelfZap', fieldsCCitadel_Ability_Frank_SelfZap)
 
 const fieldsCCitadel_Ability_Frank_ShockTarget2 = {
+  m_vecHitTargets: 'list:handle',
   m_bIsFullyCharged: 'bool',
 } as const
 export class CCitadel_Ability_Frank_ShockTarget2 extends CCitadelBaseAbility {}
@@ -5934,8 +6047,12 @@ define(CCitadel_Ability_GenericPerson_3, 'CCitadel_Ability_GenericPerson_3', {})
 export class CCitadel_Ability_GenericPerson_4 extends CCitadelBaseAbility {}
 define(CCitadel_Ability_GenericPerson_4, 'CCitadel_Ability_GenericPerson_4', {})
 
+const fieldsCCitadel_Ability_Ghost_BloodShards = {
+  m_vecDamagedTargets: 'list:handle',
+} as const
 export class CCitadel_Ability_Ghost_BloodShards extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Ghost_BloodShards, 'CCitadel_Ability_Ghost_BloodShards', {})
+export interface CCitadel_Ability_Ghost_BloodShards extends Fields<typeof fieldsCCitadel_Ability_Ghost_BloodShards> {}
+define(CCitadel_Ability_Ghost_BloodShards, 'CCitadel_Ability_Ghost_BloodShards', fieldsCCitadel_Ability_Ghost_BloodShards)
 
 const fieldsCCitadel_Ability_GooBowlingBall = {
   m_nAirJumpsLeft: 'int32',
@@ -5953,6 +6070,7 @@ export interface CCitadel_Ability_GooBowlingBall extends Fields<typeof fieldsCCi
 define(CCitadel_Ability_GooBowlingBall, 'CCitadel_Ability_GooBowlingBall', fieldsCCitadel_Ability_GooBowlingBall)
 
 const fieldsCCitadel_Ability_GooGrenade = {
+  m_vecPuddleModifiers: 'list:handle',
   m_LastDetonateTime: 'float32',
 } as const
 export class CCitadel_Ability_GooGrenade extends CCitadelBaseAbility {}
@@ -6006,6 +6124,7 @@ define(CCitadel_Ability_Gunslinger_DemonCarbine, 'CCitadel_Ability_Gunslinger_De
 
 const fieldsCCitadel_Ability_Gunslinger_KnockbackBlast = {
   m_vecKnockbackDirection: 'vector',
+  m_vecKnockbackedUnits: 'list:handle',
 } as const
 export class CCitadel_Ability_Gunslinger_KnockbackBlast extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Gunslinger_KnockbackBlast extends Fields<typeof fieldsCCitadel_Ability_Gunslinger_KnockbackBlast> {}
@@ -6063,6 +6182,7 @@ define(CCitadel_Ability_HornetLeap, 'CCitadel_Ability_HornetLeap', fieldsCCitade
 const fieldsCCitadel_Ability_HornetSting = {
   m_BounceCount: 'int32',
   m_bHitHero: 'bool',
+  m_vecValidBounceTargets: 'list:handle',
 } as const
 export class CCitadel_Ability_HornetSting extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_HornetSting extends Fields<typeof fieldsCCitadel_Ability_HornetSting> {}
@@ -6086,6 +6206,7 @@ define(CCitadel_Ability_Hornet_Snipe, 'CCitadel_Ability_Hornet_Snipe', fieldsCCi
 const fieldsCCitadel_Ability_IceBeam = {
   m_bIceBeaming: 'bool',
   m_flNextDamageTick: 'float32',
+  m_vecEntitiesHit: 'list:handle',
 } as const
 export class CCitadel_Ability_IceBeam extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_IceBeam extends Fields<typeof fieldsCCitadel_Ability_IceBeam> {}
@@ -6122,8 +6243,12 @@ define(CCitadel_Ability_IcePath, 'CCitadel_Ability_IcePath', fieldsCCitadel_Abil
 export class CCitadel_Ability_ImmobilizeTrap extends CCitadelBaseAbility {}
 define(CCitadel_Ability_ImmobilizeTrap, 'CCitadel_Ability_ImmobilizeTrap', {})
 
+const fieldsCCitadel_Ability_IncendiaryProjectile = {
+  m_vecHitEnemies: 'list:handle',
+} as const
 export class CCitadel_Ability_IncendiaryProjectile extends CCitadelBaseAbility {}
-define(CCitadel_Ability_IncendiaryProjectile, 'CCitadel_Ability_IncendiaryProjectile', {})
+export interface CCitadel_Ability_IncendiaryProjectile extends Fields<typeof fieldsCCitadel_Ability_IncendiaryProjectile> {}
+define(CCitadel_Ability_IncendiaryProjectile, 'CCitadel_Ability_IncendiaryProjectile', fieldsCCitadel_Ability_IncendiaryProjectile)
 
 export class CCitadel_Ability_Intimidate extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Intimidate, 'CCitadel_Ability_Intimidate', {})
@@ -6176,6 +6301,8 @@ const fieldsCCitadel_Ability_LashDownStrike = {
   m_ImpactTime: 'float32',
   m_vDamagePos: 'vector',
   m_vDamageDir: 'vector',
+  m_vHitEnemies: 'list:handle',
+  m_vecHitEntities: 'list:handle',
   m_PreviewEffect: 'int32',
   m_ActiveEffect: 'int32',
   m_bIsCrashingDown: 'bool',
@@ -6252,6 +6379,7 @@ export class CCitadel_Ability_Magician_Escape extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Magician_Escape, 'CCitadel_Ability_Magician_Escape', {})
 
 const fieldsCCitadel_Ability_Magician_MagicBolt = {
+  m_vecDeployedProjectiles: 'list:handle',
   m_iCurrentRedirects: 'int32',
 } as const
 export class CCitadel_Ability_Magician_MagicBolt extends CCitadelBaseAbility {}
@@ -6368,6 +6496,7 @@ export class CCitadel_Ability_Nano_CatFormPounce extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Nano_CatFormPounce, 'CCitadel_Ability_Nano_CatFormPounce', {})
 
 const fieldsCCitadel_Ability_Nano_ClusterGrenade = {
+  m_vecHitEnemies: 'list:handle',
   m_flNextProjectileTime: 'float32',
 } as const
 export class CCitadel_Ability_Nano_ClusterGrenade extends CCitadelBaseAbility {}
@@ -6422,6 +6551,7 @@ export interface CCitadel_Ability_Necro_Fear extends Fields<typeof fieldsCCitade
 define(CCitadel_Ability_Necro_Fear, 'CCitadel_Ability_Necro_Fear', fieldsCCitadel_Ability_Necro_Fear)
 
 const fieldsCCitadel_Ability_Necro_GraveStone = {
+  m_vecDeployedGravestones: 'list:handle',
   m_vCastPosition: 'vector',
   m_qCastAngle: 'angles',
 } as const
@@ -6460,6 +6590,7 @@ define(CCitadel_Ability_Necro_NukeMap, 'CCitadel_Ability_Necro_NukeMap', {})
 
 const fieldsCCitadel_Ability_Necro_ZombieWall = {
   m_tWallDeployFinishTime: 'float32',
+  m_vecHitUnits: 'list:handle',
 } as const
 export class CCitadel_Ability_Necro_ZombieWall extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Necro_ZombieWall extends Fields<typeof fieldsCCitadel_Ability_Necro_ZombieWall> {}
@@ -6755,6 +6886,7 @@ define(CCitadel_Ability_ProximityRitual, 'CCitadel_Ability_ProximityRitual', fie
 const fieldsCCitadel_Ability_PsychicLift = {
   m_vLiftPosition: 'vector',
   m_vCrashPosition: 'vector',
+  m_vecLiftTargets: 'list:handle',
 } as const
 export class CCitadel_Ability_PsychicLift extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_PsychicLift extends Fields<typeof fieldsCCitadel_Ability_PsychicLift> {}
@@ -6881,6 +7013,7 @@ define(CCitadel_Ability_SelfVacuum, 'CCitadel_Ability_SelfVacuum', {})
 
 const fieldsCCitadel_Ability_SettingSun = {
   m_bProjectileActive: 'bool',
+  m_TargetPreviews: 'list:int32',
   m_bWasSelected: 'bool',
 } as const
 export class CCitadel_Ability_SettingSun extends CCitadelBaseAbility {}
@@ -6910,8 +7043,12 @@ define(CCitadel_Ability_ShieldGuy_Ability03, 'CCitadel_Ability_ShieldGuy_Ability
 export class CCitadel_Ability_ShieldGuy_Ability04 extends CCitadelBaseAbility {}
 define(CCitadel_Ability_ShieldGuy_Ability04, 'CCitadel_Ability_ShieldGuy_Ability04', {})
 
+const fieldsCCitadel_Ability_ShieldedSentry = {
+  m_vecDeployedSentries: 'list:handle',
+} as const
 export class CCitadel_Ability_ShieldedSentry extends CCitadelBaseAbility {}
-define(CCitadel_Ability_ShieldedSentry, 'CCitadel_Ability_ShieldedSentry', {})
+export interface CCitadel_Ability_ShieldedSentry extends Fields<typeof fieldsCCitadel_Ability_ShieldedSentry> {}
+define(CCitadel_Ability_ShieldedSentry, 'CCitadel_Ability_ShieldedSentry', fieldsCCitadel_Ability_ShieldedSentry)
 
 export class CCitadel_Ability_SkyRunner_Ability04 extends CCitadelBaseAbility {}
 define(CCitadel_Ability_SkyRunner_Ability04, 'CCitadel_Ability_SkyRunner_Ability04', {})
@@ -6978,6 +7115,7 @@ export class CCitadel_Ability_SpiderShield extends CCitadelBaseAbility {}
 define(CCitadel_Ability_SpiderShield, 'CCitadel_Ability_SpiderShield', {})
 
 const fieldsCCitadel_Ability_Spinning_Blade = {
+  m_vecOutgoingHits: 'list:handle',
   m_hActiveProjectile: 'CCitadelProjectile',
 } as const
 export class CCitadel_Ability_Spinning_Blade extends CCitadelBaseAbility {}
@@ -7013,6 +7151,7 @@ define(CCitadel_Ability_StickyBomb, 'CCitadel_Ability_StickyBomb', fieldsCCitade
 const fieldsCCitadel_Ability_Stomp = {
   m_vStompPos: 'vector',
   m_vStompDir: 'vector',
+  m_vecStompedEnemies: 'list:handle',
 } as const
 export class CCitadel_Ability_Stomp extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Stomp extends Fields<typeof fieldsCCitadel_Ability_Stomp> {}
@@ -7027,8 +7166,12 @@ export class CCitadel_Ability_StormCloud extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_StormCloud extends Fields<typeof fieldsCCitadel_Ability_StormCloud> {}
 define(CCitadel_Ability_StormCloud, 'CCitadel_Ability_StormCloud', fieldsCCitadel_Ability_StormCloud)
 
+const fieldsCCitadel_Ability_SummonGangster = {
+  m_vecGangsters: 'list:handle',
+} as const
 export class CCitadel_Ability_SummonGangster extends CCitadelBaseAbility {}
-define(CCitadel_Ability_SummonGangster, 'CCitadel_Ability_SummonGangster', {})
+export interface CCitadel_Ability_SummonGangster extends Fields<typeof fieldsCCitadel_Ability_SummonGangster> {}
+define(CCitadel_Ability_SummonGangster, 'CCitadel_Ability_SummonGangster', fieldsCCitadel_Ability_SummonGangster)
 
 const fieldsCCitadel_Ability_SuperNeutralCharge = {
   m_bPreparing: 'bool',
@@ -7051,8 +7194,12 @@ define(CCitadel_Ability_Swan_Ability04, 'CCitadel_Ability_Swan_Ability04', {})
 export class CCitadel_Ability_Swan_Acrobat extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Swan_Acrobat, 'CCitadel_Ability_Swan_Acrobat', {})
 
+const fieldsCCitadel_Ability_Swan_FeatherBoomerang = {
+  m_vecHitTargetList: 'list:handle',
+} as const
 export class CCitadel_Ability_Swan_FeatherBoomerang extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Swan_FeatherBoomerang, 'CCitadel_Ability_Swan_FeatherBoomerang', {})
+export interface CCitadel_Ability_Swan_FeatherBoomerang extends Fields<typeof fieldsCCitadel_Ability_Swan_FeatherBoomerang> {}
+define(CCitadel_Ability_Swan_FeatherBoomerang, 'CCitadel_Ability_Swan_FeatherBoomerang', fieldsCCitadel_Ability_Swan_FeatherBoomerang)
 
 export class CCitadel_Ability_Swan_Leap extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Swan_Leap, 'CCitadel_Ability_Swan_Leap', {})
@@ -7125,6 +7272,7 @@ const fieldsCCitadel_Ability_Tengu_StoneForm = {
   m_bInStoneForm: 'bool',
   m_flStartHeight: 'float32',
   m_nStoneFormEffect: 'int32',
+  m_vecHitEntities: 'list:handle',
 } as const
 export class CCitadel_Ability_Tengu_StoneForm extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Tengu_StoneForm extends Fields<typeof fieldsCCitadel_Ability_Tengu_StoneForm> {}
@@ -7166,8 +7314,12 @@ export class CCitadel_Ability_TestHero_SummonCannon extends CCitadelBaseAbility 
 export interface CCitadel_Ability_TestHero_SummonCannon extends Fields<typeof fieldsCCitadel_Ability_TestHero_SummonCannon> {}
 define(CCitadel_Ability_TestHero_SummonCannon, 'CCitadel_Ability_TestHero_SummonCannon', fieldsCCitadel_Ability_TestHero_SummonCannon)
 
+const fieldsCCitadel_Ability_TestHero_SummonSoldier = {
+  m_vecTargetsInCone: 'list:handle',
+} as const
 export class CCitadel_Ability_TestHero_SummonSoldier extends CCitadelBaseAbility {}
-define(CCitadel_Ability_TestHero_SummonSoldier, 'CCitadel_Ability_TestHero_SummonSoldier', {})
+export interface CCitadel_Ability_TestHero_SummonSoldier extends Fields<typeof fieldsCCitadel_Ability_TestHero_SummonSoldier> {}
+define(CCitadel_Ability_TestHero_SummonSoldier, 'CCitadel_Ability_TestHero_SummonSoldier', fieldsCCitadel_Ability_TestHero_SummonSoldier)
 
 const fieldsCCitadel_Ability_TestHero_WallCling = {
   m_vecWallClingNormal: 'vector',
@@ -7178,10 +7330,15 @@ export class CCitadel_Ability_TestHero_WallCling extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_TestHero_WallCling extends Fields<typeof fieldsCCitadel_Ability_TestHero_WallCling> {}
 define(CCitadel_Ability_TestHero_WallCling, 'CCitadel_Ability_TestHero_WallCling', fieldsCCitadel_Ability_TestHero_WallCling)
 
+const fieldsCCitadel_Ability_ThrowSand = {
+  m_vHitEnts: 'list:handle',
+} as const
 export class CCitadel_Ability_ThrowSand extends CCitadelBaseAbility {}
-define(CCitadel_Ability_ThrowSand, 'CCitadel_Ability_ThrowSand', {})
+export interface CCitadel_Ability_ThrowSand extends Fields<typeof fieldsCCitadel_Ability_ThrowSand> {}
+define(CCitadel_Ability_ThrowSand, 'CCitadel_Ability_ThrowSand', fieldsCCitadel_Ability_ThrowSand)
 
 const fieldsCCitadel_Ability_Thumper_1 = {
+  m_vecHitEntities: 'list:handle',
   m_vecAimPos: 'vector',
   m_vecAimNormal: 'vector',
   m_flPushForce: 'float32',
@@ -7238,6 +7395,7 @@ define(CCitadel_Ability_Trapper_WebWall, 'CCitadel_Ability_Trapper_WebWall', fie
 const fieldsCCitadel_Ability_Trappers_Bolo = {
   m_hProjectile: 'CBaseEntity',
   m_hNextTarget: 'CBaseEntity',
+  m_hHitTargets: 'list:handle',
   m_iBounces: 'int32',
   m_bReturning: 'bool',
 } as const
@@ -7275,6 +7433,8 @@ define(CCitadel_Ability_Unicorn_DazzlingOrb, 'CCitadel_Ability_Unicorn_DazzlingO
 const fieldsCCitadel_Ability_Unicorn_LuminousStrike = {
   m_flLastStackChangeTime: 'float32',
   m_nLastStackCount: 'int32',
+  m_vecNextExplosionTime: 'list:float32',
+  m_vecNextExplosionLocation: 'list:vector',
   m_nStackCount: 'int32',
   m_bPendingStackUpdate: 'bool',
 } as const
@@ -7285,8 +7445,12 @@ define(CCitadel_Ability_Unicorn_LuminousStrike, 'CCitadel_Ability_Unicorn_Lumino
 export class CCitadel_Ability_Unicorn_PrismaticGuard extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Unicorn_PrismaticGuard, 'CCitadel_Ability_Unicorn_PrismaticGuard', {})
 
+const fieldsCCitadel_Ability_Unicorn_RadiantBlast = {
+  m_vecHitTargets: 'list:handle',
+} as const
 export class CCitadel_Ability_Unicorn_RadiantBlast extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Unicorn_RadiantBlast, 'CCitadel_Ability_Unicorn_RadiantBlast', {})
+export interface CCitadel_Ability_Unicorn_RadiantBlast extends Fields<typeof fieldsCCitadel_Ability_Unicorn_RadiantBlast> {}
+define(CCitadel_Ability_Unicorn_RadiantBlast, 'CCitadel_Ability_Unicorn_RadiantBlast', fieldsCCitadel_Ability_Unicorn_RadiantBlast)
 
 const fieldsCCitadel_Ability_VampireBat_BatBlink = {
   m_iRemainingCasts: 'int32',
@@ -7343,8 +7507,13 @@ define(CCitadel_Ability_Vandal_Ability03, 'CCitadel_Ability_Vandal_Ability03', {
 export class CCitadel_Ability_Vandal_Pillar extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Vandal_Pillar, 'CCitadel_Ability_Vandal_Pillar', {})
 
+const fieldsCCitadel_Ability_ViperHookblade = {
+  m_vecOutgoingHitList: 'list:handle',
+  m_vecReturningHitList: 'list:handle',
+} as const
 export class CCitadel_Ability_ViperHookblade extends CCitadelBaseAbility {}
-define(CCitadel_Ability_ViperHookblade, 'CCitadel_Ability_ViperHookblade', {})
+export interface CCitadel_Ability_ViperHookblade extends Fields<typeof fieldsCCitadel_Ability_ViperHookblade> {}
+define(CCitadel_Ability_ViperHookblade, 'CCitadel_Ability_ViperHookblade', fieldsCCitadel_Ability_ViperHookblade)
 
 export class CCitadel_Ability_ViperVenom extends CCitadelBaseAbility {}
 define(CCitadel_Ability_ViperVenom, 'CCitadel_Ability_ViperVenom', {})
@@ -7438,14 +7607,19 @@ export interface CCitadel_Ability_WreckerTeleport extends Fields<typeof fieldsCC
 define(CCitadel_Ability_WreckerTeleport, 'CCitadel_Ability_WreckerTeleport', fieldsCCitadel_Ability_WreckerTeleport)
 
 const fieldsCCitadel_Ability_Wrecker_BoulderGrenade = {
+  m_hHitTroopers: 'list:handle',
   m_nBallParticle: 'int32',
 } as const
 export class CCitadel_Ability_Wrecker_BoulderGrenade extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Wrecker_BoulderGrenade extends Fields<typeof fieldsCCitadel_Ability_Wrecker_BoulderGrenade> {}
 define(CCitadel_Ability_Wrecker_BoulderGrenade, 'CCitadel_Ability_Wrecker_BoulderGrenade', fieldsCCitadel_Ability_Wrecker_BoulderGrenade)
 
+const fieldsCCitadel_Ability_Wrecker_Salvage = {
+  m_vecTargets: 'list:handle',
+} as const
 export class CCitadel_Ability_Wrecker_Salvage extends CCitadelBaseAbility {}
-define(CCitadel_Ability_Wrecker_Salvage, 'CCitadel_Ability_Wrecker_Salvage', {})
+export interface CCitadel_Ability_Wrecker_Salvage extends Fields<typeof fieldsCCitadel_Ability_Wrecker_Salvage> {}
+define(CCitadel_Ability_Wrecker_Salvage, 'CCitadel_Ability_Wrecker_Salvage', fieldsCCitadel_Ability_Wrecker_Salvage)
 
 const fieldsCCitadel_Ability_Wrecker_Ultimate = {
   m_angBeamAngles: 'angles',
@@ -7457,6 +7631,7 @@ define(CCitadel_Ability_Wrecker_Ultimate, 'CCitadel_Ability_Wrecker_Ultimate', f
 const fieldsCCitadel_Ability_WreckingBall = {
   m_nBallParticle: 'int32',
   m_nCastCompleteParticle: 'int32',
+  m_vecTargetsHit: 'list:handle',
   m_bHoldingBall: 'bool',
 } as const
 export class CCitadel_Ability_WreckingBall extends CCitadelBaseAbility {}
@@ -8050,8 +8225,12 @@ define(CItemHauntingScream, 'CItemHauntingScream', {})
 export class CItemMysticReverb extends CCitadel_Item {}
 define(CItemMysticReverb, 'CItemMysticReverb', {})
 
+const fieldsCItemSilenceGlyph = {
+  m_vHitEnts: 'list:handle',
+} as const
 export class CItemSilenceGlyph extends CCitadel_Item {}
-define(CItemSilenceGlyph, 'CItemSilenceGlyph', {})
+export interface CItemSilenceGlyph extends Fields<typeof fieldsCItemSilenceGlyph> {}
+define(CItemSilenceGlyph, 'CItemSilenceGlyph', fieldsCItemSilenceGlyph)
 
 export class CItem_FleetfootBoots extends CCitadel_Item {}
 define(CItem_FleetfootBoots, 'CItem_FleetfootBoots', {})
@@ -8523,6 +8702,7 @@ const fieldsCFishPool = {
   m_swimDepth: 'float32',
   m_waterLevel: 'float32',
   m_isDormant: 'bool',
+  m_fishes: 'list:handle',
 } as const
 export class CFishPool extends CBaseEntity {}
 export interface CFishPool extends Fields<typeof fieldsCFishPool> {}
@@ -8774,10 +8954,17 @@ const fieldsCPathParticleRope = {
   m_bStartActive: 'bool',
   m_flMaxSimulationTime: 'float32',
   m_iszEffectName: 'string',
+  m_PathNodes_Name: 'list:string',
   m_flParticleSpacing: 'float32',
   m_flSlack: 'float32',
   m_flRadius: 'float32',
   m_nEffectState: 'int32',
+  m_PathNodes_Position: 'list:vector',
+  m_PathNodes_TangentIn: 'list:vector',
+  m_PathNodes_TangentOut: 'list:vector',
+  m_PathNodes_Color: 'list:vector',
+  m_PathNodes_PinEnabled: 'list:bool',
+  m_PathNodes_RadiusScale: 'list:float32',
 } as const
 const inputsCPathParticleRope = {
   DestroyImmediately: '',
@@ -8811,6 +8998,7 @@ export interface CPathSimple extends Fields<typeof fieldsCPathSimple> {}
 define(CPathSimple, 'CPathSimple', fieldsCPathSimple)
 
 const fieldsCPathWithDynamicNodes = {
+  m_vecPathNodes: 'list:handle',
   m_eDesiredDirection: 'uint32',
   m_bIgnoreParentRotation: 'bool',
 } as const
@@ -8819,6 +9007,8 @@ export interface CPathWithDynamicNodes extends Fields<typeof fieldsCPathWithDyna
 define(CPathWithDynamicNodes, 'CPathWithDynamicNodes', fieldsCPathWithDynamicNodes)
 
 const fieldsCPathMover = {
+  m_vecMovers: 'list:handle',
+  m_vecSpawners: 'list:handle',
   m_iszMoverSpawnerName: 'string',
   m_hMoverRouter: 'CFuncMoverRouter',
   m_iszMoverRouterName: 'string',
@@ -8981,6 +9171,7 @@ const fieldsCAI_VolumetricEventSensor = {
   m_flMaxRange: 'float32',
   m_iszListenFilter: 'string',
   m_hListenFilter: 'CBaseFilter',
+  m_hSensedEvents: 'list:uint64',
 } as const
 const inputsCAI_VolumetricEventSensor = {
   Disable: '',
@@ -9293,8 +9484,11 @@ const fieldsCInfoOffscreenPanoramaTexture = {
   m_szPanelType: 'string',
   m_szLayoutFileName: 'string',
   m_RenderAttrName: 'string',
+  m_TargetEntities: 'list:handle',
   m_nTargetChangeCount: 'int32',
+  m_vecCSSClasses: 'list:string',
   m_szTargetsName: 'string',
+  m_AdditionalTargetEntities: 'list:handle',
 } as const
 const inputsCInfoOffscreenPanoramaTexture = {
   AddCSSClass: 'text',
@@ -9786,6 +9980,8 @@ const fieldsCSceneEntity = {
   m_bInterruptedActorsScenes: 'bool',
   m_bBreakOnNonIdle: 'bool',
   m_bSceneFinished: 'bool',
+  m_hActorList: 'list:handle',
+  m_hRemoveActorList: 'list:handle',
   m_nSceneStringIndex: 'uint16',
   m_hInterruptScene: 'CSceneEntity',
   m_nInterruptCount: 'int32',
@@ -9796,6 +9992,8 @@ const fieldsCSceneEntity = {
   m_bCompletedEarly: 'bool',
   m_bInterruptSceneFinished: 'bool',
   m_bRestoring: 'bool',
+  m_hNotifySceneCompletion: 'list:handle',
+  m_hListManagers: 'list:handle',
   m_iszSoundName: 'string',
   m_iszSequenceName: 'string',
   m_hActor: 'CBaseModelEntity',
@@ -9918,6 +10116,7 @@ const fieldsCPointValueRemapper = {
   m_iszOutputEntity2Name: 'string',
   m_iszOutputEntity3Name: 'string',
   m_iszOutputEntity4Name: 'string',
+  m_hOutputEntities: 'list:handle',
   m_nHapticsType: 'uint32',
   m_nMomentumType: 'uint32',
   m_flMomentumModifier: 'float32',
@@ -10371,6 +10570,7 @@ define(CLogicActiveAutosave, 'CLogicActiveAutosave', fieldsCLogicActiveAutosave,
 
 const fieldsCLogicBranch = {
   m_bInValue: 'bool',
+  m_Listeners: 'list:handle',
 } as const
 const inputsCLogicBranch = {
   SetValue: 'boolean',
@@ -10384,6 +10584,7 @@ export interface CLogicBranch extends Fields<typeof fieldsCLogicBranch>, Inputs<
 define(CLogicBranch, 'CLogicBranch', fieldsCLogicBranch, inputsCLogicBranch)
 
 const fieldsCLogicBranchList = {
+  m_LogicBranchList: 'list:handle',
   m_eLastState: 'uint32',
 } as const
 const inputsCLogicBranchList = {
@@ -10646,6 +10847,7 @@ const fieldsCMultiLightProxy = {
   m_bPerformScreenFade: 'bool',
   m_flTargetBrightnessMultiplier: 'float32',
   m_flCurrentBrightnessMultiplier: 'float32',
+  m_vecLights: 'list:handle',
 } as const
 const inputsCMultiLightProxy = {
   DisableLights: 'number',
@@ -10690,6 +10892,7 @@ const fieldsCPathMoverEntitySpawner = {
   m_flLastSpawnTime: 'float32',
   m_bEnabled: 'bool',
   m_bDestroyMoverOnArrivedAtEnd: 'bool',
+  m_vecQueuedRemovals: 'list:handle',
   m_iszPathMoverName: 'string',
   m_bPrepopulateOnSpawn: 'bool',
   m_iszPathNodeStartName: 'string',
@@ -11045,6 +11248,8 @@ const fieldsCPointTemplate = {
   m_bAsynchronouslySpawnEntities: 'bool',
   m_clientOnlyEntityBehavior: 'uint32',
   m_ownerSpawnGroupType: 'uint32',
+  m_createdSpawnGroupHandles: 'list:uint32',
+  m_SpawnedEntityHandles: 'list:handle',
 } as const
 const inputsCPointTemplate = {
   /**
@@ -11059,12 +11264,15 @@ export class CPointTemplate extends CLogicalEntity {}
 export interface CPointTemplate extends Fields<typeof fieldsCPointTemplate>, Inputs<typeof inputsCPointTemplate> {}
 define(CPointTemplate, 'CPointTemplate', fieldsCPointTemplate, inputsCPointTemplate)
 
+const fieldsCSceneListManager = {
+  m_hListManagers: 'list:handle',
+} as const
 const inputsCSceneListManager = {
   Shutdown: '',
 } as const
 export class CSceneListManager extends CLogicalEntity {}
-export interface CSceneListManager extends Inputs<typeof inputsCSceneListManager> {}
-define(CSceneListManager, 'CSceneListManager', {}, inputsCSceneListManager)
+export interface CSceneListManager extends Fields<typeof fieldsCSceneListManager>, Inputs<typeof inputsCSceneListManager> {}
+define(CSceneListManager, 'CSceneListManager', fieldsCSceneListManager, inputsCSceneListManager)
 
 const fieldsCSoundStackSave = {
   m_iszStackName: 'string',
@@ -11228,6 +11436,7 @@ const fieldsCPointPrefab = {
   m_fixupNames: 'bool',
   m_bLoadDynamic: 'bool',
   m_associatedRelayEntity: 'CPointPrefab',
+  m_ProceduralRelaySources: 'list:handle',
 } as const
 export class CPointPrefab extends CServerOnlyPointEntity {}
 export interface CPointPrefab extends Fields<typeof fieldsCPointPrefab> {}
@@ -11553,7 +11762,14 @@ export class CSoundOpvarSetOBBEntity extends CSoundOpvarSetAABBEntity {}
 define(CSoundOpvarSetOBBEntity, 'CSoundOpvarSetOBBEntity', {})
 
 const fieldsCSoundOpvarSetDomeEntity = {
+  m_arDirections: 'list:vector',
+  m_arOpenness: 'list:float32',
+  m_arNeighbors: 'list:int32',
   m_nCurrentIndex: 'int32',
+  m_arClusterParent: 'list:int32',
+  m_arClusterSize: 'list:int32',
+  m_arClusterWeight: 'list:float32',
+  m_arClusterDirSum: 'list:vector',
   m_nClusterIndex: 'int32',
   m_flClusteredOpenness: 'float32',
   m_vClusterDirection: 'vector',
@@ -11598,6 +11814,8 @@ export interface CSoundOpvarSetPathCornerEntity extends Fields<typeof fieldsCSou
 define(CSoundOpvarSetPathCornerEntity, 'CSoundOpvarSetPathCornerEntity', fieldsCSoundOpvarSetPathCornerEntity)
 
 const fieldsCSoundOpvarSetPrecipitationEntity = {
+  m_arDirections: 'list:vector',
+  m_arSky: 'list:float32',
   m_nCurrentIndex: 'int32',
   m_flSmoothedValue: 'float32',
   m_flLastSmoothTime: 'float32',
@@ -11626,6 +11844,8 @@ export class CSoundOpvarSetPrecipitationOBBEntity extends CSoundOpvarSetPrecipit
 define(CSoundOpvarSetPrecipitationOBBEntity, 'CSoundOpvarSetPrecipitationOBBEntity', {})
 
 const fieldsCTeam = {
+  m_aPlayerControllers: 'list:handle',
+  m_aPlayers: 'list:handle',
   m_iScore: 'int32',
 } as const
 export class CTeam extends CBaseEntity {}
@@ -11729,6 +11949,7 @@ const fieldsCCitadelGameRules = {
   m_nHideoutOwner: 'uint32',
   m_hTrooperMinimap: 'CCitadelTrooperMinimap',
   m_iWinningTeam: 'int32',
+  m_vecBannedHeroes: 'list:uint32',
   m_nCorruptedPenaltySeed: 'uint32',
   m_nNumCorruptedItemsLimit: 'int32',
   m_nKothScoringTeam: 'int32',
@@ -11748,6 +11969,7 @@ const fieldsCCitadelGameRules = {
   m_timeNextKothSpawn: 'float32',
   m_timeNextKothSpawnWindowTime: 'float32',
   m_vNextKothLocation: 'vector',
+  m_vKothSpawnLocationDeck: 'list:vector',
   m_nKothSpawnWarnings: 'int32',
   m_bNotifiedClientsOfNextCrateSpawn: 'bool',
   m_bEarlyCratesSpawned: 'bool',
@@ -11769,6 +11991,9 @@ const fieldsCCitadelGameRules = {
   m_iAmberRejuvCount: 'int32',
   m_iSapphireRejuvCount: 'int32',
   m_tNextMidBossSpawnTime: 'float32',
+  m_vecNeutralCampTimerOrigins: 'list:vector',
+  m_vecNeutralCampNextSpawnTimes: 'list:float32',
+  m_vecNeutralCampTimerIsMidBoss: 'list:bool',
   m_bServerPaused: 'bool',
   m_iPauseTeam: 'int32',
   m_nMatchClockUpdateTick: 'int32',

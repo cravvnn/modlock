@@ -3623,6 +3623,79 @@ export const FieldResponse: MessageType<FieldResponse> = /* @__PURE__ */ createM
 });
 
 /**
+ * FieldListResponse holds the elements ReadFieldList read.
+ *
+ * @generated from message modlock.wasm.FieldListResponse
+ */
+export interface FieldListResponse {
+  /**
+   * @generated from field: repeated modlock.wasm.FieldValue values = 1;
+   */
+  values?: FieldValue[];
+
+};
+
+export const FieldListResponse: MessageType<FieldListResponse> = /* @__PURE__ */ createMessageType({
+    typeName: "modlock.wasm.FieldListResponse",
+    fields: [
+        { no: 1, name: "values", kind: "message", T: () => FieldValue, repeated: true },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
+/**
+ * WriteFieldListRequest replaces the elements of one list field of a live
+ * entity.
+ *
+ * @generated from message modlock.wasm.WriteFieldListRequest
+ */
+export interface WriteFieldListRequest {
+  /**
+   * Entity is the entity's handle.
+   *
+   * @generated from field: uint32 entity = 1;
+   */
+  entity?: number;
+  /**
+   * ClassName is the server class that declares the field, or a subclass.
+   *
+   * @generated from field: string class_name = 2;
+   */
+  className?: string;
+  /**
+   * Field is the field's schema name, such as m_vecBannedHeroes.
+   *
+   * @generated from field: string field = 3;
+   */
+  field?: string;
+  /**
+   * Type is how to write each element.
+   *
+   * @generated from field: modlock.wasm.FieldType type = 4;
+   */
+  type?: FieldType;
+  /**
+   * Values are the list's new elements, each in the form WriteField takes.
+   *
+   * @generated from field: repeated modlock.wasm.FieldValue values = 5;
+   */
+  values?: FieldValue[];
+
+};
+
+export const WriteFieldListRequest: MessageType<WriteFieldListRequest> = /* @__PURE__ */ createMessageType({
+    typeName: "modlock.wasm.WriteFieldListRequest",
+    fields: [
+        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
+        { no: 2, name: "class_name", kind: "scalar", T: ScalarType.STRING },
+        { no: 3, name: "field", kind: "scalar", T: ScalarType.STRING },
+        { no: 4, name: "type", kind: "enum", T: FieldType_Enum },
+        { no: 5, name: "values", kind: "message", T: () => FieldValue, repeated: true },
+    ] satisfies readonly PartialFieldInfo[],
+    packedByDefault: true,
+});
+
+/**
  * WriteFieldRequest writes one schema field of a live entity.
  *
  * @generated from message modlock.wasm.WriteFieldRequest

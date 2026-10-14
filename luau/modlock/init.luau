@@ -1928,6 +1928,16 @@ schema.FieldValue = {
 	{ number = 4, name = "text", kind = "string", oneof = "value" },
 	{ number = 5, name = "vector", kind = "message", oneof = "value", message = "Vec3" },
 }
+schema.FieldListResponse = {
+	{ number = 1, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
+}
+schema.WriteFieldListRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "className", kind = "string" },
+	{ number = 3, name = "field", kind = "string" },
+	{ number = 4, name = "type", kind = "enum", enum = FieldType },
+	{ number = 5, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
+}
 schema.WriteFieldRequest = {
 	{ number = 1, name = "entity", kind = "uint32" },
 	{ number = 2, name = "className", kind = "string" },
@@ -2255,6 +2265,24 @@ end
 -- it, so players already in the match see the change.
 function modlock.writeField(entity: number, className: string, field: string, type: FieldType, value: FieldValue): boolean
 	return call("WriteField", "WriteFieldRequest", { entity = entity, className = className, field = field, type = type, value = value }) ~= nil
+end
+
+-- readFieldList reads a field that holds a list, such as the m_vecBannedHeroes
+-- of CCitadelGameRules. The type is the type of one element: a number, a
+-- handle, a boolean or a vector. A list of structures cannot be read.
+function modlock.readFieldList(entity: number, className: string, field: string, type: FieldType): { FieldValue }
+	local response = call("ReadFieldList", "ReadFieldRequest", { entity = entity, className = className, field = field, type = type }, "FieldListResponse")
+	if response == nil then
+		return {}
+	end
+	return response.values
+end
+
+-- writeFieldList replaces the elements of a list field and sends the change
+-- to the players, growing the list when it holds fewer elements than the
+-- new ones.
+function modlock.writeFieldList(entity: number, className: string, field: string, type: FieldType, values: { FieldValue }?): boolean
+	return call("WriteFieldList", "WriteFieldListRequest", { entity = entity, className = className, field = field, type = type, values = values }) ~= nil
 end
 
 -- entityClass returns a live entity's schema class, such as

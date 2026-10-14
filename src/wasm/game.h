@@ -352,6 +352,9 @@ class Game : public HostService {
       const ClearScreenEffectRequest& request) override;
   std::expected<FieldResponse, std::string> ReadField(const ReadFieldRequest& request) override;
   std::expected<void, std::string> WriteField(const WriteFieldRequest& request) override;
+  std::expected<FieldListResponse, std::string> ReadFieldList(
+      const ReadFieldRequest& request) override;
+  std::expected<void, std::string> WriteFieldList(const WriteFieldListRequest& request) override;
   std::expected<EntityClassResponse, std::string> EntityClass(
       const EntityRequest& request) override;
   std::expected<ActiveResponse, std::string> ModifierState(
@@ -409,12 +412,12 @@ class Game : public HostService {
   std::expected<void, std::string> WatchMovement(const WatchMovementRequest& request) override;
   std::expected<void, std::string> WatchProjectiles(const ProjectileOptions& request) override;
 
-  // FieldAddress resolves a schema field of entity that holds a value of
-  // type, refusing an entity that is not of class_name. A game rules class
+  // FieldAddress resolves a schema field of entity that holds at least size
+  // bytes, refusing an entity that is not of class_name. A game rules class
   // resolves on the game rules proxy entity to the field of the rules object.
   std::expected<unsigned char*, std::string> FieldAddress(void* entity,
                                                           const std::string& class_name,
-                                                          const std::string& field, FieldType type);
+                                                          const std::string& field, size_t size);
 
   // StoreField writes a schema field of entity without telling the network
   // it changed.

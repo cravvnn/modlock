@@ -235,6 +235,17 @@ A write sends the whole rules to the players, so players already in the match
 see the change at once. A field the game's clients derive from other state may
 be set again by the game on its next update.
 
+A field that holds a list of numbers, handles, booleans, vectors or text, such
+as the banned heroes or the neutral camp spawn times, reads as an array and
+writes by replacing the array. The host grows the game's list when the new array
+is longer than the space the game allocated. A list of structures, such as the
+Mid Boss team states, has no accessor.
+
+```ts
+rules.m_vecBannedHeroes = [1, 2, 3]
+const times = rules.m_vecNeutralCampNextSpawnTimes // number[]
+```
+
 ## Inputs
 
 `fireInput(handle, input, value)` sends an entity an input, as a map's output

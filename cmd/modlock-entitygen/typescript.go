@@ -16,7 +16,9 @@ import {
   createEntity,
   fireInput,
   readField,
+  readFieldList,
   writeField,
+  writeFieldList,
   type Angles,
   type EntityOptions,
   type EntityValue,
@@ -78,6 +80,19 @@ function define(
  * undefined leaves a field unchanged, but clears a handle field.
  */
 function accessor(className: string, field: string, type: string): PropertyDescriptor {
+  if (type.startsWith('list:')) {
+    const element = type.slice('list:'.length) as FieldType
+    return {
+      get(this: CEntityInstance) {
+        return readFieldList(this.handle, className, field, element)
+      },
+      set(this: CEntityInstance, value: never) {
+        if (value !== undefined) {
+          writeFieldList(this.handle, className, field, element, value)
+        }
+      },
+    }
+  }
   if (type === 'angles') {
     return {
       get(this: CEntityInstance): Angles | undefined {
@@ -163,7 +178,13 @@ interface FieldTypes {
 }
 
 /** FieldOf is the type a field of table entry T holds. */
-type FieldOf<T> = T extends keyof FieldTypes ? FieldTypes[T] : T extends keyof Targets ? Targets[T] : never
+type FieldOf<T> = T extends keyof FieldTypes
+  ? FieldTypes[T]
+  : T extends ` + "`list:${infer Element extends keyof FieldTypes}`" + `
+    ? FieldTypes[Element][]
+    : T extends keyof Targets
+      ? Targets[T]
+      : never
 
 /**
  * Fields declares the fields a table installs. A string field is read only,
@@ -439,9 +460,12 @@ func typeScriptTable(entries []string) string {
 }
 
 // typeScriptEntry returns field f's entry in its class's table: angles, the
-// class its handle names, or its FieldType.
+// class its handle names, its FieldType, or list: and the FieldType of its
+// elements.
 func typeScriptEntry(f readable) string {
 	switch {
+	case f.list:
+		return "list:" + f.wire
 	case f.angles:
 		return "angles"
 	case f.target != "":
@@ -471,6 +495,8 @@ func typeScriptDoc(doc string) string {
 // typeScriptType returns the type a getter for a field of kind k returns.
 func typeScriptType(k kind) string {
 	switch {
+	case k.list:
+		return typeScriptTypes[k.wire] + "[]"
 	case k.angles:
 		return "Angles"
 	case k.target != "":

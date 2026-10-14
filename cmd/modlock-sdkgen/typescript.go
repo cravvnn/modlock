@@ -584,7 +584,7 @@ func (w *tsWriter) fromValue(f *field, value string) string {
 // filling an unset field with its zero.
 func (w *tsWriter) fromField(f *field, value string) string {
 	switch {
-	case f.repeated && f.enum != nil:
+	case f.repeated && (f.enum != nil || f.message != nil && f.message.isUnion()):
 		return fmt.Sprintf("(%s ?? []).flatMap((v) => %s ?? [])", value, w.fromValue(f, "v"))
 	case f.repeated:
 		if read := w.fromValue(f, "v"); read != "v" {

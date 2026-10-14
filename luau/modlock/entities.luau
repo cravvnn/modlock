@@ -21,13 +21,14 @@ local entities = {}
 local invalidHandle = 0xffffffff
 
 -- Field is one field or input a class declares. A field has its wire type,
--- and for a handle, the class of entity it names, or for a rotation, angles.
--- An input, which a method named after it sends, has its name and the case of
+-- and for a handle, the class of entity it names, for a rotation, angles, or
+-- for a list, that its wire type is its elements'. An input, which a method named after it sends, has its name and the case of
 -- EntityValue it takes, if any.
 type Field = {
 	type: modlock.FieldType?,
 	target: string?,
 	angles: boolean?,
+	list: boolean?,
 	input: string?,
 	value: string?,
 }
@@ -105,7 +106,8 @@ local function new(className: string, handle: number): any
 end
 
 -- describe adds one class. Each of its fields maps to its FieldType, angles,
--- or the class of entity its handle names, and each input to the case of
+-- list: and the FieldType of its elements, or the class of entity its handle
+-- names, and each input to the case of
 -- EntityValue it sends, or to the empty string for none. Its instances read a
 -- field by indexing and write one by assigning; a field the class lacks reads
 -- as nil and ignores writes, after a line in the server log.
@@ -114,6 +116,7 @@ local function describe(className: string, base: string?, entries: { [string]: s
 	for name, entry in entries do
 		local field: Field = if entry == "angles"
 			then { type = "vector", angles = true }
+			elseif string.sub(entry, 1, 5) == "list:" then { type = string.sub(entry, 6) :: modlock.FieldType, list = true }
 			elseif fieldTypes[entry] then { type = entry :: modlock.FieldType }
 			else { type = "handle", target = entry }
 		fields[name] = field
@@ -139,6 +142,9 @@ local function describe(className: string, base: string?, entries: { [string]: s
 					return modlock.fireInput(entity.handle, input, { [case] = value } :: any, activator)
 				end
 			end
+			if field.list then
+				return modlock.readFieldList(entity.handle, owner, name, field.type :: modlock.FieldType)
+			end
 			local value = modlock.readField(entity.handle, owner, name, field.type :: modlock.FieldType)
 			if value == nil then
 				return nil
@@ -155,6 +161,10 @@ local function describe(className: string, base: string?, entries: { [string]: s
 		__newindex = function(entity: any, name: string, value: any)
 			local owner, field = resolve(className, name)
 			if owner == nil or field == nil or field.input ~= nil then
+				return
+			end
+			if field.list then
+				modlock.writeFieldList(entity.handle, owner, name, field.type :: modlock.FieldType, value)
 				return
 			end
 			if field.angles then
@@ -469,6 +479,7 @@ export type CAI_GoalEntity = CBaseEntity & {
 	m_fStartActive: boolean?,
 	m_SearchType: number?,
 	m_iszConceptModifiers: string?,
+	m_actors: { number }?,
 	m_hGoalEntity: CBaseEntity?,
 	m_flags: number?,
 	inputActivate: (self: any) -> boolean,
@@ -482,6 +493,7 @@ describe("CAI_GoalEntity", "CBaseEntity", {
 	m_fStartActive = "bool",
 	m_SearchType = "uint32",
 	m_iszConceptModifiers = "string",
+	m_actors = "list:handle",
 	m_hGoalEntity = "CBaseEntity",
 	m_flags = "uint32",
 }, {
@@ -738,6 +750,9 @@ export type CBarnLight = CBaseModelEntity & {
 	m_flLuminaireAnisotropy: number?,
 	m_LightStyleString: string?,
 	m_flLightStyleStartTime: number?,
+	m_QueuedLightStyleStrings: { string }?,
+	m_LightStyleEvents: { string }?,
+	m_LightStyleTargets: { number }?,
 	m_flShape: number?,
 	m_flSoftX: number?,
 	m_flSoftY: number?,
@@ -794,6 +809,7 @@ export type CBarnLight = CBaseModelEntity & {
 	m_vPrecomputedOBBExtent5: modlock.Vector?,
 	m_bPvsModifyEntity: boolean?,
 	m_bTransmitAlways: boolean?,
+	m_VisClusters: { number }?,
 	inputCastDynamicShadows: (self: any, value: boolean) -> boolean,
 	inputDisable: (self: any) -> boolean,
 	inputEnable: (self: any) -> boolean,
@@ -822,6 +838,9 @@ describe("CBarnLight", "CBaseModelEntity", {
 	m_flLuminaireAnisotropy = "float32",
 	m_LightStyleString = "string",
 	m_flLightStyleStartTime = "float32",
+	m_QueuedLightStyleStrings = "list:string",
+	m_LightStyleEvents = "list:string",
+	m_LightStyleTargets = "list:handle",
 	m_flShape = "float32",
 	m_flSoftX = "float32",
 	m_flSoftY = "float32",
@@ -878,6 +897,7 @@ describe("CBarnLight", "CBaseModelEntity", {
 	m_vPrecomputedOBBExtent5 = "vector",
 	m_bPvsModifyEntity = "bool",
 	m_bTransmitAlways = "bool",
+	m_VisClusters = "list:uint16",
 }, {
 	CastDynamicShadows = "boolean",
 	Disable = "",
@@ -958,6 +978,7 @@ describe("CBaseAnimGraphAlias_baseanimating", "CBaseAnimGraph", {})
 
 export type CBaseCombatCharacter = CBaseAnimGraph & {
 	m_bForceServerRagdoll: boolean?,
+	m_hMyWearables: { number }?,
 	m_impactEnergyScale: number?,
 	m_bApplyStressDamage: boolean?,
 	m_bDeathEventsDispatched: boolean?,
@@ -969,6 +990,7 @@ export type CBaseCombatCharacter = CBaseAnimGraph & {
 }
 describe("CBaseCombatCharacter", "CBaseAnimGraph", {
 	m_bForceServerRagdoll = "bool",
+	m_hMyWearables = "list:handle",
 	m_impactEnergyScale = "float32",
 	m_bApplyStressDamage = "bool",
 	m_bDeathEventsDispatched = "bool",
@@ -984,6 +1006,7 @@ export type CAI_BaseNPC = CBaseCombatCharacter & {
 	m_bCheckContacts: boolean?,
 	m_bForceDynamicHull: boolean?,
 	m_hSynchronizedPrimaryNPC: CAI_BaseNPC?,
+	m_vecSynchronizedSecondaryNPCs: { number }?,
 	m_NPCState: number?,
 	m_nPreModifierNPCState: number?,
 	m_IdealNPCState: number?,
@@ -1017,6 +1040,7 @@ export type CAI_BaseNPC = CBaseCombatCharacter & {
 	m_nPrevHealthDuringModifyDamage: number?,
 	m_flWaitFinished: number?,
 	m_fNoDamageDecal: boolean?,
+	m_vecAttachments: { number }?,
 	m_nAITraceMask: number?,
 	m_bDynamicAILOD: boolean?,
 	m_aiLOD: number?,
@@ -1031,6 +1055,7 @@ describe("CAI_BaseNPC", "CBaseCombatCharacter", {
 	m_bCheckContacts = "bool",
 	m_bForceDynamicHull = "bool",
 	m_hSynchronizedPrimaryNPC = "CAI_BaseNPC",
+	m_vecSynchronizedSecondaryNPCs = "list:handle",
 	m_NPCState = "uint32",
 	m_nPreModifierNPCState = "uint32",
 	m_IdealNPCState = "uint32",
@@ -1064,6 +1089,7 @@ describe("CAI_BaseNPC", "CBaseCombatCharacter", {
 	m_nPrevHealthDuringModifyDamage = "int32",
 	m_flWaitFinished = "float32",
 	m_fNoDamageDecal = "bool",
+	m_vecAttachments = "list:handle",
 	m_nAITraceMask = "uint64",
 	m_bDynamicAILOD = "bool",
 	m_aiLOD = "uint32",
@@ -1696,6 +1722,7 @@ describe("CDynamicProp", "CBreakableProp", {
 
 export type CBasePropDoor = CDynamicProp & {
 	m_flAutoReturnDelay: number?,
+	m_hDoorList: { number }?,
 	m_nHardwareType: number?,
 	m_bNeedsHardware: boolean?,
 	m_eDoorState: number?,
@@ -1725,6 +1752,7 @@ export type CBasePropDoor = CDynamicProp & {
 }
 describe("CBasePropDoor", "CDynamicProp", {
 	m_flAutoReturnDelay = "float32",
+	m_hDoorList = "list:handle",
 	m_nHardwareType = "int32",
 	m_bNeedsHardware = "bool",
 	m_eDoorState = "uint32",
@@ -1804,6 +1832,7 @@ export type CPropDoorRotatingBreakable = CPropDoorRotating & {
 	m_bBreakable: boolean?,
 	m_isAbleToCloseAreaPortals: boolean?,
 	m_currentDamageState: number?,
+	m_damageStates: { string }?,
 	inputSetBreakable: (self: any) -> boolean,
 	inputSetUnbreakable: (self: any) -> boolean,
 }
@@ -1811,6 +1840,7 @@ describe("CPropDoorRotatingBreakable", "CPropDoorRotating", {
 	m_bBreakable = "bool",
 	m_isAbleToCloseAreaPortals = "bool",
 	m_currentDamageState = "int32",
+	m_damageStates = "list:string",
 }, {
 	SetBreakable = "",
 	SetUnbreakable = "",
@@ -2187,6 +2217,7 @@ export type CCitadel_Bounce_Pad = CCitadelAnimatingModelEntity & {
 	m_flBarrelBounceVelocity: number?,
 	m_flBarrelUpFactor: number?,
 	m_bSpeedOnLand: boolean?,
+	m_vBouncedPlayerBefore: { number }?,
 }
 describe("CCitadel_Bounce_Pad", "CCitadelAnimatingModelEntity", {
 	m_hAbility = "CCitadelBaseAbility",
@@ -2197,6 +2228,7 @@ describe("CCitadel_Bounce_Pad", "CCitadelAnimatingModelEntity", {
 	m_flBarrelBounceVelocity = "float32",
 	m_flBarrelUpFactor = "float32",
 	m_bSpeedOnLand = "bool",
+	m_vBouncedPlayerBefore = "list:handle",
 })
 
 export type CCitadel_CatAnimating = CCitadelAnimatingModelEntity
@@ -2816,6 +2848,9 @@ export type CRagdollProp = CBaseAnimGraph & {
 	m_bStartDisabled: boolean?,
 	m_massScale: number?,
 	m_buoyancyScale: number?,
+	m_ragEnabled: { boolean }?,
+	m_ragPos: { modlock.Vector }?,
+	m_ragAngles: { modlock.Vector }?,
 	m_lastUpdateTickCount: number?,
 	m_allAsleep: boolean?,
 	m_bFirstCollisionAfterLaunch: boolean?,
@@ -2838,6 +2873,8 @@ export type CRagdollProp = CBaseAnimGraph & {
 	m_bAllowStretch: boolean?,
 	m_flBlendWeight: number?,
 	m_flDefaultFadeScale: number?,
+	m_ragdollMins: { modlock.Vector }?,
+	m_ragdollMaxs: { modlock.Vector }?,
 	m_bShouldDeleteActivationRecord: boolean?,
 	inputDisable: (self: any) -> boolean,
 	inputDisableMotion: (self: any) -> boolean,
@@ -2849,6 +2886,9 @@ describe("CRagdollProp", "CBaseAnimGraph", {
 	m_bStartDisabled = "bool",
 	m_massScale = "float32",
 	m_buoyancyScale = "float32",
+	m_ragEnabled = "list:bool",
+	m_ragPos = "list:vector",
+	m_ragAngles = "list:vector",
 	m_lastUpdateTickCount = "uint32",
 	m_allAsleep = "bool",
 	m_bFirstCollisionAfterLaunch = "bool",
@@ -2871,6 +2911,8 @@ describe("CRagdollProp", "CBaseAnimGraph", {
 	m_bAllowStretch = "bool",
 	m_flBlendWeight = "float32",
 	m_flDefaultFadeScale = "float32",
+	m_ragdollMins = "list:vector",
+	m_ragdollMaxs = "list:vector",
 	m_bShouldDeleteActivationRecord = "bool",
 }, {
 	Disable = "",
@@ -2945,6 +2987,7 @@ export type CPointClientUIWorldPanel = CBaseClientUIEntity & {
 	m_unVerticalAlign: number?,
 	m_unOrientation: number?,
 	m_bAllowInteractionFromAllSceneWorlds: boolean?,
+	m_vecCSSClasses: { string }?,
 	m_bOpaque: boolean?,
 	m_bNoDepth: boolean?,
 	m_bVisibleWhenParentNoDraw: boolean?,
@@ -2978,6 +3021,7 @@ describe("CPointClientUIWorldPanel", "CBaseClientUIEntity", {
 	m_unVerticalAlign = "uint32",
 	m_unOrientation = "uint32",
 	m_bAllowInteractionFromAllSceneWorlds = "bool",
+	m_vecCSSClasses = "list:string",
 	m_bOpaque = "bool",
 	m_bNoDepth = "bool",
 	m_bVisibleWhenParentNoDraw = "bool",
@@ -3293,6 +3337,7 @@ describe("CFuncTrain", "CBasePlatTrain", {
 })
 
 export type CBaseTrigger = CBaseToggle & {
+	m_hTouchingEntities: { number }?,
 	m_iFilterName: string?,
 	m_hFilter: CBaseFilter?,
 	m_bDisabled: boolean?,
@@ -3305,6 +3350,7 @@ export type CBaseTrigger = CBaseToggle & {
 	inputTouchTest: (self: any) -> boolean,
 }
 describe("CBaseTrigger", "CBaseToggle", {
+	m_hTouchingEntities = "list:handle",
 	m_iFilterName = "string",
 	m_hFilter = "CBaseFilter",
 	m_bDisabled = "bool",
@@ -3645,8 +3691,12 @@ describe("CTriggerAddModifier", "CBaseTrigger", {
 	m_bMomentary = "bool",
 })
 
-export type CTriggerBurrowUnderground = CBaseTrigger
-describe("CTriggerBurrowUnderground", "CBaseTrigger", {})
+export type CTriggerBurrowUnderground = CBaseTrigger & {
+	m_pTouchedEntities: { number }?,
+}
+describe("CTriggerBurrowUnderground", "CBaseTrigger", {
+	m_pTouchedEntities = "list:handle",
+})
 
 export type CTriggerCallback = CBaseTrigger
 describe("CTriggerCallback", "CBaseTrigger", {})
@@ -3743,6 +3793,7 @@ export type CTriggerHurt = CBaseTrigger & {
 	m_vDamageForce: modlock.Vector?,
 	m_thinkAlways: boolean?,
 	m_hurtThinkPeriod: number?,
+	m_hurtEntities: { number }?,
 	inputSetDamage: (self: any, value: number) -> boolean,
 }
 describe("CTriggerHurt", "CBaseTrigger", {
@@ -3757,6 +3808,7 @@ describe("CTriggerHurt", "CBaseTrigger", {
 	m_vDamageForce = "vector",
 	m_thinkAlways = "bool",
 	m_hurtThinkPeriod = "float32",
+	m_hurtEntities = "list:handle",
 }, {
 	SetDamage = "number",
 })
@@ -3984,8 +4036,14 @@ describe("CTriggerLook", "CTriggerOnce", {
 	LookTime = "number",
 })
 
-export type CTriggerNeutralShield = CBaseTrigger
-describe("CTriggerNeutralShield", "CBaseTrigger", {})
+export type CTriggerNeutralShield = CBaseTrigger & {
+	m_vecPlayers: { number }?,
+	m_vecNeutrals: { number }?,
+}
+describe("CTriggerNeutralShield", "CBaseTrigger", {
+	m_vecPlayers = "list:handle",
+	m_vecNeutrals = "list:handle",
+})
 
 export type CTriggerMidBossShield = CTriggerNeutralShield
 describe("CTriggerMidBossShield", "CTriggerNeutralShield", {})
@@ -4143,6 +4201,7 @@ describe("CTriggerSave", "CBaseTrigger", {
 })
 
 export type CTriggerSndSosOpvar = CBaseTrigger & {
+	m_hTouchingPlayers: { number }?,
 	m_flPosition: modlock.Vector?,
 	m_flCenterSize: number?,
 	m_flMinVal: number?,
@@ -4155,6 +4214,7 @@ export type CTriggerSndSosOpvar = CBaseTrigger & {
 	m_flNormCenterSize: number?,
 }
 describe("CTriggerSndSosOpvar", "CBaseTrigger", {
+	m_hTouchingPlayers = "list:handle",
 	m_flPosition = "vector",
 	m_flCenterSize = "float32",
 	m_flMinVal = "float32",
@@ -4170,10 +4230,12 @@ describe("CTriggerSndSosOpvar", "CBaseTrigger", {
 export type CTriggerSoundscape = CBaseTrigger & {
 	m_hSoundscape: CEnvSoundscapeTriggerable?,
 	m_SoundscapeName: string?,
+	m_spectators: { number }?,
 }
 describe("CTriggerSoundscape", "CBaseTrigger", {
 	m_hSoundscape = "CEnvSoundscapeTriggerable",
 	m_SoundscapeName = "string",
+	m_spectators = "list:handle",
 })
 
 export type CTriggerSuspendModifier = CBaseTrigger & {
@@ -4568,6 +4630,7 @@ export type CCitadelProjectile = CBaseModelEntity & {
 	m_nDetonationsLeft: number?,
 	m_vLastAbsOrigin: modlock.Vector?,
 	m_vLastAbsVelocity: modlock.Vector?,
+	m_vecTargetToIgnore: { number }?,
 	m_bDetonateStarted: boolean?,
 	m_bTouchDisabled: boolean?,
 	m_vInitialVelocity: modlock.Vector?,
@@ -4591,6 +4654,7 @@ describe("CCitadelProjectile", "CBaseModelEntity", {
 	m_nDetonationsLeft = "int32",
 	m_vLastAbsOrigin = "vector",
 	m_vLastAbsVelocity = "vector",
+	m_vecTargetToIgnore = "list:handle",
 	m_bDetonateStarted = "bool",
 	m_bTouchDisabled = "bool",
 	m_vInitialVelocity = "vector",
@@ -4708,6 +4772,7 @@ export type CCitadel_Projectile_BloodBomb = CCitadelProjectile & {
 	m_flBeepSoundIntervalBias: number?,
 	m_flBeepSoundMaxFrequency: number?,
 	m_flArmingDuration: number?,
+	m_vecBeepIntervals: { number }?,
 }
 describe("CCitadel_Projectile_BloodBomb", "CCitadelProjectile", {
 	m_bSecondBomb = "bool",
@@ -4715,6 +4780,7 @@ describe("CCitadel_Projectile_BloodBomb", "CCitadelProjectile", {
 	m_flBeepSoundIntervalBias = "float32",
 	m_flBeepSoundMaxFrequency = "float32",
 	m_flArmingDuration = "float32",
+	m_vecBeepIntervals = "list:float32",
 })
 
 export type CCitadel_Projectile_BookwormGun = CCitadelProjectile
@@ -4778,10 +4844,14 @@ describe("CCitadel_Projectile_SpiderProjectile", "CCitadelProjectile", {
 export type CCitadel_Projectile_Viscous_GooGrenade = CCitadelProjectile & {
 	m_nBounces: number?,
 	m_tNextDetonateTime: number?,
+	m_vecLastHitTargets: { number }?,
+	m_vecProjectileHitTargets: { number }?,
 }
 describe("CCitadel_Projectile_Viscous_GooGrenade", "CCitadelProjectile", {
 	m_nBounces = "int32",
 	m_tNextDetonateTime = "float32",
+	m_vecLastHitTargets = "list:handle",
+	m_vecProjectileHitTargets = "list:handle",
 })
 
 export type CCitadel_Projectile_WebWall = CCitadelProjectile & {
@@ -4820,8 +4890,12 @@ describe("CItemExplosiveBarrel", "CCitadelProjectile", {})
 export type CProjectile_Boho_SkipGrenade = CCitadelProjectile
 describe("CProjectile_Boho_SkipGrenade", "CCitadelProjectile", {})
 
-export type CProjectile_BookwormDragon_Projectile = CCitadelProjectile
-describe("CProjectile_BookwormDragon_Projectile", "CCitadelProjectile", {})
+export type CProjectile_BookwormDragon_Projectile = CCitadelProjectile & {
+	m_vecHitUnits: { number }?,
+}
+describe("CProjectile_BookwormDragon_Projectile", "CCitadelProjectile", {
+	m_vecHitUnits = "list:handle",
+})
 
 export type CProjectile_ChessMaster_Fork_Projectile = CCitadelProjectile
 describe("CProjectile_ChessMaster_Fork_Projectile", "CCitadelProjectile", {})
@@ -4854,8 +4928,12 @@ describe("CProjectile_Necro_HauntProjectile", "CCitadelProjectile", {})
 export type CProjectile_Necro_ZombieWall_Projectile = CCitadelProjectile
 describe("CProjectile_Necro_ZombieWall_Projectile", "CCitadelProjectile", {})
 
-export type CProjectile_Perched_Predator = CCitadelProjectile
-describe("CProjectile_Perched_Predator", "CCitadelProjectile", {})
+export type CProjectile_Perched_Predator = CCitadelProjectile & {
+	m_vecHitEntities: { number }?,
+}
+describe("CProjectile_Perched_Predator", "CCitadelProjectile", {
+	m_vecHitEntities = "list:handle",
+})
 
 export type CProjectile_Rolling_FireBall = CCitadelProjectile & {
 	m_bHitWorld: boolean?,
@@ -4924,6 +5002,8 @@ describe("CCitadelTunnelNode", "CBaseModelEntity", {
 })
 
 export type CCitadelZipLineNode = CBaseModelEntity & {
+	m_vecConnections: { number }?,
+	m_vecConnectionDir: { number }?,
 	m_vTangentIn: modlock.Vector?,
 	m_vTangentOut: modlock.Vector?,
 	m_flCumulativeDistance: number?,
@@ -4939,9 +5019,12 @@ export type CCitadelZipLineNode = CBaseModelEntity & {
 	m_bDisableZippingToByPlayers: boolean?,
 	m_flSpeedMultiplierToBaseBonus: number?,
 	m_flSpeedMultiplierFromBaseBonus: number?,
+	m_hGuardingBosses: { number }?,
 	m_flRopeRadius: number?,
 }
 describe("CCitadelZipLineNode", "CBaseModelEntity", {
+	m_vecConnections = "list:handle",
+	m_vecConnectionDir = "list:int32",
 	m_vTangentIn = "vector",
 	m_vTangentOut = "vector",
 	m_flCumulativeDistance = "float32",
@@ -4957,6 +5040,7 @@ describe("CCitadelZipLineNode", "CBaseModelEntity", {
 	m_bDisableZippingToByPlayers = "bool",
 	m_flSpeedMultiplierToBaseBonus = "float32",
 	m_flSpeedMultiplierFromBaseBonus = "float32",
+	m_hGuardingBosses = "list:handle",
 	m_flRopeRadius = "float32",
 })
 
@@ -5231,6 +5315,7 @@ describe("CFuncInteractionLayerClip", "CBaseModelEntity", {
 
 export type CFuncLadder = CBaseModelEntity & {
 	m_vecLadderDir: modlock.Vector?,
+	m_Dismounts: { number }?,
 	m_vecLocalTop: modlock.Vector?,
 	m_vecPlayerMountPositionTop: modlock.Vector?,
 	m_vecPlayerMountPositionBottom: modlock.Vector?,
@@ -5244,6 +5329,7 @@ export type CFuncLadder = CBaseModelEntity & {
 }
 describe("CFuncLadder", "CBaseModelEntity", {
 	m_vecLadderDir = "vector",
+	m_Dismounts = "list:handle",
 	m_vecLocalTop = "vector",
 	m_vecPlayerMountPositionTop = "vector",
 	m_vecPlayerMountPositionBottom = "vector",
@@ -5681,6 +5767,7 @@ describe("CFuncRotator", "CBaseModelEntity", {
 })
 
 export type CFuncShatterglass = CBaseModelEntity & {
+	m_vecShatterGlassShards: { number }?,
 	m_flLastShatterSoundEmitTime: number?,
 	m_flLastCleanupTime: number?,
 	m_flInitAtTime: number?,
@@ -5697,12 +5784,15 @@ export type CFuncShatterglass = CBaseModelEntity & {
 	m_szDamagePositioningEntityName02: string?,
 	m_szDamagePositioningEntityName03: string?,
 	m_szDamagePositioningEntityName04: string?,
+	m_vInitialDamagePositions: { modlock.Vector }?,
+	m_vExtraDamagePositions: { modlock.Vector }?,
 	m_iSurfaceType: number?,
 	inputHit: (self: any) -> boolean,
 	inputRestore: (self: any) -> boolean,
 	inputShatter: (self: any) -> boolean,
 }
 describe("CFuncShatterglass", "CBaseModelEntity", {
+	m_vecShatterGlassShards = "list:uint32",
 	m_flLastShatterSoundEmitTime = "float32",
 	m_flLastCleanupTime = "float32",
 	m_flInitAtTime = "float32",
@@ -5719,6 +5809,8 @@ describe("CFuncShatterglass", "CBaseModelEntity", {
 	m_szDamagePositioningEntityName02 = "string",
 	m_szDamagePositioningEntityName03 = "string",
 	m_szDamagePositioningEntityName04 = "string",
+	m_vInitialDamagePositions = "list:vector",
+	m_vExtraDamagePositions = "list:vector",
 	m_iSurfaceType = "uint8",
 }, {
 	Hit = "",
@@ -6635,6 +6727,7 @@ export type CBasePlayerController = CBaseEntity & {
 	m_hPawn: CBasePlayerPawn?,
 	m_bKnownTeamMismatch: boolean?,
 	m_hSplitOwner: CBasePlayerController?,
+	m_hSplitScreenPlayers: { number }?,
 	m_bIsHLTV: boolean?,
 	m_iConnected: number?,
 	m_iMostConnected: number?,
@@ -6659,6 +6752,7 @@ describe("CBasePlayerController", "CBaseEntity", {
 	m_hPawn = "CBasePlayerPawn",
 	m_bKnownTeamMismatch = "bool",
 	m_hSplitOwner = "CBasePlayerController",
+	m_hSplitScreenPlayers = "list:handle",
 	m_bIsHLTV = "bool",
 	m_iConnected = "uint32",
 	m_iMostConnected = "uint32",
@@ -6699,6 +6793,9 @@ export type CCitadelPlayerController = CBasePlayerController & {
 	m_bInTeamChat: boolean?,
 	m_bInPartyChat: boolean?,
 	m_bLaneSwapLocked: boolean?,
+	m_vecLaneSwapRequests: { number }?,
+	m_vecLaneSwapRejects: { number }?,
+	m_vecMutedPlayers: { number }?,
 	m_bCommsRestricted: boolean?,
 	m_bPriorCommsAbuse: boolean?,
 	m_bIsNewPlayer: boolean?,
@@ -6709,6 +6806,7 @@ export type CCitadelPlayerController = CBasePlayerController & {
 	m_flLastCommsTime: number?,
 	m_flNextAllowedCommsTime: number?,
 	m_flLastFailedCommsTime: number?,
+	m_vecRecentCommAttempts: { number }?,
 	m_nTotalCommsAttempted: number?,
 	m_nGuideBotNumTasksComplete: number?,
 }
@@ -6733,6 +6831,9 @@ describe("CCitadelPlayerController", "CBasePlayerController", {
 	m_bInTeamChat = "bool",
 	m_bInPartyChat = "bool",
 	m_bLaneSwapLocked = "bool",
+	m_vecLaneSwapRequests = "list:handle",
+	m_vecLaneSwapRejects = "list:handle",
+	m_vecMutedPlayers = "list:int32",
 	m_bCommsRestricted = "bool",
 	m_bPriorCommsAbuse = "bool",
 	m_bIsNewPlayer = "bool",
@@ -6743,6 +6844,7 @@ describe("CCitadelPlayerController", "CBasePlayerController", {
 	m_flLastCommsTime = "float32",
 	m_flNextAllowedCommsTime = "float32",
 	m_flLastFailedCommsTime = "float32",
+	m_vecRecentCommAttempts = "list:float32",
 	m_nTotalCommsAttempted = "int32",
 	m_nGuideBotNumTasksComplete = "int32",
 })
@@ -6846,9 +6948,11 @@ describe("CCitadelBaseAbility", "CBaseEntity", {
 
 export type CAbility_Drifter_BloodBlast = CCitadelBaseAbility & {
 	m_SandEffect: number?,
+	m_vecHitTargets: { number }?,
 }
 describe("CAbility_Drifter_BloodBlast", "CCitadelBaseAbility", {
 	m_SandEffect = "int32",
+	m_vecHitTargets = "list:handle",
 })
 
 export type CAbility_Drifter_Darkness = CCitadelBaseAbility
@@ -6925,6 +7029,7 @@ export type CAbility_Fencer_Lunge = CCitadelBaseAbility & {
 	m_RecastEndTime: number?,
 	m_eLungeDirection: number?,
 	m_flHeldTime: number?,
+	m_vecHitEnemies: { number }?,
 	m_vLastPosition: modlock.Vector?,
 	m_flStuckTime: number?,
 	m_nGlintParticleIndex: number?,
@@ -6943,6 +7048,7 @@ describe("CAbility_Fencer_Lunge", "CCitadelBaseAbility", {
 	m_RecastEndTime = "float32",
 	m_eLungeDirection = "uint8",
 	m_flHeldTime = "float32",
+	m_vecHitEnemies = "list:handle",
 	m_vLastPosition = "vector",
 	m_flStuckTime = "float32",
 	m_nGlintParticleIndex = "int32",
@@ -6957,6 +7063,8 @@ export type CAbility_Fencer_Ultimate = CCitadelBaseAbility & {
 	m_eUltState: number?,
 	m_flStateStartTime: number?,
 	m_bHitSomeone: boolean?,
+	m_vecHitEnemies: { number }?,
+	m_vecHitHeroes: { number }?,
 	m_flStuckTime: number?,
 	m_UltHoldVFX: number?,
 	m_DirPreviewVFX: number?,
@@ -6968,6 +7076,8 @@ describe("CAbility_Fencer_Ultimate", "CCitadelBaseAbility", {
 	m_eUltState = "uint8",
 	m_flStateStartTime = "float32",
 	m_bHitSomeone = "bool",
+	m_vecHitEnemies = "list:handle",
+	m_vecHitHeroes = "list:handle",
 	m_flStuckTime = "float32",
 	m_UltHoldVFX = "int32",
 	m_DirPreviewVFX = "int32",
@@ -7044,6 +7154,7 @@ describe("CAbility_Synth_Barrage", "CCitadelBaseAbility", {
 
 export type CAbility_Synth_PlasmaFlux = CCitadelBaseAbility & {
 	m_bTeleported: boolean?,
+	m_vecUniqueHitList: { number }?,
 	m_vLastValidTeleportPosition: modlock.Vector?,
 	m_flProjectileLaunchTime: number?,
 	m_flProjectileExpireTime: number?,
@@ -7051,6 +7162,7 @@ export type CAbility_Synth_PlasmaFlux = CCitadelBaseAbility & {
 }
 describe("CAbility_Synth_PlasmaFlux", "CCitadelBaseAbility", {
 	m_bTeleported = "bool",
+	m_vecUniqueHitList = "list:handle",
 	m_vLastValidTeleportPosition = "vector",
 	m_flProjectileLaunchTime = "float32",
 	m_flProjectileExpireTime = "float32",
@@ -7073,9 +7185,11 @@ describe("CAbility_TestHero_SpookyHide", "CCitadelBaseAbility", {
 
 export type CAbility_Werewolf_Frenzy = CCitadelBaseAbility & {
 	m_SandEffect: number?,
+	m_vecHitTargets: { number }?,
 }
 describe("CAbility_Werewolf_Frenzy", "CCitadelBaseAbility", {
 	m_SandEffect = "int32",
+	m_vecHitTargets = "list:handle",
 })
 
 export type CCitadelAbilityDruidAbility04 = CCitadelBaseAbility
@@ -7164,11 +7278,13 @@ describe("CCitadel_Ability_Tier3Boss_AoEWave", "CTier3BossAbility", {})
 
 export type CCitadel_Ability_Tier3Boss_DropBombs = CTier3BossAbility & {
 	m_tNextBombTime: number?,
+	m_vHitTargets: { number }?,
 	m_hShootPos: number?,
 	m_flDetonationTime: number?,
 }
 describe("CCitadel_Ability_Tier3Boss_DropBombs", "CTier3BossAbility", {
 	m_tNextBombTime = "float32",
+	m_vHitTargets = "list:handle",
 	m_hShootPos = "uint8",
 	m_flDetonationTime = "float32",
 })
@@ -7271,6 +7387,7 @@ describe("CCitadel_Ability_Shiv_Defer_Damage", "CCitadelBaseShivAbility", {
 })
 
 export type CCitadel_Ability_Shiv_KillingBlow = CCitadelBaseShivAbility & {
+	m_vHitEnts: { number }?,
 	m_bDamagedAnyHero: boolean?,
 	m_bActive: boolean?,
 	m_bStartedOnGround: boolean?,
@@ -7283,6 +7400,7 @@ export type CCitadel_Ability_Shiv_KillingBlow = CCitadelBaseShivAbility & {
 	m_flRecastWindowEnd: number?,
 }
 describe("CCitadel_Ability_Shiv_KillingBlow", "CCitadelBaseShivAbility", {
+	m_vHitEnts = "list:handle",
 	m_bDamagedAnyHero = "bool",
 	m_bActive = "bool",
 	m_bStartedOnGround = "bool",
@@ -7421,10 +7539,12 @@ describe("CCitadel_Ability_InfinitySlash", "CCitadelBaseYamatoAbility", {
 
 export type CCitadel_Ability_PowerSlash = CCitadelBaseYamatoAbility & {
 	m_nPowerLevel: number?,
+	m_vecHitTargets: { number }?,
 	m_nCastParticle: number?,
 }
 describe("CCitadel_Ability_PowerSlash", "CCitadelBaseYamatoAbility", {
 	m_nPowerLevel = "int32",
+	m_vecHitTargets = "list:handle",
 	m_nCastParticle = "int32",
 })
 
@@ -7564,8 +7684,12 @@ describe("CCitadel_Ability_Boho_BouncyProjectile", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_Boho_ChannelTether = CCitadelBaseAbility
 describe("CCitadel_Ability_Boho_ChannelTether", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_Boho_DamageShare = CCitadelBaseAbility
-describe("CCitadel_Ability_Boho_DamageShare", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Boho_DamageShare = CCitadelBaseAbility & {
+	m_vecLinkedEnemies: { number }?,
+}
+describe("CCitadel_Ability_Boho_DamageShare", "CCitadelBaseAbility", {
+	m_vecLinkedEnemies = "list:handle",
+})
 
 export type CCitadel_Ability_Boho_DoubleHit = CCitadelBaseAbility
 describe("CCitadel_Ability_Boho_DoubleHit", "CCitadelBaseAbility", {})
@@ -7627,9 +7751,11 @@ describe("CCitadel_Ability_Bookworm_KnightBarrier", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Bookworm_KnightCharge = CCitadelBaseAbility & {
+	m_vecHitUnits: { number }?,
 	m_bAffectedAnyTargets: boolean?,
 }
 describe("CCitadel_Ability_Bookworm_KnightCharge", "CCitadelBaseAbility", {
+	m_vecHitUnits = "list:handle",
 	m_bAffectedAnyTargets = "bool",
 })
 
@@ -7649,6 +7775,7 @@ describe("CCitadel_Ability_Bounce_Pad", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Bull_Charge = CCitadelBaseAbility & {
+	m_vecHitEntities: { number }?,
 	m_bGainedWeaponPowerBuff: boolean?,
 	m_anglesCharging: modlock.Angles?,
 	m_flChargeStartTime: number?,
@@ -7659,6 +7786,7 @@ export type CCitadel_Ability_Bull_Charge = CCitadelBaseAbility & {
 	m_vGoalDir: modlock.Vector?,
 }
 describe("CCitadel_Ability_Bull_Charge", "CCitadelBaseAbility", {
+	m_vecHitEntities = "list:handle",
 	m_bGainedWeaponPowerBuff = "bool",
 	m_anglesCharging = "angles",
 	m_flChargeStartTime = "float32",
@@ -7680,6 +7808,7 @@ export type CCitadel_Ability_Bull_Leap = CCitadelBaseAbility & {
 	m_eLeapState: number?,
 	m_flStateEnterTime: number?,
 	m_vPrevPos: modlock.Vector?,
+	m_vecDraggedEntities: { number }?,
 	m_vecLastVel: modlock.Vector?,
 	m_vecCrashDownLastPos: modlock.Vector?,
 	m_bInputBufferCrash: boolean?,
@@ -7692,6 +7821,7 @@ describe("CCitadel_Ability_Bull_Leap", "CCitadelBaseAbility", {
 	m_eLeapState = "uint8",
 	m_flStateEnterTime = "float32",
 	m_vPrevPos = "vector",
+	m_vecDraggedEntities = "list:handle",
 	m_vecLastVel = "vector",
 	m_vecCrashDownLastPos = "vector",
 	m_bInputBufferCrash = "bool",
@@ -7699,6 +7829,7 @@ describe("CCitadel_Ability_Bull_Leap", "CCitadelBaseAbility", {
 
 export type CCitadel_Ability_BulletFlurry = CCitadelBaseAbility & {
 	m_flNextAttackTime: number?,
+	m_vecShootTargets: { number }?,
 	m_nNumPlayersKilled: number?,
 	m_nShootIndex: number?,
 	m_nShootIndexNPC: number?,
@@ -7708,6 +7839,7 @@ export type CCitadel_Ability_BulletFlurry = CCitadelBaseAbility & {
 }
 describe("CCitadel_Ability_BulletFlurry", "CCitadelBaseAbility", {
 	m_flNextAttackTime = "float32",
+	m_vecShootTargets = "list:handle",
 	m_nNumPlayersKilled = "int32",
 	m_nShootIndex = "int32",
 	m_nShootIndexNPC = "int32",
@@ -7741,10 +7873,12 @@ describe("CCitadel_Ability_Cadence_Lullaby", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_CardToss = CCitadelBaseAbility & {
 	m_nPreviousMaxCharges: number?,
+	m_vCardList: { number }?,
 	m_bCardIsFlying: boolean?,
 }
 describe("CCitadel_Ability_CardToss", "CCitadelBaseAbility", {
 	m_nPreviousMaxCharges = "int32",
+	m_vCardList = "list:uint32",
 	m_bCardIsFlying = "bool",
 })
 
@@ -7763,6 +7897,7 @@ export type CCitadel_Ability_ChargedTackle = CCitadelBaseAbility & {
 	m_vecTackleDir: modlock.Vector?,
 	m_vecLastPosition: modlock.Vector?,
 	m_nStuckFramesCount: number?,
+	m_vecHitEnemies: { number }?,
 	m_nDistancePreview: number?,
 }
 describe("CCitadel_Ability_ChargedTackle", "CCitadelBaseAbility", {
@@ -7773,6 +7908,7 @@ describe("CCitadel_Ability_ChargedTackle", "CCitadelBaseAbility", {
 	m_vecTackleDir = "vector",
 	m_vecLastPosition = "vector",
 	m_nStuckFramesCount = "int32",
+	m_vecHitEnemies = "list:handle",
 	m_nDistancePreview = "int32",
 })
 
@@ -7808,27 +7944,37 @@ describe("CCitadel_Ability_Chessmaster_MoveChessPiece", "CCitadelBaseAbility", {
 
 export type CCitadel_Ability_Chessmaster_Queen = CCitadelBaseAbility & {
 	m_iRemainingMoves: number?,
+	m_vecHitUnits: { number }?,
+	m_vecStunnedUnits: { number }?,
 	m_pDeployedQueen: CBaseEntity?,
 	m_bActive: boolean?,
 }
 describe("CCitadel_Ability_Chessmaster_Queen", "CCitadelBaseAbility", {
 	m_iRemainingMoves = "int32",
+	m_vecHitUnits = "list:handle",
+	m_vecStunnedUnits = "list:handle",
 	m_pDeployedQueen = "CBaseEntity",
 	m_bActive = "bool",
 })
 
 export type CCitadel_Ability_Chessmaster_ThrowBishop = CCitadelBaseAbility & {
+	m_vecDeployedPieces: { number }?,
 	m_bActive: boolean?,
 	m_iBishopIndex: number?,
 	m_tRecastEndTime: number?,
+	m_vecShotBishops: { number }?,
+	m_vecHitTargets: { number }?,
 	m_vecLaunchPosition: modlock.Vector?,
 	m_vecLaunchVelocity: modlock.Vector?,
 	m_qLaunchAngle: modlock.Angles?,
 }
 describe("CCitadel_Ability_Chessmaster_ThrowBishop", "CCitadelBaseAbility", {
+	m_vecDeployedPieces = "list:handle",
 	m_bActive = "bool",
 	m_iBishopIndex = "int32",
 	m_tRecastEndTime = "float32",
+	m_vecShotBishops = "list:handle",
+	m_vecHitTargets = "list:handle",
 	m_vecLaunchPosition = "vector",
 	m_vecLaunchVelocity = "vector",
 	m_qLaunchAngle = "angles",
@@ -7999,14 +8145,20 @@ describe("CCitadel_Ability_Doorman_Hotel", "CCitadelBaseAbility", {
 	m_vLookTarget = "vector",
 })
 
-export type CCitadel_Ability_Drifter_Hunger = CCitadelBaseAbility
-describe("CCitadel_Ability_Drifter_Hunger", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Drifter_Hunger = CCitadelBaseAbility & {
+	m_vecCurrentTargets: { number }?,
+}
+describe("CCitadel_Ability_Drifter_Hunger", "CCitadelBaseAbility", {
+	m_vecCurrentTargets = "list:handle",
+})
 
 export type CCitadel_Ability_Dust_Storm = CCitadelBaseAbility & {
 	m_hSpinningBladeAbility: CCitadel_Ability_Spinning_Blade?,
+	m_vTargets: { number }?,
 }
 describe("CCitadel_Ability_Dust_Storm", "CCitadelBaseAbility", {
 	m_hSpinningBladeAbility = "CCitadel_Ability_Spinning_Blade",
+	m_vTargets = "list:handle",
 })
 
 export type CCitadel_Ability_EmpowerBullet = CCitadelBaseAbility
@@ -8022,8 +8174,12 @@ describe("CCitadel_Ability_ExplosiveBarrel", "CCitadelBaseAbility", {
 	m_hBarrel = "CCitadelProjectile",
 })
 
-export type CCitadel_Ability_Familiar_Ability01 = CCitadelBaseAbility
-describe("CCitadel_Ability_Familiar_Ability01", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Familiar_Ability01 = CCitadelBaseAbility & {
+	m_vecTargetsInCone: { number }?,
+}
+describe("CCitadel_Ability_Familiar_Ability01", "CCitadelBaseAbility", {
+	m_vecTargetsInCone = "list:handle",
+})
 
 export type CCitadel_Ability_Familiar_Ability02 = CCitadelBaseAbility & {
 	m_bCastWhileAttached: boolean?,
@@ -8033,9 +8189,11 @@ describe("CCitadel_Ability_Familiar_Ability02", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Familiar_Attach = CCitadelBaseAbility & {
+	m_vecTagAlongVisitedAllies: { number }?,
 	m_hLastAttachedTo: CBaseEntity?,
 }
 describe("CCitadel_Ability_Familiar_Attach", "CCitadelBaseAbility", {
+	m_vecTagAlongVisitedAllies = "list:handle",
 	m_hLastAttachedTo = "CBaseEntity",
 })
 
@@ -8062,10 +8220,12 @@ describe("CCitadel_Ability_Familiar_HealHost", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Familiar_HelpingHands = CCitadelBaseAbility & {
+	m_vecHelpers: { number }?,
 	m_tChoreUseCooldownEndTime: number?,
 	m_tSoonestHelperCooldownEndTime: number?,
 }
 describe("CCitadel_Ability_Familiar_HelpingHands", "CCitadelBaseAbility", {
+	m_vecHelpers = "list:handle",
 	m_tChoreUseCooldownEndTime = "float32",
 	m_tSoonestHelperCooldownEndTime = "float32",
 })
@@ -8111,6 +8271,7 @@ export type CCitadel_Ability_Fencer_Riposte = CCitadelBaseAbility & {
 	m_flStateStartTime: number?,
 	m_nCurrentRiposteState: number?,
 	m_flSuccessfulRiposteTime: number?,
+	m_vecHitEnemies: { number }?,
 	m_vecLastPosition: modlock.Vector?,
 	m_flStuckTime: number?,
 	m_nParriedFXIndex: number?,
@@ -8122,6 +8283,7 @@ describe("CCitadel_Ability_Fencer_Riposte", "CCitadelBaseAbility", {
 	m_flStateStartTime = "float32",
 	m_nCurrentRiposteState = "uint8",
 	m_flSuccessfulRiposteTime = "float32",
+	m_vecHitEnemies = "list:handle",
 	m_vecLastPosition = "vector",
 	m_flStuckTime = "float32",
 	m_nParriedFXIndex = "int32",
@@ -8177,9 +8339,11 @@ describe("CCitadel_Ability_FissureWall", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_FlameDash = CCitadelBaseAbility & {
+	m_vecHitEntities: { number }?,
 	m_bIsSpeedBursting: boolean?,
 }
 describe("CCitadel_Ability_FlameDash", "CCitadelBaseAbility", {
+	m_vecHitEntities = "list:handle",
 	m_bIsSpeedBursting = "bool",
 })
 
@@ -8223,9 +8387,11 @@ describe("CCitadel_Ability_Frank_SelfZap", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Frank_ShockTarget2 = CCitadelBaseAbility & {
+	m_vecHitTargets: { number }?,
 	m_bIsFullyCharged: boolean?,
 }
 describe("CCitadel_Ability_Frank_ShockTarget2", "CCitadelBaseAbility", {
+	m_vecHitTargets = "list:handle",
 	m_bIsFullyCharged = "bool",
 })
 
@@ -8247,8 +8413,12 @@ describe("CCitadel_Ability_GenericPerson_3", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_GenericPerson_4 = CCitadelBaseAbility
 describe("CCitadel_Ability_GenericPerson_4", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_Ghost_BloodShards = CCitadelBaseAbility
-describe("CCitadel_Ability_Ghost_BloodShards", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Ghost_BloodShards = CCitadelBaseAbility & {
+	m_vecDamagedTargets: { number }?,
+}
+describe("CCitadel_Ability_Ghost_BloodShards", "CCitadelBaseAbility", {
+	m_vecDamagedTargets = "list:handle",
+})
 
 export type CCitadel_Ability_GooBowlingBall = CCitadelBaseAbility & {
 	m_nAirJumpsLeft: number?,
@@ -8274,9 +8444,11 @@ describe("CCitadel_Ability_GooBowlingBall", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_GooGrenade = CCitadelBaseAbility & {
+	m_vecPuddleModifiers: { number }?,
 	m_LastDetonateTime: number?,
 }
 describe("CCitadel_Ability_GooGrenade", "CCitadelBaseAbility", {
+	m_vecPuddleModifiers = "list:handle",
 	m_LastDetonateTime = "float32",
 })
 
@@ -8343,9 +8515,11 @@ describe("CCitadel_Ability_Gunslinger_DemonCarbine", "CCitadelBaseAbility", {
 
 export type CCitadel_Ability_Gunslinger_KnockbackBlast = CCitadelBaseAbility & {
 	m_vecKnockbackDirection: modlock.Vector?,
+	m_vecKnockbackedUnits: { number }?,
 }
 describe("CCitadel_Ability_Gunslinger_KnockbackBlast", "CCitadelBaseAbility", {
 	m_vecKnockbackDirection = "vector",
+	m_vecKnockbackedUnits = "list:handle",
 })
 
 export type CCitadel_Ability_Gunslinger_Salvo = CCitadelBaseAbility & {
@@ -8412,10 +8586,12 @@ describe("CCitadel_Ability_HornetLeap", "CCitadelBaseAbility", {
 export type CCitadel_Ability_HornetSting = CCitadelBaseAbility & {
 	m_BounceCount: number?,
 	m_bHitHero: boolean?,
+	m_vecValidBounceTargets: { number }?,
 }
 describe("CCitadel_Ability_HornetSting", "CCitadelBaseAbility", {
 	m_BounceCount = "int32",
 	m_bHitHero = "bool",
+	m_vecValidBounceTargets = "list:handle",
 })
 
 export type CCitadel_Ability_Hornet_Chain = CCitadelBaseAbility & {
@@ -8437,10 +8613,12 @@ describe("CCitadel_Ability_Hornet_Snipe", "CCitadelBaseAbility", {
 export type CCitadel_Ability_IceBeam = CCitadelBaseAbility & {
 	m_bIceBeaming: boolean?,
 	m_flNextDamageTick: number?,
+	m_vecEntitiesHit: { number }?,
 }
 describe("CCitadel_Ability_IceBeam", "CCitadelBaseAbility", {
 	m_bIceBeaming = "bool",
 	m_flNextDamageTick = "float32",
+	m_vecEntitiesHit = "list:handle",
 })
 
 export type CCitadel_Ability_IceDome = CCitadelBaseAbility & {
@@ -8481,8 +8659,12 @@ describe("CCitadel_Ability_IcePath", "CCitadelBaseAbility", {
 export type CCitadel_Ability_ImmobilizeTrap = CCitadelBaseAbility
 describe("CCitadel_Ability_ImmobilizeTrap", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_IncendiaryProjectile = CCitadelBaseAbility
-describe("CCitadel_Ability_IncendiaryProjectile", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_IncendiaryProjectile = CCitadelBaseAbility & {
+	m_vecHitEnemies: { number }?,
+}
+describe("CCitadel_Ability_IncendiaryProjectile", "CCitadelBaseAbility", {
+	m_vecHitEnemies = "list:handle",
+})
 
 export type CCitadel_Ability_Intimidate = CCitadelBaseAbility
 describe("CCitadel_Ability_Intimidate", "CCitadelBaseAbility", {})
@@ -8562,6 +8744,8 @@ export type CCitadel_Ability_LashDownStrike = CCitadelBaseAbility & {
 	m_ImpactTime: number?,
 	m_vDamagePos: modlock.Vector?,
 	m_vDamageDir: modlock.Vector?,
+	m_vHitEnemies: { number }?,
+	m_vecHitEntities: { number }?,
 	m_PreviewEffect: number?,
 	m_ActiveEffect: number?,
 	m_bIsCrashingDown: boolean?,
@@ -8573,6 +8757,8 @@ describe("CCitadel_Ability_LashDownStrike", "CCitadelBaseAbility", {
 	m_ImpactTime = "float32",
 	m_vDamagePos = "vector",
 	m_vDamageDir = "vector",
+	m_vHitEnemies = "list:handle",
+	m_vecHitEntities = "list:handle",
 	m_PreviewEffect = "int32",
 	m_ActiveEffect = "int32",
 	m_bIsCrashingDown = "bool",
@@ -8656,9 +8842,11 @@ export type CCitadel_Ability_Magician_Escape = CCitadelBaseAbility
 describe("CCitadel_Ability_Magician_Escape", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_Magician_MagicBolt = CCitadelBaseAbility & {
+	m_vecDeployedProjectiles: { number }?,
 	m_iCurrentRedirects: number?,
 }
 describe("CCitadel_Ability_Magician_MagicBolt", "CCitadelBaseAbility", {
+	m_vecDeployedProjectiles = "list:handle",
 	m_iCurrentRedirects = "int32",
 })
 
@@ -8813,9 +9001,11 @@ export type CCitadel_Ability_Nano_CatFormPounce = CCitadelBaseAbility
 describe("CCitadel_Ability_Nano_CatFormPounce", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_Nano_ClusterGrenade = CCitadelBaseAbility & {
+	m_vecHitEnemies: { number }?,
 	m_flNextProjectileTime: number?,
 }
 describe("CCitadel_Ability_Nano_ClusterGrenade", "CCitadelBaseAbility", {
+	m_vecHitEnemies = "list:handle",
 	m_flNextProjectileTime = "float32",
 })
 
@@ -8887,10 +9077,12 @@ describe("CCitadel_Ability_Necro_Fear", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Necro_GraveStone = CCitadelBaseAbility & {
+	m_vecDeployedGravestones: { number }?,
 	m_vCastPosition: modlock.Vector?,
 	m_qCastAngle: modlock.Angles?,
 }
 describe("CCitadel_Ability_Necro_GraveStone", "CCitadelBaseAbility", {
+	m_vecDeployedGravestones = "list:handle",
 	m_vCastPosition = "vector",
 	m_qCastAngle = "angles",
 })
@@ -8931,9 +9123,11 @@ describe("CCitadel_Ability_Necro_NukeMap", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_Necro_ZombieWall = CCitadelBaseAbility & {
 	m_tWallDeployFinishTime: number?,
+	m_vecHitUnits: { number }?,
 }
 describe("CCitadel_Ability_Necro_ZombieWall", "CCitadelBaseAbility", {
 	m_tWallDeployFinishTime = "float32",
+	m_vecHitUnits = "list:handle",
 })
 
 export type CCitadel_Ability_Nikuman = CCitadelBaseAbility
@@ -9303,10 +9497,12 @@ describe("CCitadel_Ability_ProximityRitual", "CCitadelBaseAbility", {
 export type CCitadel_Ability_PsychicLift = CCitadelBaseAbility & {
 	m_vLiftPosition: modlock.Vector?,
 	m_vCrashPosition: modlock.Vector?,
+	m_vecLiftTargets: { number }?,
 }
 describe("CCitadel_Ability_PsychicLift", "CCitadelBaseAbility", {
 	m_vLiftPosition = "vector",
 	m_vCrashPosition = "vector",
+	m_vecLiftTargets = "list:handle",
 })
 
 export type CCitadel_Ability_PunkGoat_Blasted = CCitadelBaseAbility & {
@@ -9458,10 +9654,12 @@ describe("CCitadel_Ability_SelfVacuum", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_SettingSun = CCitadelBaseAbility & {
 	m_bProjectileActive: boolean?,
+	m_TargetPreviews: { number }?,
 	m_bWasSelected: boolean?,
 }
 describe("CCitadel_Ability_SettingSun", "CCitadelBaseAbility", {
 	m_bProjectileActive = "bool",
+	m_TargetPreviews = "list:int32",
 	m_bWasSelected = "bool",
 })
 
@@ -9489,8 +9687,12 @@ describe("CCitadel_Ability_ShieldGuy_Ability03", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_ShieldGuy_Ability04 = CCitadelBaseAbility
 describe("CCitadel_Ability_ShieldGuy_Ability04", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_ShieldedSentry = CCitadelBaseAbility
-describe("CCitadel_Ability_ShieldedSentry", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_ShieldedSentry = CCitadelBaseAbility & {
+	m_vecDeployedSentries: { number }?,
+}
+describe("CCitadel_Ability_ShieldedSentry", "CCitadelBaseAbility", {
+	m_vecDeployedSentries = "list:handle",
+})
 
 export type CCitadel_Ability_SkyRunner_Ability04 = CCitadelBaseAbility
 describe("CCitadel_Ability_SkyRunner_Ability04", "CCitadelBaseAbility", {})
@@ -9579,9 +9781,11 @@ export type CCitadel_Ability_SpiderShield = CCitadelBaseAbility
 describe("CCitadel_Ability_SpiderShield", "CCitadelBaseAbility", {})
 
 export type CCitadel_Ability_Spinning_Blade = CCitadelBaseAbility & {
+	m_vecOutgoingHits: { number }?,
 	m_hActiveProjectile: CCitadelProjectile?,
 }
 describe("CCitadel_Ability_Spinning_Blade", "CCitadelBaseAbility", {
+	m_vecOutgoingHits = "list:handle",
 	m_hActiveProjectile = "CCitadelProjectile",
 })
 
@@ -9620,10 +9824,12 @@ describe("CCitadel_Ability_StickyBomb", "CCitadelBaseAbility", {
 export type CCitadel_Ability_Stomp = CCitadelBaseAbility & {
 	m_vStompPos: modlock.Vector?,
 	m_vStompDir: modlock.Vector?,
+	m_vecStompedEnemies: { number }?,
 }
 describe("CCitadel_Ability_Stomp", "CCitadelBaseAbility", {
 	m_vStompPos = "vector",
 	m_vStompDir = "vector",
+	m_vecStompedEnemies = "list:handle",
 })
 
 export type CCitadel_Ability_StormCloud = CCitadelBaseAbility & {
@@ -9637,8 +9843,12 @@ describe("CCitadel_Ability_StormCloud", "CCitadelBaseAbility", {
 	m_nLightningStrikesRemaining = "int32",
 })
 
-export type CCitadel_Ability_SummonGangster = CCitadelBaseAbility
-describe("CCitadel_Ability_SummonGangster", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_SummonGangster = CCitadelBaseAbility & {
+	m_vecGangsters: { number }?,
+}
+describe("CCitadel_Ability_SummonGangster", "CCitadelBaseAbility", {
+	m_vecGangsters = "list:handle",
+})
 
 export type CCitadel_Ability_SuperNeutralCharge = CCitadelBaseAbility & {
 	m_bPreparing: boolean?,
@@ -9669,8 +9879,12 @@ describe("CCitadel_Ability_Swan_Ability04", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_Swan_Acrobat = CCitadelBaseAbility
 describe("CCitadel_Ability_Swan_Acrobat", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_Swan_FeatherBoomerang = CCitadelBaseAbility
-describe("CCitadel_Ability_Swan_FeatherBoomerang", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Swan_FeatherBoomerang = CCitadelBaseAbility & {
+	m_vecHitTargetList: { number }?,
+}
+describe("CCitadel_Ability_Swan_FeatherBoomerang", "CCitadelBaseAbility", {
+	m_vecHitTargetList = "list:handle",
+})
 
 export type CCitadel_Ability_Swan_Leap = CCitadelBaseAbility
 describe("CCitadel_Ability_Swan_Leap", "CCitadelBaseAbility", {})
@@ -9764,6 +9978,7 @@ export type CCitadel_Ability_Tengu_StoneForm = CCitadelBaseAbility & {
 	m_bInStoneForm: boolean?,
 	m_flStartHeight: number?,
 	m_nStoneFormEffect: number?,
+	m_vecHitEntities: { number }?,
 }
 describe("CCitadel_Ability_Tengu_StoneForm", "CCitadelBaseAbility", {
 	m_flStartTime = "float32",
@@ -9773,6 +9988,7 @@ describe("CCitadel_Ability_Tengu_StoneForm", "CCitadelBaseAbility", {
 	m_bInStoneForm = "bool",
 	m_flStartHeight = "float32",
 	m_nStoneFormEffect = "int32",
+	m_vecHitEntities = "list:handle",
 })
 
 export type CCitadel_Ability_Tengu_Urn = CCitadelBaseAbility & {
@@ -9814,8 +10030,12 @@ describe("CCitadel_Ability_TestHero_SummonCannon", "CCitadelBaseAbility", {
 	m_qLaunchAngle = "angles",
 })
 
-export type CCitadel_Ability_TestHero_SummonSoldier = CCitadelBaseAbility
-describe("CCitadel_Ability_TestHero_SummonSoldier", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_TestHero_SummonSoldier = CCitadelBaseAbility & {
+	m_vecTargetsInCone: { number }?,
+}
+describe("CCitadel_Ability_TestHero_SummonSoldier", "CCitadelBaseAbility", {
+	m_vecTargetsInCone = "list:handle",
+})
 
 export type CCitadel_Ability_TestHero_WallCling = CCitadelBaseAbility & {
 	m_vecWallClingNormal: modlock.Vector?,
@@ -9828,15 +10048,21 @@ describe("CCitadel_Ability_TestHero_WallCling", "CCitadelBaseAbility", {
 	m_vecLastVelocity = "vector",
 })
 
-export type CCitadel_Ability_ThrowSand = CCitadelBaseAbility
-describe("CCitadel_Ability_ThrowSand", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_ThrowSand = CCitadelBaseAbility & {
+	m_vHitEnts: { number }?,
+}
+describe("CCitadel_Ability_ThrowSand", "CCitadelBaseAbility", {
+	m_vHitEnts = "list:handle",
+})
 
 export type CCitadel_Ability_Thumper_1 = CCitadelBaseAbility & {
+	m_vecHitEntities: { number }?,
 	m_vecAimPos: modlock.Vector?,
 	m_vecAimNormal: modlock.Vector?,
 	m_flPushForce: number?,
 }
 describe("CCitadel_Ability_Thumper_1", "CCitadelBaseAbility", {
+	m_vecHitEntities = "list:handle",
 	m_vecAimPos = "vector",
 	m_vecAimNormal = "vector",
 	m_flPushForce = "float32",
@@ -9898,12 +10124,14 @@ describe("CCitadel_Ability_Trapper_WebWall", "CCitadelBaseAbility", {
 export type CCitadel_Ability_Trappers_Bolo = CCitadelBaseAbility & {
 	m_hProjectile: CBaseEntity?,
 	m_hNextTarget: CBaseEntity?,
+	m_hHitTargets: { number }?,
 	m_iBounces: number?,
 	m_bReturning: boolean?,
 }
 describe("CCitadel_Ability_Trappers_Bolo", "CCitadelBaseAbility", {
 	m_hProjectile = "CBaseEntity",
 	m_hNextTarget = "CBaseEntity",
+	m_hHitTargets = "list:handle",
 	m_iBounces = "int32",
 	m_bReturning = "bool",
 })
@@ -9945,12 +10173,16 @@ describe("CCitadel_Ability_Unicorn_DazzlingOrb", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_Unicorn_LuminousStrike = CCitadelBaseAbility & {
 	m_flLastStackChangeTime: number?,
 	m_nLastStackCount: number?,
+	m_vecNextExplosionTime: { number }?,
+	m_vecNextExplosionLocation: { modlock.Vector }?,
 	m_nStackCount: number?,
 	m_bPendingStackUpdate: boolean?,
 }
 describe("CCitadel_Ability_Unicorn_LuminousStrike", "CCitadelBaseAbility", {
 	m_flLastStackChangeTime = "float32",
 	m_nLastStackCount = "int32",
+	m_vecNextExplosionTime = "list:float32",
+	m_vecNextExplosionLocation = "list:vector",
 	m_nStackCount = "int32",
 	m_bPendingStackUpdate = "bool",
 })
@@ -9958,8 +10190,12 @@ describe("CCitadel_Ability_Unicorn_LuminousStrike", "CCitadelBaseAbility", {
 export type CCitadel_Ability_Unicorn_PrismaticGuard = CCitadelBaseAbility
 describe("CCitadel_Ability_Unicorn_PrismaticGuard", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_Unicorn_RadiantBlast = CCitadelBaseAbility
-describe("CCitadel_Ability_Unicorn_RadiantBlast", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Unicorn_RadiantBlast = CCitadelBaseAbility & {
+	m_vecHitTargets: { number }?,
+}
+describe("CCitadel_Ability_Unicorn_RadiantBlast", "CCitadelBaseAbility", {
+	m_vecHitTargets = "list:handle",
+})
 
 export type CCitadel_Ability_VampireBat_BatBlink = CCitadelBaseAbility & {
 	m_iRemainingCasts: number?,
@@ -10025,8 +10261,14 @@ describe("CCitadel_Ability_Vandal_Ability03", "CCitadelBaseAbility", {})
 export type CCitadel_Ability_Vandal_Pillar = CCitadelBaseAbility
 describe("CCitadel_Ability_Vandal_Pillar", "CCitadelBaseAbility", {})
 
-export type CCitadel_Ability_ViperHookblade = CCitadelBaseAbility
-describe("CCitadel_Ability_ViperHookblade", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_ViperHookblade = CCitadelBaseAbility & {
+	m_vecOutgoingHitList: { number }?,
+	m_vecReturningHitList: { number }?,
+}
+describe("CCitadel_Ability_ViperHookblade", "CCitadelBaseAbility", {
+	m_vecOutgoingHitList = "list:handle",
+	m_vecReturningHitList = "list:handle",
+})
 
 export type CCitadel_Ability_ViperVenom = CCitadelBaseAbility
 describe("CCitadel_Ability_ViperVenom", "CCitadelBaseAbility", {})
@@ -10139,14 +10381,20 @@ describe("CCitadel_Ability_WreckerTeleport", "CCitadelBaseAbility", {
 })
 
 export type CCitadel_Ability_Wrecker_BoulderGrenade = CCitadelBaseAbility & {
+	m_hHitTroopers: { number }?,
 	m_nBallParticle: number?,
 }
 describe("CCitadel_Ability_Wrecker_BoulderGrenade", "CCitadelBaseAbility", {
+	m_hHitTroopers = "list:handle",
 	m_nBallParticle = "int32",
 })
 
-export type CCitadel_Ability_Wrecker_Salvage = CCitadelBaseAbility
-describe("CCitadel_Ability_Wrecker_Salvage", "CCitadelBaseAbility", {})
+export type CCitadel_Ability_Wrecker_Salvage = CCitadelBaseAbility & {
+	m_vecTargets: { number }?,
+}
+describe("CCitadel_Ability_Wrecker_Salvage", "CCitadelBaseAbility", {
+	m_vecTargets = "list:handle",
+})
 
 export type CCitadel_Ability_Wrecker_Ultimate = CCitadelBaseAbility & {
 	m_angBeamAngles: modlock.Angles?,
@@ -10158,11 +10406,13 @@ describe("CCitadel_Ability_Wrecker_Ultimate", "CCitadelBaseAbility", {
 export type CCitadel_Ability_WreckingBall = CCitadelBaseAbility & {
 	m_nBallParticle: number?,
 	m_nCastCompleteParticle: number?,
+	m_vecTargetsHit: { number }?,
 	m_bHoldingBall: boolean?,
 }
 describe("CCitadel_Ability_WreckingBall", "CCitadelBaseAbility", {
 	m_nBallParticle = "int32",
 	m_nCastCompleteParticle = "int32",
+	m_vecTargetsHit = "list:handle",
 	m_bHoldingBall = "bool",
 })
 
@@ -10818,8 +11068,12 @@ describe("CItemHauntingScream", "CCitadel_Item", {})
 export type CItemMysticReverb = CCitadel_Item
 describe("CItemMysticReverb", "CCitadel_Item", {})
 
-export type CItemSilenceGlyph = CCitadel_Item
-describe("CItemSilenceGlyph", "CCitadel_Item", {})
+export type CItemSilenceGlyph = CCitadel_Item & {
+	m_vHitEnts: { number }?,
+}
+describe("CItemSilenceGlyph", "CCitadel_Item", {
+	m_vHitEnts = "list:handle",
+})
 
 export type CItem_FleetfootBoots = CCitadel_Item
 describe("CItem_FleetfootBoots", "CCitadel_Item", {})
@@ -11488,6 +11742,7 @@ export type CFishPool = CBaseEntity & {
 	m_swimDepth: number?,
 	m_waterLevel: number?,
 	m_isDormant: boolean?,
+	m_fishes: { number }?,
 }
 describe("CFishPool", "CBaseEntity", {
 	m_fishCount = "int32",
@@ -11495,6 +11750,7 @@ describe("CFishPool", "CBaseEntity", {
 	m_swimDepth = "float32",
 	m_waterLevel = "float32",
 	m_isDormant = "bool",
+	m_fishes = "list:handle",
 })
 
 export type CFogController = CBaseEntity & {
@@ -11849,10 +12105,17 @@ export type CPathParticleRope = CBaseEntity & {
 	m_bStartActive: boolean?,
 	m_flMaxSimulationTime: number?,
 	m_iszEffectName: string?,
+	m_PathNodes_Name: { string }?,
 	m_flParticleSpacing: number?,
 	m_flSlack: number?,
 	m_flRadius: number?,
 	m_nEffectState: number?,
+	m_PathNodes_Position: { modlock.Vector }?,
+	m_PathNodes_TangentIn: { modlock.Vector }?,
+	m_PathNodes_TangentOut: { modlock.Vector }?,
+	m_PathNodes_Color: { modlock.Vector }?,
+	m_PathNodes_PinEnabled: { boolean }?,
+	m_PathNodes_RadiusScale: { number }?,
 	inputDestroyImmediately: (self: any) -> boolean,
 	inputDisablePin: (self: any, value: string) -> boolean,
 	inputSetRadius: (self: any, value: number) -> boolean,
@@ -11865,10 +12128,17 @@ describe("CPathParticleRope", "CBaseEntity", {
 	m_bStartActive = "bool",
 	m_flMaxSimulationTime = "float32",
 	m_iszEffectName = "string",
+	m_PathNodes_Name = "list:string",
 	m_flParticleSpacing = "float32",
 	m_flSlack = "float32",
 	m_flRadius = "float32",
 	m_nEffectState = "int32",
+	m_PathNodes_Position = "list:vector",
+	m_PathNodes_TangentIn = "list:vector",
+	m_PathNodes_TangentOut = "list:vector",
+	m_PathNodes_Color = "list:vector",
+	m_PathNodes_PinEnabled = "list:bool",
+	m_PathNodes_RadiusScale = "list:float32",
 }, {
 	DestroyImmediately = "",
 	DisablePin = "text",
@@ -11899,21 +12169,27 @@ describe("CPathSimple", "CBaseEntity", {
 })
 
 export type CPathWithDynamicNodes = CPathSimple & {
+	m_vecPathNodes: { number }?,
 	m_eDesiredDirection: number?,
 	m_bIgnoreParentRotation: boolean?,
 }
 describe("CPathWithDynamicNodes", "CPathSimple", {
+	m_vecPathNodes = "list:handle",
 	m_eDesiredDirection = "uint32",
 	m_bIgnoreParentRotation = "bool",
 })
 
 export type CPathMover = CPathWithDynamicNodes & {
+	m_vecMovers: { number }?,
+	m_vecSpawners: { number }?,
 	m_iszMoverSpawnerName: string?,
 	m_hMoverRouter: CFuncMoverRouter?,
 	m_iszMoverRouterName: string?,
 	m_flSampleSpacing: number?,
 }
 describe("CPathMover", "CPathWithDynamicNodes", {
+	m_vecMovers = "list:handle",
+	m_vecSpawners = "list:handle",
 	m_iszMoverSpawnerName = "string",
 	m_hMoverRouter = "CFuncMoverRouter",
 	m_iszMoverRouterName = "string",
@@ -12138,6 +12414,7 @@ export type CAI_VolumetricEventSensor = CPointEntity & {
 	m_flMaxRange: number?,
 	m_iszListenFilter: string?,
 	m_hListenFilter: CBaseFilter?,
+	m_hSensedEvents: { number }?,
 	inputDisable: (self: any) -> boolean,
 	inputEnable: (self: any) -> boolean,
 }
@@ -12148,6 +12425,7 @@ describe("CAI_VolumetricEventSensor", "CPointEntity", {
 	m_flMaxRange = "float32",
 	m_iszListenFilter = "string",
 	m_hListenFilter = "CBaseFilter",
+	m_hSensedEvents = "list:uint64",
 }, {
 	Disable = "",
 	Enable = "",
@@ -12549,8 +12827,11 @@ export type CInfoOffscreenPanoramaTexture = CPointEntity & {
 	m_szPanelType: string?,
 	m_szLayoutFileName: string?,
 	m_RenderAttrName: string?,
+	m_TargetEntities: { number }?,
 	m_nTargetChangeCount: number?,
+	m_vecCSSClasses: { string }?,
 	m_szTargetsName: string?,
+	m_AdditionalTargetEntities: { number }?,
 	inputAddCSSClass: (self: any, value: string) -> boolean,
 	inputDisable: (self: any) -> boolean,
 	inputEnable: (self: any) -> boolean,
@@ -12564,8 +12845,11 @@ describe("CInfoOffscreenPanoramaTexture", "CPointEntity", {
 	m_szPanelType = "string",
 	m_szLayoutFileName = "string",
 	m_RenderAttrName = "string",
+	m_TargetEntities = "list:handle",
 	m_nTargetChangeCount = "int32",
+	m_vecCSSClasses = "list:string",
 	m_szTargetsName = "string",
+	m_AdditionalTargetEntities = "list:handle",
 }, {
 	AddCSSClass = "text",
 	Disable = "",
@@ -13195,6 +13479,8 @@ export type CSceneEntity = CPointEntity & {
 	m_bInterruptedActorsScenes: boolean?,
 	m_bBreakOnNonIdle: boolean?,
 	m_bSceneFinished: boolean?,
+	m_hActorList: { number }?,
+	m_hRemoveActorList: { number }?,
 	m_nSceneStringIndex: number?,
 	m_hInterruptScene: CSceneEntity?,
 	m_nInterruptCount: number?,
@@ -13205,6 +13491,8 @@ export type CSceneEntity = CPointEntity & {
 	m_bCompletedEarly: boolean?,
 	m_bInterruptSceneFinished: boolean?,
 	m_bRestoring: boolean?,
+	m_hNotifySceneCompletion: { number }?,
+	m_hListManagers: { number }?,
 	m_iszSoundName: string?,
 	m_iszSequenceName: string?,
 	m_hActor: CBaseModelEntity?,
@@ -13266,6 +13554,8 @@ describe("CSceneEntity", "CPointEntity", {
 	m_bInterruptedActorsScenes = "bool",
 	m_bBreakOnNonIdle = "bool",
 	m_bSceneFinished = "bool",
+	m_hActorList = "list:handle",
+	m_hRemoveActorList = "list:handle",
 	m_nSceneStringIndex = "uint16",
 	m_hInterruptScene = "CSceneEntity",
 	m_nInterruptCount = "int32",
@@ -13276,6 +13566,8 @@ describe("CSceneEntity", "CPointEntity", {
 	m_bCompletedEarly = "bool",
 	m_bInterruptSceneFinished = "bool",
 	m_bRestoring = "bool",
+	m_hNotifySceneCompletion = "list:handle",
+	m_hListManagers = "list:handle",
 	m_iszSoundName = "string",
 	m_iszSequenceName = "string",
 	m_hActor = "CBaseModelEntity",
@@ -13417,6 +13709,7 @@ export type CPointValueRemapper = CBaseEntity & {
 	m_iszOutputEntity2Name: string?,
 	m_iszOutputEntity3Name: string?,
 	m_iszOutputEntity4Name: string?,
+	m_hOutputEntities: { number }?,
 	m_nHapticsType: number?,
 	m_nMomentumType: number?,
 	m_flMomentumModifier: number?,
@@ -13462,6 +13755,7 @@ describe("CPointValueRemapper", "CBaseEntity", {
 	m_iszOutputEntity2Name = "string",
 	m_iszOutputEntity3Name = "string",
 	m_iszOutputEntity4Name = "string",
+	m_hOutputEntities = "list:handle",
 	m_nHapticsType = "uint32",
 	m_nMomentumType = "uint32",
 	m_flMomentumModifier = "float32",
@@ -14067,6 +14361,7 @@ describe("CLogicActiveAutosave", "CLogicAutosave", {
 
 export type CLogicBranch = CLogicalEntity & {
 	m_bInValue: boolean?,
+	m_Listeners: { number }?,
 	inputSetValue: (self: any, value: boolean) -> boolean,
 	inputSetValueTest: (self: any, value: boolean) -> boolean,
 	inputTest: (self: any) -> boolean,
@@ -14075,6 +14370,7 @@ export type CLogicBranch = CLogicalEntity & {
 }
 describe("CLogicBranch", "CLogicalEntity", {
 	m_bInValue = "bool",
+	m_Listeners = "list:handle",
 }, {
 	SetValue = "boolean",
 	SetValueTest = "boolean",
@@ -14084,12 +14380,14 @@ describe("CLogicBranch", "CLogicalEntity", {
 })
 
 export type CLogicBranchList = CLogicalEntity & {
+	m_LogicBranchList: { number }?,
 	m_eLastState: number?,
 	inputTest: (self: any) -> boolean,
 	input_OnLogicBranchChanged: (self: any) -> boolean,
 	input_OnLogicBranchRemoved: (self: any) -> boolean,
 }
 describe("CLogicBranchList", "CLogicalEntity", {
+	m_LogicBranchList = "list:handle",
 	m_eLastState = "uint32",
 }, {
 	Test = "",
@@ -14423,6 +14721,7 @@ export type CMultiLightProxy = CLogicalEntity & {
 	m_bPerformScreenFade: boolean?,
 	m_flTargetBrightnessMultiplier: number?,
 	m_flCurrentBrightnessMultiplier: number?,
+	m_vecLights: { number }?,
 	inputDisableLights: (self: any, value: number) -> boolean,
 	inputFlickerLights: (self: any, value: number) -> boolean,
 	inputSetBrightnessDelta: (self: any, value: number) -> boolean,
@@ -14436,6 +14735,7 @@ describe("CMultiLightProxy", "CLogicalEntity", {
 	m_bPerformScreenFade = "bool",
 	m_flTargetBrightnessMultiplier = "float32",
 	m_flCurrentBrightnessMultiplier = "float32",
+	m_vecLights = "list:handle",
 }, {
 	DisableLights = "number",
 	FlickerLights = "number",
@@ -14483,6 +14783,7 @@ export type CPathMoverEntitySpawner = CLogicalEntity & {
 	m_flLastSpawnTime: number?,
 	m_bEnabled: boolean?,
 	m_bDestroyMoverOnArrivedAtEnd: boolean?,
+	m_vecQueuedRemovals: { number }?,
 	m_iszPathMoverName: string?,
 	m_bPrepopulateOnSpawn: boolean?,
 	m_iszPathNodeStartName: string?,
@@ -14508,6 +14809,7 @@ describe("CPathMoverEntitySpawner", "CLogicalEntity", {
 	m_flLastSpawnTime = "float32",
 	m_bEnabled = "bool",
 	m_bDestroyMoverOnArrivedAtEnd = "bool",
+	m_vecQueuedRemovals = "list:handle",
 	m_iszPathMoverName = "string",
 	m_bPrepopulateOnSpawn = "bool",
 	m_iszPathNodeStartName = "string",
@@ -15043,6 +15345,8 @@ export type CPointTemplate = CLogicalEntity & {
 	m_bAsynchronouslySpawnEntities: boolean?,
 	m_clientOnlyEntityBehavior: number?,
 	m_ownerSpawnGroupType: number?,
+	m_createdSpawnGroupHandles: { number }?,
+	m_SpawnedEntityHandles: { number }?,
 	-- Deletes all spawn groups created by the template. Only works if you use
 	-- asynchronous spawn and INSERT_INTO_NEWLY_CREATED_SPAWN_GROUP.
 	inputDeleteCreatedSpawnGroups: (self: any) -> boolean,
@@ -15057,15 +15361,20 @@ describe("CPointTemplate", "CLogicalEntity", {
 	m_bAsynchronouslySpawnEntities = "bool",
 	m_clientOnlyEntityBehavior = "uint32",
 	m_ownerSpawnGroupType = "uint32",
+	m_createdSpawnGroupHandles = "list:uint32",
+	m_SpawnedEntityHandles = "list:handle",
 }, {
 	DeleteCreatedSpawnGroups = "",
 	ForceSpawn = "",
 })
 
 export type CSceneListManager = CLogicalEntity & {
+	m_hListManagers: { number }?,
 	inputShutdown: (self: any) -> boolean,
 }
-describe("CSceneListManager", "CLogicalEntity", {}, {
+describe("CSceneListManager", "CLogicalEntity", {
+	m_hListManagers = "list:handle",
+}, {
 	Shutdown = "",
 })
 
@@ -15282,6 +15591,7 @@ export type CPointPrefab = CServerOnlyPointEntity & {
 	m_fixupNames: boolean?,
 	m_bLoadDynamic: boolean?,
 	m_associatedRelayEntity: CPointPrefab?,
+	m_ProceduralRelaySources: { number }?,
 }
 describe("CPointPrefab", "CServerOnlyPointEntity", {
 	m_targetMapName = "string",
@@ -15290,6 +15600,7 @@ describe("CPointPrefab", "CServerOnlyPointEntity", {
 	m_fixupNames = "bool",
 	m_bLoadDynamic = "bool",
 	m_associatedRelayEntity = "CPointPrefab",
+	m_ProceduralRelaySources = "list:handle",
 })
 
 export type CPointTeleport = CServerOnlyPointEntity & {
@@ -15716,7 +16027,14 @@ export type CSoundOpvarSetOBBEntity = CSoundOpvarSetAABBEntity
 describe("CSoundOpvarSetOBBEntity", "CSoundOpvarSetAABBEntity", {})
 
 export type CSoundOpvarSetDomeEntity = CSoundOpvarSetPointEntity & {
+	m_arDirections: { modlock.Vector }?,
+	m_arOpenness: { number }?,
+	m_arNeighbors: { number }?,
 	m_nCurrentIndex: number?,
+	m_arClusterParent: { number }?,
+	m_arClusterSize: { number }?,
+	m_arClusterWeight: { number }?,
+	m_arClusterDirSum: { modlock.Vector }?,
 	m_nClusterIndex: number?,
 	m_flClusteredOpenness: number?,
 	m_vClusterDirection: modlock.Vector?,
@@ -15745,7 +16063,14 @@ export type CSoundOpvarSetDomeEntity = CSoundOpvarSetPointEntity & {
 	inputSetTracesPerFrame: (self: any, value: number) -> boolean,
 }
 describe("CSoundOpvarSetDomeEntity", "CSoundOpvarSetPointEntity", {
+	m_arDirections = "list:vector",
+	m_arOpenness = "list:float32",
+	m_arNeighbors = "list:int32",
 	m_nCurrentIndex = "int32",
+	m_arClusterParent = "list:int32",
+	m_arClusterSize = "list:int32",
+	m_arClusterWeight = "list:float32",
+	m_arClusterDirSum = "list:vector",
 	m_nClusterIndex = "int32",
 	m_flClusteredOpenness = "float32",
 	m_vClusterDirection = "vector",
@@ -15789,6 +16114,8 @@ describe("CSoundOpvarSetPathCornerEntity", "CSoundOpvarSetPointEntity", {
 })
 
 export type CSoundOpvarSetPrecipitationEntity = CSoundOpvarSetPointBase & {
+	m_arDirections: { modlock.Vector }?,
+	m_arSky: { number }?,
 	m_nCurrentIndex: number?,
 	m_flSmoothedValue: number?,
 	m_flLastSmoothTime: number?,
@@ -15808,6 +16135,8 @@ export type CSoundOpvarSetPrecipitationEntity = CSoundOpvarSetPointBase & {
 	inputSetMode: (self: any, value: number) -> boolean,
 }
 describe("CSoundOpvarSetPrecipitationEntity", "CSoundOpvarSetPointBase", {
+	m_arDirections = "list:vector",
+	m_arSky = "list:float32",
 	m_nCurrentIndex = "int32",
 	m_flSmoothedValue = "float32",
 	m_flLastSmoothTime = "float32",
@@ -15832,9 +16161,13 @@ export type CSoundOpvarSetPrecipitationOBBEntity = CSoundOpvarSetPrecipitationEn
 describe("CSoundOpvarSetPrecipitationOBBEntity", "CSoundOpvarSetPrecipitationEntity", {})
 
 export type CTeam = CBaseEntity & {
+	m_aPlayerControllers: { number }?,
+	m_aPlayers: { number }?,
 	m_iScore: number?,
 }
 describe("CTeam", "CBaseEntity", {
+	m_aPlayerControllers = "list:handle",
+	m_aPlayers = "list:handle",
 	m_iScore = "int32",
 })
 
@@ -15960,6 +16293,7 @@ export type CCitadelGameRules = CTeamplayRules & {
 	m_nHideoutOwner: number?,
 	m_hTrooperMinimap: CCitadelTrooperMinimap?,
 	m_iWinningTeam: number?,
+	m_vecBannedHeroes: { number }?,
 	m_nCorruptedPenaltySeed: number?,
 	m_nNumCorruptedItemsLimit: number?,
 	m_nKothScoringTeam: number?,
@@ -15979,6 +16313,7 @@ export type CCitadelGameRules = CTeamplayRules & {
 	m_timeNextKothSpawn: number?,
 	m_timeNextKothSpawnWindowTime: number?,
 	m_vNextKothLocation: modlock.Vector?,
+	m_vKothSpawnLocationDeck: { modlock.Vector }?,
 	m_nKothSpawnWarnings: number?,
 	m_bNotifiedClientsOfNextCrateSpawn: boolean?,
 	m_bEarlyCratesSpawned: boolean?,
@@ -16000,6 +16335,9 @@ export type CCitadelGameRules = CTeamplayRules & {
 	m_iAmberRejuvCount: number?,
 	m_iSapphireRejuvCount: number?,
 	m_tNextMidBossSpawnTime: number?,
+	m_vecNeutralCampTimerOrigins: { modlock.Vector }?,
+	m_vecNeutralCampNextSpawnTimes: { number }?,
+	m_vecNeutralCampTimerIsMidBoss: { boolean }?,
 	m_bServerPaused: boolean?,
 	m_iPauseTeam: number?,
 	m_nMatchClockUpdateTick: number?,
@@ -16050,6 +16388,7 @@ describe("CCitadelGameRules", "CTeamplayRules", {
 	m_nHideoutOwner = "uint32",
 	m_hTrooperMinimap = "CCitadelTrooperMinimap",
 	m_iWinningTeam = "int32",
+	m_vecBannedHeroes = "list:uint32",
 	m_nCorruptedPenaltySeed = "uint32",
 	m_nNumCorruptedItemsLimit = "int32",
 	m_nKothScoringTeam = "int32",
@@ -16069,6 +16408,7 @@ describe("CCitadelGameRules", "CTeamplayRules", {
 	m_timeNextKothSpawn = "float32",
 	m_timeNextKothSpawnWindowTime = "float32",
 	m_vNextKothLocation = "vector",
+	m_vKothSpawnLocationDeck = "list:vector",
 	m_nKothSpawnWarnings = "int32",
 	m_bNotifiedClientsOfNextCrateSpawn = "bool",
 	m_bEarlyCratesSpawned = "bool",
@@ -16090,6 +16430,9 @@ describe("CCitadelGameRules", "CTeamplayRules", {
 	m_iAmberRejuvCount = "int32",
 	m_iSapphireRejuvCount = "int32",
 	m_tNextMidBossSpawnTime = "float32",
+	m_vecNeutralCampTimerOrigins = "list:vector",
+	m_vecNeutralCampNextSpawnTimes = "list:float32",
+	m_vecNeutralCampTimerIsMidBoss = "list:bool",
 	m_bServerPaused = "bool",
 	m_iPauseTeam = "int32",
 	m_nMatchClockUpdateTick = "int32",

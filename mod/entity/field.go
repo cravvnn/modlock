@@ -155,6 +155,90 @@ func (f Angles) Set(value *mod.Angles) error {
 	return f.write(mod.FieldTypeVector, &mod.Vector{X: value.GetPitch(), Y: value.GetYaw(), Z: value.GetRoll()})
 }
 
+// readList reads the field as a list of typ and returns each element as T.
+func readList[T bool | string | *mod.Vector](f Field, typ mod.FieldType) ([]T, error) {
+	values, err := mod.ReadFieldList(f.Handle, f.ClassName, f.Name, typ)
+	list := make([]T, len(values))
+	for i, value := range values {
+		list[i], _ = value.(T)
+	}
+	return list, err
+}
+
+// writeList replaces the field's elements, each written as typ.
+func writeList[T bool | *mod.Vector](f Field, typ mod.FieldType, values []T) error {
+	elements := make([]any, len(values))
+	for i, value := range values {
+		elements[i] = value
+	}
+	return mod.WriteFieldList(f.Handle, f.ClassName, f.Name, typ, elements)
+}
+
+// List is a field that holds a list of numbers, or of handles as the numbers
+// the host reads them as. A list field is a CUtlVector of the game, such as
+// the banned heroes of CCitadelGameRules.
+type List[T Numeric] struct{ Field }
+
+// Get reads the elements.
+func (f List[T]) Get() ([]T, error) {
+	typ, wide := numberType[T]()
+	values, err := mod.ReadFieldList(f.Handle, f.ClassName, f.Name, typ)
+	list := make([]T, len(values))
+	for i, value := range values {
+		if wide {
+			number, _ := value.(int64)
+			list[i] = T(number)
+		} else {
+			number, _ := value.(float64)
+			list[i] = T(number)
+		}
+	}
+	return list, err
+}
+
+// Set replaces the elements, growing the list when it holds fewer.
+func (f List[T]) Set(values []T) error {
+	typ, wide := numberType[T]()
+	elements := make([]any, len(values))
+	for i, value := range values {
+		if wide {
+			elements[i] = int64(value)
+		} else {
+			elements[i] = float64(value)
+		}
+	}
+	return mod.WriteFieldList(f.Handle, f.ClassName, f.Name, typ, elements)
+}
+
+// BoolList is a field that holds a list of booleans.
+type BoolList struct{ Field }
+
+// Get reads the elements.
+func (f BoolList) Get() ([]bool, error) { return readList[bool](f.Field, mod.FieldTypeBool) }
+
+// Set replaces the elements, growing the list when it holds fewer.
+func (f BoolList) Set(values []bool) error { return writeList(f.Field, mod.FieldTypeBool, values) }
+
+// VectorList is a field that holds a list of positions or directions.
+type VectorList struct{ Field }
+
+// Get reads the elements.
+func (f VectorList) Get() ([]*mod.Vector, error) {
+	return readList[*mod.Vector](f.Field, mod.FieldTypeVector)
+}
+
+// Set replaces the elements, growing the list when it holds fewer.
+func (f VectorList) Set(values []*mod.Vector) error {
+	return writeList(f.Field, mod.FieldTypeVector, values)
+}
+
+// TextList is a field that holds a list of strings, which the host can read
+// but not write.
+type TextList struct{ Field }
+
+// Get reads the elements.
+func (f TextList) Get() ([]string, error) { return readList[string](f.Field, mod.FieldTypeString) }
+
 // Class is an entity class: CEntityInstance or a class defined over it.
 type Class interface {
 	~struct{ Handle uint32 }

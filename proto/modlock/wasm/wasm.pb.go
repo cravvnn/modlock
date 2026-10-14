@@ -3830,6 +3830,82 @@ func (*FieldValue_Text) isFieldValue_Value() {}
 
 func (*FieldValue_Vector) isFieldValue_Value() {}
 
+// FieldListResponse holds the elements ReadFieldList read.
+type FieldListResponse struct {
+	unknownFields []byte
+	Values        []*FieldValue `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (x *FieldListResponse) Reset() {
+	*x = FieldListResponse{}
+}
+
+func (*FieldListResponse) ProtoMessage() {}
+
+func (x *FieldListResponse) GetValues() []*FieldValue {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+// WriteFieldListRequest replaces the elements of one list field of a live
+// entity.
+type WriteFieldListRequest struct {
+	unknownFields []byte
+	// Entity is the entity's handle.
+	Entity uint32 `protobuf:"varint,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// ClassName is the server class that declares the field, or a subclass.
+	ClassName string `protobuf:"bytes,2,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
+	// Field is the field's schema name, such as m_vecBannedHeroes.
+	Field string `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`
+	// Type is how to write each element.
+	Type FieldType `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"`
+	// Values are the list's new elements, each in the form WriteField takes.
+	Values []*FieldValue `protobuf:"bytes,5,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (x *WriteFieldListRequest) Reset() {
+	*x = WriteFieldListRequest{}
+}
+
+func (*WriteFieldListRequest) ProtoMessage() {}
+
+func (x *WriteFieldListRequest) GetEntity() uint32 {
+	if x != nil {
+		return x.Entity
+	}
+	return 0
+}
+
+func (x *WriteFieldListRequest) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *WriteFieldListRequest) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *WriteFieldListRequest) GetType() FieldType {
+	if x != nil {
+		return x.Type
+	}
+	return FieldType_FIELD_TYPE_UNKNOWN
+}
+
+func (x *WriteFieldListRequest) GetValues() []*FieldValue {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 // WriteFieldRequest writes one schema field of a live entity.
 type WriteFieldRequest struct {
 	unknownFields []byte
@@ -8075,6 +8151,42 @@ func (m *FieldValue_Vector) CloneOneofVT() isFieldValue_Value {
 	return m.CloneVT()
 }
 
+func (m *FieldListResponse) CloneVT() *FieldListResponse {
+	if m == nil {
+		return (*FieldListResponse)(nil)
+	}
+	r := new(FieldListResponse)
+	r.Values = protobuf_go_lite.CloneVTSlice(m.Values)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *FieldListResponse) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *WriteFieldListRequest) CloneVT() *WriteFieldListRequest {
+	if m == nil {
+		return (*WriteFieldListRequest)(nil)
+	}
+	r := new(WriteFieldListRequest)
+	r.Entity = m.Entity
+	r.ClassName = m.ClassName
+	r.Field = m.Field
+	r.Type = m.Type
+	r.Values = protobuf_go_lite.CloneVTSlice(m.Values)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *WriteFieldListRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *WriteFieldRequest) CloneVT() *WriteFieldRequest {
 	if m == nil {
 		return (*WriteFieldRequest)(nil)
@@ -11557,6 +11669,56 @@ func (this *FieldValue_Vector) EqualVT(thatIface isFieldValue_Value) bool {
 	return true
 }
 
+func (this *FieldListResponse) EqualVT(that *FieldListResponse) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Values, that.Values, func() *FieldValue { return &FieldValue{} }) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *FieldListResponse) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*FieldListResponse)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *WriteFieldListRequest) EqualVT(that *WriteFieldListRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Entity != that.Entity {
+		return false
+	}
+	if this.ClassName != that.ClassName {
+		return false
+	}
+	if this.Field != that.Field {
+		return false
+	}
+	if this.Type != that.Type {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Values, that.Values, func() *FieldValue { return &FieldValue{} }) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *WriteFieldListRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*WriteFieldListRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
 func (this *WriteFieldRequest) EqualVT(that *WriteFieldRequest) bool {
 	if this == that {
 		return true
@@ -18813,6 +18975,164 @@ func (x *FieldValue) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the FieldValue from JSON.
 func (x *FieldValue) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the FieldListResponse message to JSON.
+func (x *FieldListResponse) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if len(x.Values) > 0 || s.HasField("values") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("values")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Values {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("values"))
+		}
+		s.WriteArrayEnd()
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the FieldListResponse to JSON.
+func (x *FieldListResponse) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the FieldListResponse message from JSON.
+func (x *FieldListResponse) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "values":
+			s.AddField("values")
+			if s.ReadNil() {
+				x.Values = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Values = append(x.Values, nil)
+					return
+				}
+				v := &FieldValue{}
+				v.UnmarshalProtoJSON(s.WithField("values", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Values = append(x.Values, v)
+			})
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the FieldListResponse from JSON.
+func (x *FieldListResponse) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the WriteFieldListRequest message to JSON.
+func (x *WriteFieldListRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Entity != 0 || s.HasField("entity") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("entity")
+		s.WriteUint32(x.Entity)
+	}
+	if x.ClassName != "" || s.HasField("className") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("className")
+		s.WriteString(x.ClassName)
+	}
+	if x.Field != "" || s.HasField("field") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("field")
+		s.WriteString(x.Field)
+	}
+	if x.Type != 0 || s.HasField("type") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("type")
+		x.Type.MarshalProtoJSON(s)
+	}
+	if len(x.Values) > 0 || s.HasField("values") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("values")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Values {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("values"))
+		}
+		s.WriteArrayEnd()
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the WriteFieldListRequest to JSON.
+func (x *WriteFieldListRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the WriteFieldListRequest message from JSON.
+func (x *WriteFieldListRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "entity":
+			s.AddField("entity")
+			x.Entity = s.ReadUint32()
+		case "class_name", "className":
+			s.AddField("class_name")
+			x.ClassName = s.ReadString()
+		case "field":
+			s.AddField("field")
+			x.Field = s.ReadString()
+		case "type":
+			s.AddField("type")
+			x.Type.UnmarshalProtoJSON(s)
+		case "values":
+			s.AddField("values")
+			if s.ReadNil() {
+				x.Values = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Values = append(x.Values, nil)
+					return
+				}
+				v := &FieldValue{}
+				v.UnmarshalProtoJSON(s.WithField("values", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Values = append(x.Values, v)
+			})
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the WriteFieldListRequest from JSON.
+func (x *WriteFieldListRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -27813,6 +28133,114 @@ func (m *FieldValue_Vector) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	}
 	return len(dAtA) - i, nil
 }
+func (m *FieldListResponse) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FieldListResponse) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *FieldListResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Values) > 0 {
+		for iNdEx := len(m.Values) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Values[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *WriteFieldListRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *WriteFieldListRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *WriteFieldListRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Values) > 0 {
+		for iNdEx := len(m.Values) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Values[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if m.Type != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Field) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Field)
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ClassName) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.ClassName)
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Entity != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Entity))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *WriteFieldRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -32591,6 +33019,38 @@ func (m *FieldValue_Vector) SizeVT() (n int) {
 	}
 	return n
 }
+func (m *FieldListResponse) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	for _, e := range m.Values {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *WriteFieldListRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Entity)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.ClassName)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Field)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Type)
+	for _, e := range m.Values {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *WriteFieldRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -35572,6 +36032,64 @@ func (x *FieldValue) MarshalProtoText() string {
 }
 
 func (x *FieldValue) String() string {
+	return x.MarshalProtoText()
+}
+func (x *FieldListResponse) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "FieldListResponse")
+	if len(x.Values) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "values")
+		for i, v := range x.Values {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &FieldValue{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *FieldListResponse) String() string {
+	return x.MarshalProtoText()
+}
+func (x *WriteFieldListRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "WriteFieldListRequest")
+	if x.Entity != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "entity")
+		protobuf_go_lite.TextWriteUint(&sb, x.Entity)
+	}
+	if x.ClassName != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "class_name")
+		protobuf_go_lite.TextWriteString(&sb, x.ClassName)
+	}
+	if x.Field != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "field")
+		protobuf_go_lite.TextWriteString(&sb, x.Field)
+	}
+	if x.Type != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "type")
+		protobuf_go_lite.TextWriteStringer(&sb, FieldType(x.Type))
+	}
+	if len(x.Values) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "values")
+		for i, v := range x.Values {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &FieldValue{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *WriteFieldListRequest) String() string {
 	return x.MarshalProtoText()
 }
 func (x *WriteFieldRequest) MarshalProtoText() string {
@@ -43378,6 +43896,156 @@ func (m *FieldValue) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 				m.Value = &FieldValue_Vector{Vector: v}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FieldListResponse) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FieldListResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FieldListResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Values = append(m.Values, &FieldValue{})
+			if err := m.Values[len(m.Values)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *WriteFieldListRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WriteFieldListRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WriteFieldListRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Entity", wireType)
+			}
+			m.Entity = 0
+			m.Entity, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassName", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.ClassName = v
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Field = v
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			var _v uint64
+			_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			m.Type = FieldType(_v)
+			if err != nil {
+				return err
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Values", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Values = append(m.Values, &FieldValue{})
+			if err := m.Values[len(m.Values)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
 		default:

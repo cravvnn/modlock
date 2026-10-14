@@ -1,6 +1,5 @@
 #include "wasm/instance.h"
 
-#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <format>

@@ -119,8 +119,12 @@ func (s *schema) isEntity(name string) bool {
 // kind is how the host reads one field: the wire field type and, for
 // angles and handles, how a library presents it.
 type kind struct {
-	// wire is the field type the host reads, such as "int32".
+	// wire is the field type the host reads, such as "int32", or for a list
+	// the type of one element.
 	wire string
+	// list marks a field that holds a list of wire. A list of handles or
+	// angles presents each element as the number or vector the host reads.
+	list bool
 	// angles marks a vector the library presents as pitch, yaw and roll.
 	angles bool
 	// target names the entity class a handle points to, or is empty.
@@ -150,8 +154,12 @@ var scalars = map[string]string{
 // handleType matches a typed entity handle.
 var handleType = regexp.MustCompile(`^CHandle< (\w+) >$`)
 
+// listType matches a game list: a CUtlVector or a networked one, which share a
+// layout.
+var listType = regexp.MustCompile(`^(?:CUtlVector|CNetworkUtlVectorBase)< (.+) >$`)
+
 // kindOf resolves a field's declared type to how the host reads it, and
-// reports false for a type the host cannot read, such as a container.
+// reports false for a type the host cannot read, such as a map.
 func (s *schema) kindOf(typ string) (kind, bool) {
 	// A scalar, angle or handle reads directly.
 	if wire, ok := scalars[typ]; ok {
@@ -166,6 +174,12 @@ func (s *schema) kindOf(typ string) (kind, bool) {
 			k.target = m[1]
 		}
 		return k, true
+	}
+
+	// A list reads as its elements, when the host can read one.
+	if m := listType.FindStringSubmatch(typ); m != nil {
+		element, ok := s.kindOf(m[1])
+		return kind{wire: element.wire, list: ok && !element.list}, ok && !element.list
 	}
 
 	// An enum reads as the unsigned integer of its size.

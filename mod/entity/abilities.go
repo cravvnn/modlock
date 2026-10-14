@@ -126,6 +126,10 @@ func (e CAbility_Drifter_BloodBlast) SandEffect() Number[int32] {
 	return Number[int32]{e.field("m_SandEffect")}
 }
 
+func (e CAbility_Drifter_BloodBlast) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
+}
+
 type CAbility_Drifter_Darkness CEntityInstance
 
 type CAbility_Drifter_ShadowMark CEntityInstance
@@ -284,6 +288,10 @@ func (e CAbility_Fencer_Lunge) FlHeldTime() Number[float32] {
 	return Number[float32]{e.field("m_flHeldTime")}
 }
 
+func (e CAbility_Fencer_Lunge) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
+}
+
 func (e CAbility_Fencer_Lunge) VLastPosition() Vector {
 	return Vector{e.field("m_vLastPosition")}
 }
@@ -332,6 +340,14 @@ func (e CAbility_Fencer_Ultimate) FlStateStartTime() Number[float32] {
 
 func (e CAbility_Fencer_Ultimate) BHitSomeone() Bool {
 	return Bool{e.field("m_bHitSomeone")}
+}
+
+func (e CAbility_Fencer_Ultimate) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
+}
+
+func (e CAbility_Fencer_Ultimate) VecHitHeroes() List[uint32] {
+	return List[uint32]{e.field("m_vecHitHeroes")}
 }
 
 func (e CAbility_Fencer_Ultimate) FlStuckTime() Number[float32] {
@@ -458,6 +474,10 @@ func (e CAbility_Synth_PlasmaFlux) BTeleported() Bool {
 	return Bool{e.field("m_bTeleported")}
 }
 
+func (e CAbility_Synth_PlasmaFlux) VecUniqueHitList() List[uint32] {
+	return List[uint32]{e.field("m_vecUniqueHitList")}
+}
+
 func (e CAbility_Synth_PlasmaFlux) VLastValidTeleportPosition() Vector {
 	return Vector{e.field("m_vLastValidTeleportPosition")}
 }
@@ -502,6 +522,10 @@ func (e CAbility_Werewolf_Frenzy) field(name string) Field {
 
 func (e CAbility_Werewolf_Frenzy) SandEffect() Number[int32] {
 	return Number[int32]{e.field("m_SandEffect")}
+}
+
+func (e CAbility_Werewolf_Frenzy) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
 }
 
 type CCitadelAbilityDruidAbility04 CEntityInstance
@@ -592,6 +616,10 @@ func (e CCitadel_Ability_Tier3Boss_DropBombs) field(name string) Field {
 
 func (e CCitadel_Ability_Tier3Boss_DropBombs) TNextBombTime() Number[float32] {
 	return Number[float32]{e.field("m_tNextBombTime")}
+}
+
+func (e CCitadel_Ability_Tier3Boss_DropBombs) VHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vHitTargets")}
 }
 
 func (e CCitadel_Ability_Tier3Boss_DropBombs) HShootPos() Number[uint8] {
@@ -748,6 +776,10 @@ type CCitadel_Ability_Shiv_KillingBlow CEntityInstance
 
 func (e CCitadel_Ability_Shiv_KillingBlow) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Shiv_KillingBlow", name}
+}
+
+func (e CCitadel_Ability_Shiv_KillingBlow) VHitEnts() List[uint32] {
+	return List[uint32]{e.field("m_vHitEnts")}
 }
 
 func (e CCitadel_Ability_Shiv_KillingBlow) BDamagedAnyHero() Bool {
@@ -992,6 +1024,10 @@ func (e CCitadel_Ability_PowerSlash) NPowerLevel() Number[int32] {
 	return Number[int32]{e.field("m_nPowerLevel")}
 }
 
+func (e CCitadel_Ability_PowerSlash) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
+}
+
 func (e CCitadel_Ability_PowerSlash) NCastParticle() Number[int32] {
 	return Number[int32]{e.field("m_nCastParticle")}
 }
@@ -1214,6 +1250,14 @@ type CCitadel_Ability_Boho_ChannelTether CEntityInstance
 
 type CCitadel_Ability_Boho_DamageShare CEntityInstance
 
+func (e CCitadel_Ability_Boho_DamageShare) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Boho_DamageShare", name}
+}
+
+func (e CCitadel_Ability_Boho_DamageShare) VecLinkedEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecLinkedEnemies")}
+}
+
 type CCitadel_Ability_Boho_DoubleHit CEntityInstance
 
 type CCitadel_Ability_Boho_RideBroom CEntityInstance
@@ -1302,6 +1346,10 @@ func (e CCitadel_Ability_Bookworm_KnightCharge) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Bookworm_KnightCharge", name}
 }
 
+func (e CCitadel_Ability_Bookworm_KnightCharge) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
+}
+
 func (e CCitadel_Ability_Bookworm_KnightCharge) BAffectedAnyTargets() Bool {
 	return Bool{e.field("m_bAffectedAnyTargets")}
 }
@@ -1336,6 +1384,10 @@ type CCitadel_Ability_Bull_Charge CEntityInstance
 
 func (e CCitadel_Ability_Bull_Charge) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Bull_Charge", name}
+}
+
+func (e CCitadel_Ability_Bull_Charge) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
 }
 
 func (e CCitadel_Ability_Bull_Charge) BGainedWeaponPowerBuff() Bool {
@@ -1406,6 +1458,10 @@ func (e CCitadel_Ability_Bull_Leap) VPrevPos() Vector {
 	return Vector{e.field("m_vPrevPos")}
 }
 
+func (e CCitadel_Ability_Bull_Leap) VecDraggedEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecDraggedEntities")}
+}
+
 func (e CCitadel_Ability_Bull_Leap) VecLastVel() Vector {
 	return Vector{e.field("m_vecLastVel")}
 }
@@ -1426,6 +1482,10 @@ func (e CCitadel_Ability_BulletFlurry) field(name string) Field {
 
 func (e CCitadel_Ability_BulletFlurry) FlNextAttackTime() Number[float32] {
 	return Number[float32]{e.field("m_flNextAttackTime")}
+}
+
+func (e CCitadel_Ability_BulletFlurry) VecShootTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecShootTargets")}
 }
 
 func (e CCitadel_Ability_BulletFlurry) NNumPlayersKilled() Number[int32] {
@@ -1488,6 +1548,10 @@ func (e CCitadel_Ability_CardToss) NPreviousMaxCharges() Number[int32] {
 	return Number[int32]{e.field("m_nPreviousMaxCharges")}
 }
 
+func (e CCitadel_Ability_CardToss) VCardList() List[uint32] {
+	return List[uint32]{e.field("m_vCardList")}
+}
+
 func (e CCitadel_Ability_CardToss) BCardIsFlying() Bool {
 	return Bool{e.field("m_bCardIsFlying")}
 }
@@ -1534,6 +1598,10 @@ func (e CCitadel_Ability_ChargedTackle) VecLastPosition() Vector {
 
 func (e CCitadel_Ability_ChargedTackle) NStuckFramesCount() Number[int32] {
 	return Number[int32]{e.field("m_nStuckFramesCount")}
+}
+
+func (e CCitadel_Ability_ChargedTackle) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
 }
 
 func (e CCitadel_Ability_ChargedTackle) NDistancePreview() Number[int32] {
@@ -1594,6 +1662,14 @@ func (e CCitadel_Ability_Chessmaster_Queen) IRemainingMoves() Number[int32] {
 	return Number[int32]{e.field("m_iRemainingMoves")}
 }
 
+func (e CCitadel_Ability_Chessmaster_Queen) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
+}
+
+func (e CCitadel_Ability_Chessmaster_Queen) VecStunnedUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecStunnedUnits")}
+}
+
 func (e CCitadel_Ability_Chessmaster_Queen) PDeployedQueen() Handle[CBaseEntity] {
 	return Handle[CBaseEntity]{e.field("m_pDeployedQueen")}
 }
@@ -1608,6 +1684,10 @@ func (e CCitadel_Ability_Chessmaster_ThrowBishop) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Chessmaster_ThrowBishop", name}
 }
 
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecDeployedPieces() List[uint32] {
+	return List[uint32]{e.field("m_vecDeployedPieces")}
+}
+
 func (e CCitadel_Ability_Chessmaster_ThrowBishop) BActive() Bool {
 	return Bool{e.field("m_bActive")}
 }
@@ -1618,6 +1698,14 @@ func (e CCitadel_Ability_Chessmaster_ThrowBishop) IBishopIndex() Number[int32] {
 
 func (e CCitadel_Ability_Chessmaster_ThrowBishop) TRecastEndTime() Number[float32] {
 	return Number[float32]{e.field("m_tRecastEndTime")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecShotBishops() List[uint32] {
+	return List[uint32]{e.field("m_vecShotBishops")}
+}
+
+func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
 }
 
 func (e CCitadel_Ability_Chessmaster_ThrowBishop) VecLaunchPosition() Vector {
@@ -1904,6 +1992,14 @@ func (e CCitadel_Ability_Doorman_Hotel) VLookTarget() Vector {
 
 type CCitadel_Ability_Drifter_Hunger CEntityInstance
 
+func (e CCitadel_Ability_Drifter_Hunger) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Drifter_Hunger", name}
+}
+
+func (e CCitadel_Ability_Drifter_Hunger) VecCurrentTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecCurrentTargets")}
+}
+
 type CCitadel_Ability_Dust_Storm CEntityInstance
 
 func (e CCitadel_Ability_Dust_Storm) field(name string) Field {
@@ -1912,6 +2008,10 @@ func (e CCitadel_Ability_Dust_Storm) field(name string) Field {
 
 func (e CCitadel_Ability_Dust_Storm) HSpinningBladeAbility() Handle[CCitadel_Ability_Spinning_Blade] {
 	return Handle[CCitadel_Ability_Spinning_Blade]{e.field("m_hSpinningBladeAbility")}
+}
+
+func (e CCitadel_Ability_Dust_Storm) VTargets() List[uint32] {
+	return List[uint32]{e.field("m_vTargets")}
 }
 
 type CCitadel_Ability_EmpowerBullet CEntityInstance
@@ -1930,6 +2030,14 @@ func (e CCitadel_Ability_ExplosiveBarrel) HBarrel() Handle[CCitadelProjectile] {
 
 type CCitadel_Ability_Familiar_Ability01 CEntityInstance
 
+func (e CCitadel_Ability_Familiar_Ability01) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Familiar_Ability01", name}
+}
+
+func (e CCitadel_Ability_Familiar_Ability01) VecTargetsInCone() List[uint32] {
+	return List[uint32]{e.field("m_vecTargetsInCone")}
+}
+
 type CCitadel_Ability_Familiar_Ability02 CEntityInstance
 
 func (e CCitadel_Ability_Familiar_Ability02) field(name string) Field {
@@ -1944,6 +2052,10 @@ type CCitadel_Ability_Familiar_Attach CEntityInstance
 
 func (e CCitadel_Ability_Familiar_Attach) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Familiar_Attach", name}
+}
+
+func (e CCitadel_Ability_Familiar_Attach) VecTagAlongVisitedAllies() List[uint32] {
+	return List[uint32]{e.field("m_vecTagAlongVisitedAllies")}
 }
 
 func (e CCitadel_Ability_Familiar_Attach) HLastAttachedTo() Handle[CBaseEntity] {
@@ -1974,6 +2086,10 @@ type CCitadel_Ability_Familiar_HelpingHands CEntityInstance
 
 func (e CCitadel_Ability_Familiar_HelpingHands) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Familiar_HelpingHands", name}
+}
+
+func (e CCitadel_Ability_Familiar_HelpingHands) VecHelpers() List[uint32] {
+	return List[uint32]{e.field("m_vecHelpers")}
 }
 
 func (e CCitadel_Ability_Familiar_HelpingHands) TChoreUseCooldownEndTime() Number[float32] {
@@ -2064,6 +2180,10 @@ func (e CCitadel_Ability_Fencer_Riposte) NCurrentRiposteState() Number[uint8] {
 
 func (e CCitadel_Ability_Fencer_Riposte) FlSuccessfulRiposteTime() Number[float32] {
 	return Number[float32]{e.field("m_flSuccessfulRiposteTime")}
+}
+
+func (e CCitadel_Ability_Fencer_Riposte) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
 }
 
 func (e CCitadel_Ability_Fencer_Riposte) VecLastPosition() Vector {
@@ -2170,6 +2290,10 @@ func (e CCitadel_Ability_FlameDash) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_FlameDash", name}
 }
 
+func (e CCitadel_Ability_FlameDash) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
+}
+
 func (e CCitadel_Ability_FlameDash) BIsSpeedBursting() Bool {
 	return Bool{e.field("m_bIsSpeedBursting")}
 }
@@ -2230,6 +2354,10 @@ func (e CCitadel_Ability_Frank_ShockTarget2) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Frank_ShockTarget2", name}
 }
 
+func (e CCitadel_Ability_Frank_ShockTarget2) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
+}
+
 func (e CCitadel_Ability_Frank_ShockTarget2) BIsFullyCharged() Bool {
 	return Bool{e.field("m_bIsFullyCharged")}
 }
@@ -2247,6 +2375,14 @@ type CCitadel_Ability_GenericPerson_3 CEntityInstance
 type CCitadel_Ability_GenericPerson_4 CEntityInstance
 
 type CCitadel_Ability_Ghost_BloodShards CEntityInstance
+
+func (e CCitadel_Ability_Ghost_BloodShards) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Ghost_BloodShards", name}
+}
+
+func (e CCitadel_Ability_Ghost_BloodShards) VecDamagedTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecDamagedTargets")}
+}
 
 type CCitadel_Ability_GooBowlingBall CEntityInstance
 
@@ -2294,6 +2430,10 @@ type CCitadel_Ability_GooGrenade CEntityInstance
 
 func (e CCitadel_Ability_GooGrenade) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_GooGrenade", name}
+}
+
+func (e CCitadel_Ability_GooGrenade) VecPuddleModifiers() List[uint32] {
+	return List[uint32]{e.field("m_vecPuddleModifiers")}
 }
 
 func (e CCitadel_Ability_GooGrenade) LastDetonateTime() Number[float32] {
@@ -2404,6 +2544,10 @@ func (e CCitadel_Ability_Gunslinger_KnockbackBlast) VecKnockbackDirection() Vect
 	return Vector{e.field("m_vecKnockbackDirection")}
 }
 
+func (e CCitadel_Ability_Gunslinger_KnockbackBlast) VecKnockbackedUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecKnockbackedUnits")}
+}
+
 type CCitadel_Ability_Gunslinger_Salvo CEntityInstance
 
 func (e CCitadel_Ability_Gunslinger_Salvo) field(name string) Field {
@@ -2512,6 +2656,10 @@ func (e CCitadel_Ability_HornetSting) BHitHero() Bool {
 	return Bool{e.field("m_bHitHero")}
 }
 
+func (e CCitadel_Ability_HornetSting) VecValidBounceTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecValidBounceTargets")}
+}
+
 type CCitadel_Ability_Hornet_Chain CEntityInstance
 
 func (e CCitadel_Ability_Hornet_Chain) field(name string) Field {
@@ -2548,6 +2696,10 @@ func (e CCitadel_Ability_IceBeam) BIceBeaming() Bool {
 
 func (e CCitadel_Ability_IceBeam) FlNextDamageTick() Number[float32] {
 	return Number[float32]{e.field("m_flNextDamageTick")}
+}
+
+func (e CCitadel_Ability_IceBeam) VecEntitiesHit() List[uint32] {
+	return List[uint32]{e.field("m_vecEntitiesHit")}
 }
 
 type CCitadel_Ability_IceDome CEntityInstance
@@ -2611,6 +2763,14 @@ func (e CCitadel_Ability_IcePath) TLingerMovementControlUntilTime() Number[float
 type CCitadel_Ability_ImmobilizeTrap CEntityInstance
 
 type CCitadel_Ability_IncendiaryProjectile CEntityInstance
+
+func (e CCitadel_Ability_IncendiaryProjectile) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_IncendiaryProjectile", name}
+}
+
+func (e CCitadel_Ability_IncendiaryProjectile) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
+}
 
 type CCitadel_Ability_Intimidate CEntityInstance
 
@@ -2762,6 +2922,14 @@ func (e CCitadel_Ability_LashDownStrike) VDamageDir() Vector {
 	return Vector{e.field("m_vDamageDir")}
 }
 
+func (e CCitadel_Ability_LashDownStrike) VHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vHitEnemies")}
+}
+
+func (e CCitadel_Ability_LashDownStrike) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
+}
+
 func (e CCitadel_Ability_LashDownStrike) PreviewEffect() Number[int32] {
 	return Number[int32]{e.field("m_PreviewEffect")}
 }
@@ -2898,6 +3066,10 @@ type CCitadel_Ability_Magician_MagicBolt CEntityInstance
 
 func (e CCitadel_Ability_Magician_MagicBolt) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Magician_MagicBolt", name}
+}
+
+func (e CCitadel_Ability_Magician_MagicBolt) VecDeployedProjectiles() List[uint32] {
+	return List[uint32]{e.field("m_vecDeployedProjectiles")}
 }
 
 func (e CCitadel_Ability_Magician_MagicBolt) ICurrentRedirects() Number[int32] {
@@ -3162,6 +3334,10 @@ func (e CCitadel_Ability_Nano_ClusterGrenade) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Nano_ClusterGrenade", name}
 }
 
+func (e CCitadel_Ability_Nano_ClusterGrenade) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
+}
+
 func (e CCitadel_Ability_Nano_ClusterGrenade) FlNextProjectileTime() Number[float32] {
 	return Number[float32]{e.field("m_flNextProjectileTime")}
 }
@@ -3286,6 +3462,10 @@ func (e CCitadel_Ability_Necro_GraveStone) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Necro_GraveStone", name}
 }
 
+func (e CCitadel_Ability_Necro_GraveStone) VecDeployedGravestones() List[uint32] {
+	return List[uint32]{e.field("m_vecDeployedGravestones")}
+}
+
 func (e CCitadel_Ability_Necro_GraveStone) VCastPosition() Vector {
 	return Vector{e.field("m_vCastPosition")}
 }
@@ -3354,6 +3534,10 @@ func (e CCitadel_Ability_Necro_ZombieWall) field(name string) Field {
 
 func (e CCitadel_Ability_Necro_ZombieWall) TWallDeployFinishTime() Number[float32] {
 	return Number[float32]{e.field("m_tWallDeployFinishTime")}
+}
+
+func (e CCitadel_Ability_Necro_ZombieWall) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
 }
 
 type CCitadel_Ability_Nikuman CEntityInstance
@@ -3914,6 +4098,10 @@ func (e CCitadel_Ability_PsychicLift) VCrashPosition() Vector {
 	return Vector{e.field("m_vCrashPosition")}
 }
 
+func (e CCitadel_Ability_PsychicLift) VecLiftTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecLiftTargets")}
+}
+
 type CCitadel_Ability_PunkGoat_Blasted CEntityInstance
 
 func (e CCitadel_Ability_PunkGoat_Blasted) field(name string) Field {
@@ -4150,6 +4338,10 @@ func (e CCitadel_Ability_SettingSun) BProjectileActive() Bool {
 	return Bool{e.field("m_bProjectileActive")}
 }
 
+func (e CCitadel_Ability_SettingSun) TargetPreviews() List[int32] {
+	return List[int32]{e.field("m_TargetPreviews")}
+}
+
 func (e CCitadel_Ability_SettingSun) BWasSelected() Bool {
 	return Bool{e.field("m_bWasSelected")}
 }
@@ -4179,6 +4371,14 @@ type CCitadel_Ability_ShieldGuy_Ability03 CEntityInstance
 type CCitadel_Ability_ShieldGuy_Ability04 CEntityInstance
 
 type CCitadel_Ability_ShieldedSentry CEntityInstance
+
+func (e CCitadel_Ability_ShieldedSentry) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_ShieldedSentry", name}
+}
+
+func (e CCitadel_Ability_ShieldedSentry) VecDeployedSentries() List[uint32] {
+	return List[uint32]{e.field("m_vecDeployedSentries")}
+}
 
 type CCitadel_Ability_SkyRunner_Ability04 CEntityInstance
 
@@ -4318,6 +4518,10 @@ func (e CCitadel_Ability_Spinning_Blade) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Spinning_Blade", name}
 }
 
+func (e CCitadel_Ability_Spinning_Blade) VecOutgoingHits() List[uint32] {
+	return List[uint32]{e.field("m_vecOutgoingHits")}
+}
+
 func (e CCitadel_Ability_Spinning_Blade) HActiveProjectile() Handle[CCitadelProjectile] {
 	return Handle[CCitadelProjectile]{e.field("m_hActiveProjectile")}
 }
@@ -4384,6 +4588,10 @@ func (e CCitadel_Ability_Stomp) VStompDir() Vector {
 	return Vector{e.field("m_vStompDir")}
 }
 
+func (e CCitadel_Ability_Stomp) VecStompedEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecStompedEnemies")}
+}
+
 type CCitadel_Ability_StormCloud CEntityInstance
 
 func (e CCitadel_Ability_StormCloud) field(name string) Field {
@@ -4403,6 +4611,14 @@ func (e CCitadel_Ability_StormCloud) NLightningStrikesRemaining() Number[int32] 
 }
 
 type CCitadel_Ability_SummonGangster CEntityInstance
+
+func (e CCitadel_Ability_SummonGangster) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_SummonGangster", name}
+}
+
+func (e CCitadel_Ability_SummonGangster) VecGangsters() List[uint32] {
+	return List[uint32]{e.field("m_vecGangsters")}
+}
 
 type CCitadel_Ability_SuperNeutralCharge CEntityInstance
 
@@ -4451,6 +4667,14 @@ type CCitadel_Ability_Swan_Ability04 CEntityInstance
 type CCitadel_Ability_Swan_Acrobat CEntityInstance
 
 type CCitadel_Ability_Swan_FeatherBoomerang CEntityInstance
+
+func (e CCitadel_Ability_Swan_FeatherBoomerang) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Swan_FeatherBoomerang", name}
+}
+
+func (e CCitadel_Ability_Swan_FeatherBoomerang) VecHitTargetList() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargetList")}
+}
 
 type CCitadel_Ability_Swan_Leap CEntityInstance
 
@@ -4614,6 +4838,10 @@ func (e CCitadel_Ability_Tengu_StoneForm) NStoneFormEffect() Number[int32] {
 	return Number[int32]{e.field("m_nStoneFormEffect")}
 }
 
+func (e CCitadel_Ability_Tengu_StoneForm) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
+}
+
 type CCitadel_Ability_Tengu_Urn CEntityInstance
 
 func (e CCitadel_Ability_Tengu_Urn) field(name string) Field {
@@ -4666,6 +4894,14 @@ func (e CCitadel_Ability_TestHero_SummonCannon) QLaunchAngle() Angles {
 
 type CCitadel_Ability_TestHero_SummonSoldier CEntityInstance
 
+func (e CCitadel_Ability_TestHero_SummonSoldier) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_TestHero_SummonSoldier", name}
+}
+
+func (e CCitadel_Ability_TestHero_SummonSoldier) VecTargetsInCone() List[uint32] {
+	return List[uint32]{e.field("m_vecTargetsInCone")}
+}
+
 type CCitadel_Ability_TestHero_WallCling CEntityInstance
 
 func (e CCitadel_Ability_TestHero_WallCling) field(name string) Field {
@@ -4686,10 +4922,22 @@ func (e CCitadel_Ability_TestHero_WallCling) VecLastVelocity() Vector {
 
 type CCitadel_Ability_ThrowSand CEntityInstance
 
+func (e CCitadel_Ability_ThrowSand) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_ThrowSand", name}
+}
+
+func (e CCitadel_Ability_ThrowSand) VHitEnts() List[uint32] {
+	return List[uint32]{e.field("m_vHitEnts")}
+}
+
 type CCitadel_Ability_Thumper_1 CEntityInstance
 
 func (e CCitadel_Ability_Thumper_1) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Thumper_1", name}
+}
+
+func (e CCitadel_Ability_Thumper_1) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
 }
 
 func (e CCitadel_Ability_Thumper_1) VecAimPos() Vector {
@@ -4796,6 +5044,10 @@ func (e CCitadel_Ability_Trappers_Bolo) HNextTarget() Handle[CBaseEntity] {
 	return Handle[CBaseEntity]{e.field("m_hNextTarget")}
 }
 
+func (e CCitadel_Ability_Trappers_Bolo) HHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_hHitTargets")}
+}
+
 func (e CCitadel_Ability_Trappers_Bolo) IBounces() Number[int32] {
 	return Number[int32]{e.field("m_iBounces")}
 }
@@ -4870,6 +5122,14 @@ func (e CCitadel_Ability_Unicorn_LuminousStrike) NLastStackCount() Number[int32]
 	return Number[int32]{e.field("m_nLastStackCount")}
 }
 
+func (e CCitadel_Ability_Unicorn_LuminousStrike) VecNextExplosionTime() List[float32] {
+	return List[float32]{e.field("m_vecNextExplosionTime")}
+}
+
+func (e CCitadel_Ability_Unicorn_LuminousStrike) VecNextExplosionLocation() VectorList {
+	return VectorList{e.field("m_vecNextExplosionLocation")}
+}
+
 func (e CCitadel_Ability_Unicorn_LuminousStrike) NStackCount() Number[int32] {
 	return Number[int32]{e.field("m_nStackCount")}
 }
@@ -4881,6 +5141,14 @@ func (e CCitadel_Ability_Unicorn_LuminousStrike) BPendingStackUpdate() Bool {
 type CCitadel_Ability_Unicorn_PrismaticGuard CEntityInstance
 
 type CCitadel_Ability_Unicorn_RadiantBlast CEntityInstance
+
+func (e CCitadel_Ability_Unicorn_RadiantBlast) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Unicorn_RadiantBlast", name}
+}
+
+func (e CCitadel_Ability_Unicorn_RadiantBlast) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
+}
 
 type CCitadel_Ability_VampireBat_BatBlink CEntityInstance
 
@@ -4971,6 +5239,18 @@ type CCitadel_Ability_Vandal_Ability03 CEntityInstance
 type CCitadel_Ability_Vandal_Pillar CEntityInstance
 
 type CCitadel_Ability_ViperHookblade CEntityInstance
+
+func (e CCitadel_Ability_ViperHookblade) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_ViperHookblade", name}
+}
+
+func (e CCitadel_Ability_ViperHookblade) VecOutgoingHitList() List[uint32] {
+	return List[uint32]{e.field("m_vecOutgoingHitList")}
+}
+
+func (e CCitadel_Ability_ViperHookblade) VecReturningHitList() List[uint32] {
+	return List[uint32]{e.field("m_vecReturningHitList")}
+}
 
 type CCitadel_Ability_ViperVenom CEntityInstance
 
@@ -5134,11 +5414,23 @@ func (e CCitadel_Ability_Wrecker_BoulderGrenade) field(name string) Field {
 	return Field{e.Handle, "CCitadel_Ability_Wrecker_BoulderGrenade", name}
 }
 
+func (e CCitadel_Ability_Wrecker_BoulderGrenade) HHitTroopers() List[uint32] {
+	return List[uint32]{e.field("m_hHitTroopers")}
+}
+
 func (e CCitadel_Ability_Wrecker_BoulderGrenade) NBallParticle() Number[int32] {
 	return Number[int32]{e.field("m_nBallParticle")}
 }
 
 type CCitadel_Ability_Wrecker_Salvage CEntityInstance
+
+func (e CCitadel_Ability_Wrecker_Salvage) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Wrecker_Salvage", name}
+}
+
+func (e CCitadel_Ability_Wrecker_Salvage) VecTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecTargets")}
+}
 
 type CCitadel_Ability_Wrecker_Ultimate CEntityInstance
 
@@ -5162,6 +5454,10 @@ func (e CCitadel_Ability_WreckingBall) NBallParticle() Number[int32] {
 
 func (e CCitadel_Ability_WreckingBall) NCastCompleteParticle() Number[int32] {
 	return Number[int32]{e.field("m_nCastCompleteParticle")}
+}
+
+func (e CCitadel_Ability_WreckingBall) VecTargetsHit() List[uint32] {
+	return List[uint32]{e.field("m_vecTargetsHit")}
 }
 
 func (e CCitadel_Ability_WreckingBall) BHoldingBall() Bool {
@@ -5969,6 +6265,14 @@ type CItemHauntingScream CEntityInstance
 type CItemMysticReverb CEntityInstance
 
 type CItemSilenceGlyph CEntityInstance
+
+func (e CItemSilenceGlyph) field(name string) Field {
+	return Field{e.Handle, "CItemSilenceGlyph", name}
+}
+
+func (e CItemSilenceGlyph) VHitEnts() List[uint32] {
+	return List[uint32]{e.field("m_vHitEnts")}
+}
 
 type CItem_FleetfootBoots CEntityInstance
 

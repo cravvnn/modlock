@@ -35,13 +35,14 @@ local entities = {}
 local invalidHandle = 0xffffffff
 
 -- Field is one field or input a class declares. A field has its wire type,
--- and for a handle, the class of entity it names, or for a rotation, angles.
--- An input, which a method named after it sends, has its name and the case of
+-- and for a handle, the class of entity it names, for a rotation, angles, or
+-- for a list, that its wire type is its elements'. An input, which a method named after it sends, has its name and the case of
 -- EntityValue it takes, if any.
 type Field = {
 	type: modlock.FieldType?,
 	target: string?,
 	angles: boolean?,
+	list: boolean?,
 	input: string?,
 	value: string?,
 }
@@ -119,7 +120,8 @@ local function new(className: string, handle: number): any
 end
 
 -- describe adds one class. Each of its fields maps to its FieldType, angles,
--- or the class of entity its handle names, and each input to the case of
+-- list: and the FieldType of its elements, or the class of entity its handle
+-- names, and each input to the case of
 -- EntityValue it sends, or to the empty string for none. Its instances read a
 -- field by indexing and write one by assigning; a field the class lacks reads
 -- as nil and ignores writes, after a line in the server log.
@@ -128,6 +130,7 @@ local function describe(className: string, base: string?, entries: { [string]: s
 	for name, entry in entries do
 		local field: Field = if entry == "angles"
 			then { type = "vector", angles = true }
+			elseif string.sub(entry, 1, 5) == "list:" then { type = string.sub(entry, 6) :: modlock.FieldType, list = true }
 			elseif fieldTypes[entry] then { type = entry :: modlock.FieldType }
 			else { type = "handle", target = entry }
 		fields[name] = field
@@ -153,6 +156,9 @@ local function describe(className: string, base: string?, entries: { [string]: s
 					return modlock.fireInput(entity.handle, input, { [case] = value } :: any, activator)
 				end
 			end
+			if field.list then
+				return modlock.readFieldList(entity.handle, owner, name, field.type :: modlock.FieldType)
+			end
 			local value = modlock.readField(entity.handle, owner, name, field.type :: modlock.FieldType)
 			if value == nil then
 				return nil
@@ -169,6 +175,10 @@ local function describe(className: string, base: string?, entries: { [string]: s
 		__newindex = function(entity: any, name: string, value: any)
 			local owner, field = resolve(className, name)
 			if owner == nil or field == nil or field.input ~= nil then
+				return
+			end
+			if field.list then
+				modlock.writeFieldList(entity.handle, owner, name, field.type :: modlock.FieldType, value)
 				return
 			end
 			if field.angles then
@@ -471,6 +481,8 @@ func luauConsole(c *console) []byte {
 // luauType returns the type a field of kind k holds.
 func luauType(k kind) string {
 	switch {
+	case k.list:
+		return "{ " + luauTypes[k.wire] + " }"
 	case k.angles:
 		return "modlock.Angles"
 	case k.target != "":
@@ -480,9 +492,12 @@ func luauType(k kind) string {
 }
 
 // luauEntry returns field f's entry in its class's description: angles, the
-// class its handle names, or its FieldType.
+// class its handle names, its FieldType, or list: and the FieldType of its
+// elements.
 func luauEntry(f readable) string {
 	switch {
+	case f.list:
+		return "list:" + f.wire
 	case f.angles:
 		return "angles"
 	case f.target != "":

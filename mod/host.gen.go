@@ -657,6 +657,37 @@ func WriteField(entity uint32, className, field string, kind FieldType, value an
 	return invoke("WriteField", request, nil)
 }
 
+// ReadFieldList reads a field that holds a list, such as the m_vecBannedHeroes
+// of CCitadelGameRules. The type is the type of one element: a number, a
+// handle, a boolean or a vector. A list of structures cannot be read.
+func ReadFieldList(entity uint32, className, field string, kind FieldType) ([]any, error) {
+	request := &wasm.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	response := &wasm.FieldListResponse{}
+	if err := invoke("ReadFieldList", request, response); err != nil {
+		return nil, err
+	}
+	decoded := make([]any, 0, len(response.GetValues()))
+	for _, message := range response.GetValues() {
+		decoded = append(decoded, fromFieldValue(message))
+	}
+	return decoded, nil
+}
+
+// WriteFieldList replaces the elements of a list field and sends the change
+// to the players, growing the list when it holds fewer elements than the
+// new ones.
+func WriteFieldList(entity uint32, className, field string, kind FieldType, values []any) error {
+	request := &wasm.WriteFieldListRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	for _, value := range values {
+		encoded, err := toFieldValue(value)
+		if err != nil {
+			return err
+		}
+		request.Values = append(request.Values, encoded)
+	}
+	return invoke("WriteFieldList", request, nil)
+}
+
 // EntityClass returns a live entity's schema class, such as
 // CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
 func EntityClass(entity uint32) (*EntityClassName, error) {

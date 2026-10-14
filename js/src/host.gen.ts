@@ -1995,6 +1995,27 @@ export function writeField(entity: number, className: string, field: string, typ
 }
 
 /**
+ * readFieldList reads a field that holds a list, such as the m_vecBannedHeroes
+ * of CCitadelGameRules. The type is the type of one element: a number, a
+ * handle, a boolean or a vector. A list of structures cannot be read.
+ */
+export function readFieldList(entity: number, className: string, field: string, type: FieldType): FieldValue[] {
+  const reply = call('ReadFieldList', pb.ReadFieldRequest.toBinary({ entity, className, field, type: fieldTypeValues[type] }))
+  if (reply === undefined) return []
+  const response = pb.FieldListResponse.fromBinary(reply)
+  return (response.values ?? []).flatMap((v) => fromFieldValue(v) ?? [])
+}
+
+/**
+ * writeFieldList replaces the elements of a list field and sends the change
+ * to the players, growing the list when it holds fewer elements than the
+ * new ones.
+ */
+export function writeFieldList(entity: number, className: string, field: string, type: FieldType, values?: readonly FieldValue[]): boolean {
+  return call('WriteFieldList', pb.WriteFieldListRequest.toBinary({ entity, className, field, type: fieldTypeValues[type], values: values?.map((v) => toFieldValue(v)) })) !== undefined
+}
+
+/**
  * entityClass returns a live entity's schema class, such as
  * CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
  */

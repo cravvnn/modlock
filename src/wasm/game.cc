@@ -7,6 +7,7 @@
 #include <iostream>
 #include <span>
 #include <utility>
+#include <vector>
 
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/console_variables.h"
@@ -21,6 +22,10 @@ namespace {
 // kMaxString bounds the bytes ReadField copies for a string field.
 constexpr size_t kMaxString = 256;
 
+// kMaxList bounds the elements of a list field the host reads or grows to, so
+// a list the game has not initialized cannot size a huge copy.
+constexpr int32_t kMaxList = 1 << 20;
+
 // kMaxChanges bounds the button changes, and separately the launches, one
 // mod has not yet received.
 constexpr size_t kMaxChanges = 256;
@@ -33,6 +38,29 @@ constexpr size_t kDesignerNameOffset = 0x20;
 bool IsRulesClass(const std::string& class_name) {
   return class_name == "CGameRules" || class_name == "CTeamplayRules" ||
          class_name == "CCitadelGameRules";
+}
+
+// ListHeader is the layout of a list field: a CUtlVector, which the game's
+// networked lists share. The elements are an array of capacity entries.
+struct ListHeader {
+  int32_t size;
+  int32_t padding;
+  void* elements;
+  int32_t capacity;
+  int32_t grow;
+};
+static_assert(sizeof(ListHeader) == 24);
+
+// ReadList copies the header of the list field at address.
+std::expected<ListHeader, std::string> ReadList(const unsigned char* address) {
+  ListHeader list;
+  if (!gameinterop::ReadNative(address, &list, sizeof(list))) {
+    return std::unexpected("cannot read the list");
+  }
+  if (list.size < 0 || list.size > list.capacity || list.capacity > kMaxList) {
+    return std::unexpected("the list is not initialized");
+  }
+  return list;
 }
 
 std::array<float, 3> Floats(const Vec3& vector) {
@@ -1150,9 +1178,7 @@ std::expected<PawnResponse, std::string> Game::Pawn(const PlayerRequest& request
 std::expected<unsigned char*, std::string> Game::FieldAddress(void* entity,
                                                               const std::string& class_name,
                                                               const std::string& field,
-                                                              FieldType type) {
-  const auto size = Size(type);
-  if (size == 0) return std::unexpected("the field type is unknown");
+                                                              size_t size) {
   auto found = services_.Field(class_name, field);
   if (!found) return std::unexpected(found.error());
   if (found->size < size) {
@@ -1183,7 +1209,7 @@ std::expected<void, std::string> Game::StoreField(void* entity, const std::strin
                                                   const FieldValue& value) {
   auto bytes = Encode(type, value);
   if (!bytes) return std::unexpected(bytes.error());
-  auto address = FieldAddress(entity, class_name, field, type);
+  auto address = FieldAddress(entity, class_name, field, Size(type));
   if (!address) return std::unexpected(address.error());
   if (!gameinterop::WriteNative(*address, bytes->data(), Size(type))) {
     return std::unexpected("cannot write " + class_name + "." + field);
@@ -1194,7 +1220,9 @@ std::expected<void, std::string> Game::StoreField(void* entity, const std::strin
 std::expected<FieldResponse, std::string> Game::ReadField(const ReadFieldRequest& request) {
   auto entity = Entity(request.entity());
   if (!entity) return std::unexpected(entity.error());
-  auto address = FieldAddress(*entity, request.class_name(), request.field(), request.type());
+  const auto size = Size(request.type());
+  if (size == 0) return std::unexpected("the field type is unknown");
+  auto address = FieldAddress(*entity, request.class_name(), request.field(), size);
   if (!address) return std::unexpected(address.error());
 
   // Copy through the operating system, so a field the entity lacks fails
@@ -1218,6 +1246,75 @@ std::expected<void, std::string> Game::WriteField(const WriteFieldRequest& reque
   if (!stored) return stored;
   if (!gameinterop::NotifyEntityStateChanged(*entity)) {
     return std::unexpected("cannot replicate " + request.class_name() + "." + request.field());
+  }
+  return {};
+}
+
+std::expected<FieldListResponse, std::string> Game::ReadFieldList(const ReadFieldRequest& request) {
+  auto entity = Entity(request.entity());
+  if (!entity) return std::unexpected(entity.error());
+  const auto stride = Size(request.type());
+  if (stride == 0) return std::unexpected("the field type is unknown");
+  auto address = FieldAddress(*entity, request.class_name(), request.field(), sizeof(ListHeader));
+  if (!address) return std::unexpected(address.error());
+  auto list = ReadList(*address);
+  if (!list) return std::unexpected(list.error());
+
+  // Copy every element through the operating system, then decode each.
+  std::vector<unsigned char> bytes(static_cast<size_t>(list->size) * stride);
+  if (!bytes.empty() && !gameinterop::ReadNative(list->elements, bytes.data(), bytes.size())) {
+    return std::unexpected("cannot read " + request.class_name() + "." + request.field());
+  }
+  FieldListResponse response;
+  for (size_t at = 0; at < bytes.size(); at += stride) {
+    auto value = Decode(request.type(), &bytes[at]);
+    if (!value) return std::unexpected(value.error());
+    *response.add_values() = std::move(*value);
+  }
+  return response;
+}
+
+std::expected<void, std::string> Game::WriteFieldList(const WriteFieldListRequest& request) {
+  auto entity = Entity(request.entity());
+  if (!entity) return std::unexpected(entity.error());
+  const auto stride = Size(request.type());
+  if (stride == 0) return std::unexpected("the field type is unknown");
+  if (request.values_size() > kMaxList) return std::unexpected("the list is too long");
+  std::vector<unsigned char> bytes;
+  for (const auto& value : request.values()) {
+    auto encoded = Encode(request.type(), value);
+    if (!encoded) return std::unexpected(encoded.error());
+    bytes.insert(bytes.end(), encoded->begin(), encoded->begin() + stride);
+  }
+  auto address = FieldAddress(*entity, request.class_name(), request.field(), sizeof(ListHeader));
+  if (!address) return std::unexpected(address.error());
+  auto list = ReadList(*address);
+  if (!list) return std::unexpected(list.error());
+
+  // A list that is too short takes a larger buffer from the game's allocator,
+  // which the game frees with the list. The old buffer is left to the game
+  // since its owner is unknown, and doubling bounds what that leaves behind.
+  const auto count = request.values_size();
+  if (count > list->capacity) {
+    const int32_t capacity = std::clamp(2 * list->capacity, count, kMaxList);
+    void* grown = gameinterop::AllocateNative(static_cast<size_t>(capacity) * stride);
+    if (grown == nullptr) return std::unexpected("cannot grow " + request.field());
+    list->elements = grown;
+    list->capacity = capacity;
+  }
+
+  // Fill the elements before the header, so the list never counts an element
+  // that is not there.
+  const std::string name = request.class_name() + "." + request.field();
+  if (!bytes.empty() && !gameinterop::WriteNative(list->elements, bytes.data(), bytes.size())) {
+    return std::unexpected("cannot write " + name);
+  }
+  list->size = count;
+  if (!gameinterop::WriteNative(*address, &*list, sizeof(*list))) {
+    return std::unexpected("cannot write " + name);
+  }
+  if (!gameinterop::NotifyEntityStateChanged(*entity)) {
+    return std::unexpected("cannot replicate " + name);
   }
   return {};
 }

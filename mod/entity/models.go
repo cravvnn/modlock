@@ -208,6 +208,18 @@ func (e CBarnLight) FlLightStyleStartTime() Number[float32] {
 	return Number[float32]{e.field("m_flLightStyleStartTime")}
 }
 
+func (e CBarnLight) QueuedLightStyleStrings() TextList {
+	return TextList{e.field("m_QueuedLightStyleStrings")}
+}
+
+func (e CBarnLight) LightStyleEvents() TextList {
+	return TextList{e.field("m_LightStyleEvents")}
+}
+
+func (e CBarnLight) LightStyleTargets() List[uint32] {
+	return List[uint32]{e.field("m_LightStyleTargets")}
+}
+
 func (e CBarnLight) FlShape() Number[float32] {
 	return Number[float32]{e.field("m_flShape")}
 }
@@ -432,6 +444,10 @@ func (e CBarnLight) BTransmitAlways() Bool {
 	return Bool{e.field("m_bTransmitAlways")}
 }
 
+func (e CBarnLight) VisClusters() List[uint16] {
+	return List[uint16]{e.field("m_VisClusters")}
+}
+
 type CEnvironmentLight CEntityInstance
 
 func (e CEnvironmentLight) field(name string) Field {
@@ -524,6 +540,10 @@ func (e CBaseCombatCharacter) BForceServerRagdoll() Bool {
 	return Bool{e.field("m_bForceServerRagdoll")}
 }
 
+func (e CBaseCombatCharacter) HMyWearables() List[uint32] {
+	return List[uint32]{e.field("m_hMyWearables")}
+}
+
 func (e CBaseCombatCharacter) ImpactEnergyScale() Number[float32] {
 	return Number[float32]{e.field("m_impactEnergyScale")}
 }
@@ -564,6 +584,10 @@ func (e CAI_BaseNPC) BForceDynamicHull() Bool {
 
 func (e CAI_BaseNPC) HSynchronizedPrimaryNPC() Handle[CAI_BaseNPC] {
 	return Handle[CAI_BaseNPC]{e.field("m_hSynchronizedPrimaryNPC")}
+}
+
+func (e CAI_BaseNPC) VecSynchronizedSecondaryNPCs() List[uint32] {
+	return List[uint32]{e.field("m_vecSynchronizedSecondaryNPCs")}
 }
 
 func (e CAI_BaseNPC) NPCState() Number[uint32] {
@@ -696,6 +720,10 @@ func (e CAI_BaseNPC) FlWaitFinished() Number[float32] {
 
 func (e CAI_BaseNPC) FNoDamageDecal() Bool {
 	return Bool{e.field("m_fNoDamageDecal")}
+}
+
+func (e CAI_BaseNPC) VecAttachments() List[uint32] {
+	return List[uint32]{e.field("m_vecAttachments")}
 }
 
 func (e CAI_BaseNPC) NAITraceMask() Number[uint64] {
@@ -1676,6 +1704,10 @@ func (e CBasePropDoor) FlAutoReturnDelay() Number[float32] {
 	return Number[float32]{e.field("m_flAutoReturnDelay")}
 }
 
+func (e CBasePropDoor) HDoorList() List[uint32] {
+	return List[uint32]{e.field("m_hDoorList")}
+}
+
 func (e CBasePropDoor) NHardwareType() Number[int32] {
 	return Number[int32]{e.field("m_nHardwareType")}
 }
@@ -1834,6 +1866,10 @@ func (e CPropDoorRotatingBreakable) IsAbleToCloseAreaPortals() Bool {
 
 func (e CPropDoorRotatingBreakable) CurrentDamageState() Number[int32] {
 	return Number[int32]{e.field("m_currentDamageState")}
+}
+
+func (e CPropDoorRotatingBreakable) DamageStates() TextList {
+	return TextList{e.field("m_damageStates")}
 }
 
 type CCitadelHeroReleaseVoteTerminal CEntityInstance
@@ -2394,6 +2430,10 @@ func (e CCitadel_Bounce_Pad) FlBarrelUpFactor() Number[float32] {
 
 func (e CCitadel_Bounce_Pad) BSpeedOnLand() Bool {
 	return Bool{e.field("m_bSpeedOnLand")}
+}
+
+func (e CCitadel_Bounce_Pad) VBouncedPlayerBefore() List[uint32] {
+	return List[uint32]{e.field("m_vBouncedPlayerBefore")}
 }
 
 type CCitadel_CatAnimating CEntityInstance
@@ -3330,6 +3370,18 @@ func (e CRagdollProp) BuoyancyScale() Number[float32] {
 	return Number[float32]{e.field("m_buoyancyScale")}
 }
 
+func (e CRagdollProp) RagEnabled() BoolList {
+	return BoolList{e.field("m_ragEnabled")}
+}
+
+func (e CRagdollProp) RagPos() VectorList {
+	return VectorList{e.field("m_ragPos")}
+}
+
+func (e CRagdollProp) RagAngles() VectorList {
+	return VectorList{e.field("m_ragAngles")}
+}
+
 func (e CRagdollProp) LastUpdateTickCount() Number[uint32] {
 	return Number[uint32]{e.field("m_lastUpdateTickCount")}
 }
@@ -3416,6 +3468,14 @@ func (e CRagdollProp) FlBlendWeight() Number[float32] {
 
 func (e CRagdollProp) FlDefaultFadeScale() Number[float32] {
 	return Number[float32]{e.field("m_flDefaultFadeScale")}
+}
+
+func (e CRagdollProp) RagdollMins() VectorList {
+	return VectorList{e.field("m_ragdollMins")}
+}
+
+func (e CRagdollProp) RagdollMaxs() VectorList {
+	return VectorList{e.field("m_ragdollMaxs")}
 }
 
 func (e CRagdollProp) BShouldDeleteActivationRecord() Bool {
@@ -3552,6 +3612,10 @@ func (e CPointClientUIWorldPanel) UnOrientation() Number[uint32] {
 
 func (e CPointClientUIWorldPanel) BAllowInteractionFromAllSceneWorlds() Bool {
 	return Bool{e.field("m_bAllowInteractionFromAllSceneWorlds")}
+}
+
+func (e CPointClientUIWorldPanel) VecCSSClasses() TextList {
+	return TextList{e.field("m_vecCSSClasses")}
 }
 
 func (e CPointClientUIWorldPanel) BOpaque() Bool {
@@ -3996,6 +4060,10 @@ type CBaseTrigger CEntityInstance
 
 func (e CBaseTrigger) field(name string) Field {
 	return Field{e.Handle, "CBaseTrigger", name}
+}
+
+func (e CBaseTrigger) HTouchingEntities() List[uint32] {
+	return List[uint32]{e.field("m_hTouchingEntities")}
 }
 
 func (e CBaseTrigger) IFilterName() Text {
@@ -4528,6 +4596,14 @@ func (e CTriggerAddModifier) BMomentary() Bool {
 
 type CTriggerBurrowUnderground CEntityInstance
 
+func (e CTriggerBurrowUnderground) field(name string) Field {
+	return Field{e.Handle, "CTriggerBurrowUnderground", name}
+}
+
+func (e CTriggerBurrowUnderground) PTouchedEntities() List[uint32] {
+	return List[uint32]{e.field("m_pTouchedEntities")}
+}
+
 type CTriggerCallback CEntityInstance
 
 type CTriggerDetectBulletFire CEntityInstance
@@ -4708,6 +4784,10 @@ func (e CTriggerHurt) ThinkAlways() Bool {
 
 func (e CTriggerHurt) HurtThinkPeriod() Number[float32] {
 	return Number[float32]{e.field("m_hurtThinkPeriod")}
+}
+
+func (e CTriggerHurt) HurtEntities() List[uint32] {
+	return List[uint32]{e.field("m_hurtEntities")}
 }
 
 type CCitadelTriggerHurt CEntityInstance
@@ -5054,6 +5134,18 @@ func (e CTriggerLook) BTestAllVisibleOcclusion() Bool {
 
 type CTriggerNeutralShield CEntityInstance
 
+func (e CTriggerNeutralShield) field(name string) Field {
+	return Field{e.Handle, "CTriggerNeutralShield", name}
+}
+
+func (e CTriggerNeutralShield) VecPlayers() List[uint32] {
+	return List[uint32]{e.field("m_vecPlayers")}
+}
+
+func (e CTriggerNeutralShield) VecNeutrals() List[uint32] {
+	return List[uint32]{e.field("m_vecNeutrals")}
+}
+
 type CTriggerMidBossShield CEntityInstance
 
 type CTriggerNeutralIdles CEntityInstance
@@ -5262,6 +5354,10 @@ func (e CTriggerSndSosOpvar) field(name string) Field {
 	return Field{e.Handle, "CTriggerSndSosOpvar", name}
 }
 
+func (e CTriggerSndSosOpvar) HTouchingPlayers() List[uint32] {
+	return List[uint32]{e.field("m_hTouchingPlayers")}
+}
+
 func (e CTriggerSndSosOpvar) FlPosition() Vector {
 	return Vector{e.field("m_flPosition")}
 }
@@ -5314,6 +5410,10 @@ func (e CTriggerSoundscape) HSoundscape() Handle[CEnvSoundscapeTriggerable] {
 
 func (e CTriggerSoundscape) SoundscapeName() Text {
 	return Text{e.field("m_SoundscapeName")}
+}
+
+func (e CTriggerSoundscape) Spectators() List[uint32] {
+	return List[uint32]{e.field("m_spectators")}
 }
 
 type CTriggerSuspendModifier CEntityInstance
@@ -5884,6 +5984,10 @@ func (e CCitadelProjectile) VLastAbsVelocity() Vector {
 	return Vector{e.field("m_vLastAbsVelocity")}
 }
 
+func (e CCitadelProjectile) VecTargetToIgnore() List[uint32] {
+	return List[uint32]{e.field("m_vecTargetToIgnore")}
+}
+
 func (e CCitadelProjectile) BDetonateStarted() Bool {
 	return Bool{e.field("m_bDetonateStarted")}
 }
@@ -6092,6 +6196,10 @@ func (e CCitadel_Projectile_BloodBomb) FlArmingDuration() Number[float32] {
 	return Number[float32]{e.field("m_flArmingDuration")}
 }
 
+func (e CCitadel_Projectile_BloodBomb) VecBeepIntervals() List[float32] {
+	return List[float32]{e.field("m_vecBeepIntervals")}
+}
+
 type CCitadel_Projectile_BookwormGun CEntityInstance
 
 type CCitadel_Projectile_BubblingBrew CEntityInstance
@@ -6174,6 +6282,14 @@ func (e CCitadel_Projectile_Viscous_GooGrenade) TNextDetonateTime() Number[float
 	return Number[float32]{e.field("m_tNextDetonateTime")}
 }
 
+func (e CCitadel_Projectile_Viscous_GooGrenade) VecLastHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecLastHitTargets")}
+}
+
+func (e CCitadel_Projectile_Viscous_GooGrenade) VecProjectileHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecProjectileHitTargets")}
+}
+
 type CCitadel_Projectile_WebWall CEntityInstance
 
 func (e CCitadel_Projectile_WebWall) field(name string) Field {
@@ -6224,6 +6340,14 @@ type CProjectile_Boho_SkipGrenade CEntityInstance
 
 type CProjectile_BookwormDragon_Projectile CEntityInstance
 
+func (e CProjectile_BookwormDragon_Projectile) field(name string) Field {
+	return Field{e.Handle, "CProjectile_BookwormDragon_Projectile", name}
+}
+
+func (e CProjectile_BookwormDragon_Projectile) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
+}
+
 type CProjectile_ChessMaster_Fork_Projectile CEntityInstance
 
 type CProjectile_Doorman_Cart_Projectile CEntityInstance
@@ -6259,6 +6383,14 @@ type CProjectile_Necro_HauntProjectile CEntityInstance
 type CProjectile_Necro_ZombieWall_Projectile CEntityInstance
 
 type CProjectile_Perched_Predator CEntityInstance
+
+func (e CProjectile_Perched_Predator) field(name string) Field {
+	return Field{e.Handle, "CProjectile_Perched_Predator", name}
+}
+
+func (e CProjectile_Perched_Predator) VecHitEntities() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEntities")}
+}
 
 type CProjectile_Rolling_FireBall CEntityInstance
 
@@ -6366,6 +6498,14 @@ func (e CCitadelZipLineNode) field(name string) Field {
 	return Field{e.Handle, "CCitadelZipLineNode", name}
 }
 
+func (e CCitadelZipLineNode) VecConnections() List[uint32] {
+	return List[uint32]{e.field("m_vecConnections")}
+}
+
+func (e CCitadelZipLineNode) VecConnectionDir() List[int32] {
+	return List[int32]{e.field("m_vecConnectionDir")}
+}
+
 func (e CCitadelZipLineNode) VTangentIn() Vector {
 	return Vector{e.field("m_vTangentIn")}
 }
@@ -6424,6 +6564,10 @@ func (e CCitadelZipLineNode) FlSpeedMultiplierToBaseBonus() Number[float32] {
 
 func (e CCitadelZipLineNode) FlSpeedMultiplierFromBaseBonus() Number[float32] {
 	return Number[float32]{e.field("m_flSpeedMultiplierFromBaseBonus")}
+}
+
+func (e CCitadelZipLineNode) HGuardingBosses() List[uint32] {
+	return List[uint32]{e.field("m_hGuardingBosses")}
 }
 
 func (e CCitadelZipLineNode) FlRopeRadius() Number[float32] {
@@ -6790,6 +6934,10 @@ func (e CFuncLadder) field(name string) Field {
 
 func (e CFuncLadder) VecLadderDir() Vector {
 	return Vector{e.field("m_vecLadderDir")}
+}
+
+func (e CFuncLadder) Dismounts() List[uint32] {
+	return List[uint32]{e.field("m_Dismounts")}
 }
 
 func (e CFuncLadder) VecLocalTop() Vector {
@@ -7416,6 +7564,10 @@ func (e CFuncShatterglass) field(name string) Field {
 	return Field{e.Handle, "CFuncShatterglass", name}
 }
 
+func (e CFuncShatterglass) VecShatterGlassShards() List[uint32] {
+	return List[uint32]{e.field("m_vecShatterGlassShards")}
+}
+
 func (e CFuncShatterglass) FlLastShatterSoundEmitTime() Number[float32] {
 	return Number[float32]{e.field("m_flLastShatterSoundEmitTime")}
 }
@@ -7478,6 +7630,14 @@ func (e CFuncShatterglass) SzDamagePositioningEntityName03() Text {
 
 func (e CFuncShatterglass) SzDamagePositioningEntityName04() Text {
 	return Text{e.field("m_szDamagePositioningEntityName04")}
+}
+
+func (e CFuncShatterglass) VInitialDamagePositions() VectorList {
+	return VectorList{e.field("m_vInitialDamagePositions")}
+}
+
+func (e CFuncShatterglass) VExtraDamagePositions() VectorList {
+	return VectorList{e.field("m_vExtraDamagePositions")}
 }
 
 func (e CFuncShatterglass) ISurfaceType() Number[uint8] {

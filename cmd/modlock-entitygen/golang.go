@@ -234,6 +234,10 @@ func goMethod(field string) string {
 // on entity e.
 func goField(f readable) (typ, value string) {
 	switch {
+	case f.list && goFields[f.wire] != "":
+		typ = goFields[f.wire] + "List"
+	case f.list:
+		typ = "List[" + goNumbers[f.wire] + "]"
 	case f.angles:
 		typ = "Angles"
 	case f.target != "":
