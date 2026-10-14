@@ -2273,10 +2273,29 @@ void Game::HoldClock() {
   if (!now) return;
 
   // A hold the game refuses ends with a log line instead of every frame.
-  if (auto held = (*clock)->Restore(*held_clock_, now->current_time, now->interval); !held) {
+  auto held = (*clock)->Restore(*held_clock_, now->current_time, now->interval);
+  if (held) held = ReplicateClock();
+  if (!held) {
     std::cerr << "[modlock] match clock hold ended: " << held.error() << "\n";
     held_clock_.reset();
   }
+}
+
+std::expected<void, std::string> Game::ReplicateClock() {
+  auto rules = Entity(rules_entity_);
+  if (!rules) {
+    auto world = World();
+    if (!world) return std::unexpected(world.error());
+    auto found = (*world)->Find("citadel_gamerules");
+    if (!found) return std::unexpected(found.error());
+    if (found->empty()) return std::unexpected("the game has no rules entity");
+    rules_entity_ = found->front();
+    rules = Entity(rules_entity_);
+    if (!rules) return std::unexpected(rules.error());
+  }
+  if (!gameinterop::NotifyEntityStateChanged(*rules))
+    return std::unexpected("match clock replication is unavailable");
+  return {};
 }
 
 std::expected<RiftResponse, std::string> Game::Rift() {

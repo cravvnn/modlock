@@ -444,6 +444,11 @@ class Game : public HostService {
   // each frame.
   void HoldClock();
 
+  // ReplicateClock sends the restored match clock to every client. The start
+  // time lives in the game rules, which clients receive through the rules
+  // entity; a plain write there reaches only clients that join later.
+  std::expected<void, std::string> ReplicateClock();
+
   // LatchTime is the time a hero's stamina latch counts from: the simulation
   // time without the ticks the game spent paused.
   std::expected<float, std::string> LatchTime();
@@ -579,6 +584,8 @@ class Game : public HostService {
   // held_clock_ is the match time the mod holds; paused_ is true while the
   // mod has the game paused.
   std::optional<float> held_clock_;
+  // rules_entity_ is the handle of the game rules entity, found on first use.
+  uint32_t rules_entity_ = 0;
   bool paused_ = false;
 };
 
