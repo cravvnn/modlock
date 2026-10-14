@@ -2591,7 +2591,9 @@ def read_field(entity: int, class_name: str, field: str, type: FieldType) -> Fie
     """read_field reads one schema field of a live entity, such as the int32
     m_iHealth of CBaseEntity. The host finds the field by name, so it
     survives game updates that move it, and refuses an entity that is not of
-    the named class or a subclass.
+    the named class or a subclass. The match's state, such as the gold of each
+    team or the winning team, is a field of CCitadelGameRules, which the
+    citadel_gamerules entity reads.
     """
     response = _call("ReadField", "ReadFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type}, "FieldResponse")
     if response is None:
@@ -2602,7 +2604,8 @@ def read_field(entity: int, class_name: str, field: str, type: FieldType) -> Fie
 def write_field(entity: int, class_name: str, field: str, type: FieldType, value: FieldValue) -> bool:
     """write_field writes one schema field of a live entity and sends the change
     to the players. The value takes the form ReadField returns for the type;
-    text fields cannot be written.
+    text fields cannot be written. A write to the match's state sends all of
+    it, so players already in the match see the change.
     """
     return _call("WriteField", "WriteFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type, "value": value}) is not None
 

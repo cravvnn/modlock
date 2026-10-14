@@ -11682,6 +11682,125 @@ define(CTonemapController2Alias_env_tonemap_controller2, 'CTonemapController2Ali
 export class C_HeroPreview extends CBaseEntity {}
 define(C_HeroPreview, 'C_HeroPreview', {})
 
+const fieldsCGameRules = {
+  m_nQuestPhase: 'int32',
+  m_nLastMatchTime: 'uint32',
+  m_nLastMatchTime_MatchID64: 'uint64',
+  m_nTotalPausedTicks: 'int32',
+  m_nPauseStartTick: 'int32',
+  m_bGamePaused: 'bool',
+} as const
+export class CGameRules extends CEntityInstance {}
+export interface CGameRules extends Fields<typeof fieldsCGameRules> {}
+define(CGameRules, 'CGameRules', fieldsCGameRules)
+
+export class CMultiplayRules extends CGameRules {}
+define(CMultiplayRules, 'CMultiplayRules', {})
+
+export class CTeamplayRules extends CMultiplayRules {}
+define(CTeamplayRules, 'CTeamplayRules', {})
+
+const fieldsCCitadelGameRules = {
+  m_bFreezePeriod: 'bool',
+  m_fLevelStartTime: 'float32',
+  m_flGameStartTime: 'float32',
+  m_flGameStateStartTime: 'float32',
+  m_flGameStateEndTime: 'float32',
+  m_flRoundStartTime: 'float32',
+  m_flPlayOfTheGameStateEndTime: 'float32',
+  m_eGameState: 'uint32',
+  m_hTowerAmber: 'CBaseEntity',
+  m_hTowerSapphire: 'CBaseEntity',
+  m_bEnemyInAmberBase: 'bool',
+  m_bEnemyInSapphireBase: 'bool',
+  m_bEnemyPlayersInAmberBase: 'bool',
+  m_bEnemyPlayersInSapphireBase: 'bool',
+  m_vMinimapMins: 'vector',
+  m_vMinimapMaxs: 'vector',
+  m_bMatchSafeToAbandon: 'bool',
+  m_bMatchNotScored: 'bool',
+  m_tAbandonTriggerEarlyTime: 'float32',
+  m_bAbandonTriggerSapphire: 'bool',
+  m_bAbandonTriggerAmber: 'bool',
+  m_eMatchMode: 'uint32',
+  m_eGameMode: 'uint32',
+  m_unSpectatorCount: 'uint32',
+  m_unExpectedPlayerCount: 'uint32',
+  m_nHideoutOwner: 'uint32',
+  m_hTrooperMinimap: 'CCitadelTrooperMinimap',
+  m_iWinningTeam: 'int32',
+  m_nCorruptedPenaltySeed: 'uint32',
+  m_nNumCorruptedItemsLimit: 'int32',
+  m_nKothScoringTeam: 'int32',
+  m_timeKothScoring: 'float32',
+  m_timeKothCashInStarted: 'float32',
+  m_timeKothGiveUp: 'float32',
+  m_nAmberGold: 'int32',
+  m_nSapphireGold: 'int32',
+  m_vKothCashInCurrentLocation: 'vector',
+  m_hCurrentHeroDrafterRebels: 'CBaseEntity',
+  m_hCurrentHeroDrafterCombine: 'CBaseEntity',
+  m_bDontUploadStats: 'bool',
+  m_bIsEndGameTest: 'bool',
+  m_bSpawnedBots: 'bool',
+  m_bGuideBotAssigned: 'bool',
+  m_timeLastSpawnCrates: 'float32',
+  m_timeNextKothSpawn: 'float32',
+  m_timeNextKothSpawnWindowTime: 'float32',
+  m_vNextKothLocation: 'vector',
+  m_nKothSpawnWarnings: 'int32',
+  m_bNotifiedClientsOfNextCrateSpawn: 'bool',
+  m_bEarlyCratesSpawned: 'bool',
+  m_bIsEarlyCrateGamestate: 'bool',
+  m_nNumCorruptedItemShopSpawns: 'int32',
+  m_flGameTimeAllPlayersDisconnected: 'float32',
+  m_nNextHeroDraftPosition: 'int32',
+  m_flTimeScaleStart: 'float32',
+  m_flTimeScaleEndTime: 'float32',
+  m_flTimeScaleRampInEndTime: 'float32',
+  m_flTimeScaleRampOutStartTime: 'float32',
+  m_flTimeScaleRampInTime: 'float32',
+  m_flTimeScaleDuration: 'float32',
+  m_flTimeScaleRampOutTime: 'float32',
+  m_flTimeScale: 'float32',
+  m_flOriginalTimeScale: 'float32',
+  m_bTimeScaleActive: 'bool',
+  m_iMidbossKillCount: 'int32',
+  m_iAmberRejuvCount: 'int32',
+  m_iSapphireRejuvCount: 'int32',
+  m_tNextMidBossSpawnTime: 'float32',
+  m_bServerPaused: 'bool',
+  m_iPauseTeam: 'int32',
+  m_nMatchClockUpdateTick: 'int32',
+  m_flMatchClockAtLastUpdate: 'float32',
+  m_flPauseTime: 'float64',
+  m_fPauseRawTime: 'float32',
+  m_fPauseCurTime: 'float32',
+  m_fUnpauseRawTime: 'float32',
+  m_fUnpauseCurTime: 'float32',
+  m_nLastPreGameCount: 'int32',
+  m_eGGTeam: 'int32',
+  m_flGGEndsAtTime: 'float32',
+  m_bGGMarkAsNotScored: 'bool',
+  m_unMatchID: 'uint64',
+  m_sGameplayExperiment: 'string',
+  m_ExperimentTokenHashCode: 'uint32',
+  m_nPlayerDeathEventID: 'int32',
+  m_nReplayChangedEvent: 'int32',
+  m_nGameOverEvent: 'int32',
+  m_flHeroDiedTime: 'float32',
+} as const
+export class CCitadelGameRules extends CTeamplayRules {}
+export interface CCitadelGameRules extends Fields<typeof fieldsCCitadelGameRules> {}
+define(CCitadelGameRules, 'CCitadelGameRules', fieldsCCitadelGameRules)
+
+const fieldsCSingleplayRules = {
+  m_bSinglePlayerGameEnding: 'bool',
+} as const
+export class CSingleplayRules extends CGameRules {}
+export interface CSingleplayRules extends Fields<typeof fieldsCSingleplayRules> {}
+define(CSingleplayRules, 'CSingleplayRules', fieldsCSingleplayRules)
+
 /** Targets maps each class a handle field names to its instances. */
 interface Targets {
   CAI_BaseNPC: CAI_BaseNPC
@@ -11700,6 +11819,7 @@ interface Targets {
   CCitadelPlayerPawn: CCitadelPlayerPawn
   CCitadelPortalTrigger: CCitadelPortalTrigger
   CCitadelProjectile: CCitadelProjectile
+  CCitadelTrooperMinimap: CCitadelTrooperMinimap
   CCitadelTunnelNode: CCitadelTunnelNode
   CCitadelViscousBall: CCitadelViscousBall
   CCitadel_Ability_Dust_Storm: CCitadel_Ability_Dust_Storm

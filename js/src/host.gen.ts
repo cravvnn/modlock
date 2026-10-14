@@ -1973,7 +1973,9 @@ export function holdReload(held: boolean): boolean {
  * readField reads one schema field of a live entity, such as the int32
  * m_iHealth of CBaseEntity. The host finds the field by name, so it
  * survives game updates that move it, and refuses an entity that is not of
- * the named class or a subclass.
+ * the named class or a subclass. The match's state, such as the gold of each
+ * team or the winning team, is a field of CCitadelGameRules, which the
+ * citadel_gamerules entity reads.
  */
 export function readField(entity: number, className: string, field: string, type: FieldType): FieldValue | undefined {
   const reply = call('ReadField', pb.ReadFieldRequest.toBinary({ entity, className, field, type: fieldTypeValues[type] }))
@@ -1985,7 +1987,8 @@ export function readField(entity: number, className: string, field: string, type
 /**
  * writeField writes one schema field of a live entity and sends the change
  * to the players. The value takes the form ReadField returns for the type;
- * text fields cannot be written.
+ * text fields cannot be written. A write to the match's state sends all of
+ * it, so players already in the match see the change.
  */
 export function writeField(entity: number, className: string, field: string, type: FieldType, value: FieldValue): boolean {
   return call('WriteField', pb.WriteFieldRequest.toBinary({ entity, className, field, type: fieldTypeValues[type], value: toFieldValue(value) })) !== undefined

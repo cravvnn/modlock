@@ -28,6 +28,13 @@ constexpr size_t kMaxChanges = 256;
 // kDesignerNameOffset is CEntityIdentity's designer name pointer.
 constexpr size_t kDesignerNameOffset = 0x20;
 
+// IsRulesClass reports whether class_name is one of the classes that declare
+// the game rules' fields.
+bool IsRulesClass(const std::string& class_name) {
+  return class_name == "CGameRules" || class_name == "CTeamplayRules" ||
+         class_name == "CCitadelGameRules";
+}
+
 std::array<float, 3> Floats(const Vec3& vector) {
   return {static_cast<float>(vector.x()), static_cast<float>(vector.y()),
           static_cast<float>(vector.z())};
@@ -613,6 +620,24 @@ std::expected<gameinterop::MatchClock*, std::string> GameServices::Clock() {
   return &*clock_;
 }
 
+std::expected<void*, std::string> GameServices::Rules() {
+  auto image = Image();
+  if (!image) return std::unexpected(image.error());
+  if (!rules_) {
+    auto current = gameinterop::ResolveCurrentGameRules(**image);
+    if (!current) return std::unexpected(current.error());
+    rules_ = *current;
+  }
+  void* rules = nullptr;
+  std::memcpy(&rules, rules_, sizeof(rules));
+  if (!rules) return std::unexpected("the game rules are not active");
+  uintptr_t table = 0;
+  std::memcpy(&table, rules, sizeof(table));
+  if (table < (*image)->base() || table - (*image)->base() >= (*image)->image_bytes().size())
+    return std::unexpected("the game rules leave the server module");
+  return rules;
+}
+
 std::expected<gameinterop::KothRules*, std::string> GameServices::Rift() {
   if (!rift_) {
     auto image = Image();
@@ -1137,6 +1162,14 @@ std::expected<unsigned char*, std::string> Game::FieldAddress(void* entity,
   // The offset belongs to class_name, so the entity must be one.
   auto actual = gameinterop::SchemaClassOfEntity(entity, gameinterop::ReadNative);
   if (!actual) return std::unexpected(actual.error());
+
+  // The game rules are not an entity: their proxy entity points to them and
+  // sends their fields, so a rules field is read and written through it.
+  if (IsRulesClass(class_name) && services_.Derives(*actual, "CGameRulesProxy")) {
+    auto rules = services_.Rules();
+    if (!rules) return std::unexpected(rules.error());
+    return static_cast<unsigned char*>(*rules) + found->offset;
+  }
   if (!services_.Derives(*actual, class_name)) {
     return std::unexpected("the entity is a " +
                            std::string(gameinterop::SchemaClassNameOf(*actual)) + ", not a " +

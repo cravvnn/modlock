@@ -85,8 +85,18 @@ func readSchema(dir string) (*schema, error) {
 		}
 		s.classes[c.name] = c
 	}
+
+	// The game rules are not an entity, but the host reads their fields through
+	// the rules proxy entity, so their classes take the entity root as a base
+	// and wrap the proxy's handle.
+	if rules, ok := s.classes[rulesRoot]; ok {
+		rules.base = entityRoot
+	}
 	return s, nil
 }
+
+// rulesRoot is the class every game rules class derives from.
+const rulesRoot = "CGameRules"
 
 // entityRoot is the class every entity derives from.
 const entityRoot = "CEntityInstance"

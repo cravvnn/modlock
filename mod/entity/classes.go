@@ -7609,3 +7609,405 @@ func (e CTonemapController2) FlTonemapEVSmoothingRange() Number[float32] {
 type CTonemapController2Alias_env_tonemap_controller2 CEntityInstance
 
 type C_HeroPreview CEntityInstance
+
+type CGameRules CEntityInstance
+
+func (e CGameRules) field(name string) Field {
+	return Field{e.Handle, "CGameRules", name}
+}
+
+func (e CGameRules) NQuestPhase() Number[int32] {
+	return Number[int32]{e.field("m_nQuestPhase")}
+}
+
+func (e CGameRules) NLastMatchTime() Number[uint32] {
+	return Number[uint32]{e.field("m_nLastMatchTime")}
+}
+
+func (e CGameRules) NLastMatchTime_MatchID64() Number[uint64] {
+	return Number[uint64]{e.field("m_nLastMatchTime_MatchID64")}
+}
+
+func (e CGameRules) NTotalPausedTicks() Number[int32] {
+	return Number[int32]{e.field("m_nTotalPausedTicks")}
+}
+
+func (e CGameRules) NPauseStartTick() Number[int32] {
+	return Number[int32]{e.field("m_nPauseStartTick")}
+}
+
+func (e CGameRules) BGamePaused() Bool {
+	return Bool{e.field("m_bGamePaused")}
+}
+
+type CMultiplayRules CEntityInstance
+
+type CTeamplayRules CEntityInstance
+
+type CCitadelGameRules CEntityInstance
+
+func (e CCitadelGameRules) field(name string) Field {
+	return Field{e.Handle, "CCitadelGameRules", name}
+}
+
+func (e CCitadelGameRules) BFreezePeriod() Bool {
+	return Bool{e.field("m_bFreezePeriod")}
+}
+
+func (e CCitadelGameRules) FLevelStartTime() Number[float32] {
+	return Number[float32]{e.field("m_fLevelStartTime")}
+}
+
+func (e CCitadelGameRules) FlGameStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flGameStartTime")}
+}
+
+func (e CCitadelGameRules) FlGameStateStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flGameStateStartTime")}
+}
+
+func (e CCitadelGameRules) FlGameStateEndTime() Number[float32] {
+	return Number[float32]{e.field("m_flGameStateEndTime")}
+}
+
+func (e CCitadelGameRules) FlRoundStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flRoundStartTime")}
+}
+
+func (e CCitadelGameRules) FlPlayOfTheGameStateEndTime() Number[float32] {
+	return Number[float32]{e.field("m_flPlayOfTheGameStateEndTime")}
+}
+
+func (e CCitadelGameRules) EGameState() Number[uint32] {
+	return Number[uint32]{e.field("m_eGameState")}
+}
+
+func (e CCitadelGameRules) HTowerAmber() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hTowerAmber")}
+}
+
+func (e CCitadelGameRules) HTowerSapphire() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hTowerSapphire")}
+}
+
+func (e CCitadelGameRules) BEnemyInAmberBase() Bool {
+	return Bool{e.field("m_bEnemyInAmberBase")}
+}
+
+func (e CCitadelGameRules) BEnemyInSapphireBase() Bool {
+	return Bool{e.field("m_bEnemyInSapphireBase")}
+}
+
+func (e CCitadelGameRules) BEnemyPlayersInAmberBase() Bool {
+	return Bool{e.field("m_bEnemyPlayersInAmberBase")}
+}
+
+func (e CCitadelGameRules) BEnemyPlayersInSapphireBase() Bool {
+	return Bool{e.field("m_bEnemyPlayersInSapphireBase")}
+}
+
+func (e CCitadelGameRules) VMinimapMins() Vector {
+	return Vector{e.field("m_vMinimapMins")}
+}
+
+func (e CCitadelGameRules) VMinimapMaxs() Vector {
+	return Vector{e.field("m_vMinimapMaxs")}
+}
+
+func (e CCitadelGameRules) BMatchSafeToAbandon() Bool {
+	return Bool{e.field("m_bMatchSafeToAbandon")}
+}
+
+func (e CCitadelGameRules) BMatchNotScored() Bool {
+	return Bool{e.field("m_bMatchNotScored")}
+}
+
+func (e CCitadelGameRules) TAbandonTriggerEarlyTime() Number[float32] {
+	return Number[float32]{e.field("m_tAbandonTriggerEarlyTime")}
+}
+
+func (e CCitadelGameRules) BAbandonTriggerSapphire() Bool {
+	return Bool{e.field("m_bAbandonTriggerSapphire")}
+}
+
+func (e CCitadelGameRules) BAbandonTriggerAmber() Bool {
+	return Bool{e.field("m_bAbandonTriggerAmber")}
+}
+
+func (e CCitadelGameRules) EMatchMode() Number[uint32] {
+	return Number[uint32]{e.field("m_eMatchMode")}
+}
+
+func (e CCitadelGameRules) EGameMode() Number[uint32] {
+	return Number[uint32]{e.field("m_eGameMode")}
+}
+
+func (e CCitadelGameRules) UnSpectatorCount() Number[uint32] {
+	return Number[uint32]{e.field("m_unSpectatorCount")}
+}
+
+func (e CCitadelGameRules) UnExpectedPlayerCount() Number[uint32] {
+	return Number[uint32]{e.field("m_unExpectedPlayerCount")}
+}
+
+func (e CCitadelGameRules) NHideoutOwner() Number[uint32] {
+	return Number[uint32]{e.field("m_nHideoutOwner")}
+}
+
+func (e CCitadelGameRules) HTrooperMinimap() Handle[CCitadelTrooperMinimap] {
+	return Handle[CCitadelTrooperMinimap]{e.field("m_hTrooperMinimap")}
+}
+
+func (e CCitadelGameRules) IWinningTeam() Number[int32] {
+	return Number[int32]{e.field("m_iWinningTeam")}
+}
+
+func (e CCitadelGameRules) NCorruptedPenaltySeed() Number[uint32] {
+	return Number[uint32]{e.field("m_nCorruptedPenaltySeed")}
+}
+
+func (e CCitadelGameRules) NNumCorruptedItemsLimit() Number[int32] {
+	return Number[int32]{e.field("m_nNumCorruptedItemsLimit")}
+}
+
+func (e CCitadelGameRules) NKothScoringTeam() Number[int32] {
+	return Number[int32]{e.field("m_nKothScoringTeam")}
+}
+
+func (e CCitadelGameRules) TimeKothScoring() Number[float32] {
+	return Number[float32]{e.field("m_timeKothScoring")}
+}
+
+func (e CCitadelGameRules) TimeKothCashInStarted() Number[float32] {
+	return Number[float32]{e.field("m_timeKothCashInStarted")}
+}
+
+func (e CCitadelGameRules) TimeKothGiveUp() Number[float32] {
+	return Number[float32]{e.field("m_timeKothGiveUp")}
+}
+
+func (e CCitadelGameRules) NAmberGold() Number[int32] {
+	return Number[int32]{e.field("m_nAmberGold")}
+}
+
+func (e CCitadelGameRules) NSapphireGold() Number[int32] {
+	return Number[int32]{e.field("m_nSapphireGold")}
+}
+
+func (e CCitadelGameRules) VKothCashInCurrentLocation() Vector {
+	return Vector{e.field("m_vKothCashInCurrentLocation")}
+}
+
+func (e CCitadelGameRules) HCurrentHeroDrafterRebels() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hCurrentHeroDrafterRebels")}
+}
+
+func (e CCitadelGameRules) HCurrentHeroDrafterCombine() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hCurrentHeroDrafterCombine")}
+}
+
+func (e CCitadelGameRules) BDontUploadStats() Bool {
+	return Bool{e.field("m_bDontUploadStats")}
+}
+
+func (e CCitadelGameRules) BIsEndGameTest() Bool {
+	return Bool{e.field("m_bIsEndGameTest")}
+}
+
+func (e CCitadelGameRules) BSpawnedBots() Bool {
+	return Bool{e.field("m_bSpawnedBots")}
+}
+
+func (e CCitadelGameRules) BGuideBotAssigned() Bool {
+	return Bool{e.field("m_bGuideBotAssigned")}
+}
+
+func (e CCitadelGameRules) TimeLastSpawnCrates() Number[float32] {
+	return Number[float32]{e.field("m_timeLastSpawnCrates")}
+}
+
+func (e CCitadelGameRules) TimeNextKothSpawn() Number[float32] {
+	return Number[float32]{e.field("m_timeNextKothSpawn")}
+}
+
+func (e CCitadelGameRules) TimeNextKothSpawnWindowTime() Number[float32] {
+	return Number[float32]{e.field("m_timeNextKothSpawnWindowTime")}
+}
+
+func (e CCitadelGameRules) VNextKothLocation() Vector {
+	return Vector{e.field("m_vNextKothLocation")}
+}
+
+func (e CCitadelGameRules) NKothSpawnWarnings() Number[int32] {
+	return Number[int32]{e.field("m_nKothSpawnWarnings")}
+}
+
+func (e CCitadelGameRules) BNotifiedClientsOfNextCrateSpawn() Bool {
+	return Bool{e.field("m_bNotifiedClientsOfNextCrateSpawn")}
+}
+
+func (e CCitadelGameRules) BEarlyCratesSpawned() Bool {
+	return Bool{e.field("m_bEarlyCratesSpawned")}
+}
+
+func (e CCitadelGameRules) BIsEarlyCrateGamestate() Bool {
+	return Bool{e.field("m_bIsEarlyCrateGamestate")}
+}
+
+func (e CCitadelGameRules) NNumCorruptedItemShopSpawns() Number[int32] {
+	return Number[int32]{e.field("m_nNumCorruptedItemShopSpawns")}
+}
+
+func (e CCitadelGameRules) FlGameTimeAllPlayersDisconnected() Number[float32] {
+	return Number[float32]{e.field("m_flGameTimeAllPlayersDisconnected")}
+}
+
+func (e CCitadelGameRules) NNextHeroDraftPosition() Number[int32] {
+	return Number[int32]{e.field("m_nNextHeroDraftPosition")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleStart() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleStart")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleEndTime() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleEndTime")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleRampInEndTime() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleRampInEndTime")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleRampOutStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleRampOutStartTime")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleRampInTime() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleRampInTime")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleDuration() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleDuration")}
+}
+
+func (e CCitadelGameRules) FlTimeScaleRampOutTime() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScaleRampOutTime")}
+}
+
+func (e CCitadelGameRules) FlTimeScale() Number[float32] {
+	return Number[float32]{e.field("m_flTimeScale")}
+}
+
+func (e CCitadelGameRules) FlOriginalTimeScale() Number[float32] {
+	return Number[float32]{e.field("m_flOriginalTimeScale")}
+}
+
+func (e CCitadelGameRules) BTimeScaleActive() Bool {
+	return Bool{e.field("m_bTimeScaleActive")}
+}
+
+func (e CCitadelGameRules) IMidbossKillCount() Number[int32] {
+	return Number[int32]{e.field("m_iMidbossKillCount")}
+}
+
+func (e CCitadelGameRules) IAmberRejuvCount() Number[int32] {
+	return Number[int32]{e.field("m_iAmberRejuvCount")}
+}
+
+func (e CCitadelGameRules) ISapphireRejuvCount() Number[int32] {
+	return Number[int32]{e.field("m_iSapphireRejuvCount")}
+}
+
+func (e CCitadelGameRules) TNextMidBossSpawnTime() Number[float32] {
+	return Number[float32]{e.field("m_tNextMidBossSpawnTime")}
+}
+
+func (e CCitadelGameRules) BServerPaused() Bool {
+	return Bool{e.field("m_bServerPaused")}
+}
+
+func (e CCitadelGameRules) IPauseTeam() Number[int32] {
+	return Number[int32]{e.field("m_iPauseTeam")}
+}
+
+func (e CCitadelGameRules) NMatchClockUpdateTick() Number[int32] {
+	return Number[int32]{e.field("m_nMatchClockUpdateTick")}
+}
+
+func (e CCitadelGameRules) FlMatchClockAtLastUpdate() Number[float32] {
+	return Number[float32]{e.field("m_flMatchClockAtLastUpdate")}
+}
+
+func (e CCitadelGameRules) FlPauseTime() Number[float64] {
+	return Number[float64]{e.field("m_flPauseTime")}
+}
+
+func (e CCitadelGameRules) FPauseRawTime() Number[float32] {
+	return Number[float32]{e.field("m_fPauseRawTime")}
+}
+
+func (e CCitadelGameRules) FPauseCurTime() Number[float32] {
+	return Number[float32]{e.field("m_fPauseCurTime")}
+}
+
+func (e CCitadelGameRules) FUnpauseRawTime() Number[float32] {
+	return Number[float32]{e.field("m_fUnpauseRawTime")}
+}
+
+func (e CCitadelGameRules) FUnpauseCurTime() Number[float32] {
+	return Number[float32]{e.field("m_fUnpauseCurTime")}
+}
+
+func (e CCitadelGameRules) NLastPreGameCount() Number[int32] {
+	return Number[int32]{e.field("m_nLastPreGameCount")}
+}
+
+func (e CCitadelGameRules) EGGTeam() Number[int32] {
+	return Number[int32]{e.field("m_eGGTeam")}
+}
+
+func (e CCitadelGameRules) FlGGEndsAtTime() Number[float32] {
+	return Number[float32]{e.field("m_flGGEndsAtTime")}
+}
+
+func (e CCitadelGameRules) BGGMarkAsNotScored() Bool {
+	return Bool{e.field("m_bGGMarkAsNotScored")}
+}
+
+func (e CCitadelGameRules) UnMatchID() Number[uint64] {
+	return Number[uint64]{e.field("m_unMatchID")}
+}
+
+func (e CCitadelGameRules) SGameplayExperiment() Text {
+	return Text{e.field("m_sGameplayExperiment")}
+}
+
+func (e CCitadelGameRules) ExperimentTokenHashCode() Number[uint32] {
+	return Number[uint32]{e.field("m_ExperimentTokenHashCode")}
+}
+
+func (e CCitadelGameRules) NPlayerDeathEventID() Number[int32] {
+	return Number[int32]{e.field("m_nPlayerDeathEventID")}
+}
+
+func (e CCitadelGameRules) NReplayChangedEvent() Number[int32] {
+	return Number[int32]{e.field("m_nReplayChangedEvent")}
+}
+
+func (e CCitadelGameRules) NGameOverEvent() Number[int32] {
+	return Number[int32]{e.field("m_nGameOverEvent")}
+}
+
+func (e CCitadelGameRules) FlHeroDiedTime() Number[float32] {
+	return Number[float32]{e.field("m_flHeroDiedTime")}
+}
+
+type CSingleplayRules CEntityInstance
+
+func (e CSingleplayRules) field(name string) Field {
+	return Field{e.Handle, "CSingleplayRules", name}
+}
+
+func (e CSingleplayRules) BSinglePlayerGameEnding() Bool {
+	return Bool{e.field("m_bSinglePlayerGameEnding")}
+}

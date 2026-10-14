@@ -115,6 +115,9 @@ class GameServices {
   std::expected<const gameinterop::GamePause*, std::string> Pause();
   std::expected<gameinterop::MatchClock*, std::string> Clock();
   std::expected<gameinterop::KothRules*, std::string> Rift();
+  // Rules returns the game rules object, which the rules proxy entity points
+  // to.
+  std::expected<void*, std::string> Rules();
   std::expected<gameinterop::SchemaField, std::string> Field(const std::string& class_name,
                                                              const std::string& field);
   // Derives reports whether the schema class class_info is class_name or
@@ -179,6 +182,7 @@ class GameServices {
   std::optional<gameinterop::GamePause> pause_;
   std::optional<gameinterop::MatchClock> clock_;
   std::optional<gameinterop::KothRules> rift_;
+  void* const* rules_ = nullptr;
   std::map<FieldKey, gameinterop::SchemaField> fields_;
   std::map<std::pair<const void*, std::string>, bool> derives_;
   std::optional<ModifierLayout> modifiers_;
@@ -406,7 +410,8 @@ class Game : public HostService {
   std::expected<void, std::string> WatchProjectiles(const ProjectileOptions& request) override;
 
   // FieldAddress resolves a schema field of entity that holds a value of
-  // type, refusing an entity that is not of class_name.
+  // type, refusing an entity that is not of class_name. A game rules class
+  // resolves on the game rules proxy entity to the field of the rules object.
   std::expected<unsigned char*, std::string> FieldAddress(void* entity,
                                                           const std::string& class_name,
                                                           const std::string& field, FieldType type);

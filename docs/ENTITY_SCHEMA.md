@@ -214,6 +214,27 @@ and 64-bit floats, vectors, entity handles and strings. Angles travel as
 vectors. A typed field whose type is another entity class reads as that
 class, so `hero.m_hController` is a controller a mod can read further.
 
+### The match's state
+
+The match's state, such as each team's gold, the game state, the winning team,
+the Mid Boss count and the pause fields, belongs to the game rules, which are
+not an entity. Their proxy entity, `citadel_gamerules`, points to them and sends
+them, so a mod names the rules classes `CGameRules` and `CCitadelGameRules`
+with the proxy's handle:
+
+```ts
+import { findEntities } from 'modlock'
+import { CCitadelGameRules } from 'modlock/entities'
+
+const [proxy] = findEntities('citadel_gamerules')
+const rules = new CCitadelGameRules(proxy)
+rules.m_nAmberGold = 10000
+```
+
+A write sends the whole rules to the players, so players already in the match
+see the change at once. A field the game's clients derive from other state may
+be set again by the game on its next update.
+
 ## Inputs
 
 `fireInput(handle, input, value)` sends an entity an input, as a map's output
