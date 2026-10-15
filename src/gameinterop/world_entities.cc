@@ -178,6 +178,7 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
       {"entity.remove", reinterpret_cast<void**>(&world.calls_.remove)},
       {"vdata.lookup-by-hash", reinterpret_cast<void**>(&world.calls_.definition)},
       {"entity-instance.accept-input", reinterpret_cast<void**>(&world.calls_.accept_input)},
+      {"network-transmit.set-state", reinterpret_cast<void**>(&world.calls_.set_transmit_state)},
   };
   for (const auto& entry : entries) {
     auto address = ResolveSignature(server, entry.id);
@@ -189,13 +190,16 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
     const char* name;
     size_t width;
   };
-  const Field fields[] = {{"CBaseEntity", "m_iTeamNum", sizeof(uint8_t)},
-                          {"CBaseEntity", "m_nSubclassID", sizeof(uint32_t) + sizeof(void*)},
-                          {"CBaseEntity", "m_iHealth", sizeof(int32_t)},
-                          {"CBaseEntity", "m_iMaxHealth", sizeof(int32_t)},
-                          {"CBaseEntity", "m_CBodyComponent", sizeof(void*)},
-                          {"CBodyComponent", "m_pSceneNode", sizeof(void*)},
-                          {"CGameSceneNode", "m_vecAbsOrigin", sizeof(float) * 3}};
+  const Field fields[] = {
+      {"CBaseEntity", "m_iTeamNum", sizeof(uint8_t)},
+      {"CBaseEntity", "m_nSubclassID", sizeof(uint32_t) + sizeof(void*)},
+      {"CBaseEntity", "m_iHealth", sizeof(int32_t)},
+      {"CBaseEntity", "m_iMaxHealth", sizeof(int32_t)},
+      {"CBaseEntity", "m_CBodyComponent", sizeof(void*)},
+      {"CBodyComponent", "m_pSceneNode", sizeof(void*)},
+      {"CGameSceneNode", "m_vecAbsOrigin", sizeof(float) * 3},
+      {"CBaseEntity", "m_NetworkTransmitComponent", sizeof(uint8_t)},
+      {"CNetworkTransmitComponent", "m_nTransmitStateOwnedCounter", sizeof(uint8_t)}};
   for (size_t i = 0; i < world.calls_.offsets.size(); ++i) {
     auto field = SchemaFieldOf(schema_system, "server.dll", fields[i].owner, fields[i].name);
     if (!field) return std::unexpected(field.error());
@@ -535,6 +539,24 @@ std::expected<bool, std::string> WorldEntities::FireInput(uint32_t handle, const
   }
   if (!calls_.accept_input(entity, input.c_str(), cause, nullptr, &variant, 0, nullptr))
     return std::unexpected(DesignerName(entity) + " has no input " + input);
+  return true;
+}
+
+std::expected<bool, std::string> WorldEntities::TransmitAlways(uint32_t handle) {
+  // kTransmitAlways is the transmit state that sends an entity to every
+  // client.
+  constexpr uint32_t kTransmitAlways = 4;
+  auto system = ResolveLiveEntitySystem();
+  if (!system) return std::unexpected(system.error());
+  void* entity = EntityInstance(*system, handle);
+  if (!entity) return false;
+
+  // While its owned counter is nonzero, the game keeps the state set here
+  // instead of asking the entity again.
+  void* component = static_cast<unsigned char*>(entity) + calls_.offsets[7];
+  const auto owned = ReadAt<uint8_t>(component, calls_.offsets[8]);
+  if (owned == 0) WriteAt(component, calls_.offsets[8], uint8_t{1});
+  calls_.set_transmit_state(component, kTransmitAlways);
   return true;
 }
 

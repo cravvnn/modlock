@@ -1909,6 +1909,11 @@ message EntityOptions {
   // Fields are schema fields the host writes after it creates the entity and
   // before the entity spawns. A write that fails cancels the creation.
   repeated FieldWrite fields = 7;
+
+  // TransmitAlways sends the entity to every client, past the game's own
+  // rule, which never sends one without a model, such as a
+  // point_clientui_dialog.
+  bool transmit_always = 8;
 }
 
 // KeyValue is one spawn key value.

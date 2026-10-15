@@ -34045,6 +34045,7 @@ class MODLOCK_API EntityOptions final : public ::google::protobuf::Message
     kPositionFieldNumber = 4,
     kFacingFieldNumber = 5,
     kTeamFieldNumber = 3,
+    kTransmitAlwaysFieldNumber = 8,
   };
   // repeated .modlock.wasm.KeyValue key_values = 6;
   int key_values_size() const;
@@ -34150,12 +34151,22 @@ class MODLOCK_API EntityOptions final : public ::google::protobuf::Message
   void _internal_set_team(::int32_t value);
 
   public:
+  // bool transmit_always = 8;
+  void clear_transmit_always() ;
+  bool transmit_always() const;
+  void set_transmit_always(bool value);
+
+  private:
+  bool _internal_transmit_always() const;
+  void _internal_set_transmit_always(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:modlock.wasm.EntityOptions)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 7,
-                                   4, 56,
+  static const ::google::protobuf::internal::TcParseTable<3, 8,
+                                   4, 64,
                                    2>
       _table_;
 
@@ -34183,6 +34194,7 @@ class MODLOCK_API EntityOptions final : public ::google::protobuf::Message
     ::modlock::Vec3* PROTOBUF_NULLABLE position_;
     ::modlock::EulerAngles* PROTOBUF_NULLABLE facing_;
     ::int32_t team_;
+    bool transmit_always_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -50820,6 +50832,31 @@ inline ::google::protobuf::RepeatedPtrField<::modlock::wasm::FieldWrite>* PROTOB
 EntityOptions::_internal_mutable_fields() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.fields_;
+}
+
+// bool transmit_always = 8;
+inline void EntityOptions::clear_transmit_always() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.transmit_always_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000080U);
+}
+inline bool EntityOptions::transmit_always() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.EntityOptions.transmit_always)
+  return _internal_transmit_always();
+}
+inline void EntityOptions::set_transmit_always(bool value) {
+  _internal_set_transmit_always(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.EntityOptions.transmit_always)
+}
+inline bool EntityOptions::_internal_transmit_always() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.transmit_always_;
+}
+inline void EntityOptions::_internal_set_transmit_always(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.transmit_always_ = value;
 }
 
 // -------------------------------------------------------------------

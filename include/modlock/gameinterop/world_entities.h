@@ -38,7 +38,8 @@ class MODLOCK_API WorldEntities {
     void* (*definition)(int32_t, uint32_t) = nullptr;
     bool (*accept_input)(void* entity, const char* input, void* activator, void* caller,
                          void* value, int output_id, void* unknown) = nullptr;
-    std::array<size_t, 7> offsets{};
+    uint32_t (*set_transmit_state)(void* component, uint32_t flags) = nullptr;
+    std::array<size_t, 9> offsets{};
   };
   explicit WorldEntities(Calls calls) : calls_(std::move(calls)) {}
 
@@ -108,6 +109,10 @@ class MODLOCK_API WorldEntities {
   std::expected<bool, std::string> FireInput(uint32_t handle, const std::string& input,
                                              const std::optional<EntityValue>& value,
                                              std::optional<uint32_t> activator = {});
+  // TransmitAlways sends one live entity to every client from now on, past
+  // the game's own rule, which never sends an entity without a model, such as
+  // a point_clientui_dialog. It returns false when the entity is gone.
+  std::expected<bool, std::string> TransmitAlways(uint32_t handle);
   // RemoveEntity deletes one live entity through UTIL_Remove without rewards.
   // It returns false when the handle no longer names one.
   std::expected<bool, std::string> RemoveEntity(uint32_t handle);

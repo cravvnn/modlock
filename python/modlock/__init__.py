@@ -877,6 +877,10 @@ class EntityOptions:
     # fields are schema fields the host writes after it creates the entity and
     # before the entity spawns. A write that fails cancels the creation.
     fields: list[FieldWrite] = dataclasses.field(default_factory=lambda: list[FieldWrite]())
+    # transmit_always sends the entity to every client, past the game's own
+    # rule, which never sends one without a model, such as a
+    # point_clientui_dialog.
+    transmit_always: bool = False
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -2319,6 +2323,7 @@ _SCHEMA: wire.Schema = {
             wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
             wire.Field(6, "key_values", "message", repeated=True, message="KeyValue"),
             wire.Field(7, "fields", "message", repeated=True, message="FieldWrite"),
+            wire.Field(8, "transmit_always", "bool"),
         ],
     ),
     "KeyValue": (

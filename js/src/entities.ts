@@ -200,7 +200,7 @@ type Typed<Keys extends Readonly<Record<string, KeyType>>> = { readonly [Key in 
  * Spawn describes an entity create creates: the options of createEntity but
  * the designer name, with typed spawn key values.
  */
-export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'team'> & {
+export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'team' | 'transmitAlways'> & {
   /**
    * subclass names the entity's game data entry, such as npc_boss_tier1 for
    * the lane Guardian. An NPC needs one.
@@ -208,6 +208,12 @@ export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'tea
   subclass?: string
   /** team is the entity's team number; 4 is neutral. */
   team?: number
+  /**
+   * transmitAlways sends the entity to every client, past the game's own
+   * rule, which never sends one without a model, such as a
+   * point_clientui_dialog.
+   */
+  transmitAlways?: boolean
   /** keys are the entity's spawn key values, each typed as the entity reads it. */
   keys?: Keys
 }
@@ -257,6 +263,7 @@ export function create<D extends DesignerName>(
     designerName,
     subclass: options.subclass ?? subclass ?? '',
     team: options.team ?? 0,
+    transmitAlways: options.transmitAlways ?? false,
     keyValues,
   })
   return handle === undefined ? undefined : (new make(handle) as DesignerClass<D>)

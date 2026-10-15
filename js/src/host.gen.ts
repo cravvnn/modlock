@@ -1174,6 +1174,12 @@ export interface EntityOptions {
    * before the entity spawns. A write that fails cancels the creation.
    */
   fields?: readonly FieldWrite[]
+  /**
+   * transmitAlways sends the entity to every client, past the game's own
+   * rule, which never sends one without a model, such as a
+   * point_clientui_dialog.
+   */
+  transmitAlways: boolean
 }
 
 /** toEntityOptions encodes an EntityOptions. */
@@ -1186,6 +1192,7 @@ function toEntityOptions(value: EntityOptions): pb.EntityOptions {
     facing: value.facing,
     keyValues: value.keyValues?.map((v) => toKeyValue(v)),
     fields: value.fields?.map((v) => toFieldWrite(v)),
+    transmitAlways: value.transmitAlways,
   }
 }
 

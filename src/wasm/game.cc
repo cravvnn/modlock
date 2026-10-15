@@ -1951,6 +1951,14 @@ std::expected<EntityResponse, std::string> Game::CreateEntity(const EntityOption
   };
   auto entity = (*world)->CreateEntity(target, *key_values, WriteBeforeSpawn(request.fields()));
   if (!entity) return std::unexpected(entity.error());
+  if (request.transmit_always()) {
+    auto sent = (*world)->TransmitAlways(*entity);
+    if (!sent || !*sent) {
+      (void)(*world)->RemoveEntity(*entity);
+      return std::unexpected(sent ? request.designer_name() + " did not survive its spawn"
+                                  : sent.error());
+    }
+  }
   created_.insert(*entity);
   EntityResponse response;
   response.set_entity(*entity);

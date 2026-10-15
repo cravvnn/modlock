@@ -363,6 +363,13 @@ signatures {
 }
 
 signatures {
+  id: "network-transmit.set-state"
+  modules: GAME_MODULE_SERVER
+  pattern: "4C 8B C1 F0 83 A1 80 01 00 00 E3"
+  shape: "CNetworkTransmitComponent::SetTransmitState(component, flags): 4 always, 8 never, 0x10 by PVS"
+}
+
+signatures {
   id: "pawn.add-item"
   modules: GAME_MODULE_SERVER
   pattern: "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 49 8B E9 B9"
