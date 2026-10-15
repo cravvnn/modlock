@@ -123,6 +123,115 @@ def on_frame[F: Callable[[FrameEvent], object]](handler: F) -> F:
     return handler
 
 
+class Timer:
+    """Timer is one scheduled callback. Time is the game's, so a paused game
+    holds its timers. A tick is 1/64 second."""
+
+    def __init__(self) -> None:
+        # finished reports whether the timer ran its last time or was
+        # cancelled.
+        self.finished = False
+
+    def cancel(self) -> None:
+        """cancel stops the timer; it does nothing once the timer is finished."""
+        self.finished = True
+
+
+class _Entry(Timer):
+    """_Entry is a Timer the clock keeps until it finishes."""
+
+    def __init__(self, delay: float, run: Callable[[], float | None]) -> None:
+        super().__init__()
+        self.delay = delay
+        # run returns the seconds before the entry's next run, or None after
+        # its last.
+        self.run = run
+        # at is the game time the entry next runs. It is unset until started,
+        # which waits for the clock when the entry came before the first frame.
+        self.started = _now is not None
+        self.at = 0.0 if _now is None else _now + delay
+
+
+# _now is the game time of the latest frame, None before the first.
+_now: float | None = None
+
+# _entries are the timers that have not finished, in creation order.
+_entries: list[_Entry] = []
+
+
+def _schedule(delay: float, run: Callable[[], float | None]) -> Timer:
+    entry = _Entry(delay, run)
+    _entries.append(entry)
+    return entry
+
+
+def after(seconds: float, fn: Callable[[], object]) -> Timer:
+    """after runs fn once, seconds from now."""
+
+    def run() -> None:
+        fn()
+
+    return _schedule(seconds, run)
+
+
+def every(seconds: float, fn: Callable[[], object]) -> Timer:
+    """every runs fn each seconds, keeping its cadence through a late frame."""
+
+    def run() -> float:
+        fn()
+        return seconds
+
+    return _schedule(seconds, run)
+
+
+def sequence(fn: Callable[[int], float | None]) -> Timer:
+    """sequence calls fn on the next frame with the number of times it has run,
+    starting at 1. fn returns the seconds to wait before it runs again, or None
+    to end the sequence."""
+    runs = 0
+
+    def run() -> float | None:
+        nonlocal runs
+        runs += 1
+        return fn(runs)
+
+    return _schedule(0, run)
+
+
+def _advance_timers(seconds: float) -> None:
+    """_advance_timers moves the clock to a frame and runs the timers that came
+    due, at most once each and in the order they came due. A callback that
+    raises ends only its own timer."""
+    global _now, _entries
+    _now = seconds
+
+    # Start the timers made before the clock was known, then take the due ones.
+    # Timers a callback makes wait for the next frame.
+    for entry in _entries:
+        if not entry.started:
+            entry.started = True
+            entry.at = seconds + entry.delay
+    due = [entry for entry in _entries if not entry.finished and entry.at <= seconds]
+    due.sort(key=lambda entry: entry.at)
+
+    for entry in due:
+        if entry.finished:
+            continue
+        try:
+            wait = entry.run()
+        except Exception as error:
+            entry.finished = True
+            log(f"timer failed: {error!r}")
+            continue
+        if wait is None:
+            entry.finished = True
+        else:
+            following = entry.at + wait
+            entry.at = following if following > seconds else seconds + wait
+
+    _entries = [entry for entry in _entries if not entry.finished]
+
+
 def on_world[F: Callable[[str], object]](handler: F) -> F:
     """on_world calls handler with the map's name each time a world loads,
     and at start when one already has. Objects and bots from an earlier
@@ -200,10 +309,12 @@ def on_setting_changed[F: Callable[[Player, str, str], object]](handler: F) -> F
 def _start(event: StartEvent) -> StartResult:
     for handler in _starts:
         handler(event.args)
-    return StartResult(frames=bool(_frames), damage=bool(_damages), damaged=bool(_damageds))
+    # Timers run from frames, so the library always takes them.
+    return StartResult(frames=True, damage=bool(_damages), damaged=bool(_damageds))
 
 
 def _frame(event: FrameEvent) -> None:
+    _advance_timers(event.time_seconds)
     for handler in _frames:
         handler(event)
 

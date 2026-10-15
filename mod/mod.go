@@ -153,11 +153,13 @@ func (h *handlers) Start(event *StartEvent) (*StartResult, error) {
 	for _, handler := range h.starts {
 		handler(event.GetArgs())
 	}
-	return &StartResult{Frames: len(h.frames) != 0, Damage: len(h.damages) != 0, Damaged: len(h.damageds) != 0}, nil
+	// Timers run from frames, so the library always takes them.
+	return &StartResult{Frames: true, Damage: len(h.damages) != 0, Damaged: len(h.damageds) != 0}, nil
 }
 
-// Frame runs the frame handlers.
+// Frame runs the timers that came due and the frame handlers.
 func (h *handlers) Frame(event *FrameEvent) error {
+	advanceTimers(event.GetTimeSeconds())
 	for _, handler := range h.frames {
 		handler(event)
 	}

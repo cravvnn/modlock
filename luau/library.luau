@@ -113,6 +113,129 @@ function modlock.onFrame(handler: (frame: FrameEvent) -> ())
 	table.insert(frames, handler)
 end
 
+-- Timer is one scheduled callback.
+export type Timer = {
+	-- finished reports whether the timer ran its last time or was cancelled.
+	finished: boolean,
+	-- cancel stops the timer; it does nothing once the timer is finished.
+	cancel: (self: Timer) -> (),
+}
+
+-- Entry is a Timer the clock keeps until it finishes.
+type Entry = Timer & {
+	id: number,
+	-- at is the game time the entry next runs, unset until the clock is known.
+	at: number?,
+	delay: number,
+	-- run returns the seconds before the entry's next run, or nil after its
+	-- last.
+	run: () -> number?,
+}
+
+local timerMethods = {}
+timerMethods.__index = timerMethods
+
+function timerMethods.cancel(self: Entry)
+	self.finished = true
+end
+
+-- now is the game time of the latest frame, unset before the first.
+local now: number? = nil
+local entries: { Entry } = {}
+local lastTimer = 0
+
+-- schedule adds a timer whose first run is delay seconds away.
+local function schedule(delay: number, run: () -> number?): Timer
+	lastTimer += 1
+	local entry = setmetatable({
+		finished = false,
+		id = lastTimer,
+		at = if now then now + delay else nil,
+		delay = delay,
+		run = run,
+	}, timerMethods) :: any
+	table.insert(entries, entry)
+	return entry
+end
+
+-- after runs fn once, seconds from now. Time is the game's, so a paused game
+-- holds its timers. A tick is 1/64 second.
+function modlock.after(seconds: number, fn: () -> ()): Timer
+	return schedule(seconds, function()
+		fn()
+		return nil
+	end)
+end
+
+-- every runs fn each seconds, keeping its cadence through a late frame.
+function modlock.every(seconds: number, fn: () -> ()): Timer
+	return schedule(seconds, function()
+		fn()
+		return seconds
+	end)
+end
+
+-- sequence calls fn on the next frame with the number of times it has run,
+-- starting at 1. fn returns the seconds to wait before it runs again, or
+-- nothing to end the sequence.
+function modlock.sequence(fn: (run: number) -> number?): Timer
+	local runs = 0
+	return schedule(0, function()
+		runs += 1
+		return fn(runs)
+	end)
+end
+
+-- advanceTimers moves the clock to a frame and runs the timers that came due,
+-- at most once each and in the order they came due. A callback that errors ends
+-- only its own timer.
+local function advanceTimers(seconds: number)
+	now = seconds
+
+	-- Start the timers made before the clock was known, then take the due ones.
+	-- Timers a callback makes wait for the next frame.
+	local due: { Entry } = {}
+	for _, entry in entries do
+		if entry.at == nil then
+			entry.at = seconds + entry.delay
+		end
+		if not entry.finished and (entry.at :: number) <= seconds then
+			table.insert(due, entry)
+		end
+	end
+	table.sort(due, function(a: Entry, b: Entry)
+		if a.at ~= b.at then
+			return (a.at :: number) < (b.at :: number)
+		end
+		return a.id < b.id
+	end)
+
+	for _, entry in due do
+		if entry.finished then
+			continue
+		end
+		local ok, wait = pcall(entry.run)
+		if not ok then
+			entry.finished = true
+			modlock.log("timer failed: " .. tostring(wait))
+		elseif wait == nil then
+			entry.finished = true
+		else
+			local delay = wait :: number
+			local next = (entry.at :: number) + delay
+			entry.at = if next > seconds then next else seconds + delay
+		end
+	end
+
+	local live: { Entry } = {}
+	for _, entry in entries do
+		if not entry.finished then
+			table.insert(live, entry)
+		end
+	end
+	entries = live
+end
+
 -- onWorld calls handler with the map's name each time a world loads, and at
 -- start when one already has. Objects and bots from an earlier world are
 -- gone by then.
@@ -181,10 +304,12 @@ local handlers: ModHandlers = {
 		for _, handler in starts do
 			handler(event.args)
 		end
-		return { frames = #frames ~= 0, damage = #damages ~= 0, damaged = #damageds ~= 0 }
+		-- Timers run from frames, so the library always takes them.
+		return { frames = true, damage = #damages ~= 0, damaged = #damageds ~= 0 }
 	end,
 
 	frame = function(event)
+		advanceTimers(event.timeSeconds)
 		for _, handler in frames do
 			handler(event)
 		end

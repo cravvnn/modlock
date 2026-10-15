@@ -185,35 +185,25 @@ command('where', (player) => {
 })
 ```
 
-### 3. Count down on the frame
+### 3. Count down with a timer
 
-The server calls `onFrame` once per frame. The frame rate varies, so never count
-frames: store when something is due and compare it with the game clock in
-`frame.timeSeconds`. `players()` lists who is connected, bots included.
+`after(seconds, fn)` runs `fn` once, that many seconds of game time from now.
+The game clock stops when the game pauses, so a paused round holds its timers.
+`players()` lists who is connected, bots included.
 
 ```ts
-import { command, onFrame, players } from 'modlock'
-
-let now = 0
-let liveAt: number | undefined
-
-onFrame((frame) => {
-  now = frame.timeSeconds
-  if (liveAt === undefined || now < liveAt) {
-    return
-  }
-  liveAt = undefined
-  for (const { player } of players()) {
-    player.freeze(false)
-    player.announce('Fight!', 'The round is live.')
-  }
-})
+import { after, command, players } from 'modlock'
 
 command('start', () => {
-  liveAt = now + 5
   for (const { player } of players()) {
     player.freeze(true)
   }
+  after(5, () => {
+    for (const { player } of players()) {
+      player.freeze(false)
+      player.announce('Fight!', 'The round is live.')
+    }
+  })
 })
 ```
 
@@ -476,6 +466,38 @@ the next frame after the release. A mod that stops also releases its hold.
 | `onLanded(handler)`                                 | When a hero lands under the manifest's movement model.        |
 | `onSettingChanged(handler)`                         | When a player changes a setting outside the mod.              |
 | `watchProjectiles(options)`, `onLaunch`, `onImpact` | On a watched projectile's first frame, and on its impact.     |
+
+### Timers
+
+| Call                 | Runs the callback                                                             |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `after(seconds, fn)` | Once, `seconds` of game time from now.                                        |
+| `every(seconds, fn)` | Each `seconds`, keeping its cadence through a late frame.                     |
+| `sequence(fn)`       | On the next frame with its run count; it returns the wait, or nothing to end. |
+
+Each call returns a timer with `finished` and `cancel()`. Time is the game's
+clock, so a paused game holds its timers, and they survive a map change. The
+frame rate sets the precision: a timer runs on the first frame at or after its
+time, at most once per frame, and a repeat that stalls skips the runs it
+missed. Timers due on one frame run in the order they came due. A timer made
+inside a callback first runs on the next frame. A callback that throws ends only
+its own timer and logs `timer failed`.
+
+```ts
+const heartbeat = every(1, () => log('tick'))
+after(10, () => heartbeat.cancel())
+
+sequence((run) => {
+  player.chat(`Step ${run}`)
+  return run < 3 ? 2 : undefined
+})
+```
+
+In Go, `mod.After`, `mod.Every` and `mod.Sequence` take a `time.Duration`, and
+`Sequence`'s callback returns the wait and whether to run again. In
+Luau, `modlock.after`, `modlock.every` and `modlock.sequence` return a timer
+whose `cancel` you call with a colon. In Python, `modlock.after`,
+`modlock.every` and `modlock.sequence` return a `Timer`.
 
 ### Players and heroes
 

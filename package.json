@@ -4,12 +4,12 @@
   "scripts": {
     "gen": "./scripts/gen-proto.sh --language ts",
     "prepare": "sh scripts/install-hooks.sh",
-    "typecheck": "tsgo --noEmit -p js/tsconfig.json && tsgo --noEmit -p panorama/tsconfig.json && tsgo --noEmit -p scripts/tsconfig.json",
+    "typecheck": "tsgo --noEmit -p js/tsconfig.json && tsgo --noEmit -p js/test/tsconfig.json && tsgo --noEmit -p panorama/tsconfig.json && tsgo --noEmit -p scripts/tsconfig.json",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
     "lint:cc": "bun scripts/lint-cc.ts",
     "format": "oxfmt",
-    "test": "bun test --timeout 30000 ./panorama/"
+    "test": "bun test --timeout 30000 ./panorama/ ./js/test/"
   },
   "devDependencies": {
     "@aptre/protobuf-es-lite": "1.1.1",

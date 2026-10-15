@@ -30,9 +30,11 @@ import {
   serveMod,
 } from './host.gen.js'
 import { host } from './host.js'
+import { advance } from './timer.js'
 import { press, tick } from './ui.js'
 
 export { Buttons, Layers } from './bits.js'
+export { after, every, sequence, type Timer } from './timer.js'
 export * from './host.gen.js'
 export { type CatalogEntry, Dropper, dropperButtons } from './dropper.js'
 export {
@@ -255,6 +257,7 @@ const handlers: ModHandlers = {
 
   frame(event) {
     tick(event.timeSeconds)
+    advance(event.timeSeconds)
     for (const handler of frames) {
       handler(event)
     }
