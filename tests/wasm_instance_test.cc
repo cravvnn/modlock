@@ -405,7 +405,7 @@ TEST(WasmInstance, SlowEventCountsHostCalls) {
   EXPECT_TRUE(delivered) << delivered.error();
   EXPECT_FALSE((*instance)->Failure());
   ASSERT_TRUE((*instance)->Slow());
-  const auto& report = *(*instance)->Slow();
+  const auto report = (*instance)->Report();
   EXPECT_TRUE(report.starts_with("Frame took")) << report;
   EXPECT_TRUE(report.contains("the slowest Sleep at")) << report;
 }

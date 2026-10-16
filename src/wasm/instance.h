@@ -75,9 +75,14 @@ class Instance {
   // Failure returns the reason the instance stopped, or nullopt while it runs.
   [[nodiscard]] const std::optional<std::string>& Failure() const { return failure_; }
 
-  // Slow describes where the last delivered event's time went when it ran
-  // past limits.slow_event, or is nullopt.
-  [[nodiscard]] const std::optional<std::string>& Slow() const { return slow_; }
+  // Slow reports whether the last delivered event ran past
+  // limits.slow_event.
+  [[nodiscard]] bool Slow() const { return budget_.spent >= limits_.slow_event; }
+
+  // Report describes where the last delivered event's processor time went,
+  // such as "Frame took 12 ms, 9 ms of it in host calls, the slowest SetHero
+  // at 8 ms".
+  [[nodiscard]] std::string Report() const;
 
  private:
   Instance(Runtime& runtime, const Limits& limits, HostCall host_call);
@@ -89,11 +94,13 @@ class Instance {
   wasmtime::Result<std::monostate, wasmtime::Trap> HostReadImport(wasmtime::Caller caller,
                                                                   uint32_t data, uint32_t size);
   // Budget is the running call's processor time limit and how its host calls
-  // spent it. began is the thread's processor time when the call started.
+  // spent it. began is the thread's processor time when the call started,
+  // and spent is the time the call took once it returned.
   struct Budget {
     std::string call;
     std::chrono::milliseconds limit{};
     std::chrono::nanoseconds began{};
+    std::chrono::nanoseconds spent{};
     std::chrono::nanoseconds host{};
     std::string slowest;
     std::chrono::nanoseconds slowest_time{};
@@ -107,9 +114,9 @@ class Instance {
   static uint64_t Ticks(std::chrono::nanoseconds left);
   // ArmDeadline sets the epoch deadline to the time left in budget_.
   void ArmDeadline();
-  // Spent describes the running call's time: spent in all, how much went to
+  // Spent describes the returned call's time: spent in all, how much went to
   // host calls and the slowest of them.
-  std::string Spent(std::chrono::nanoseconds spent) const;
+  std::string Spent() const;
   // Stop fails the instance after a trap: an overrun budget, which it
   // describes with where the time went, or else the trap itself.
   std::string Stop(std::string trap);
@@ -131,7 +138,6 @@ class Instance {
   // busy_ is true while a call into the mod is running.
   bool busy_ = false;
   std::optional<std::string> failure_;
-  std::optional<std::string> slow_;
 };
 
 }  // namespace modlock::wasm

@@ -485,11 +485,13 @@ class WasmPlugin final : public Plugin {
   std::map<int32_t, std::pair<uint64_t, wasm::Tally>> tallies_;
   // frames_resume_ is when the mod's next frame is due after a slow one.
   // skipped_ counts the frames skipped since shed_logged_, the last log of
-  // them, and slowest_ is the slowest frame since then.
+  // them, slowest_ is the slowest frame since then, and slowest_report_
+  // describes where that frame's processor time went.
   std::chrono::steady_clock::time_point frames_resume_;
   std::chrono::steady_clock::time_point shed_logged_;
   int skipped_ = 0;
   std::chrono::steady_clock::duration slowest_{};
+  std::string slowest_report_;
 };
 
 // kFrameAllowance is the time a mod's frame may take before the mod skips
@@ -806,16 +808,22 @@ void WasmPlugin::Tick() {
   }
   static_cast<void>(mod_.Frame(frame));
 
-  // Charge a slow frame to the frames after it, and log the skipped frames
-  // at most once a minute.
+  // Charge a slow frame to the frames after it. The slowest frame keeps its
+  // processor time report, since time the engine thread spent waiting, as
+  // on a page fault or a lock, is in the frame but not in its report.
   const auto ended = std::chrono::steady_clock::now();
   const auto spent = ended - began;
-  slowest_ = std::max(slowest_, spent);
+  if (spent > slowest_ && instance_) {
+    slowest_ = spent;
+    slowest_report_ = instance_->Report();
+  }
   if (spent > kFrameAllowance) frames_resume_ = ended + spent;
+
+  // Log the skipped frames at most once a minute.
   if (skipped_ > 0 && ended - shed_logged_ >= std::chrono::minutes(1)) {
     const auto slowest = std::chrono::duration_cast<std::chrono::milliseconds>(slowest_);
-    Log(std::format("skipped {} frames to repay slow ones; the slowest took {} ms", skipped_,
-                    slowest.count()));
+    Log(std::format("skipped {} frames to repay slow ones; the slowest took {} ms: {}", skipped_,
+                    slowest.count(), slowest_report_));
     skipped_ = 0;
     slowest_ = {};
     shed_logged_ = ended;
@@ -1071,7 +1079,7 @@ std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call)
 
   // A handler's error goes to the service's caller, or else to the log.
   if (!reply->error().empty() && call.method() != "Serve") Log(reply->error());
-  if (const auto& slow = instance_->Slow()) Slowed(*slow);
+  if (instance_->Slow()) Slowed(instance_->Report());
   return reply;
 }
 
