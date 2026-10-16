@@ -34151,7 +34151,8 @@ class MODLOCK_API EntityOptions final : public ::google::protobuf::Message
   void _internal_set_team(::int32_t value);
 
   public:
-  // bool transmit_always = 8;
+  // optional bool transmit_always = 8;
+  bool has_transmit_always() const;
   void clear_transmit_always() ;
   bool transmit_always() const;
   void set_transmit_always(bool value);
@@ -50834,7 +50835,11 @@ EntityOptions::_internal_mutable_fields() {
   return &_impl_.fields_;
 }
 
-// bool transmit_always = 8;
+// optional bool transmit_always = 8;
+inline bool EntityOptions::has_transmit_always() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
+  return value;
+}
 inline void EntityOptions::clear_transmit_always() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.transmit_always_ = false;

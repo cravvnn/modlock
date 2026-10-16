@@ -2268,6 +2268,7 @@ type SelectHeroRequest struct {
 	// Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
+	//
 	//	*SelectHeroRequest_HeroName
 	//	*SelectHeroRequest_HeroId
 	Hero isSelectHeroRequest_Hero `protobuf_oneof:"hero"`
@@ -3740,6 +3741,7 @@ func (x *FieldResponse) GetValue() *FieldValue {
 type FieldValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
+	//
 	//	*FieldValue_Boolean
 	//	*FieldValue_Number
 	//	*FieldValue_Integer
@@ -4606,6 +4608,7 @@ type BotOptions struct {
 	// as Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
+	//
 	//	*BotOptions_HeroName
 	//	*BotOptions_HeroId
 	Hero isBotOptions_Hero `protobuf_oneof:"hero"`
@@ -4835,7 +4838,7 @@ type EntityOptions struct {
 	// TransmitAlways sends the entity to every client, past the game's own
 	// rule, which never sends one without a model, such as a
 	// point_clientui_dialog.
-	TransmitAlways bool `protobuf:"varint,8,opt,name=transmit_always,json=transmitAlways,proto3" json:"transmitAlways,omitempty"`
+	TransmitAlways *bool `protobuf:"varint,8,opt,name=transmit_always,json=transmitAlways,proto3,oneof" json:"transmitAlways,omitempty"`
 }
 
 func (x *EntityOptions) Reset() {
@@ -4894,8 +4897,8 @@ func (x *EntityOptions) GetFields() []*FieldWrite {
 }
 
 func (x *EntityOptions) GetTransmitAlways() bool {
-	if x != nil {
-		return x.TransmitAlways
+	if x != nil && x.TransmitAlways != nil {
+		return *x.TransmitAlways
 	}
 	return false
 }
@@ -4936,6 +4939,7 @@ func (x *KeyValue) GetValue() *EntityValue {
 type EntityValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
+	//
 	//	*EntityValue_Boolean
 	//	*EntityValue_Integer
 	//	*EntityValue_Number
@@ -8662,11 +8666,11 @@ func (m *EntityOptions) CloneVT() *EntityOptions {
 	r.DesignerName = m.DesignerName
 	r.Subclass = m.Subclass
 	r.Team = m.Team
-	r.TransmitAlways = m.TransmitAlways
 	r.Position = protobuf_go_lite.CloneVTValue(m.Position)
 	r.Facing = protobuf_go_lite.CloneVTValue(m.Facing)
 	r.KeyValues = protobuf_go_lite.CloneVTSlice(m.KeyValues)
 	r.Fields = protobuf_go_lite.CloneVTSlice(m.Fields)
+	r.TransmitAlways = protobuf_go_lite.ClonePtr(m.TransmitAlways)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -12387,7 +12391,7 @@ func (this *EntityOptions) EqualVT(that *EntityOptions) bool {
 	if !protobuf_go_lite.EqualVTSliceImplicit(this.Fields, that.Fields, func() *FieldWrite { return &FieldWrite{} }) {
 		return false
 	}
-	if this.TransmitAlways != that.TransmitAlways {
+	if !protobuf_go_lite.EqualPtr(this.TransmitAlways, that.TransmitAlways) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -20717,10 +20721,10 @@ func (x *EntityOptions) MarshalProtoJSON(s *json.MarshalState) {
 		}
 		s.WriteArrayEnd()
 	}
-	if x.TransmitAlways || s.HasField("transmitAlways") {
+	if x.TransmitAlways != nil {
 		s.WriteMoreIf(&wroteField)
 		s.WriteObjectField("transmitAlways")
-		s.WriteBool(x.TransmitAlways)
+		s.WriteBool(*x.TransmitAlways)
 	}
 	s.WriteObjectEnd()
 }
@@ -20800,7 +20804,12 @@ func (x *EntityOptions) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			})
 		case "transmit_always", "transmitAlways":
 			s.AddField("transmit_always")
-			x.TransmitAlways = s.ReadBool()
+			if s.ReadNil() {
+				x.TransmitAlways = nil
+				return
+			}
+			t := s.ReadBool()
+			x.TransmitAlways = &t
 		}
 	})
 }
@@ -29519,8 +29528,8 @@ func (m *EntityOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
-	if m.TransmitAlways {
-		i = protobuf_go_lite.EncodeBool(dAtA, i, m.TransmitAlways)
+	if m.TransmitAlways != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.TransmitAlways)
 		i--
 		dAtA[i] = 0x40
 	}
@@ -33486,7 +33495,7 @@ func (m *EntityOptions) SizeVT() (n int) {
 		l = e.SizeVT()
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
-	n += protobuf_go_lite.SizeBoolNonZero(1, m.TransmitAlways)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.TransmitAlways)
 	n += len(m.unknownFields)
 	return n
 }
@@ -36660,9 +36669,9 @@ func (x *EntityOptions) MarshalProtoText() string {
 		}
 		protobuf_go_lite.TextWriteListEnd(&sb)
 	}
-	if x.TransmitAlways != false {
+	if x.TransmitAlways != nil {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "transmit_always")
-		protobuf_go_lite.TextWriteBool(&sb, x.TransmitAlways)
+		protobuf_go_lite.TextWriteBool(&sb, *x.TransmitAlways)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -46009,7 +46018,8 @@ func (m *EntityOptions) UnmarshalVT(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			m.TransmitAlways = bool(v)
+			b := bool(v)
+			m.TransmitAlways = &b
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

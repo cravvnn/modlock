@@ -4757,7 +4757,7 @@ export interface EntityOptions {
    * rule, which never sends one without a model, such as a
    * point_clientui_dialog.
    *
-   * @generated from field: bool transmit_always = 8;
+   * @generated from field: optional bool transmit_always = 8;
    */
   transmitAlways?: boolean;
 
@@ -4773,7 +4773,7 @@ export const EntityOptions: MessageType<EntityOptions> = /* @__PURE__ */ createM
         { no: 5, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
         { no: 6, name: "key_values", kind: "message", T: () => KeyValue, repeated: true },
         { no: 7, name: "fields", kind: "message", T: () => FieldWrite, repeated: true },
-        { no: 8, name: "transmit_always", kind: "scalar", T: ScalarType.BOOL },
+        { no: 8, name: "transmit_always", kind: "scalar", T: ScalarType.BOOL, opt: true },
     ] satisfies readonly PartialFieldInfo[],
     packedByDefault: true,
 });

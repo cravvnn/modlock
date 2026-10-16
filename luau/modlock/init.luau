@@ -752,7 +752,7 @@ export type EntityOptions = {
 	-- transmitAlways sends the entity to every client, past the game's own
 	-- rule, which never sends one without a model, such as a
 	-- point_clientui_dialog.
-	transmitAlways: boolean,
+	transmitAlways: boolean?,
 }
 
 -- KeyValue is one spawn key value.
@@ -2063,7 +2063,7 @@ schema.EntityOptions = {
 	{ number = 5, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
 	{ number = 6, name = "keyValues", kind = "message", repeated = true, message = "KeyValue" },
 	{ number = 7, name = "fields", kind = "message", repeated = true, message = "FieldWrite" },
-	{ number = 8, name = "transmitAlways", kind = "bool" },
+	{ number = 8, name = "transmitAlways", kind = "bool", optional = true },
 }
 schema.KeyValue = {
 	{ number = 1, name = "key", kind = "string" },

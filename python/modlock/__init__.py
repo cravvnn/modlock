@@ -880,7 +880,7 @@ class EntityOptions:
     # transmit_always sends the entity to every client, past the game's own
     # rule, which never sends one without a model, such as a
     # point_clientui_dialog.
-    transmit_always: bool = False
+    transmit_always: bool | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -2323,7 +2323,7 @@ _SCHEMA: wire.Schema = {
             wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
             wire.Field(6, "key_values", "message", repeated=True, message="KeyValue"),
             wire.Field(7, "fields", "message", repeated=True, message="FieldWrite"),
-            wire.Field(8, "transmit_always", "bool"),
+            wire.Field(8, "transmit_always", "bool", optional=True),
         ],
     ),
     "KeyValue": (

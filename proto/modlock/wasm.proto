@@ -1913,7 +1913,7 @@ message EntityOptions {
   // TransmitAlways sends the entity to every client, past the game's own
   // rule, which never sends one without a model, such as a
   // point_clientui_dialog.
-  bool transmit_always = 8;
+  optional bool transmit_always = 8;
 }
 
 // KeyValue is one spawn key value.

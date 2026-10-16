@@ -1179,7 +1179,7 @@ export interface EntityOptions {
    * rule, which never sends one without a model, such as a
    * point_clientui_dialog.
    */
-  transmitAlways: boolean
+  transmitAlways?: boolean
 }
 
 /** toEntityOptions encodes an EntityOptions. */
