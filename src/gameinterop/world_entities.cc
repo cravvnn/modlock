@@ -134,18 +134,19 @@ std::vector<EntityKeyValue> WithWorldTextPanelDefaults(std::span<const EntityKey
   return result;
 }
 
-std::string DesignerName(void* entity) {
+// DesignerName borrows entity's designer name from the game's string pool,
+// which keeps it for the life of the map, or returns empty when the name is
+// unreadable. Scans compare it in place, without copying every entity's name.
+std::string_view DesignerName(void* entity) {
   auto* identity = IdentityOf(entity);
   if (!identity) return {};
   const char* name = ReadAt<const char*>(identity, 0x20);
   if (!name) return {};
-  std::string copied;
   for (size_t i = 0; i < 128; ++i) {
-    if (!name[i]) return copied;
+    if (!name[i]) return {name, i};
     if (!((name[i] >= 'a' && name[i] <= 'z') || (name[i] >= '0' && name[i] <= '9') ||
           name[i] == '_'))
       return {};
-    copied.push_back(name[i]);
   }
   return {};
 }
@@ -246,9 +247,9 @@ std::expected<std::vector<WorldEntities::Sample>, std::string> WorldEntities::Re
   if (!system) return std::unexpected(system.error());
   std::vector<Sample> result;
   for (void* entity : EntityInstances(*system)) {
-    auto name = DesignerName(entity);
+    const auto name = DesignerName(entity);
     if (!IsRestoredNpc(name)) continue;
-    auto sample = ReadEntity(entity, std::move(name));
+    auto sample = ReadEntity(entity, std::string(name));
     if (!sample) return std::unexpected(sample.error());
     if (sample->state.health > 0) result.push_back(std::move(*sample));
   }
@@ -336,7 +337,7 @@ std::expected<void, std::string> WorldEntities::Restore(std::span<const Target> 
   for (void* entity : EntityInstances(*system)) {
     const auto name = DesignerName(entity);
     if (!IsRestoredNpc(name)) continue;
-    auto sample = ReadEntity(entity, name);
+    auto sample = ReadEntity(entity, std::string(name));
     if (!sample) return std::unexpected(sample.error());
     bool keep = false;
     if (IsStructure(name) && sample->state.health > 0) {
@@ -538,7 +539,7 @@ std::expected<bool, std::string> WorldEntities::FireInput(uint32_t handle, const
         *value);
   }
   if (!calls_.accept_input(entity, input.c_str(), cause, nullptr, &variant, 0, nullptr))
-    return std::unexpected(DesignerName(entity) + " has no input " + input);
+    return std::unexpected(std::string(DesignerName(entity)) + " has no input " + input);
   return true;
 }
 
@@ -576,7 +577,7 @@ void WorldEntities::FinishSpawns() {
     void* entity = EntityInstance(*system, sample.handle);
     if (!entity) continue;
     // A spawn killed on its first frame stays dead.
-    auto live = ReadEntity(entity, DesignerName(entity));
+    auto live = ReadEntity(entity, std::string(DesignerName(entity)));
     if (!live || live->state.health <= 0) continue;
     (void)Apply(entity, sample.state);
   }
@@ -595,7 +596,7 @@ std::expected<std::optional<WorldEntities::Sample>, std::string> WorldEntities::
   if (!system) return std::unexpected(system.error());
   void* entity = EntityInstance(*system, handle);
   if (!entity) return std::nullopt;
-  auto sample = ReadEntity(entity, DesignerName(entity));
+  auto sample = ReadEntity(entity, std::string(DesignerName(entity)));
   if (!sample) return std::unexpected(sample.error());
   if (sample->state.health <= 0) return std::nullopt;
   return std::move(*sample);

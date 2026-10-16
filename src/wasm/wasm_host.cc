@@ -458,7 +458,18 @@ class WasmPlugin final : public Plugin {
   // tallies_ holds each player's metric totals by slot, with the account
   // they belong to, until the player leaves or the mod stops.
   std::map<int32_t, std::pair<uint64_t, wasm::Tally>> tallies_;
+  // frames_resume_ is when the mod's next frame is due after a slow one.
+  // skipped_ counts the frames skipped since shed_logged_, the last log of
+  // them, and slowest_ is the slowest frame since then.
+  std::chrono::steady_clock::time_point frames_resume_;
+  std::chrono::steady_clock::time_point shed_logged_;
+  int skipped_ = 0;
+  std::chrono::steady_clock::duration slowest_{};
 };
+
+// kFrameAllowance is the time a mod's frame may take before the mod skips
+// frames to repay it: half of a 64-tick frame.
+constexpr auto kFrameAllowance = std::chrono::milliseconds(8);
 
 // kMaxDamaged bounds the applied hits and the movement facts queued between
 // frames.
@@ -669,6 +680,15 @@ void WasmPlugin::Tick() {
   DeliverDamaged();
   DeliverGameEvents();
   if (!wants_.frames() || !instance_) return;
+
+  // A mod that ran a slow frame skips frames until as much time passed, so
+  // it keeps at most half of the engine thread and no player times out. A mod
+  // reads the game clock, so a skipped frame delays its work without losing it.
+  const auto began = std::chrono::steady_clock::now();
+  if (began < frames_resume_) {
+    ++skipped_;
+    return;
+  }
   wasm::FrameEvent frame;
   if (!check_only_) {
     if (auto server = host_.game.Server()) {
@@ -687,6 +707,21 @@ void WasmPlugin::Tick() {
     Sample(frame);
   }
   static_cast<void>(mod_.Frame(frame));
+
+  // Charge a slow frame to the frames after it, and log the skipped frames
+  // at most once a minute.
+  const auto ended = std::chrono::steady_clock::now();
+  const auto spent = ended - began;
+  slowest_ = std::max(slowest_, spent);
+  if (spent > kFrameAllowance) frames_resume_ = ended + spent;
+  if (skipped_ > 0 && ended - shed_logged_ >= std::chrono::minutes(1)) {
+    const auto slowest = std::chrono::duration_cast<std::chrono::milliseconds>(slowest_);
+    Log(std::format("skipped {} frames to repay slow ones; the slowest took {} ms", skipped_,
+                    slowest.count()));
+    skipped_ = 0;
+    slowest_ = {};
+    shed_logged_ = ended;
+  }
 }
 
 void WasmPlugin::Stop() {
