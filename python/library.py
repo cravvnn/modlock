@@ -68,6 +68,12 @@ type Service = Callable[[str, bytes], bytes]
 # _commands maps each registered command name to its handler.
 _commands: dict[str, Callable[[Player, str], object]] = {}
 
+# _deferred holds the command handlers players triggered since the last
+# frame, which runs them first. The engine reads commands while it processes
+# a player's network messages and drops a player whose messages take a few
+# hundred milliseconds, so no handler runs there.
+_deferred: list[Callable[[], object]] = []
+
 # _services maps each service the mod serves to its handler.
 _services: dict[str, Service] = {}
 
@@ -100,8 +106,9 @@ def serve(service: str) -> Callable[[Service], Service]:
 def command[F: Callable[[Player, str], object]](name: str) -> Callable[[F], F]:
     """command calls the decorated handler when a player types /name in chat
     or their client sends the console command name to the server. The
-    handler receives the text after the name, trimmed of surrounding spaces.
-    Registering a name again replaces its handler."""
+    handler runs at the start of the next frame and receives the text after
+    the name, trimmed of surrounding spaces. Registering a name again
+    replaces its handler."""
 
     def register(handler: F) -> F:
         _commands[name] = handler
@@ -315,6 +322,13 @@ def _start(event: StartEvent) -> StartResult:
 
 def _frame(event: FrameEvent) -> None:
     _advance_timers(event.time_seconds)
+    due = _deferred.copy()
+    _deferred.clear()
+    for run in due:
+        try:
+            run()
+        except Exception as error:
+            log(f"command failed: {error!r}")
     for handler in _frames:
         handler(event)
 
@@ -326,8 +340,9 @@ def _command(event: CommandEvent) -> CommandResult:
     if handler is None:
         return CommandResult(claimed=False)
 
-    # Run the handler and claim the command.
-    handler(event.player, args.strip())
+    # Claim the command now and run its handler in the next frame.
+    player, rest = event.player, args.strip()
+    _deferred.append(lambda: handler(player, rest))
     return CommandResult(claimed=True)
 
 

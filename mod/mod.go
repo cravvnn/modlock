@@ -40,6 +40,11 @@ type handlers struct {
 	commands map[string]func(Player, string)
 	// services maps each service the mod serves to its handler.
 	services map[string]Service
+	// deferred holds the command handlers players triggered since the last
+	// frame, which runs them first. The engine reads commands while it
+	// processes a player's network messages and drops a player whose messages
+	// take a few hundred milliseconds, so no handler runs there.
+	deferred []func()
 
 	starts        []func(args []string)
 	frames        []func(*FrameEvent)
@@ -61,9 +66,10 @@ type handlers struct {
 // registered is the mod's single set of handlers.
 var registered = &handlers{commands: map[string]func(Player, string){}, services: map[string]Service{}}
 
-// Command calls handler when a player types /name in chat. The handler
-// receives the text after the name, trimmed of surrounding spaces.
-// Registering a name again replaces its handler.
+// Command calls handler when a player types /name in chat. The handler runs
+// at the start of the next frame and receives the text after the name,
+// trimmed of surrounding spaces. Registering a name again replaces its
+// handler.
 func Command(name string, handler func(p Player, args string)) {
 	registered.commands[name] = handler
 }
@@ -157,17 +163,23 @@ func (h *handlers) Start(event *StartEvent) (*StartResult, error) {
 	return &StartResult{Frames: true, Damage: len(h.damages) != 0, Damaged: len(h.damageds) != 0}, nil
 }
 
-// Frame runs the timers that came due and the frame handlers.
+// Frame runs the timers that came due, the deferred commands and the frame
+// handlers.
 func (h *handlers) Frame(event *FrameEvent) error {
 	advanceTimers(event.GetTimeSeconds())
+	deferred := h.deferred
+	h.deferred = nil
+	for _, run := range deferred {
+		run()
+	}
 	for _, handler := range h.frames {
 		handler(event)
 	}
 	return nil
 }
 
-// Command runs the handler registered for the command's name and claims the
-// command when one exists.
+// Command claims the command when a handler is registered for its name and
+// defers the handler to the next frame.
 func (h *handlers) Command(event *CommandEvent) (*CommandResult, error) {
 	// Split the command line into its name and arguments.
 	name, args, _ := strings.Cut(strings.TrimSpace(event.GetLine()), " ")
@@ -176,8 +188,9 @@ func (h *handlers) Command(event *CommandEvent) (*CommandResult, error) {
 		return &CommandResult{}, nil
 	}
 
-	// Run the handler and claim the command.
-	handler(Player{Slot: event.GetPlayer()}, strings.TrimSpace(args))
+	// Claim the command now and run its handler in the next frame.
+	player, args := Player{Slot: event.GetPlayer()}, strings.TrimSpace(args)
+	h.deferred = append(h.deferred, func() { handler(player, args) })
 	return &CommandResult{Claimed: true}, nil
 }
 

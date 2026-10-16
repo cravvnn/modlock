@@ -24,10 +24,9 @@ struct Limits {
   // and the Start event, where a script mod evaluates its whole script. Both
   // run while the server loads the mod, before players are in it.
   std::chrono::milliseconds start_budget{5000};
-  // slow_event is the time past which an event is slow. The engine drops a
-  // player whose commands hold its thread for about a second, so it is half
-  // that, which still fits one slow engine call such as adding a bot (about
-  // 270 ms). A slow event finishes; the instance reports it.
+  // slow_event is the time past which an event is slow. Half a second still
+  // fits one slow engine call such as adding a bot (about 270 ms). A slow
+  // event finishes; the instance reports it.
   std::chrono::milliseconds slow_event{500};
   // event_budget bounds one event, including the host calls it makes. It
   // stops only a runaway loop, which would otherwise hold the server for

@@ -70,6 +70,12 @@ export type Service = (method: string, payload: string) -> string
 -- commands maps each registered command name to its handler.
 local commands: { [string]: (player: Player, args: string) -> () } = {}
 
+-- deferred holds the command handlers players triggered since the last
+-- frame, which runs them first. The engine reads commands while it processes
+-- a player's network messages and drops a player whose messages take a few
+-- hundred milliseconds, so no handler runs there.
+local deferred: { () -> () } = {}
+
 -- services maps each service the mod serves to its handler.
 local services: { [string]: Service } = {}
 
@@ -95,9 +101,9 @@ function modlock.serve(service: string, handler: Service)
 end
 
 -- command calls handler when a player types /name in chat or their client
--- sends the console command name to the server. The handler receives the
--- text after the name, trimmed of surrounding spaces. Registering a name
--- again replaces its handler.
+-- sends the console command name to the server. The handler runs at the start
+-- of the next frame and receives the text after the name, trimmed of
+-- surrounding spaces. Registering a name again replaces its handler.
 function modlock.command(name: string, handler: (player: Player, args: string) -> ())
 	commands[name] = handler
 end
@@ -310,6 +316,14 @@ local handlers: ModHandlers = {
 
 	frame = function(event)
 		advanceTimers(event.timeSeconds)
+		local due = deferred
+		deferred = {}
+		for _, run in due do
+			local ok, err = pcall(run)
+			if not ok then
+				modlock.log("command failed: " .. tostring(err))
+			end
+		end
 		for _, handler in frames do
 			handler(event)
 		end
@@ -323,8 +337,10 @@ local handlers: ModHandlers = {
 			return { claimed = false }
 		end
 
-		-- Run the handler and claim the command.
-		handler(event.player, args or "")
+		-- Claim the command now and run its handler in the next frame.
+		table.insert(deferred, function()
+			handler(event.player, args or "")
+		end)
 		return { claimed = true }
 	end,
 

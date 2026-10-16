@@ -87,9 +87,9 @@ export function serve(service: string, handler: Service): void {
 
 /**
  * command calls handler when a player types /name in chat or their client
- * sends the console command name to the server. The handler receives the
- * text after the name, trimmed of surrounding spaces. Registering a name
- * again replaces its handler.
+ * sends the console command name to the server. The handler runs at the start
+ * of the next frame and receives the text after the name, trimmed of
+ * surrounding spaces. Registering a name again replaces its handler.
  */
 export function command(
   name: string,
@@ -222,6 +222,15 @@ export function settingNumber(player: Player, key: string): number | undefined {
 /** commands maps each registered command name to its handler. */
 const commands = new Map<string, (player: Player, args: string) => void>()
 
+/**
+ * deferred holds the command and button handlers players triggered since the
+ * last frame, which runs them first. The engine reads commands and presses
+ * while it processes a player's network messages, and drops a player whose
+ * messages take a few hundred milliseconds; a handler that seats a hero or
+ * starts a route can take that long, so none runs there.
+ */
+const deferred: (() => void)[] = []
+
 /** services maps each service the mod serves to its handler. */
 const services = new Map<string, Service>()
 
@@ -258,6 +267,13 @@ const handlers: ModHandlers = {
   frame(event) {
     tick(event.timeSeconds)
     advance(event.timeSeconds)
+    for (const run of deferred.splice(0)) {
+      try {
+        run()
+      } catch (error) {
+        log('command failed:', error)
+      }
+    }
     for (const handler of frames) {
       handler(event)
     }
@@ -272,8 +288,9 @@ const handlers: ModHandlers = {
       return { claimed: false }
     }
 
-    // Run the handler and claim the command.
-    handler(event.player, space < 0 ? '' : line.slice(space + 1).trim())
+    // Claim the command now and run its handler in the next frame.
+    const args = space < 0 ? '' : line.slice(space + 1).trim()
+    deferred.push(() => handler(event.player, args))
     return { claimed: true }
   },
 
@@ -284,7 +301,7 @@ const handlers: ModHandlers = {
   },
 
   uiPress(event) {
-    press(event.player, event.node)
+    deferred.push(() => press(event.player, event.node))
   },
 
   serve(event) {

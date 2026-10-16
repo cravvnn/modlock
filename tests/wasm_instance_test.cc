@@ -144,28 +144,29 @@ TEST(WasmInstance, GoModAnswersEvents) {
   ASSERT_EQ(started->error(), "");
   EXPECT_TRUE(Parse<StartResult>(started->response()).frames());
 
-  // The hello command is claimed and greets its player.
+  // The hello command is claimed at once, and its handler waits for the next
+  // frame.
   auto hello = (*instance)->Deliver(Command(3, "hello  there"));
   ASSERT_TRUE(hello) << hello.error();
   EXPECT_TRUE(Parse<CommandResult>(hello->response()).claimed());
-  ASSERT_EQ(recorder.calls.size(), 1);
-  EXPECT_EQ(recorder.calls[0].method(), "Chat");
-  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
-  EXPECT_EQ(chat.player(), 3);
-  EXPECT_EQ(chat.text(), "Hello from Go!");
+  EXPECT_TRUE(recorder.calls.empty());
 
   // Other commands pass through to the game.
   auto other = (*instance)->Deliver(Command(3, "say hi"));
   ASSERT_TRUE(other) << other.error();
   EXPECT_FALSE(Parse<CommandResult>(other->response()).claimed());
 
-  // The first frame is logged once.
+  // The first frame greets the player, and is logged once.
   FrameEvent tick;
   tick.set_tick(7);
   const auto frame = Event("Frame", tick);
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_EQ(recorder.calls.size(), 2);
+  EXPECT_EQ(recorder.calls[0].method(), "Chat");
+  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
+  EXPECT_EQ(chat.player(), 3);
+  EXPECT_EQ(chat.text(), "Hello from Go!");
   EXPECT_EQ(recorder.calls[1].method(), "Log");
   EXPECT_EQ(Parse<LogRequest>(recorder.calls[1].request()).message(), "first frame at tick 7");
 }
@@ -190,28 +191,29 @@ TEST(WasmInstance, LuauModAnswersEvents) {
   ASSERT_EQ(started->error(), "");
   EXPECT_TRUE(Parse<StartResult>(started->response()).frames());
 
-  // The hello command is claimed and greets its player.
+  // The hello command is claimed at once, and its handler waits for the next
+  // frame.
   auto hello = (*instance)->Deliver(Command(3, "hello  there"));
   ASSERT_TRUE(hello) << hello.error();
   EXPECT_TRUE(Parse<CommandResult>(hello->response()).claimed());
-  ASSERT_EQ(recorder.calls.size(), 1);
-  EXPECT_EQ(recorder.calls[0].method(), "Chat");
-  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
-  EXPECT_EQ(chat.player(), 3);
-  EXPECT_EQ(chat.text(), "Hello from Luau!");
+  EXPECT_TRUE(recorder.calls.empty());
 
   // Other commands pass through to the game.
   auto other = (*instance)->Deliver(Command(3, "say hi"));
   ASSERT_TRUE(other) << other.error();
   EXPECT_FALSE(Parse<CommandResult>(other->response()).claimed());
 
-  // The first frame is logged once.
+  // The first frame greets the player, and is logged once.
   FrameEvent tick;
   tick.set_tick(7);
   const auto frame = Event("Frame", tick);
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_EQ(recorder.calls.size(), 2);
+  EXPECT_EQ(recorder.calls[0].method(), "Chat");
+  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
+  EXPECT_EQ(chat.player(), 3);
+  EXPECT_EQ(chat.text(), "Hello from Luau!");
   EXPECT_EQ(recorder.calls[1].method(), "Log");
   EXPECT_EQ(Parse<LogRequest>(recorder.calls[1].request()).message(), "first frame at tick 7");
 }
@@ -254,10 +256,12 @@ end)
   ASSERT_TRUE(started) << started.error();
   ASSERT_EQ(started->error(), "");
 
-  // Both calls name CBaseEntity, which declares m_iHealth.
-  auto heal = (*instance)->Deliver(Command(3, "heal 7"));
-  ASSERT_TRUE(heal) << heal.error();
-  ASSERT_EQ(heal->error(), "");
+  // The next frame heals, and both calls name CBaseEntity, which declares
+  // m_iHealth.
+  ASSERT_TRUE((*instance)->Deliver(Command(3, "heal 7")));
+  auto frame = (*instance)->Deliver(Event("Frame", FrameEvent{}));
+  ASSERT_TRUE(frame) << frame.error();
+  ASSERT_EQ(frame->error(), "");
   ASSERT_EQ(calls.size(), 2);
   EXPECT_EQ(calls[0].method(), "ReadField");
   const auto read = Parse<ReadFieldRequest>(calls[0].request());
@@ -294,28 +298,29 @@ TEST(WasmInstance, PythonModAnswersEvents) {
   ASSERT_EQ(started->error(), "");
   EXPECT_TRUE(Parse<StartResult>(started->response()).frames());
 
-  // The hello command is claimed and greets its player.
+  // The hello command is claimed at once, and its handler waits for the next
+  // frame.
   auto hello = (*instance)->Deliver(Command(3, "hello  there"));
   ASSERT_TRUE(hello) << hello.error();
   EXPECT_TRUE(Parse<CommandResult>(hello->response()).claimed());
-  ASSERT_EQ(recorder.calls.size(), 1);
-  EXPECT_EQ(recorder.calls[0].method(), "Chat");
-  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
-  EXPECT_EQ(chat.player(), 3);
-  EXPECT_EQ(chat.text(), "Hello from Python!");
+  EXPECT_TRUE(recorder.calls.empty());
 
   // Other commands pass through to the game.
   auto other = (*instance)->Deliver(Command(3, "say hi"));
   ASSERT_TRUE(other) << other.error();
   EXPECT_FALSE(Parse<CommandResult>(other->response()).claimed());
 
-  // The first frame is logged once.
+  // The first frame greets the player, and is logged once.
   FrameEvent tick;
   tick.set_tick(7);
   const auto frame = Event("Frame", tick);
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_TRUE((*instance)->Deliver(frame));
   ASSERT_EQ(recorder.calls.size(), 2);
+  EXPECT_EQ(recorder.calls[0].method(), "Chat");
+  const auto chat = Parse<ChatRequest>(recorder.calls[0].request());
+  EXPECT_EQ(chat.player(), 3);
+  EXPECT_EQ(chat.text(), "Hello from Python!");
   EXPECT_EQ(recorder.calls[1].method(), "Log");
   EXPECT_EQ(Parse<LogRequest>(recorder.calls[1].request()).message(), "first frame at tick 7");
 }
