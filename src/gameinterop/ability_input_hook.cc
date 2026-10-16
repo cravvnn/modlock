@@ -1,5 +1,7 @@
 #include "modlock/gameinterop/ability_input_hook.h"
 
+#include <vector>
+
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/entity_abi.h"
 
@@ -12,36 +14,50 @@
 namespace modlock::gameinterop {
 namespace {
 
+// Owner is one installation's handler and failure report.
+struct Owner {
+  AbilityInputHook::Handler handler;
+  std::function<void(std::string)> failure;
+  bool include_bots = false;
+};
+
 #if defined(_WIN32)
-// The server executes AbilityThink on its engine thread. Hook storage outlives
-// the installed detour, including every callback into its handler.
+// The server executes AbilityThink on its engine thread, which also installs
+// and destroys owners, so the owner list needs no lock. One detour serves every
+// owner and lives while any owner does.
 AbilityInputHook::Layout g_offsets;
-AbilityInputHook::Handler* g_handler = nullptr;
-std::function<void(std::string)>* g_failure = nullptr;
-safetyhook::InlineHook* g_hook = nullptr;
+std::vector<Owner*> g_owners;
+safetyhook::InlineHook g_hook;
 bool g_failed = false;
-bool g_include_bots = false;
+
+// Consume passes the input through each owner in installation order. Each
+// owner sees the buttons earlier owners remapped; the consumed bits combine.
+uint64_t Consume(AbilityInputHook::Input& input) {
+  const auto connection = ConnectionTracker::StateForSlot(input.slot);
+  if (!connection.occupied) return 0;
+  input.steam_id = connection.xuid;
+  input.session_generation = connection.generation;
+  uint64_t blocked = 0;
+  for (size_t i = 0; i < g_owners.size(); ++i) {
+    if (connection.is_bot && !g_owners[i]->include_bots) continue;
+    blocked |= g_owners[i]->handler(input);
+  }
+  return blocked;
+}
 
 void Filter(void* pawn) {
   if (g_failed) return;
-  auto result = AbilityInputHook::Process(
-      pawn, g_offsets, ReadNative, WriteNative,
-      [](AbilityInputHook::Input& input) {
-        const auto connection = ConnectionTracker::StateForSlot(input.slot);
-        if (!connection.occupied || (connection.is_bot && !g_include_bots)) return uint64_t{0};
-        input.steam_id = connection.xuid;
-        input.session_generation = connection.generation;
-        return (*g_handler)(input);
-      });
-  if (!result) {
-    g_failed = true;
-    (*g_failure)(result.error());
-  }
+  auto result = AbilityInputHook::Process(pawn, g_offsets, ReadNative, WriteNative, Consume);
+  if (result) return;
+
+  // A layout that cannot be read stays unreadable, so the detour stops filtering.
+  g_failed = true;
+  for (size_t i = 0; i < g_owners.size(); ++i) g_owners[i]->failure(result.error());
 }
 
 void __fastcall AbilityThinkThunk(void* pawn) {
   Filter(pawn);
-  g_hook->call<void>(pawn);
+  g_hook.call<void>(pawn);
 }
 #endif
 
@@ -77,19 +93,15 @@ std::expected<void, std::string> AbilityInputHook::Process(void* pawn, const Lay
   return {};
 }
 
+// Impl leaves the owner list on destruction; the last owner removes the detour.
 struct AbilityInputHook::Impl {
-  Handler handler;
-  std::function<void(std::string)> failure;
+  Owner owner;
 #if defined(_WIN32)
-  safetyhook::InlineHook hook;
   ~Impl() {
-    if (g_hook != &hook) return;
-    hook.reset();
-    g_hook = nullptr;
-    g_handler = nullptr;
-    g_failure = nullptr;
+    std::erase(g_owners, &owner);
+    if (!g_owners.empty()) return;
+    g_hook.reset();
     g_failed = false;
-    g_include_bots = false;
   }
 #endif
 };
@@ -103,8 +115,16 @@ std::expected<AbilityInputHook, std::string> AbilityInputHook::Install(
     const ModuleImage& server, void* schema_system, Handler handler,
     std::function<void(std::string)> failure, bool include_bots) {
 #if defined(_WIN32)
-  if (g_hook || !handler || !failure)
-    return std::unexpected("ability input: already installed or missing callbacks");
+  if (!handler || !failure) return std::unexpected("ability input: missing callbacks");
+  auto impl = std::make_unique<Impl>();
+  impl->owner = {std::move(handler), std::move(failure), include_bots};
+
+  // A later owner joins the detour the first owner created.
+  if (!g_owners.empty()) {
+    g_owners.push_back(&impl->owner);
+    return AbilityInputHook(std::move(impl));
+  }
+
   // Resolve AbilityThink before binding its schema-derived input layout.
   auto target = ResolveSignature(server, "ability.think");
   if (!target) return std::unexpected(target.error());
@@ -124,20 +144,14 @@ std::expected<AbilityInputHook, std::string> AbilityInputHook::Install(
       states->size < sizeof(std::array<uint64_t, 3>))
     return std::unexpected("ability input: native field storage is too short");
 
-  auto impl = std::make_unique<Impl>();
-  impl->handler = std::move(handler);
-  impl->failure = std::move(failure);
-  impl->hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&AbilityThinkThunk),
-                                         safetyhook::InlineHook::StartDisabled);
-  if (!impl->hook) return std::unexpected("ability input: cannot create AbilityThink hook");
+  // The first owner creates the detour; a failed enable removes it again.
   g_offsets = {controller->offset, movement->offset, buttons->offset + states->offset};
-  g_handler = &impl->handler;
-  g_failure = &impl->failure;
+  g_hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&AbilityThinkThunk),
+                                     safetyhook::InlineHook::StartDisabled);
+  if (!g_hook) return std::unexpected("ability input: cannot create AbilityThink hook");
   g_failed = false;
-  g_include_bots = include_bots;
-  g_hook = &impl->hook;
-  if (!impl->hook.enable())
-    return std::unexpected("ability input: cannot enable AbilityThink hook");
+  g_owners.push_back(&impl->owner);
+  if (!g_hook.enable()) return std::unexpected("ability input: cannot enable AbilityThink hook");
   return AbilityInputHook(std::move(impl));
 #else
   (void)server;

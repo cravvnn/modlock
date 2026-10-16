@@ -41,6 +41,8 @@ class MODLOCK_API AbilityInputHook {
                                                   const Handler& handler);
 
   // Install includes native bot commands only when include_bots is true.
+  // Several owners may install at once and share one detour. Each handler sees
+  // the buttons earlier owners remapped, and their consumed bits combine.
   static std::expected<AbilityInputHook, std::string> Install(
       const ModuleImage& server, void* schema_system, Handler handler,
       std::function<void(std::string)> failure, bool include_bots = false);
