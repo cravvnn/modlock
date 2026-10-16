@@ -1,0 +1,24 @@
+{
+  "profile_format": 1,
+  "name": "mod",
+  "entry": "mod.ts",
+  "emission": "llvm",
+  "abi": {
+    "prefix": "mod_",
+    "init_symbol": "mod_init",
+    "sink_register_symbol": "mod_sink",
+    "callback_register_symbol": "mod_callback"
+  },
+  "callbacks": [
+    { "name": "host_call", "params": ["bytes"], "returns": "u32" },
+    { "name": "host_read", "params": ["bytes"], "returns": "void" }
+  ],
+  "exports": [
+    {
+      "export": "event",
+      "symbol": "mod_event",
+      "params": ["u32"],
+      "returns": "bytes"
+    }
+  ]
+}
