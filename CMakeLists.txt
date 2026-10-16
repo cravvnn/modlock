@@ -329,7 +329,7 @@ set(quickjs_sources
   ${CMAKE_CURRENT_SOURCE_DIR}/runtimes/quickjs/runtime.c)
 set(quickjs_wasm ${CMAKE_CURRENT_BINARY_DIR}/quickjs.wasm)
 add_custom_command(OUTPUT ${quickjs_wasm}
-  COMMAND ${wasi_sdk_SOURCE_DIR}/bin/clang --target=wasm32-wasip1 -Oz -s -mexec-model=reactor
+  COMMAND ${wasi_sdk_SOURCE_DIR}/bin/clang --target=wasm32-wasip1 -O2 -s -mexec-model=reactor
     -D_GNU_SOURCE -I${quickjs_ng_SOURCE_DIR} -Wl,-z,stack-size=2097152
     -o ${quickjs_wasm} ${quickjs_sources}
   DEPENDS ${quickjs_sources} ${CMAKE_CURRENT_SOURCE_DIR}/runtimes/boundary.h
