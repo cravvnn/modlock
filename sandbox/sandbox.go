@@ -300,8 +300,9 @@ func (s *Sandbox) frame(ctx context.Context, elapsed time.Duration) {
 }
 
 // deliver passes one event to a running mod and reports whether it handled
-// the event. A mod that traps or runs out of time stops and waits for its next
-// build, so its author sees the failure; the host restarts it instead.
+// the event. A slow event is logged, as the host warns of it. A mod that traps
+// or runs out of time stops and waits for its next build, as the host's waits
+// for a player's restart.
 func (s *Sandbox) deliver(ctx context.Context, mod *running, method string, request, response message) bool {
 	// Skip a mod that stopped.
 	if mod.mod == nil {
@@ -309,7 +310,11 @@ func (s *Sandbox) deliver(ctx context.Context, mod *running, method string, requ
 	}
 
 	// Deliver the event; an error from a closed instance stops the mod.
+	began := time.Now()
 	err := mod.mod.Deliver(ctx, method, request, response)
+	if took := time.Since(began); took >= slowEvent {
+		s.log(mod.name, "slow: "+method+" took "+strconv.FormatInt(took.Milliseconds(), 10)+" ms")
+	}
 	if err == nil {
 		return true
 	}

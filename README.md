@@ -46,10 +46,10 @@ command('hello', (player) => {
 
 - **Safe to share.** A mod runs in a [Wasmtime] sandbox inside the server. It
   has no files, network or environment, only the calls the schema offers. A
-  crash, an endless loop, a runaway allocation or an event that holds the
-  server past its time budget stops that mod with a log line and leaves the
-  match running. The stopped mod starts again on the next frame, and waits
-  longer after each later stop.
+  crash, an endless loop or a runaway allocation stops that mod with a log
+  line and leaves the match running. A slow event finishes, and the players
+  hear of it in chat. Any player can restart a stopped or slow mod with
+  `/restartmod`.
 - **Any language.** Anything that compiles to WebAssembly can be a mod, with a
   small library per language.
 - **Built once.** A mod is one portable `.wasm` file that runs on any build of
@@ -382,13 +382,16 @@ onFrame((frame) => {
 command('ready', (player) => match.ready(player))
 ```
 
-[`examples/arena`](examples/arena) is laid out this way. Each event runs within
-a 500 ms budget of processor time, which counts the game calls it makes but
-not a stall in which the server waits, such as paging on a machine short of
-memory. A mod that overruns it
-stops with a log line naming its slowest call, clears what it placed and shows,
-and starts again on the next frame, as a reload does. Each later stop of the
-same build waits twice as long before the restart, from a second up to a minute.
+[`examples/arena`](examples/arena) is laid out this way. An event that takes
+more than 500 ms of processor time, counting the game calls it makes but not
+a stall in which the server waits, such as paging on a machine short of
+memory, still finishes. The host logs where its time went, warns the players
+in chat, and for the next five minutes lets any of them restart the mod with
+`/restartmod`, in case it is stuck. Only a runaway event past five seconds
+stops the mod. A mod that stops, by a crash or a runaway event, clears what it
+placed and shows and stays stopped: the host warns in chat each minute until
+a player types `/restartmod` or a reload replaces it. A restart starts the
+same build in a new instance, as a reload does.
 
 ### 9. Test a whole round
 
@@ -1033,7 +1036,7 @@ The calls are in [`proto/modlock/wasm.proto`](proto/modlock/wasm.proto). A
 `Call` selects one method of the `Host` service, when a mod calls the game, or
 of the `Mod` service, when the host delivers an event, and carries its encoded
 request. The `Reply` carries the encoded response or an error. A new capability
-is a new method; the functions never change. Each event runs within a time budget, which stops a mod that overruns it, and each mod has a memory limit.
+is a new method; the functions never change. Each event runs within a time budget, which stops a runaway loop, and each mod has a memory limit.
 
 A program that embeds the host can offer mods more than the game, such as a game
 mode's match rules. The program provides a service with `WasmHost::Provide`, and

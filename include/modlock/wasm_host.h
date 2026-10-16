@@ -39,6 +39,10 @@ class MODLOCK_API WasmHostObserver {
   // that stops, and a player who leaves, end with a reset change.
   virtual void Ui(std::string_view mod, int32_t slot, const ui::Change& change) = 0;
 
+  // Slowed reports an event of mod that ran past its slow time and finished,
+  // with where the time went. The players may restart a mod that stays stuck.
+  virtual void Slowed(std::string_view /*mod*/, std::string_view /*report*/) {}
+
   // Held reports that mod took or released the hold that keeps its running
   // build through reloads. The mod may still be calling the host, so an
   // observer that replaces the mod does so after the call returns.
@@ -52,11 +56,14 @@ using WasmExtension = std::function<std::expected<std::string, std::string>(
     std::string_view mod, std::string_view method, std::string_view payload)>;
 
 // WasmHost runs WebAssembly mods. Each mod runs in its own sandbox and reaches
-// the game only through the host requests in proto/modlock/wasm.proto. A trap
-// or an exhausted time or memory budget stops that mod with a log line; the
-// server keeps running. A stopped mod clears what it placed and showed and
-// starts again: on the next frame after its build's first stop, then after a
-// wait that doubles with each stop, from a second up to a minute. Mods share one Wasmtime engine, and identical module
+// the game only through the host requests in proto/modlock/wasm.proto. An
+// event that runs past half a second finishes; the host warns the players in
+// chat and, for five minutes, lets any of them restart the mod with
+// /restartmod. A trap, a runaway event past five seconds or an exhausted
+// memory budget stops that mod with a log line; the server keeps running. A
+// stopped mod clears what it placed and showed and stays stopped, with a
+// warning in chat each minute, until a player restarts it with /restartmod
+// or a reload replaces it. Mods share one Wasmtime engine, and identical module
 // bytes compile once while a mod uses them, so the mods of one interpreted
 // language share one compiled interpreter.
 //

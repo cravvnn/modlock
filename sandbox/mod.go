@@ -21,8 +21,12 @@ const (
 	memoryBytes = 256 << 20
 	// startBudget bounds module initialization and the Start event.
 	startBudget = 5 * time.Second
-	// eventBudget bounds one event, including its host calls.
-	eventBudget = 500 * time.Millisecond
+	// slowEvent is the time past which an event is slow; a slow event
+	// finishes and is reported.
+	slowEvent = 500 * time.Millisecond
+	// eventBudget bounds one event, including its host calls, to stop a
+	// runaway loop.
+	eventBudget = 5 * time.Second
 )
 
 // message is a protobuf message with fast encoding.

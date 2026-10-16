@@ -376,11 +376,12 @@ TEST(WasmInstance, StartGetsTheStartBudget) {
 }
 
 // A host call that works long holds the engine thread as surely as a loop
-// does, so it spends the budget, and the failure names where the time went.
-TEST(WasmInstance, BudgetCountsHostCalls) {
+// does, so it makes the event slow, and the report names where the time went.
+// The slow event still finishes.
+TEST(WasmInstance, SlowEventCountsHostCalls) {
   Runtime runtime;
   Limits limits;
-  limits.event_budget = std::chrono::milliseconds{50};
+  limits.slow_event = std::chrono::milliseconds{50};
   auto slow = [](const Call&) {
     const auto until = std::chrono::steady_clock::now() + std::chrono::milliseconds{200};
     while (std::chrono::steady_clock::now() < until) {
@@ -400,11 +401,13 @@ TEST(WasmInstance, BudgetCountsHostCalls) {
                                  limits, slow);
   ASSERT_TRUE(instance) << instance.error();
 
-  EXPECT_FALSE((*instance)->Deliver(Event("Frame", FrameEvent{})));
-  ASSERT_TRUE((*instance)->Failure());
-  const auto& failure = *(*instance)->Failure();
-  EXPECT_TRUE(failure.starts_with("Frame ran past its 50 ms budget")) << failure;
-  EXPECT_TRUE(failure.contains("the slowest Sleep at")) << failure;
+  auto delivered = (*instance)->Deliver(Event("Frame", FrameEvent{}));
+  EXPECT_TRUE(delivered) << delivered.error();
+  EXPECT_FALSE((*instance)->Failure());
+  ASSERT_TRUE((*instance)->Slow());
+  const auto& report = *(*instance)->Slow();
+  EXPECT_TRUE(report.starts_with("Frame took")) << report;
+  EXPECT_TRUE(report.contains("the slowest Sleep at")) << report;
 }
 
 // A stall in which the engine thread waits, as when the machine pages, is

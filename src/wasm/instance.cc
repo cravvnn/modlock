@@ -157,11 +157,17 @@ std::expected<Reply, std::string> Instance::Deliver(const Call& call) {
   if (!typed) return std::unexpected(Fail("modlock_event must take i32 and return i64"));
   call.SerializeToString(&pending_);
   SetBudget(call.method(), call.method() == "Start" ? limits_.start_budget : limits_.event_budget);
+  slow_.reset();
   busy_ = true;
   auto called = typed.ok_ref().call(store_.context(), static_cast<uint32_t>(pending_.size()));
   busy_ = false;
   pending_.clear();
   if (!called) return std::unexpected(Stop(called.err().message()));
+
+  // Describe a slow event, which finished.
+  if (const auto spent = ThreadTime() - budget_.began; spent >= limits_.slow_event) {
+    slow_ = std::format("{} took {}", budget_.call, Spent(spent));
+  }
 
   // Decode the reply the mod left in its memory.
   const uint64_t packed = called.ok();
@@ -229,20 +235,23 @@ uint64_t Instance::Ticks(std::chrono::nanoseconds left) {
 
 void Instance::ArmDeadline() { store_.context().set_epoch_deadline(Ticks(Left())); }
 
-std::string Instance::Stop(std::string trap) {
+std::string Instance::Spent(std::chrono::nanoseconds spent) const {
+  using std::chrono::duration_cast;
   using std::chrono::milliseconds;
+  auto text = std::format("{} ms", duration_cast<milliseconds>(spent).count());
+  if (budget_.host > budget_.host.zero()) {
+    text += std::format(", {} ms of it in host calls, the slowest {} at {} ms",
+                        duration_cast<milliseconds>(budget_.host).count(), budget_.slowest,
+                        duration_cast<milliseconds>(budget_.slowest_time).count());
+  }
+  return text;
+}
+
+std::string Instance::Stop(std::string trap) {
   const auto spent = ThreadTime() - budget_.began;
   if (spent < budget_.limit) return Fail(std::move(trap));
-  auto reason =
-      std::format("{} ran past its {} ms budget: {} ms", budget_.call, budget_.limit.count(),
-                  std::chrono::duration_cast<milliseconds>(spent).count());
-  if (budget_.host > budget_.host.zero()) {
-    reason +=
-        std::format(", {} ms of it in host calls, the slowest {} at {} ms",
-                    std::chrono::duration_cast<milliseconds>(budget_.host).count(), budget_.slowest,
-                    std::chrono::duration_cast<milliseconds>(budget_.slowest_time).count());
-  }
-  return Fail(std::move(reason));
+  return Fail(std::format("{} ran past its {} ms budget: {}", budget_.call, budget_.limit.count(),
+                          Spent(spent)));
 }
 
 std::string Instance::Fail(std::string reason) {

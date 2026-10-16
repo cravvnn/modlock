@@ -285,8 +285,7 @@ class WasmPlugin final : public Plugin {
     manifest_ = std::move(build.manifest);
     collision_ = std::move(build.collision);
     tuned_ = false;
-    restart_at_.reset();
-    stops_ = 0;
+    Withdraw();
   }
 
   // Reload replaces the running instance with build and starts it, or keeps
@@ -298,6 +297,15 @@ class WasmPlugin final : public Plugin {
 
   // Held reports whether the running instance keeps itself through reloads.
   bool Held() const { return held_; }
+
+  // AskRestart restarts the running build in a new instance on the next
+  // frame, while the plugin offers that: after the instance stopped or ran a
+  // slow event. It reports whether the restart was offered.
+  bool AskRestart() {
+    if (!stopped_ && std::chrono::steady_clock::now() >= offer_until_) return false;
+    restart_ = true;
+    return true;
+  }
 
   // Press delivers a press on a button the mod shows the player in slot.
   std::expected<void, std::string> Press(int32_t slot, std::string_view node);
@@ -348,11 +356,22 @@ class WasmPlugin final : public Plugin {
   // whether it started.
   std::expected<void, std::string> Begin(bool reloaded);
   void Halt();
-  // Recover schedules a stopped mod's restart: the first stop restarts it on
-  // the next frame, and each later stop of the same build waits twice as long
-  // as the one before, from a second up to a minute.
-  void Recover();
-  // Restart starts the stopped mod's build again in a new instance.
+  // ListenForRestart hears the players' restart command for the plugin's
+  // lifetime, since a stopped instance has no commands of its own.
+  void ListenForRestart();
+  // Slowed reports a slow event and offers the players a restart, in case
+  // the mod is stuck.
+  void Slowed(std::string_view report);
+  // Stopped leaves a failed instance stopped and offers the players its
+  // restart until one asks for it.
+  void Stopped();
+  // Warn tells every player in the game what happened to the mod, after its
+  // name.
+  void Warn(std::string_view what);
+  // Withdraw ends the stopped state and the restart offer.
+  void Withdraw();
+  // Restart starts the running build again in a new instance, in place of a
+  // stopped or a running one.
   void Restart();
   void World();
   // SteamId returns the account of the player in slot, or zero for a bot or
@@ -414,10 +433,16 @@ class WasmPlugin final : public Plugin {
   // and waiting_ holds the newest build a reload brought meanwhile.
   bool held_ = false;
   std::optional<Build> waiting_;
-  // restart_at_ is when the stopped instance's build starts again, and stops_
-  // counts the build's stops.
-  std::optional<std::chrono::steady_clock::time_point> restart_at_;
-  int stops_ = 0;
+  // stopped_ is true while a failed instance waits for a player to restart
+  // it, and restart_ once one asked. offer_until_ ends the restart offer a
+  // slow event opens, and warned_at_ is the players' last warning.
+  // restart_command_ hears the request while restartable_ is true.
+  bool stopped_ = false;
+  bool restart_ = false;
+  std::chrono::steady_clock::time_point offer_until_;
+  std::chrono::steady_clock::time_point warned_at_;
+  Subscription restart_command_;
+  bool restartable_ = false;
   // movement_ steps every hero while a world is loaded. hero_slots_ maps
   // this frame's heroes to their slots, and floor_known_ is true once the
   // world entity under the heroes is.
@@ -470,6 +495,14 @@ class WasmPlugin final : public Plugin {
 // kFrameAllowance is the time a mod's frame may take before the mod skips
 // frames to repay it: half of a 64-tick frame.
 constexpr auto kFrameAllowance = std::chrono::milliseconds(8);
+
+// kRestartCommand is the chat command that restarts a stopped or slow mod,
+// alone for every such mod or followed by one mod's name. kWarnPeriod is how
+// often the players hear of it, and kOfferWindow how long a slow event keeps
+// the restart offered.
+constexpr std::string_view kRestartCommand = "restartmod";
+constexpr auto kWarnPeriod = std::chrono::minutes(1);
+constexpr auto kOfferWindow = std::chrono::minutes(5);
 
 // kMaxDamaged bounds the applied hits and the movement facts queued between
 // frames.
@@ -538,6 +571,7 @@ bool WasmPlugin::Start() {
                                 [this](std::string_view map) {
                                   map_ = std::string(map);
                                   host_.game.WorldReady();
+                                  ListenForRestart();
                                   ListenToPlayers();
                                   ListenToCombat();
                                   World();
@@ -628,26 +662,86 @@ void WasmPlugin::Halt() {
   for (const auto slot : ui_.Clear()) ShowUi(slot, reset);
 }
 
-void WasmPlugin::Recover() {
-  using std::chrono::seconds;
-  ++stops_;
-  const auto wait =
-      stops_ == 1 ? seconds{0} : std::min(seconds{1 << std::min(stops_ - 2, 6)}, seconds{60});
-  restart_at_ = std::chrono::steady_clock::now() + wait;
-  Log(std::format("restarts in {} s", wait.count()));
+void WasmPlugin::ListenForRestart() {
+  // Hear "/restartmod" or "/restartmod <mod>", with the prefixes the mod's
+  // own commands take.
+  if (restartable_) return;
+  auto chats = engine_->OnChat([this](int32_t, std::string_view text) {
+    if (text.empty() || !std::string_view("/.+-").contains(text.front())) return;
+    text.remove_prefix(1);
+    if (!text.starts_with(kRestartCommand)) return;
+    text.remove_prefix(kRestartCommand.size());
+    if (!text.empty() && text.front() != ' ') return;
+    const auto named = text.find_first_not_of(' ');
+    if (named == std::string_view::npos || text.substr(named) == name_) AskRestart();
+  });
+  if (!chats) {
+    Log("the restart command is unavailable: " + chats.error());
+    return;
+  }
+  restart_command_ = std::move(*chats);
+  restartable_ = true;
+}
+
+void WasmPlugin::Slowed(std::string_view report) {
+  // A slow event holds the server's tick, so the players hear of it at once
+  // and may restart a mod that stays stuck.
+  Log(std::string("slow: ") + std::string(report));
+  host_.Notify([&](WasmHostObserver& observer) { observer.Slowed(name_, report); });
+  const auto now = std::chrono::steady_clock::now();
+  offer_until_ = now + kOfferWindow;
+  if (now - warned_at_ >= kWarnPeriod) {
+    Warn(std::format("is running slowly. If it seems stuck, type /{} to restart it.",
+                     kRestartCommand));
+  }
+}
+
+void WasmPlugin::Stopped() {
+  // A restart runs the mod's start on the engine thread, which a mod that
+  // keeps failing would hold, so the players choose when it happens.
+  stopped_ = true;
+  restart_ = false;
+  Log(std::format("stays stopped until a player types /{}", kRestartCommand));
+  Warn(std::format("stopped. Type /{} to start it again.", kRestartCommand));
+}
+
+void WasmPlugin::Warn(std::string_view what) {
+  // Address each player, since the game's chat goes to one slot at a time.
+  warned_at_ = std::chrono::steady_clock::now();
+  if (check_only_) return;
+  auto messages = host_.game.Messages();
+  if (!messages) return;
+  const auto& title = manifest_.name().empty() ? name_ : manifest_.name();
+  const auto text = std::format("{} {}", title, what);
+  for (int32_t slot = 0; slot < wasm::kMaxPlayers; ++slot) {
+    const auto player = gameinterop::ConnectionTracker::StateForSlot(slot);
+    if (player.occupied && !player.is_bot) static_cast<void>((*messages)->Chat(slot, text));
+  }
+}
+
+void WasmPlugin::Withdraw() {
+  stopped_ = false;
+  restart_ = false;
+  offer_until_ = {};
 }
 
 void WasmPlugin::Restart() {
-  // A build that no longer instantiates waits for its next turn.
-  restart_at_.reset();
+  // Clear what a running instance placed and shows, as a reload does.
+  Withdraw();
+  if (instance_) {
+    Halt();
+    instance_.reset();
+  }
+
+  // A build that no longer instantiates stays stopped, still offered.
   auto instance = Instantiate(module_);
   if (!instance) {
     Failed("did not restart: " + instance.error());
-    Recover();
+    Stopped();
     return;
   }
 
-  // Start it in the running world; Send schedules the next try if it stops.
+  // Start it in the running world; Send stops it again if it fails.
   instance_ = std::move(*instance);
   if (auto started = Begin(true); !started) Log("did not restart: " + started.error());
 }
@@ -670,7 +764,11 @@ void WasmPlugin::Tick() {
       Log("the waiting build did not load: " + reloaded.error());
     }
   }
-  if (restart_at_ && std::chrono::steady_clock::now() >= *restart_at_) Restart();
+  if (restart_) {
+    Restart();
+  } else if (stopped_ && std::chrono::steady_clock::now() - warned_at_ >= kWarnPeriod) {
+    Warn(std::format("stopped. Type /{} to start it again.", kRestartCommand));
+  }
   if (!tuned_ && !check_only_) {
     tuned_ =
         Tune(L"server.dll", "server.dll", manifest_, [this](std::string_view text) { Log(text); });
@@ -726,7 +824,9 @@ void WasmPlugin::Tick() {
 
 void WasmPlugin::Stop() {
   waiting_.reset();
-  restart_at_.reset();
+  Withdraw();
+  restart_command_.Reset();
+  restartable_ = false;
   world_.Reset();
   Halt();
   instance_.reset();
@@ -964,13 +1064,14 @@ std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call)
       Failed("stopped: " + reply.error());
       Halt();
       instance_.reset();
-      Recover();
+      Stopped();
     }
     return reply;
   }
 
   // A handler's error goes to the service's caller, or else to the log.
   if (!reply->error().empty() && call.method() != "Serve") Log(reply->error());
+  if (const auto& slow = instance_->Slow()) Slowed(*slow);
   return reply;
 }
 

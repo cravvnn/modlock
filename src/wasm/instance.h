@@ -16,7 +16,7 @@
 namespace modlock::wasm {
 
 // Limits bounds what one mod may consume. A mod that exceeds a limit traps,
-// and only that mod stops.
+// and only that mod stops; a slow event runs on and is reported.
 struct Limits {
   // memory_bytes caps each linear memory the mod creates or grows.
   int64_t memory_bytes = int64_t{256} << 20;
@@ -24,14 +24,18 @@ struct Limits {
   // and the Start event, where a script mod evaluates its whole script. Both
   // run while the server loads the mod, before players are in it.
   std::chrono::milliseconds start_budget{5000};
-  // event_budget bounds one event, including the host calls it makes. The
-  // engine drops a player whose commands hold its thread for about a second,
-  // so the budget is half that, which still fits one slow engine call such as
-  // adding a bot (about 270 ms). Budgets count the engine thread's processor
-  // time, the interpreter's garbage collection included: a stall in which
-  // the thread waits, such as preemption or paging on a machine short of
-  // memory, spends none of it, since stopping the mod would not end it.
-  std::chrono::milliseconds event_budget{500};
+  // slow_event is the time past which an event is slow. The engine drops a
+  // player whose commands hold its thread for about a second, so it is half
+  // that, which still fits one slow engine call such as adding a bot (about
+  // 270 ms). A slow event finishes; the instance reports it.
+  std::chrono::milliseconds slow_event{500};
+  // event_budget bounds one event, including the host calls it makes. It
+  // stops only a runaway loop, which would otherwise hold the server for
+  // good. Times count the engine thread's processor time, the interpreter's
+  // garbage collection included: a stall in which the thread waits, such as
+  // preemption or paging on a machine short of memory, spends none of it,
+  // since stopping the mod would not end it.
+  std::chrono::milliseconds event_budget{5000};
 };
 
 // Instance runs one WebAssembly mod in its own Wasmtime store. The mod sees
@@ -71,6 +75,10 @@ class Instance {
   // Failure returns the reason the instance stopped, or nullopt while it runs.
   [[nodiscard]] const std::optional<std::string>& Failure() const { return failure_; }
 
+  // Slow describes where the last delivered event's time went when it ran
+  // past limits.slow_event, or is nullopt.
+  [[nodiscard]] const std::optional<std::string>& Slow() const { return slow_; }
+
  private:
   Instance(Runtime& runtime, const Limits& limits, HostCall host_call);
 
@@ -99,6 +107,9 @@ class Instance {
   static uint64_t Ticks(std::chrono::nanoseconds left);
   // ArmDeadline sets the epoch deadline to the time left in budget_.
   void ArmDeadline();
+  // Spent describes the running call's time: spent in all, how much went to
+  // host calls and the slowest of them.
+  std::string Spent(std::chrono::nanoseconds spent) const;
   // Stop fails the instance after a trap: an overrun budget, which it
   // describes with where the time went, or else the trap itself.
   std::string Stop(std::string trap);
@@ -120,6 +131,7 @@ class Instance {
   // busy_ is true while a call into the mod is running.
   bool busy_ = false;
   std::optional<std::string> failure_;
+  std::optional<std::string> slow_;
 };
 
 }  // namespace modlock::wasm
