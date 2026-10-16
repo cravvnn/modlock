@@ -53,7 +53,7 @@ var Files = []string{"index.js", "index.d.ts", "globals.d.ts", "host.gen.d.ts", 
 const modulePath = "github.com/paralin/modlock"
 
 // protobufVersion is the protobuf runtime the library bundles.
-const protobufVersion = "1.1.1"
+const protobufVersion = "1.1.6"
 
 // banner is the legal comment that every bundle keeps for the protobuf
 // runtime it includes.
