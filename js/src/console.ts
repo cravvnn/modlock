@@ -923,6 +923,7 @@ export interface Variables {
   citadel_crate_spawn_enabled: boolean
   citadel_crate_spawn_initial_delay: number
   citadel_crosshair_out_of_range_dist: number
+  citadel_deadpack_instant_shot: boolean
   /** How logn does the player icon linger on the minimap after they die. */
   citadel_death_linger_time: number
   citadel_death_replay_enabled: boolean

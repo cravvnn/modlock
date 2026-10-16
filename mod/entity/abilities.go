@@ -1034,6 +1034,288 @@ func (e CCitadel_Ability_PowerSlash) NCastParticle() Number[int32] {
 
 type CCitadel_Ability_Afterburn CEntityInstance
 
+type CCitadel_Ability_Artist_BambooGrove CEntityInstance
+
+func (e CCitadel_Ability_Artist_BambooGrove) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_BambooGrove", name}
+}
+
+func (e CCitadel_Ability_Artist_BambooGrove) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+type CCitadel_Ability_Artist_BouncingPot CEntityInstance
+
+func (e CCitadel_Ability_Artist_BouncingPot) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_BouncingPot", name}
+}
+
+func (e CCitadel_Ability_Artist_BouncingPot) VecGroundAuras() List[uint32] {
+	return List[uint32]{e.field("m_vecGroundAuras")}
+}
+
+func (e CCitadel_Ability_Artist_BouncingPot) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
+}
+
+func (e CCitadel_Ability_Artist_BouncingPot) TInitialShotID() Number[uint32] {
+	return Number[uint32]{e.field("m_tInitialShotID")}
+}
+
+func (e CCitadel_Ability_Artist_BouncingPot) VLaunchPosition() Vector {
+	return Vector{e.field("m_vLaunchPosition")}
+}
+
+func (e CCitadel_Ability_Artist_BouncingPot) QLaunchAngle() Angles {
+	return Angles{e.field("m_qLaunchAngle")}
+}
+
+type CCitadel_Ability_Artist_Cloudburst CEntityInstance
+
+type CCitadel_Ability_Artist_DamageZone CEntityInstance
+
+type CCitadel_Ability_Artist_EmpowerAbilities CEntityInstance
+
+func (e CCitadel_Ability_Artist_EmpowerAbilities) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_EmpowerAbilities", name}
+}
+
+func (e CCitadel_Ability_Artist_EmpowerAbilities) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+type CCitadel_Ability_Artist_FlyingLion CEntityInstance
+
+func (e CCitadel_Ability_Artist_FlyingLion) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_FlyingLion", name}
+}
+
+func (e CCitadel_Ability_Artist_FlyingLion) FlFlyingStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flFlyingStartTime")}
+}
+
+func (e CCitadel_Ability_Artist_FlyingLion) BFlying() Bool {
+	return Bool{e.field("m_bFlying")}
+}
+
+type CCitadel_Ability_Artist_HealingBarrier CEntityInstance
+
+func (e CCitadel_Ability_Artist_HealingBarrier) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_HealingBarrier", name}
+}
+
+func (e CCitadel_Ability_Artist_HealingBarrier) NCastParticleIndex() Number[int32] {
+	return Number[int32]{e.field("m_nCastParticleIndex")}
+}
+
+type CCitadel_Ability_Artist_HomingProjectile CEntityInstance
+
+func (e CCitadel_Ability_Artist_HomingProjectile) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_HomingProjectile", name}
+}
+
+func (e CCitadel_Ability_Artist_HomingProjectile) BDealtStrokeDamageThisTick() Bool {
+	return Bool{e.field("m_bDealtStrokeDamageThisTick")}
+}
+
+func (e CCitadel_Ability_Artist_HomingProjectile) VecDeployedProjectiles() List[uint32] {
+	return List[uint32]{e.field("m_vecDeployedProjectiles")}
+}
+
+func (e CCitadel_Ability_Artist_HomingProjectile) TShootingLockoutEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tShootingLockoutEndTime")}
+}
+
+type CCitadel_Ability_Artist_InkActive CEntityInstance
+
+type CCitadel_Ability_Artist_InkBrush CEntityInstance
+
+func (e CCitadel_Ability_Artist_InkBrush) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_InkBrush", name}
+}
+
+func (e CCitadel_Ability_Artist_InkBrush) BButtonDown() Bool {
+	return Bool{e.field("m_bButtonDown")}
+}
+
+func (e CCitadel_Ability_Artist_InkBrush) FlAccumulatedDrawDistance() Number[float32] {
+	return Number[float32]{e.field("m_flAccumulatedDrawDistance")}
+}
+
+type CCitadel_Ability_Artist_LionDance CEntityInstance
+
+func (e CCitadel_Ability_Artist_LionDance) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_LionDance", name}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) TEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tEndTime")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) TNextPulseTime() Number[float32] {
+	return Number[float32]{e.field("m_tNextPulseTime")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) IRemainingShots() Number[int32] {
+	return Number[int32]{e.field("m_iRemainingShots")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) VLaunchPosition() Vector {
+	return Vector{e.field("m_vLaunchPosition")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) QLaunchAngle() Angles {
+	return Angles{e.field("m_qLaunchAngle")}
+}
+
+func (e CCitadel_Ability_Artist_LionDance) PPointModifier() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_pPointModifier")}
+}
+
+type CCitadel_Ability_Artist_MultiHit CEntityInstance
+
+func (e CCitadel_Ability_Artist_MultiHit) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_MultiHit", name}
+}
+
+func (e CCitadel_Ability_Artist_MultiHit) VecHitEnemies() List[uint32] {
+	return List[uint32]{e.field("m_vecHitEnemies")}
+}
+
+func (e CCitadel_Ability_Artist_MultiHit) TMultiHitEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tMultiHitEndTime")}
+}
+
+func (e CCitadel_Ability_Artist_MultiHit) TSubCooldownEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tSubCooldownEndTime")}
+}
+
+func (e CCitadel_Ability_Artist_MultiHit) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+func (e CCitadel_Ability_Artist_MultiHit) ICurrentHits() Number[int32] {
+	return Number[int32]{e.field("m_iCurrentHits")}
+}
+
+type CCitadel_Ability_Artist_Pillar CEntityInstance
+
+type CCitadel_Ability_Artist_PullBrush CEntityInstance
+
+func (e CCitadel_Ability_Artist_PullBrush) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_PullBrush", name}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) FlAccumulatedDrawDistance() Number[float32] {
+	return Number[float32]{e.field("m_flAccumulatedDrawDistance")}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) BPainting() Bool {
+	return Bool{e.field("m_bPainting")}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) TStopPaintingTime() Number[float32] {
+	return Number[float32]{e.field("m_tStopPaintingTime")}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) VecBrushPositions() VectorList {
+	return VectorList{e.field("m_vecBrushPositions")}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) VecBrushVelocity() Vector {
+	return Vector{e.field("m_vecBrushVelocity")}
+}
+
+func (e CCitadel_Ability_Artist_PullBrush) VecBrushCurrentPosition() Vector {
+	return Vector{e.field("m_vecBrushCurrentPosition")}
+}
+
+type CCitadel_Ability_Artist_RideTiger CEntityInstance
+
+func (e CCitadel_Ability_Artist_RideTiger) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_RideTiger", name}
+}
+
+func (e CCitadel_Ability_Artist_RideTiger) BIsEnabled() Bool {
+	return Bool{e.field("m_bIsEnabled")}
+}
+
+type CCitadel_Ability_Artist_RollingProjectile CEntityInstance
+
+func (e CCitadel_Ability_Artist_RollingProjectile) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_RollingProjectile", name}
+}
+
+func (e CCitadel_Ability_Artist_RollingProjectile) BActive() Bool {
+	return Bool{e.field("m_bActive")}
+}
+
+func (e CCitadel_Ability_Artist_RollingProjectile) HDeployedProjectile() Handle[CCitadelProjectile] {
+	return Handle[CCitadelProjectile]{e.field("m_hDeployedProjectile")}
+}
+
+type CCitadel_Ability_Artist_RootingProjectile CEntityInstance
+
+type CCitadel_Ability_Artist_ShieldProjectile CEntityInstance
+
+func (e CCitadel_Ability_Artist_ShieldProjectile) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_ShieldProjectile", name}
+}
+
+func (e CCitadel_Ability_Artist_ShieldProjectile) VHitEnts() List[uint32] {
+	return List[uint32]{e.field("m_vHitEnts")}
+}
+
+type CCitadel_Ability_Artist_StoneTurtle CEntityInstance
+
+func (e CCitadel_Ability_Artist_StoneTurtle) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_StoneTurtle", name}
+}
+
+func (e CCitadel_Ability_Artist_StoneTurtle) VecLaunchPosition() Vector {
+	return Vector{e.field("m_vecLaunchPosition")}
+}
+
+func (e CCitadel_Ability_Artist_StoneTurtle) QLaunchAngle() Angles {
+	return Angles{e.field("m_qLaunchAngle")}
+}
+
+type CCitadel_Ability_Artist_Tether CEntityInstance
+
+func (e CCitadel_Ability_Artist_Tether) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_Tether", name}
+}
+
+func (e CCitadel_Ability_Artist_Tether) BSuccess() Bool {
+	return Bool{e.field("m_bSuccess")}
+}
+
+func (e CCitadel_Ability_Artist_Tether) TLastSuccessfulLookTime() Number[float32] {
+	return Number[float32]{e.field("m_tLastSuccessfulLookTime")}
+}
+
+func (e CCitadel_Ability_Artist_Tether) PSelectedTarget() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_pSelectedTarget")}
+}
+
+func (e CCitadel_Ability_Artist_Tether) IPermanentBuffCount() Number[int32] {
+	return Number[int32]{e.field("m_iPermanentBuffCount")}
+}
+
+type CCitadel_Ability_Artist_TransformingProjectile CEntityInstance
+
+func (e CCitadel_Ability_Artist_TransformingProjectile) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_TransformingProjectile", name}
+}
+
+func (e CCitadel_Ability_Artist_TransformingProjectile) VecHitUnits() List[uint32] {
+	return List[uint32]{e.field("m_vecHitUnits")}
+}
+
 type CCitadel_Ability_Baba_BenchMelee CEntityInstance
 
 func (e CCitadel_Ability_Baba_BenchMelee) field(name string) Field {
@@ -1082,6 +1364,10 @@ func (e CCitadel_Ability_Baba_BenchMelee) VDashStartVelocity() Vector {
 
 func (e CCitadel_Ability_Baba_BenchMelee) BAttackImpulseApplied() Bool {
 	return Bool{e.field("m_bAttackImpulseApplied")}
+}
+
+func (e CCitadel_Ability_Baba_BenchMelee) NAirborneAttackImpulses() Number[int32] {
+	return Number[int32]{e.field("m_nAirborneAttackImpulses")}
 }
 
 func (e CCitadel_Ability_Baba_BenchMelee) AngForced() Angles {
@@ -1926,6 +2212,174 @@ func (e CCitadel_Ability_Dash) BDownAirDash() Bool {
 
 func (e CCitadel_Ability_Dash) FlAirDashDelayedEffectsTime() Number[float32] {
 	return Number[float32]{e.field("m_flAirDashDelayedEffectsTime")}
+}
+
+type CCitadel_Ability_Deadpack_ChargeBlast CEntityInstance
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Deadpack_ChargeBlast", name}
+}
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) VStartPoint() Vector {
+	return Vector{e.field("m_vStartPoint")}
+}
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) VEndPoint() Vector {
+	return Vector{e.field("m_vEndPoint")}
+}
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) VAimOffset() Vector {
+	return Vector{e.field("m_vAimOffset")}
+}
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) TLaunchHeldBeginTime() Number[float32] {
+	return Number[float32]{e.field("m_tLaunchHeldBeginTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_ChargeBlast) BTargetingActive() Bool {
+	return Bool{e.field("m_bTargetingActive")}
+}
+
+type CCitadel_Ability_Deadpack_Flamethrower CEntityInstance
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Deadpack_Flamethrower", name}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) FlNextDamageTick() Number[float32] {
+	return Number[float32]{e.field("m_flNextDamageTick")}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) VecEntitiesHit() List[uint32] {
+	return List[uint32]{e.field("m_vecEntitiesHit")}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) TLastDamageDealTime() Number[float32] {
+	return Number[float32]{e.field("m_tLastDamageDealTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) TActivationTime() Number[float32] {
+	return Number[float32]{e.field("m_tActivationTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) TPauseBeginTime() Number[float32] {
+	return Number[float32]{e.field("m_tPauseBeginTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Flamethrower) BBeaming() Bool {
+	return Bool{e.field("m_bBeaming")}
+}
+
+type CCitadel_Ability_Deadpack_Rocketeer CEntityInstance
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Deadpack_Rocketeer", name}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VIntentSpaceVelocities() Vector {
+	return Vector{e.field("m_vIntentSpaceVelocities")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VIntentSpaceCurrent() Vector {
+	return Vector{e.field("m_vIntentSpaceCurrent")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VIntentSpaceTarget() Vector {
+	return Vector{e.field("m_vIntentSpaceTarget")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VVelocity() Vector {
+	return Vector{e.field("m_vVelocity")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) TStateEnterTime() Number[float32] {
+	return Number[float32]{e.field("m_tStateEnterTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) TGravityReductionStartTime() Number[float32] {
+	return Number[float32]{e.field("m_tGravityReductionStartTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) TGravityReductionEndTime() Number[float32] {
+	return Number[float32]{e.field("m_tGravityReductionEndTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) TJetpackInputHeldBeginTime() Number[float32] {
+	return Number[float32]{e.field("m_tJetpackInputHeldBeginTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) TLastDashJumpTime() Number[float32] {
+	return Number[float32]{e.field("m_tLastDashJumpTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VSputterIntents() Vector {
+	return Vector{e.field("m_vSputterIntents")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) VVTOLVel() Vector {
+	return Vector{e.field("m_vVTOLVel")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) FlStartHeight() Number[float32] {
+	return Number[float32]{e.field("m_flStartHeight")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) FlInitialYaw() Number[float32] {
+	return Number[float32]{e.field("m_flInitialYaw")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) BDiveStraightDown() Bool {
+	return Bool{e.field("m_bDiveStraightDown")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) FlCastDelayFrac() Number[float32] {
+	return Number[float32]{e.field("m_flCastDelayFrac")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) THeatDecayStartTime() Number[float32] {
+	return Number[float32]{e.field("m_tHeatDecayStartTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Rocketeer) EState() Number[uint8] {
+	return Number[uint8]{e.field("m_eState")}
+}
+
+type CCitadel_Ability_Deadpack_Ultimate CEntityInstance
+
+func (e CCitadel_Ability_Deadpack_Ultimate) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Deadpack_Ultimate", name}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) EState() Number[uint32] {
+	return Number[uint32]{e.field("m_eState")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) TStateTimeBegin() Number[float32] {
+	return Number[float32]{e.field("m_tStateTimeBegin")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) VStateOriginBegin() Vector {
+	return Vector{e.field("m_vStateOriginBegin")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) QStateAnglesBegin() Angles {
+	return Angles{e.field("m_qStateAnglesBegin")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) HTarget() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hTarget")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) FlGoingUpTargetElevation() Number[float32] {
+	return Number[float32]{e.field("m_flGoingUpTargetElevation")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) TLastUpwardVelocityTime() Number[float32] {
+	return Number[float32]{e.field("m_tLastUpwardVelocityTime")}
+}
+
+func (e CCitadel_Ability_Deadpack_Ultimate) BIsApproachingApex() Bool {
+	return Bool{e.field("m_bIsApproachingApex")}
 }
 
 type CCitadel_Ability_DeathTax CEntityInstance
@@ -3936,6 +4390,28 @@ func (e CCitadel_Ability_PrimaryWeapon) NClipSizeBeforeSwap() Number[int32] {
 	return Number[int32]{e.field("m_nClipSizeBeforeSwap")}
 }
 
+type CCitadel_Ability_Artist_PrimaryWeapon CEntityInstance
+
+func (e CCitadel_Ability_Artist_PrimaryWeapon) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_PrimaryWeapon", name}
+}
+
+func (e CCitadel_Ability_Artist_PrimaryWeapon) ICurrentShotCount() Number[int32] {
+	return Number[int32]{e.field("m_iCurrentShotCount")}
+}
+
+type CCitadel_Ability_Artist_PrimaryWeapon2 CEntityInstance
+
+type CCitadel_Ability_Artist_ProjectileWeapon CEntityInstance
+
+func (e CCitadel_Ability_Artist_ProjectileWeapon) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Artist_ProjectileWeapon", name}
+}
+
+func (e CCitadel_Ability_Artist_ProjectileWeapon) ICurrentShotCount() Number[int32] {
+	return Number[int32]{e.field("m_iCurrentShotCount")}
+}
+
 type CCitadel_Ability_Boho_PrimaryWeapon CEntityInstance
 
 type CCitadel_Ability_BookWorm_PrimaryWeapon CEntityInstance
@@ -3949,6 +4425,8 @@ func (e CCitadel_Ability_ChessMaster_PrimaryWeapon) field(name string) Field {
 func (e CCitadel_Ability_ChessMaster_PrimaryWeapon) ICurrentShotCount() Number[int32] {
 	return Number[int32]{e.field("m_iCurrentShotCount")}
 }
+
+type CCitadel_Ability_Deadpack_PrimaryWeapon_Charge CEntityInstance
 
 type CCitadel_Ability_Drifter_PrimaryWeapon CEntityInstance
 
