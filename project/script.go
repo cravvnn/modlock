@@ -3,7 +3,9 @@ package project
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -48,9 +50,10 @@ func scriptMain(language wasm.Manifest_Language) string {
 	return "main.ts"
 }
 
-// buildScript type checks a TypeScript or JavaScript project and bundles it
-// with the library into one script for QuickJS.
-func (p *Project) buildScript(ctx context.Context, output io.Writer) error {
+// buildScript type checks a TypeScript or JavaScript project. A release build
+// compiles it with scriptc; a dev build, or a mod scriptc cannot compile,
+// bundles it with the library into one script for QuickJS.
+func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) error {
 	// Install the library and the type checker.
 	if err := installLibrary(ctx, p.Dir); err != nil {
 		return err
@@ -71,6 +74,15 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer) error {
 			Err:         errors.New("the mod has type errors"),
 			Diagnostics: tsgoDiagnostics(p.Dir, printed.Bytes()),
 		}
+	}
+
+	// Compile a release build with scriptc when it can.
+	if mode == Release {
+		module, err := p.compileScriptc(ctx, output)
+		if err == nil {
+			return p.writeBuild(module, wasm.Manifest_RUNTIME_WASM, Entry, ScriptEntry)
+		}
+		_, _ = fmt.Fprintf(output, "%v; the mod runs on QuickJS\n", err)
 	}
 
 	// Bundle the sources and the library into one script.
@@ -97,18 +109,33 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer) error {
 		}
 	}
 
-	// Replace the script, then the manifest that names it.
+	return p.writeBuild(result.OutputFiles[0].Contents, wasm.Manifest_RUNTIME_QUICKJS, ScriptEntry, Entry)
+}
+
+// writeBuild replaces the built mod's entry with content, then the manifest
+// that names it, and removes the entry of the other runtime, stale, a
+// script mod builds for.
+func (p *Project) writeBuild(content []byte, runtime wasm.Manifest_Runtime, entry, stale string) error {
+	// Stage the entry so a failed write leaves the previous build in place.
 	if err := os.MkdirAll(p.Output(), 0o755); err != nil {
 		return errors.Wrap(err, "create the build directory")
 	}
-	staged := filepath.Join(p.Output(), ScriptEntry+".tmp")
-	if err := os.WriteFile(staged, result.OutputFiles[0].Contents, 0o644); err != nil {
-		return errors.Wrap(err, "write the script")
+	staged := filepath.Join(p.Output(), entry+".tmp")
+	if err := os.WriteFile(staged, content, 0o644); err != nil {
+		return errors.Wrap(err, "write the build")
 	}
-	if err := os.Rename(staged, filepath.Join(p.Output(), ScriptEntry)); err != nil {
-		return errors.Wrap(err, "write the script")
+	if err := os.Rename(staged, filepath.Join(p.Output(), entry)); err != nil {
+		return errors.Wrap(err, "write the build")
 	}
-	return p.writeBuiltManifest(wasm.Manifest_RUNTIME_QUICKJS, ScriptEntry)
+
+	// Name it in the manifest, then drop the entry the manifest stopped naming.
+	if err := p.writeBuiltManifest(runtime, entry); err != nil {
+		return err
+	}
+	if err := os.Remove(filepath.Join(p.Output(), stale)); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return errors.Wrap(err, "remove the previous build")
+	}
+	return nil
 }
 
 // installLibrary copies the built library into the project in dir, leaving

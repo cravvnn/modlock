@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/aperturerobotics/cli"
+	"github.com/paralin/modlock/project"
 	"github.com/pkg/errors"
 )
 
@@ -28,7 +29,7 @@ func devCommand(out *printer) *cli.Command {
 			started := make(chan error, 1)
 			rebuild := func() {
 				// Keep the running mod when the build fails.
-				if err := out.build(c.Context, opened); err != nil {
+				if err := out.build(c.Context, opened, project.Dev); err != nil {
 					out.note("the build failed; fix it and save to try again")
 					return
 				}

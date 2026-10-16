@@ -11,6 +11,8 @@ package scriptc
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -23,6 +25,42 @@ const (
 	// call the host holds and returns the encoded reply.
 	EventExport = "mod_event"
 )
+
+// profile is the scriptc profile of a mod, with its entry left to fill in.
+// It names the symbols above and the host callbacks the fit renames.
+const profile = `{
+  "profile_format": 1,
+  "name": "mod",
+  "entry": %s,
+  "emission": "llvm",
+  "abi": {
+    "prefix": "mod_",
+    "init_symbol": "mod_init",
+    "sink_register_symbol": "mod_sink",
+    "callback_register_symbol": "mod_callback"
+  },
+  "callbacks": [
+    { "name": "host_call", "params": ["bytes"], "returns": "u32" },
+    { "name": "host_read", "params": ["bytes"], "returns": "void" }
+  ],
+  "exports": [
+    {
+      "export": "event",
+      "symbol": "mod_event",
+      "params": ["u32"],
+      "returns": "bytes"
+    }
+  ]
+}
+`
+
+// Profile returns the scriptc profile that builds the module at entry, a path
+// relative to the profile, into one that Fit accepts. The entry declares
+// host_call and host_read and exports event.
+func Profile(entry string) []byte {
+	quoted, _ := json.Marshal(entry)
+	return fmt.Appendf(nil, profile, quoted)
+}
 
 // header opens every WebAssembly binary: the magic bytes and version 1.
 var header = []byte{0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00}

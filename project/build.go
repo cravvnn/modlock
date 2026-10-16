@@ -23,10 +23,21 @@ const Entry = "mod.wasm"
 // maps/<map>.bsp for the Quake collision its movement model walks on.
 const MapsDir = "maps"
 
+// Mode chooses what a script mod's build favors.
+type Mode int
+
+const (
+	// Release compiles a script mod to WebAssembly with scriptc, which runs
+	// it fastest, and bundles it for QuickJS when scriptc cannot compile it.
+	Release Mode = iota
+	// Dev bundles a script mod for QuickJS, which builds in a moment.
+	Dev
+)
+
 // Build checks the project and writes the built mod to Output. Check and
 // compiler errors go to output and fail the build with a *CheckError that
 // locates them; a failed build leaves the previous built mod in place.
-func (p *Project) Build(ctx context.Context, output io.Writer) error {
+func (p *Project) Build(ctx context.Context, output io.Writer, mode Mode) error {
 	// Check the declarations and ship the map before compiling.
 	if err := settings.Validate(p.Manifest); err != nil {
 		return err
@@ -43,7 +54,7 @@ func (p *Project) Build(ctx context.Context, output io.Writer) error {
 	case wasm.Manifest_LANGUAGE_GO:
 		return p.buildGo(ctx, output)
 	case wasm.Manifest_LANGUAGE_TYPESCRIPT, wasm.Manifest_LANGUAGE_JAVASCRIPT:
-		return p.buildScript(ctx, output)
+		return p.buildScript(ctx, output, mode)
 	case wasm.Manifest_LANGUAGE_LUAU:
 		return p.buildLuau(ctx, output)
 	case wasm.Manifest_LANGUAGE_PYTHON:
@@ -99,6 +110,7 @@ func (p *Project) buildGo(ctx context.Context, output io.Writer) error {
 // writeBuiltManifest writes the built mod's mod.json: the project's manifest,
 // naming the runtime and entry in place of the language.
 func (p *Project) writeBuiltManifest(runtime wasm.Manifest_Runtime, entry string) error {
+	// Copy the manifest, naming the runtime and the entry.
 	built := p.Manifest.CloneVT()
 	built.Language = wasm.Manifest_LANGUAGE_UNKNOWN
 	built.Runtime = runtime

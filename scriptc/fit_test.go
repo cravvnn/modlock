@@ -1,6 +1,7 @@
 package scriptc
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"strings"
@@ -26,6 +27,18 @@ func fitted(t *testing.T) []byte {
 		t.Fatalf("fit the module: %v", err)
 	}
 	return fit
+}
+
+// TestProfile checks that testdata/mod.json, which built testdata/mod.wasm,
+// is the profile that builds use.
+func TestProfile(t *testing.T) {
+	want, err := os.ReadFile("testdata/mod.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := Profile("mod.ts"); !bytes.Equal(got, want) {
+		t.Fatalf("Profile(mod.ts) = %s, want testdata/mod.json:\n%s", got, want)
+	}
 }
 
 // TestFitPassesCheck checks that a fitted module keeps to the host's boundary

@@ -17,7 +17,7 @@ func buildCommand(out *printer) *cli.Command {
 			if err != nil {
 				return err
 			}
-			if err := out.build(c.Context, opened); err != nil {
+			if err := out.build(c.Context, opened, project.Release); err != nil {
 				return err
 			}
 

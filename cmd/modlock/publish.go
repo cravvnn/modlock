@@ -6,6 +6,7 @@ import (
 
 	"github.com/aperturerobotics/cli"
 	"github.com/paralin/modlock/check"
+	"github.com/paralin/modlock/project"
 	"github.com/paralin/modlock/proto/modlock/publish"
 	"github.com/pkg/errors"
 
@@ -33,7 +34,7 @@ func publishCommand(out *printer) *cli.Command {
 			if err != nil {
 				return err
 			}
-			if err := out.build(c.Context, opened); err != nil {
+			if err := out.build(c.Context, opened, project.Release); err != nil {
 				return err
 			}
 			manifest, err := check.Mod(c.Context, os.DirFS(opened.Output()))

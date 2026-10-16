@@ -141,11 +141,11 @@ func (p *printer) emit(event *cli.Event) {
 	_, _ = os.Stdout.Write(append(data, '\n'))
 }
 
-// build builds the project, reporting the build's start and result. Tool
-// output goes to standard error.
-func (p *printer) build(ctx context.Context, opened *project.Project) error {
+// build builds the project in mode, reporting the build's start and result.
+// Tool output goes to standard error.
+func (p *printer) build(ctx context.Context, opened *project.Project, mode project.Mode) error {
 	p.building(opened.Dir)
-	err := opened.Build(ctx, os.Stderr)
+	err := opened.Build(ctx, os.Stderr, mode)
 	p.built(opened.Dir, err)
 	return err
 }

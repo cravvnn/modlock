@@ -448,6 +448,12 @@ type, with no Node.js or npm to install. A JavaScript mod is checked from its
 JSDoc. [`proto/modlock/wasm.proto`](proto/modlock/wasm.proto) documents every
 call, its arguments and its result.
 
+`modlock build` compiles the mod ahead of time to WebAssembly with
+[scriptc](https://scriptc.dev), which it downloads the first time. When scriptc
+cannot compile part of the mod, the build lists each place and the reason, and
+bundles the mod for QuickJS, which runs any JavaScript. `modlock dev` always
+bundles for QuickJS, which builds in a moment.
+
 A failed call logs why and returns `false` or `undefined`; it never stops the
 mod. Everything a mod places leaves with the world. Stopping or reloading the
 mod removes it and releases frozen heroes, modifier states and input.
