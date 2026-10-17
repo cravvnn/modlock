@@ -370,15 +370,16 @@ const screens = new Map<number, Screen>()
 function render(previous: Screen | undefined, root: Child): Screen {
   // The root is the full-screen panel the elements hang from.
   const layout = new Layout(previous)
-  layout.add({ id: '', kind: Kind.PANEL, children: layout.place(root, '/') })
+  layout.add({ id: '', kind: Kind.PANEL, children: place(layout, root, '/') })
   return layout.screen
 }
 
 /**
- * Layout lays out one screen. Its steps are methods, not closures: a closure
- * that calls itself holds itself, and QuickJS frees such a cycle, with the
- * screens it reaches, only in a full collection that walks the mod's whole
- * heap in one frame.
+ * Layout holds one screen while place lays it out. The steps are not closures:
+ * a closure that calls itself holds itself, and QuickJS frees such a cycle,
+ * with the screens it reaches, only in a full collection that walks the mod's
+ * whole heap in one frame. place is a function rather than a method because
+ * scriptc cannot hold a method that takes a Child as a prototype value.
  */
 class Layout {
   readonly screen: Screen
@@ -400,71 +401,8 @@ class Layout {
     this.screen.nodes.set(node.id!, { node, encoded: JSON.stringify(node) })
   }
 
-  /** place lays out child at place and returns its nodes' ids. */
-  place(child: Child, at: string): string[] {
-    // Lay out empty values, lists, text, and the fragments components return.
-    if (child === null || child === undefined || typeof child === 'boolean') {
-      return []
-    }
-    if (isList(child)) {
-      return child.flatMap((item, index) => {
-        const key = isElement(item) ? item.key : undefined
-        return this.place(
-          item,
-          key === undefined ? `${at},${index}` : `${at},=${key}`,
-        )
-      })
-    }
-    if (!isElement(child)) {
-      const node: Node = {
-        id: this.id(at),
-        kind: Kind.LABEL,
-        text: String(child),
-      }
-      this.add(node)
-      return [node.id!]
-    }
-    if (child.type === fragment) {
-      return this.place(child.props.children, `${at}>`)
-    }
-
-    // Draw an intrinsic element.
-    const props = child.props
-    const node: Node = {
-      id: this.id(at),
-      style: wireStyle(props.style),
-    }
-    switch (child.type) {
-      case 'label':
-        node.kind = Kind.LABEL
-        node.text = text(props.children)
-        break
-      case 'image':
-        node.kind = Kind.IMAGE
-        node.image = props.src ?? ''
-        break
-      case 'button':
-        node.kind = Kind.BUTTON
-        if (props.onPress) {
-          this.screen.presses.set(node.id!, { handler: props.onPress })
-        }
-        node.children = this.place(props.children, `${at}/`)
-        break
-      case 'layout':
-        node.kind = Kind.LAYOUT
-        node.layout = props.src ?? ''
-        node.data = props.data ?? ''
-        break
-      default:
-        node.kind = Kind.PANEL
-        node.children = this.place(props.children, `${at}/`)
-    }
-    this.add(node)
-    return [node.id!]
-  }
-
   /** id returns the node id for the element at place. */
-  private id(place: string): string {
+  id(place: string): string {
     let found = this.previous?.ids.get(place)
     if (found === undefined) {
       found = (this.screen.next++).toString(36)
@@ -472,6 +410,70 @@ class Layout {
     this.screen.ids.set(place, found)
     return found
   }
+}
+
+/** place lays out child at place in layout and returns its nodes' ids. */
+function place(layout: Layout, child: Child, at: string): string[] {
+  // Lay out empty values, lists, text, and the fragments components return.
+  if (child === null || child === undefined || typeof child === 'boolean') {
+    return []
+  }
+  if (isList(child)) {
+    return child.flatMap((item, index) => {
+      const key = isElement(item) ? item.key : undefined
+      return place(
+        layout,
+        item,
+        key === undefined ? `${at},${index}` : `${at},=${key}`,
+      )
+    })
+  }
+  if (!isElement(child)) {
+    const node: Node = {
+      id: layout.id(at),
+      kind: Kind.LABEL,
+      text: String(child),
+    }
+    layout.add(node)
+    return [node.id!]
+  }
+  if (child.type === fragment) {
+    return place(layout, child.props.children, `${at}>`)
+  }
+
+  // Draw an intrinsic element.
+  const props = child.props
+  const node: Node = {
+    id: layout.id(at),
+    style: wireStyle(props.style),
+  }
+  switch (child.type) {
+    case 'label':
+      node.kind = Kind.LABEL
+      node.text = text(props.children)
+      break
+    case 'image':
+      node.kind = Kind.IMAGE
+      node.image = props.src ?? ''
+      break
+    case 'button':
+      node.kind = Kind.BUTTON
+      if (props.onPress) {
+        layout.screen.presses.set(node.id!, { handler: props.onPress })
+      }
+      node.children = place(layout, props.children, `${at}/`)
+      break
+    case 'layout':
+      node.kind = Kind.LAYOUT
+      node.layout = props.src ?? ''
+      node.data = props.data ?? ''
+      break
+    default:
+      node.kind = Kind.PANEL
+      node.children = place(layout, props.children, `${at}/`)
+  }
+  layout.add(node)
+  return [node.id!]
 }
 
 /** diff returns the change from previous to next, or undefined when nothing changed. */
