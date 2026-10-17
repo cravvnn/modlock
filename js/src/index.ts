@@ -313,7 +313,9 @@ const handlers: ModHandlers = {
     return { payload: registered.handler(event.method, event.payload) }
   },
 
-  damage(event) {
+  // scriptc types an unannotated method that returns literals of different
+  // shapes by those literals rather than by ModHandlers, and the call throws.
+  damage(event): DamageResult {
     let amount = event.amount
     for (const handler of damages) {
       const change = handler({ ...event, amount })
