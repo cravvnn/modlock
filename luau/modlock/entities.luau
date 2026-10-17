@@ -2351,6 +2351,49 @@ describe("CNPC_Ratking_Rat", "CCitadelAnimatingModelEntity", {
 export type CCitadelHideoutPropBase = CBaseAnimGraph
 describe("CCitadelHideoutPropBase", "CBaseAnimGraph", {})
 
+export type CCitadel_Artist_SolidBlocker = CBaseAnimGraph & {
+	m_flTurnSolidTime: number?,
+}
+describe("CCitadel_Artist_SolidBlocker", "CBaseAnimGraph", {
+	m_flTurnSolidTime = "float32",
+})
+
+export type CCitadel_Artist_StrokeBlocker = CBaseAnimGraph & {
+	m_vStrokeStart: modlock.Vector?,
+	m_vStrokeEnd: modlock.Vector?,
+	m_hPrevBlocker: CCitadel_Artist_StrokeBlocker?,
+	m_hNextBlocker: CCitadel_Artist_StrokeBlocker?,
+	m_flStrokeRadius: number?,
+	m_flLifetime: number?,
+	m_vecOverlap: { number }?,
+	m_vecPrevOverlap: { number }?,
+	m_hBreaker: CBaseEntity?,
+}
+describe("CCitadel_Artist_StrokeBlocker", "CBaseAnimGraph", {
+	m_vStrokeStart = "vector",
+	m_vStrokeEnd = "vector",
+	m_hPrevBlocker = "CCitadel_Artist_StrokeBlocker",
+	m_hNextBlocker = "CCitadel_Artist_StrokeBlocker",
+	m_flStrokeRadius = "float32",
+	m_flLifetime = "float32",
+	m_vecOverlap = "list:handle",
+	m_vecPrevOverlap = "list:handle",
+	m_hBreaker = "CBaseEntity",
+})
+
+export type CCitadel_Artist_VisionBlocker = CBaseAnimGraph & {
+	s_flBuildUpTime: number?,
+	s_flTearDownTime: number?,
+	m_flTurnSolidTime: number?,
+	m_flTearDownStartTime: number?,
+}
+describe("CCitadel_Artist_VisionBlocker", "CBaseAnimGraph", {
+	s_flBuildUpTime = "float32",
+	s_flTearDownTime = "float32",
+	m_flTurnSolidTime = "float32",
+	m_flTearDownStartTime = "float32",
+})
+
 export type CCitadel_BreakableProp = CBaseAnimGraph & {
 	m_flOverrideInitialSpawnTime: number?,
 	m_flOverrideRespawnTime: number?,
@@ -2365,6 +2408,9 @@ describe("CCitadel_BreakableProp", "CBaseAnimGraph", {
 	m_hBreaker = "CCitadelPlayerPawn",
 	m_nMeleeHitsTaken = "int32",
 })
+
+export type CCitadel_BreakableProp_Hideout = CCitadel_BreakableProp
+describe("CCitadel_BreakableProp_Hideout", "CCitadel_BreakableProp", {})
 
 export type CCitadel_DeployablePreview = CBaseAnimGraph
 describe("CCitadel_DeployablePreview", "CBaseAnimGraph", {})
@@ -2477,6 +2523,15 @@ describe("CCitadel_Pickup_Ability", "CCitadel_Pickup", {
 
 export type CCitadel_Pickup_Item = CCitadel_Pickup_Ability
 describe("CCitadel_Pickup_Item", "CCitadel_Pickup_Ability", {})
+
+export type CCitadel_Pickup_ArtistDrawing = CCitadel_Pickup & {
+	m_hPlayerOwner: CBaseEntity?,
+	m_hPlayerVictim: CCitadelPlayerPawn?,
+}
+describe("CCitadel_Pickup_ArtistDrawing", "CCitadel_Pickup", {
+	m_hPlayerOwner = "CBaseEntity",
+	m_hPlayerVictim = "CCitadelPlayerPawn",
+})
 
 export type CCitadel_Pickup_AssignedGold = CCitadel_Pickup
 describe("CCitadel_Pickup_AssignedGold", "CCitadel_Pickup", {})
@@ -4737,6 +4792,9 @@ describe("CCitadel_Projectile_BatSwarmProjectile", "CCitadelTrackedProjectile", 
 export type CCitadel_Projectile_BatSwarmExtraProjectile = CCitadel_Projectile_BatSwarmProjectile
 describe("CCitadel_Projectile_BatSwarmExtraProjectile", "CCitadel_Projectile_BatSwarmProjectile", {})
 
+export type CCitadel_Projectile_DeadpackMissile = CCitadelTrackedProjectile
+describe("CCitadel_Projectile_DeadpackMissile", "CCitadelTrackedProjectile", {})
+
 export type CCitadel_Projectile_FortunaWeapon = CCitadelTrackedProjectile
 describe("CCitadel_Projectile_FortunaWeapon", "CCitadelTrackedProjectile", {})
 
@@ -4762,6 +4820,13 @@ describe("CProjectile_PunkgoatTether", "CCitadelTrackedProjectile", {
 
 export type CCitadel_Projectile_Archer_ChargedShot = CCitadelProjectile
 describe("CCitadel_Projectile_Archer_ChargedShot", "CCitadelProjectile", {})
+
+export type CCitadel_Projectile_ArtistGun = CCitadelProjectile & {
+	m_vecHitTargets: { number }?,
+}
+describe("CCitadel_Projectile_ArtistGun", "CCitadelProjectile", {
+	m_vecHitTargets = "list:handle",
+})
 
 export type CCitadel_Projectile_Bebop_Hook = CCitadelProjectile
 describe("CCitadel_Projectile_Bebop_Hook", "CCitadelProjectile", {})
@@ -4886,6 +4951,12 @@ describe("CDoormanBombProjectile", "CCitadelProjectile", {})
 
 export type CItemExplosiveBarrel = CCitadelProjectile
 describe("CItemExplosiveBarrel", "CCitadelProjectile", {})
+
+export type CProjectile_Artist_BouncingPot = CCitadelProjectile
+describe("CProjectile_Artist_BouncingPot", "CCitadelProjectile", {})
+
+export type CProjectile_Artist_RollingProjectile = CCitadelProjectile
+describe("CProjectile_Artist_RollingProjectile", "CCitadelProjectile", {})
 
 export type CProjectile_Boho_SkipGrenade = CCitadelProjectile
 describe("CProjectile_Boho_SkipGrenade", "CCitadelProjectile", {})
@@ -7551,6 +7622,189 @@ describe("CCitadel_Ability_PowerSlash", "CCitadelBaseYamatoAbility", {
 export type CCitadel_Ability_Afterburn = CCitadelBaseAbility
 describe("CCitadel_Ability_Afterburn", "CCitadelBaseAbility", {})
 
+export type CCitadel_Ability_Artist_BambooGrove = CCitadelBaseAbility & {
+	m_bActive: boolean?,
+}
+describe("CCitadel_Ability_Artist_BambooGrove", "CCitadelBaseAbility", {
+	m_bActive = "bool",
+})
+
+export type CCitadel_Ability_Artist_BouncingPot = CCitadelBaseAbility & {
+	m_vecGroundAuras: { number }?,
+	m_vecHitUnits: { number }?,
+	m_tInitialShotID: number?,
+	m_vLaunchPosition: modlock.Vector?,
+	m_qLaunchAngle: modlock.Angles?,
+}
+describe("CCitadel_Ability_Artist_BouncingPot", "CCitadelBaseAbility", {
+	m_vecGroundAuras = "list:handle",
+	m_vecHitUnits = "list:handle",
+	m_tInitialShotID = "uint32",
+	m_vLaunchPosition = "vector",
+	m_qLaunchAngle = "angles",
+})
+
+export type CCitadel_Ability_Artist_Cloudburst = CCitadelBaseAbility
+describe("CCitadel_Ability_Artist_Cloudburst", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Artist_DamageZone = CCitadelBaseAbility
+describe("CCitadel_Ability_Artist_DamageZone", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Artist_EmpowerAbilities = CCitadelBaseAbility & {
+	m_bActive: boolean?,
+}
+describe("CCitadel_Ability_Artist_EmpowerAbilities", "CCitadelBaseAbility", {
+	m_bActive = "bool",
+})
+
+export type CCitadel_Ability_Artist_FlyingLion = CCitadelBaseAbility & {
+	m_flFlyingStartTime: number?,
+	m_bFlying: boolean?,
+}
+describe("CCitadel_Ability_Artist_FlyingLion", "CCitadelBaseAbility", {
+	m_flFlyingStartTime = "float32",
+	m_bFlying = "bool",
+})
+
+export type CCitadel_Ability_Artist_HealingBarrier = CCitadelBaseAbility & {
+	m_nCastParticleIndex: number?,
+}
+describe("CCitadel_Ability_Artist_HealingBarrier", "CCitadelBaseAbility", {
+	m_nCastParticleIndex = "int32",
+})
+
+export type CCitadel_Ability_Artist_HomingProjectile = CCitadelBaseAbility & {
+	m_bDealtStrokeDamageThisTick: boolean?,
+	m_vecDeployedProjectiles: { number }?,
+	m_tShootingLockoutEndTime: number?,
+}
+describe("CCitadel_Ability_Artist_HomingProjectile", "CCitadelBaseAbility", {
+	m_bDealtStrokeDamageThisTick = "bool",
+	m_vecDeployedProjectiles = "list:handle",
+	m_tShootingLockoutEndTime = "float32",
+})
+
+export type CCitadel_Ability_Artist_InkActive = CCitadelBaseAbility
+describe("CCitadel_Ability_Artist_InkActive", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Artist_InkBrush = CCitadelBaseAbility & {
+	m_bButtonDown: boolean?,
+	m_flAccumulatedDrawDistance: number?,
+}
+describe("CCitadel_Ability_Artist_InkBrush", "CCitadelBaseAbility", {
+	m_bButtonDown = "bool",
+	m_flAccumulatedDrawDistance = "float32",
+})
+
+export type CCitadel_Ability_Artist_LionDance = CCitadelBaseAbility & {
+	m_tEndTime: number?,
+	m_tNextPulseTime: number?,
+	m_bActive: boolean?,
+	m_iRemainingShots: number?,
+	m_vLaunchPosition: modlock.Vector?,
+	m_qLaunchAngle: modlock.Angles?,
+	m_pPointModifier: CBaseEntity?,
+}
+describe("CCitadel_Ability_Artist_LionDance", "CCitadelBaseAbility", {
+	m_tEndTime = "float32",
+	m_tNextPulseTime = "float32",
+	m_bActive = "bool",
+	m_iRemainingShots = "int32",
+	m_vLaunchPosition = "vector",
+	m_qLaunchAngle = "angles",
+	m_pPointModifier = "CBaseEntity",
+})
+
+export type CCitadel_Ability_Artist_MultiHit = CCitadelBaseAbility & {
+	m_vecHitEnemies: { number }?,
+	m_tMultiHitEndTime: number?,
+	m_tSubCooldownEndTime: number?,
+	m_bActive: boolean?,
+	m_iCurrentHits: number?,
+}
+describe("CCitadel_Ability_Artist_MultiHit", "CCitadelBaseAbility", {
+	m_vecHitEnemies = "list:handle",
+	m_tMultiHitEndTime = "float32",
+	m_tSubCooldownEndTime = "float32",
+	m_bActive = "bool",
+	m_iCurrentHits = "int32",
+})
+
+export type CCitadel_Ability_Artist_Pillar = CCitadelBaseAbility
+describe("CCitadel_Ability_Artist_Pillar", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Artist_PullBrush = CCitadelBaseAbility & {
+	m_flAccumulatedDrawDistance: number?,
+	m_bPainting: boolean?,
+	m_tStopPaintingTime: number?,
+	m_vecBrushPositions: { modlock.Vector }?,
+	m_vecBrushVelocity: modlock.Vector?,
+	m_vecBrushCurrentPosition: modlock.Vector?,
+}
+describe("CCitadel_Ability_Artist_PullBrush", "CCitadelBaseAbility", {
+	m_flAccumulatedDrawDistance = "float32",
+	m_bPainting = "bool",
+	m_tStopPaintingTime = "float32",
+	m_vecBrushPositions = "list:vector",
+	m_vecBrushVelocity = "vector",
+	m_vecBrushCurrentPosition = "vector",
+})
+
+export type CCitadel_Ability_Artist_RideTiger = CCitadelBaseAbility & {
+	m_bIsEnabled: boolean?,
+}
+describe("CCitadel_Ability_Artist_RideTiger", "CCitadelBaseAbility", {
+	m_bIsEnabled = "bool",
+})
+
+export type CCitadel_Ability_Artist_RollingProjectile = CCitadelBaseAbility & {
+	m_bActive: boolean?,
+	m_hDeployedProjectile: CCitadelProjectile?,
+}
+describe("CCitadel_Ability_Artist_RollingProjectile", "CCitadelBaseAbility", {
+	m_bActive = "bool",
+	m_hDeployedProjectile = "CCitadelProjectile",
+})
+
+export type CCitadel_Ability_Artist_RootingProjectile = CCitadelBaseAbility
+describe("CCitadel_Ability_Artist_RootingProjectile", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Artist_ShieldProjectile = CCitadelBaseAbility & {
+	m_vHitEnts: { number }?,
+}
+describe("CCitadel_Ability_Artist_ShieldProjectile", "CCitadelBaseAbility", {
+	m_vHitEnts = "list:handle",
+})
+
+export type CCitadel_Ability_Artist_StoneTurtle = CCitadelBaseAbility & {
+	m_vecLaunchPosition: modlock.Vector?,
+	m_qLaunchAngle: modlock.Angles?,
+}
+describe("CCitadel_Ability_Artist_StoneTurtle", "CCitadelBaseAbility", {
+	m_vecLaunchPosition = "vector",
+	m_qLaunchAngle = "angles",
+})
+
+export type CCitadel_Ability_Artist_Tether = CCitadelBaseAbility & {
+	m_bSuccess: boolean?,
+	m_tLastSuccessfulLookTime: number?,
+	m_pSelectedTarget: CBaseEntity?,
+	m_iPermanentBuffCount: number?,
+}
+describe("CCitadel_Ability_Artist_Tether", "CCitadelBaseAbility", {
+	m_bSuccess = "bool",
+	m_tLastSuccessfulLookTime = "float32",
+	m_pSelectedTarget = "CBaseEntity",
+	m_iPermanentBuffCount = "int32",
+})
+
+export type CCitadel_Ability_Artist_TransformingProjectile = CCitadelBaseAbility & {
+	m_vecHitUnits: { number }?,
+}
+describe("CCitadel_Ability_Artist_TransformingProjectile", "CCitadelBaseAbility", {
+	m_vecHitUnits = "list:handle",
+})
+
 export type CCitadel_Ability_Baba_BenchMelee = CCitadelBaseAbility & {
 	m_eState: number?,
 	m_eAttackType: number?,
@@ -7563,6 +7817,7 @@ export type CCitadel_Ability_Baba_BenchMelee = CCitadelBaseAbility & {
 	m_bDiveApplied: boolean?,
 	m_vDashStartVelocity: modlock.Vector?,
 	m_bAttackImpulseApplied: boolean?,
+	m_nAirborneAttackImpulses: number?,
 	m_angForced: modlock.Angles?,
 }
 describe("CCitadel_Ability_Baba_BenchMelee", "CCitadelBaseAbility", {
@@ -7577,6 +7832,7 @@ describe("CCitadel_Ability_Baba_BenchMelee", "CCitadelBaseAbility", {
 	m_bDiveApplied = "bool",
 	m_vDashStartVelocity = "vector",
 	m_bAttackImpulseApplied = "bool",
+	m_nAirborneAttackImpulses = "int32",
 	m_angForced = "angles",
 })
 
@@ -8098,6 +8354,98 @@ describe("CCitadel_Ability_Dash", "CCitadelBaseAbility", {
 	m_nConsecutiveDownDashes = "int8",
 	m_bDownAirDash = "bool",
 	m_flAirDashDelayedEffectsTime = "float32",
+})
+
+export type CCitadel_Ability_Deadpack_ChargeBlast = CCitadelBaseAbility & {
+	m_vStartPoint: modlock.Vector?,
+	m_vEndPoint: modlock.Vector?,
+	m_vAimOffset: modlock.Vector?,
+	m_tLaunchHeldBeginTime: number?,
+	m_bTargetingActive: boolean?,
+}
+describe("CCitadel_Ability_Deadpack_ChargeBlast", "CCitadelBaseAbility", {
+	m_vStartPoint = "vector",
+	m_vEndPoint = "vector",
+	m_vAimOffset = "vector",
+	m_tLaunchHeldBeginTime = "float32",
+	m_bTargetingActive = "bool",
+})
+
+export type CCitadel_Ability_Deadpack_Flamethrower = CCitadelBaseAbility & {
+	m_flNextDamageTick: number?,
+	m_vecEntitiesHit: { number }?,
+	m_tLastDamageDealTime: number?,
+	m_tActivationTime: number?,
+	m_tPauseBeginTime: number?,
+	m_bBeaming: boolean?,
+}
+describe("CCitadel_Ability_Deadpack_Flamethrower", "CCitadelBaseAbility", {
+	m_flNextDamageTick = "float32",
+	m_vecEntitiesHit = "list:handle",
+	m_tLastDamageDealTime = "float32",
+	m_tActivationTime = "float32",
+	m_tPauseBeginTime = "float32",
+	m_bBeaming = "bool",
+})
+
+export type CCitadel_Ability_Deadpack_Rocketeer = CCitadelBaseAbility & {
+	m_vIntentSpaceVelocities: modlock.Vector?,
+	m_vIntentSpaceCurrent: modlock.Vector?,
+	m_vIntentSpaceTarget: modlock.Vector?,
+	m_vVelocity: modlock.Vector?,
+	m_tStateEnterTime: number?,
+	m_tGravityReductionStartTime: number?,
+	m_tGravityReductionEndTime: number?,
+	m_tJetpackInputHeldBeginTime: number?,
+	m_tLastDashJumpTime: number?,
+	m_vSputterIntents: modlock.Vector?,
+	m_vVTOLVel: modlock.Vector?,
+	m_flStartHeight: number?,
+	m_flInitialYaw: number?,
+	m_bDiveStraightDown: boolean?,
+	m_flCastDelayFrac: number?,
+	m_tHeatDecayStartTime: number?,
+	m_eState: number?,
+}
+describe("CCitadel_Ability_Deadpack_Rocketeer", "CCitadelBaseAbility", {
+	m_vIntentSpaceVelocities = "vector",
+	m_vIntentSpaceCurrent = "vector",
+	m_vIntentSpaceTarget = "vector",
+	m_vVelocity = "vector",
+	m_tStateEnterTime = "float32",
+	m_tGravityReductionStartTime = "float32",
+	m_tGravityReductionEndTime = "float32",
+	m_tJetpackInputHeldBeginTime = "float32",
+	m_tLastDashJumpTime = "float32",
+	m_vSputterIntents = "vector",
+	m_vVTOLVel = "vector",
+	m_flStartHeight = "float32",
+	m_flInitialYaw = "float32",
+	m_bDiveStraightDown = "bool",
+	m_flCastDelayFrac = "float32",
+	m_tHeatDecayStartTime = "float32",
+	m_eState = "uint8",
+})
+
+export type CCitadel_Ability_Deadpack_Ultimate = CCitadelBaseAbility & {
+	m_eState: number?,
+	m_tStateTimeBegin: number?,
+	m_vStateOriginBegin: modlock.Vector?,
+	m_qStateAnglesBegin: modlock.Angles?,
+	m_hTarget: CBaseEntity?,
+	m_flGoingUpTargetElevation: number?,
+	m_tLastUpwardVelocityTime: number?,
+	m_bIsApproachingApex: boolean?,
+}
+describe("CCitadel_Ability_Deadpack_Ultimate", "CCitadelBaseAbility", {
+	m_eState = "uint32",
+	m_tStateTimeBegin = "float32",
+	m_vStateOriginBegin = "vector",
+	m_qStateAnglesBegin = "angles",
+	m_hTarget = "CBaseEntity",
+	m_flGoingUpTargetElevation = "float32",
+	m_tLastUpwardVelocityTime = "float32",
+	m_bIsApproachingApex = "bool",
 })
 
 export type CCitadel_Ability_DeathTax = CCitadelBaseAbility
@@ -9368,6 +9716,23 @@ describe("CCitadel_Ability_PrimaryWeapon", "CCitadelBaseAbility", {
 	m_nClipSizeBeforeSwap = "int32",
 })
 
+export type CCitadel_Ability_Artist_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon & {
+	m_iCurrentShotCount: number?,
+}
+describe("CCitadel_Ability_Artist_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {
+	m_iCurrentShotCount = "int32",
+})
+
+export type CCitadel_Ability_Artist_PrimaryWeapon2 = CCitadel_Ability_PrimaryWeapon
+describe("CCitadel_Ability_Artist_PrimaryWeapon2", "CCitadel_Ability_PrimaryWeapon", {})
+
+export type CCitadel_Ability_Artist_ProjectileWeapon = CCitadel_Ability_PrimaryWeapon & {
+	m_iCurrentShotCount: number?,
+}
+describe("CCitadel_Ability_Artist_ProjectileWeapon", "CCitadel_Ability_PrimaryWeapon", {
+	m_iCurrentShotCount = "int32",
+})
+
 export type CCitadel_Ability_Boho_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon
 describe("CCitadel_Ability_Boho_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {})
 
@@ -9380,6 +9745,9 @@ export type CCitadel_Ability_ChessMaster_PrimaryWeapon = CCitadel_Ability_Primar
 describe("CCitadel_Ability_ChessMaster_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {
 	m_iCurrentShotCount = "int32",
 })
+
+export type CCitadel_Ability_Deadpack_PrimaryWeapon_Charge = CCitadel_Ability_PrimaryWeapon
+describe("CCitadel_Ability_Deadpack_PrimaryWeapon_Charge", "CCitadel_Ability_PrimaryWeapon", {})
 
 export type CCitadel_Ability_Drifter_PrimaryWeapon = CCitadel_Ability_PrimaryWeapon
 describe("CCitadel_Ability_Drifter_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon", {})
@@ -19879,7 +20247,11 @@ type ClassName0 =
 	| "CNPC_Neutral_Hideout_Rabbit"
 	| "CNPC_Ratking_Rat"
 	| "CCitadelHideoutPropBase"
+	| "CCitadel_Artist_SolidBlocker"
+	| "CCitadel_Artist_StrokeBlocker"
+	| "CCitadel_Artist_VisionBlocker"
 	| "CCitadel_BreakableProp"
+	| "CCitadel_BreakableProp_Hideout"
 	| "CCitadel_DeployablePreview"
 	| "CCitadel_DoorwayPortal"
 	| "CCitadel_FissureWall"
@@ -19891,6 +20263,7 @@ type ClassName0 =
 	| "CCitadel_Pickup"
 	| "CCitadel_Pickup_Ability"
 	| "CCitadel_Pickup_Item"
+	| "CCitadel_Pickup_ArtistDrawing"
 	| "CCitadel_Pickup_AssignedGold"
 	| "CCitadel_Pickup_Currency"
 	| "CCitadel_Pickup_Gold"
@@ -20043,12 +20416,14 @@ type ClassName0 =
 	| "CCitadelTrackedProjectile"
 	| "CCitadel_Projectile_BatSwarmProjectile"
 	| "CCitadel_Projectile_BatSwarmExtraProjectile"
+	| "CCitadel_Projectile_DeadpackMissile"
 	| "CCitadel_Projectile_FortunaWeapon"
 	| "CCitadel_Projectile_HookBlade"
 	| "CProjectile_Boho_BouncyProjectile"
 	| "CProjectile_Familiar_MovingToAttach"
 	| "CProjectile_PunkgoatTether"
 	| "CCitadel_Projectile_Archer_ChargedShot"
+	| "CCitadel_Projectile_ArtistGun"
 	| "CCitadel_Projectile_Bebop_Hook"
 	| "CCitadel_Projectile_BloodBomb"
 	| "CCitadel_Projectile_BookwormGun"
@@ -20069,6 +20444,8 @@ type ClassName0 =
 	| "CCitadel_Projectile_WreckingBall"
 	| "CDoormanBombProjectile"
 	| "CItemExplosiveBarrel"
+	| "CProjectile_Artist_BouncingPot"
+	| "CProjectile_Artist_RollingProjectile"
 	| "CProjectile_Boho_SkipGrenade"
 	| "CProjectile_BookwormDragon_Projectile"
 	| "CProjectile_ChessMaster_Fork_Projectile"
@@ -20174,6 +20551,8 @@ type ClassName0 =
 	| "CBaseTrackedStatsEntity"
 	| "CMatchTrackedStatsEntity"
 	| "CPlayerTrackedStatsEntity"
+
+type ClassName1 =
 	| "CTeamTrackedStatsEntity"
 	| "CCitadelAudioProcessingVolumeBase"
 	| "CCitadelAudioProcessingVolumeOBB"
@@ -20183,8 +20562,6 @@ type ClassName0 =
 	| "CAbility_Drifter_ShadowMark"
 	| "CAbility_Fathom_LurkersAmbush"
 	| "CAbility_Fathom_ReefdwellerHarpoon"
-
-type ClassName1 =
 	| "CAbility_Fencer_Lunge"
 	| "CAbility_Fencer_Ultimate"
 	| "CAbility_Mirage_SandPhantom"
@@ -20253,6 +20630,27 @@ type ClassName1 =
 	| "CCitadel_Ability_InfinitySlash"
 	| "CCitadel_Ability_PowerSlash"
 	| "CCitadel_Ability_Afterburn"
+	| "CCitadel_Ability_Artist_BambooGrove"
+	| "CCitadel_Ability_Artist_BouncingPot"
+	| "CCitadel_Ability_Artist_Cloudburst"
+	| "CCitadel_Ability_Artist_DamageZone"
+	| "CCitadel_Ability_Artist_EmpowerAbilities"
+	| "CCitadel_Ability_Artist_FlyingLion"
+	| "CCitadel_Ability_Artist_HealingBarrier"
+	| "CCitadel_Ability_Artist_HomingProjectile"
+	| "CCitadel_Ability_Artist_InkActive"
+	| "CCitadel_Ability_Artist_InkBrush"
+	| "CCitadel_Ability_Artist_LionDance"
+	| "CCitadel_Ability_Artist_MultiHit"
+	| "CCitadel_Ability_Artist_Pillar"
+	| "CCitadel_Ability_Artist_PullBrush"
+	| "CCitadel_Ability_Artist_RideTiger"
+	| "CCitadel_Ability_Artist_RollingProjectile"
+	| "CCitadel_Ability_Artist_RootingProjectile"
+	| "CCitadel_Ability_Artist_ShieldProjectile"
+	| "CCitadel_Ability_Artist_StoneTurtle"
+	| "CCitadel_Ability_Artist_Tether"
+	| "CCitadel_Ability_Artist_TransformingProjectile"
 	| "CCitadel_Ability_Baba_BenchMelee"
 	| "CCitadel_Ability_Baba_BenchRun"
 	| "CCitadel_Ability_Baba_BubblingBrew"
@@ -20304,6 +20702,10 @@ type ClassName1 =
 	| "CCitadel_Ability_Crackshot"
 	| "CCitadel_Ability_CrowdControl"
 	| "CCitadel_Ability_Dash"
+	| "CCitadel_Ability_Deadpack_ChargeBlast"
+	| "CCitadel_Ability_Deadpack_Flamethrower"
+	| "CCitadel_Ability_Deadpack_Rocketeer"
+	| "CCitadel_Ability_Deadpack_Ultimate"
 	| "CCitadel_Ability_DeathTax"
 	| "CCitadel_Ability_Digger_EnterTunnel"
 	| "CCitadel_Ability_Disruptive_Charge"
@@ -20436,9 +20838,13 @@ type ClassName1 =
 	| "CCitadel_Ability_Priest_StackingDefense"
 	| "CCitadel_Ability_Priest_WeaponSwap"
 	| "CCitadel_Ability_PrimaryWeapon"
+	| "CCitadel_Ability_Artist_PrimaryWeapon"
+	| "CCitadel_Ability_Artist_PrimaryWeapon2"
+	| "CCitadel_Ability_Artist_ProjectileWeapon"
 	| "CCitadel_Ability_Boho_PrimaryWeapon"
 	| "CCitadel_Ability_BookWorm_PrimaryWeapon"
 	| "CCitadel_Ability_ChessMaster_PrimaryWeapon"
+	| "CCitadel_Ability_Deadpack_PrimaryWeapon_Charge"
 	| "CCitadel_Ability_Drifter_PrimaryWeapon"
 	| "CCitadel_Ability_Familiar_AltWeapon"
 	| "CCitadel_Ability_Familiar_PrimaryWeapon"
@@ -20547,6 +20953,8 @@ type ClassName1 =
 	| "CCitadel_Ability_Unicorn_LuminousStrike"
 	| "CCitadel_Ability_Unicorn_PrismaticGuard"
 	| "CCitadel_Ability_Unicorn_RadiantBlast"
+
+type ClassName2 =
 	| "CCitadel_Ability_VampireBat_BatBlink"
 	| "CCitadel_Ability_VampireBat_BatCloud"
 	| "CCitadel_Ability_VampireBat_BatSwarm"
@@ -20585,8 +20993,6 @@ type ClassName1 =
 	| "CCitadel_CosmeticAbility"
 	| "CCitadel_CosmeticAbility_Emote"
 	| "CCitadel_CosmeticAbility_Snowball"
-
-type ClassName2 =
 	| "CCitadel_CosmeticAbility_VotingPoster"
 	| "CCitadel_Gunslinger_DemonMark"
 	| "CCitadel_Item"
@@ -20949,6 +21355,8 @@ type ClassName2 =
 	| "CTestPulseIO"
 	| "CTimerEntity"
 	| "CServerOnlyPointEntity"
+
+type ClassName3 =
 	| "CCitadelBotTestNode"
 	| "CInfoCitadelHelperLocation"
 	| "CInfoMidBossSpawn"
@@ -20987,8 +21395,6 @@ type ClassName2 =
 	| "CSoundOpvarSetPointBase"
 	| "CSoundOpvarSetOBBWindEntity"
 	| "CSoundOpvarSetPointEntity"
-
-type ClassName3 =
 	| "CSoundOpvarSetAutoRoomEntity"
 	| "CSoundOpvarSetBoxEntity"
 	| "CSoundOpvarSetAABBEntity"

@@ -901,11 +901,16 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
       call.forward = command.forward();
       call.left = command.left();
       call.up = command.up();
-      // The recorded view steers the step and, as the hero's aim, turns its
-      // body and head for everyone watching; the bot's own command set the aim
-      // before this step.
+      // The recorded view steers the step and becomes the hero's aim; its yaw
+      // turns the body, as Game::MovePlayer does. The bot's own command set
+      // both before this step, and the eye angles alone leave the body at the
+      // bot's yaw, so the hero would run sideways.
       call.angles = Floats(steering.facing());
       static_cast<void>(game->observer_.SetEyeAngles(call.pawn, call.angles));
+      if (auto motion = Motion()) {
+        const std::array<float, 3> body{0, call.angles[1], 0};
+        (*motion)->set_angles(call.pawn, body.data());
+      }
       // A press counts once, though the command stays for the ticks after.
       command.set_changed(0);
       command.set_scroll(0);

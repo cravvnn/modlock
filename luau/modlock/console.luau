@@ -207,6 +207,7 @@ type BooleanVariable0 =
 	| "citadel_corrupted_item_shop_enabled"
 	| "citadel_corrupted_items_force_variance"
 	| "citadel_crate_spawn_enabled"
+	| "citadel_deadpack_instant_shot"
 	| "citadel_death_replay_enabled"
 	| "citadel_debug_ability_beams"
 	| "citadel_debug_barrier_damage_order"
@@ -408,9 +409,9 @@ type BooleanVariable0 =
 	| "citadel_use_unit_query_system"
 	| "citadel_use_wip_models"
 	| "citadel_vanguard_enabled"
-	| "citadel_vanguard_instant_capture"
 
 type BooleanVariable1 =
+	| "citadel_vanguard_instant_capture"
 	| "citadel_viscous_bowling_radius_debug"
 	| "citadel_viscous_telepunch_trace_debug"
 	| "citadel_visualize_tethers"
@@ -810,9 +811,9 @@ type BooleanVariable1 =
 	| "navspace_create_water_smooth_connections"
 	| "navspace_create_water_surface_connections"
 	| "navspace_create_water_transition_connections"
-	| "navspace_path_use_water_level_locator"
 
 type BooleanVariable2 =
+	| "navspace_path_use_water_level_locator"
 	| "net_async_clientconnect"
 	| "net_culloptimization"
 	| "net_debug_to_file"
@@ -1212,9 +1213,9 @@ type BooleanVariable2 =
 	| "sv_audio_log_participant_start_messages"
 	| "sv_autosave"
 	| "sv_banid_enabled"
-	| "sv_cheats"
 
 type BooleanVariable3 =
+	| "sv_cheats"
 	| "sv_citadel_ability_test_fail_all"
 	| "sv_citadel_bebop_beam_draw_points"
 	| "sv_citadel_camera_sequences_debug"

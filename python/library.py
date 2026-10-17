@@ -100,7 +100,8 @@ def serve(service: str) -> Callable[[Service], Service]:
 def command[F: Callable[[Player, str], object]](name: str) -> Callable[[F], F]:
     """command calls the decorated handler when a player types /name in chat
     or their client sends the console command name to the server. The
-    handler receives the text after the name, trimmed of surrounding spaces.
+    handler runs with the next server frame, before the frame handlers, and
+    receives the text after the name, trimmed of surrounding spaces.
     Registering a name again replaces its handler."""
 
     def register(handler: F) -> F:
@@ -326,8 +327,11 @@ def _command(event: CommandEvent) -> CommandResult:
     if handler is None:
         return CommandResult(claimed=False)
 
-    # Run the handler and claim the command.
-    handler(event.player, args.strip())
+    # Claim the command and run its handler with the next frame. The server
+    # reads a client's commands under a CPU budget and drops the client when
+    # one handler spends it; slow work in a frame only delays that frame.
+    player, text = event.player, args.strip()
+    after(0, lambda: handler(player, text))
     return CommandResult(claimed=True)
 
 

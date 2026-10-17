@@ -1,5 +1,5 @@
 {
- "build": "6774",
+ "build": "6790",
  "classes": [
   {
    "designer_name": "abiilty_boho_channeltether",
@@ -16,6 +16,120 @@
   {
    "designer_name": "ability_afterburn",
    "class_name": "CCitadel_Ability_Afterburn",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_bouncingpot",
+   "class_name": "CCitadel_Ability_Artist_BouncingPot",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_cloudburst",
+   "class_name": "CCitadel_Ability_Artist_Cloudburst",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_damagezone",
+   "class_name": "CCitadel_Ability_Artist_DamageZone",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_empowerabilities",
+   "class_name": "CCitadel_Ability_Artist_EmpowerAbilities",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_healingbarrier",
+   "class_name": "CCitadel_Ability_Artist_HealingBarrier",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_homingbrush",
+   "class_name": "CCitadel_Ability_Artist_HomingProjectile",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_inkactive",
+   "class_name": "CCitadel_Ability_Artist_InkActive",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_inkbrush",
+   "class_name": "CCitadel_Ability_Artist_InkBrush",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_liondance",
+   "class_name": "CCitadel_Ability_Artist_LionDance",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_multihit",
+   "class_name": "CCitadel_Ability_Artist_MultiHit",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_pillar",
+   "class_name": "CCitadel_Ability_Artist_Pillar",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_projectileweapon",
+   "class_name": "CCitadel_Ability_Artist_ProjectileWeapon",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_pullbrush",
+   "class_name": "CCitadel_Ability_Artist_PullBrush",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_ridetiger",
+   "class_name": "CCitadel_Ability_Artist_RideTiger",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_rollingprojectile",
+   "class_name": "CCitadel_Ability_Artist_RollingProjectile",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_rootingprojectile",
+   "class_name": "CCitadel_Ability_Artist_RootingProjectile",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_shieldprojectile",
+   "class_name": "CCitadel_Ability_Artist_ShieldProjectile",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_tether",
+   "class_name": "CCitadel_Ability_Artist_Tether",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_artist_transforming_projectile",
+   "class_name": "CCitadel_Ability_Artist_TransformingProjectile",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
   },
@@ -202,6 +316,36 @@
   {
    "designer_name": "ability_crackshot",
    "class_name": "CCitadel_Ability_Crackshot",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_deadpack_chargeblast",
+   "class_name": "CCitadel_Ability_Deadpack_ChargeBlast",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_deadpack_flamethrower",
+   "class_name": "CCitadel_Ability_Deadpack_Flamethrower",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_deadpack_primary_weapon_charge",
+   "class_name": "CCitadel_Ability_Deadpack_PrimaryWeapon_Charge",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_deadpack_rocketeer",
+   "class_name": "CCitadel_Ability_Deadpack_Rocketeer",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_deadpack_ultimate",
+   "class_name": "CCitadel_Ability_Deadpack_Ultimate",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
   },
@@ -1412,6 +1556,12 @@
    "base": "citadel_projectile"
   },
   {
+   "designer_name": "artistgun_projectile",
+   "class_name": "CCitadel_Projectile_ArtistGun",
+   "data_map": "CBaseModelEntity",
+   "base": "citadel_projectile"
+  },
+  {
    "designer_name": "baba_bubblingbrew_projectile",
    "class_name": "CCitadel_Projectile_BubblingBrew",
    "data_map": "CBaseModelEntity",
@@ -1596,6 +1746,36 @@
    "class_name": "CCitadel_Ability_Cadence_SilenceContraptions",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_dash_cast_ability"
+  },
+  {
+   "designer_name": "citadel_ability_artist_bamboogrove",
+   "class_name": "CCitadel_Ability_Artist_BambooGrove",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "citadel_ability_artist_flyinglion",
+   "class_name": "CCitadel_Ability_Artist_FlyingLion",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "citadel_ability_artist_primaryweapon",
+   "class_name": "CCitadel_Ability_Artist_PrimaryWeapon",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "citadel_ability_artist_primaryweapon2",
+   "class_name": "CCitadel_Ability_Artist_PrimaryWeapon2",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "citadel_ability_artist_stoneturtle",
+   "class_name": "CCitadel_Ability_Artist_StoneTurtle",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
   },
   {
    "designer_name": "citadel_ability_bebop_laser_beam",
@@ -2258,6 +2438,24 @@
    "base": "base_combat_character"
   },
   {
+   "designer_name": "citadel_artist_solidblocker",
+   "class_name": "CCitadel_Artist_SolidBlocker",
+   "data_map": "CBaseAnimGraph",
+   "base": "baseanimgraph"
+  },
+  {
+   "designer_name": "citadel_artist_strokeblocker",
+   "class_name": "CCitadel_Artist_StrokeBlocker",
+   "data_map": "CCitadel_Artist_StrokeBlocker",
+   "base": "baseanimgraph"
+  },
+  {
+   "designer_name": "citadel_artist_visionblocker",
+   "class_name": "CCitadel_Artist_VisionBlocker",
+   "data_map": "CBaseAnimGraph",
+   "base": "baseanimgraph"
+  },
+  {
    "designer_name": "citadel_base_ability",
    "class_name": "CCitadelBaseAbility",
    "data_map": "CCitadelBaseAbility",
@@ -2316,6 +2514,12 @@
    "class_name": "CCitadel_BreakableProp",
    "data_map": "CCitadel_BreakableProp",
    "base": "baseanimgraph"
+  },
+  {
+   "designer_name": "citadel_breakable_prop_hideout",
+   "class_name": "CCitadel_BreakableProp_Hideout",
+   "data_map": "CCitadel_BreakableProp",
+   "base": "citadel_breakable_prop"
   },
   {
    "designer_name": "citadel_capture_point",
@@ -2656,6 +2860,12 @@
   {
    "designer_name": "citadel_pickup_ability",
    "class_name": "CCitadel_Pickup_Ability",
+   "data_map": "CBaseAnimGraph",
+   "base": "citadel_pickup"
+  },
+  {
+   "designer_name": "citadel_pickup_artist_drawing",
+   "class_name": "CCitadel_Pickup_ArtistDrawing",
    "data_map": "CBaseAnimGraph",
    "base": "citadel_pickup"
   },
@@ -3054,6 +3264,12 @@
    "class_name": "CCitadel_CosmeticAbility_VotingPoster",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "deadpack_projectile_missile",
+   "class_name": "CCitadel_Projectile_DeadpackMissile",
+   "data_map": "CBaseModelEntity",
+   "base": "citadel_tracked_projectile"
   },
   {
    "designer_name": "destroyable_building",
@@ -5382,6 +5598,18 @@
    "class_name": "CCitadel_Ability_Priest_Flashbang",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "projectile_artist_bouncingpot",
+   "class_name": "CProjectile_Artist_BouncingPot",
+   "data_map": "CBaseModelEntity",
+   "base": "citadel_projectile"
+  },
+  {
+   "designer_name": "projectile_artist_rollingprojectile",
+   "class_name": "CProjectile_Artist_RollingProjectile",
+   "data_map": "CBaseModelEntity",
+   "base": "citadel_projectile"
   },
   {
    "designer_name": "projectile_boho_skipgrenade",
@@ -10357,6 +10585,42 @@
      "name": "lane_number",
      "field": "m_iLaneNumber",
      "type": "KEY_TYPE_INT32",
+     "count": 1
+    }
+   ]
+  },
+  {
+   "name": "CCitadel_Artist_StrokeBlocker",
+   "base": "CBaseAnimGraph",
+   "key_values": [
+    {
+     "name": "stroke_start",
+     "field": "m_vStrokeStart",
+     "type": "KEY_TYPE_POSITION_VECTOR",
+     "count": 1
+    },
+    {
+     "name": "stroke_end",
+     "field": "m_vStrokeEnd",
+     "type": "KEY_TYPE_POSITION_VECTOR",
+     "count": 1
+    },
+    {
+     "name": "stroke_radius",
+     "field": "m_flStrokeRadius",
+     "type": "KEY_TYPE_FLOAT32",
+     "count": 1
+    },
+    {
+     "name": "lifetime",
+     "field": "m_flLifetime",
+     "type": "KEY_TYPE_FLOAT32",
+     "count": 1
+    },
+    {
+     "name": "owning_ability",
+     "field": "m_hOwningAbility",
+     "type": "KEY_TYPE_EHANDLE",
      "count": 1
     }
    ]

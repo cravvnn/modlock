@@ -368,57 +368,70 @@ const screens = new Map<number, Screen>()
 
 /** render lays root out as nodes, keeping the ids of elements that stayed in place. */
 function render(previous: Screen | undefined, root: Child): Screen {
-  // Start a screen that continues the previous screen's id counter.
-  const screen: Screen = {
-    nodes: new Map(),
-    ids: new Map(),
-    presses: new Map(),
-    next: previous?.next ?? 0,
-  }
+  // The root is the full-screen panel the elements hang from.
+  const layout = new Layout(previous)
+  layout.add({ id: '', kind: Kind.PANEL, children: layout.place(root, '/') })
+  return layout.screen
+}
 
-  // id returns the node id for the element at place.
-  const id = (place: string): string => {
-    let found = previous?.ids.get(place)
-    if (found === undefined) {
-      found = (screen.next++).toString(36)
+/**
+ * Layout lays out one screen. Its steps are methods, not closures: a closure
+ * that calls itself holds itself, and QuickJS frees such a cycle, with the
+ * screens it reaches, only in a full collection that walks the mod's whole
+ * heap in one frame.
+ */
+class Layout {
+  readonly screen: Screen
+  private readonly previous: Screen | undefined
+
+  /** The layout continues previous's id counter and keeps its ids. */
+  constructor(previous: Screen | undefined) {
+    this.previous = previous
+    this.screen = {
+      nodes: new Map(),
+      ids: new Map(),
+      presses: new Map(),
+      next: previous?.next ?? 0,
     }
-    screen.ids.set(place, found)
-    return found
   }
 
-  // add records a node.
-  const add = (node: Node) => {
-    screen.nodes.set(node.id!, { node, encoded: JSON.stringify(node) })
+  /** add records a node. */
+  add(node: Node): void {
+    this.screen.nodes.set(node.id!, { node, encoded: JSON.stringify(node) })
   }
 
-  // place lays out child at place and returns its nodes' ids.
-  const place = (child: Child, at: string): string[] => {
-    // Lay out empty values, lists, text, and function components.
+  /** place lays out child at place and returns its nodes' ids. */
+  place(child: Child, at: string): string[] {
+    // Lay out empty values, lists, text, and the fragments components return.
     if (child === null || child === undefined || typeof child === 'boolean') {
       return []
     }
     if (isList(child)) {
       return child.flatMap((item, index) => {
         const key = isElement(item) ? item.key : undefined
-        return place(
+        return this.place(
           item,
           key === undefined ? `${at},${index}` : `${at},=${key}`,
         )
       })
     }
     if (!isElement(child)) {
-      const node: Node = { id: id(at), kind: Kind.LABEL, text: String(child) }
-      add(node)
+      const node: Node = {
+        id: this.id(at),
+        kind: Kind.LABEL,
+        text: String(child),
+      }
+      this.add(node)
       return [node.id!]
     }
     if (child.type === fragment) {
-      return place(child.props.children, `${at}>`)
+      return this.place(child.props.children, `${at}>`)
     }
 
     // Draw an intrinsic element.
     const props = child.props
     const node: Node = {
-      id: id(at),
+      id: this.id(at),
       style: wireStyle(props.style),
     }
     switch (child.type) {
@@ -433,9 +446,9 @@ function render(previous: Screen | undefined, root: Child): Screen {
       case 'button':
         node.kind = Kind.BUTTON
         if (props.onPress) {
-          screen.presses.set(node.id!, { handler: props.onPress })
+          this.screen.presses.set(node.id!, { handler: props.onPress })
         }
-        node.children = place(props.children, `${at}/`)
+        node.children = this.place(props.children, `${at}/`)
         break
       case 'layout':
         node.kind = Kind.LAYOUT
@@ -444,15 +457,21 @@ function render(previous: Screen | undefined, root: Child): Screen {
         break
       default:
         node.kind = Kind.PANEL
-        node.children = place(props.children, `${at}/`)
+        node.children = this.place(props.children, `${at}/`)
     }
-    add(node)
+    this.add(node)
     return [node.id!]
   }
 
-  // The root is the full-screen panel the elements hang from.
-  add({ id: '', kind: Kind.PANEL, children: place(root, '/') })
-  return screen
+  /** id returns the node id for the element at place. */
+  private id(place: string): string {
+    let found = this.previous?.ids.get(place)
+    if (found === undefined) {
+      found = (this.screen.next++).toString(36)
+    }
+    this.screen.ids.set(place, found)
+    return found
+  }
 }
 
 /** diff returns the change from previous to next, or undefined when nothing changed. */

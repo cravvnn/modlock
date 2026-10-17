@@ -95,9 +95,10 @@ function modlock.serve(service: string, handler: Service)
 end
 
 -- command calls handler when a player types /name in chat or their client
--- sends the console command name to the server. The handler receives the
--- text after the name, trimmed of surrounding spaces. Registering a name
--- again replaces its handler.
+-- sends the console command name to the server. The handler runs with the
+-- next server frame, before the frame handlers, and receives the text after
+-- the name, trimmed of surrounding spaces. Registering a name again replaces
+-- its handler.
 function modlock.command(name: string, handler: (player: Player, args: string) -> ())
 	commands[name] = handler
 end
@@ -323,8 +324,13 @@ local handlers: ModHandlers = {
 			return { claimed = false }
 		end
 
-		-- Run the handler and claim the command.
-		handler(event.player, args or "")
+		-- Claim the command and run its handler with the next frame. The server
+		-- reads a client's commands under a CPU budget and drops the client when
+		-- one handler spends it; slow work in a frame only delays that frame.
+		local player = event.player
+		modlock.after(0, function()
+			handler(player, args or "")
+		end)
 		return { claimed = true }
 	end,
 

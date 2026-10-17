@@ -200,7 +200,7 @@ type Typed<Keys extends Readonly<Record<string, KeyType>>> = { readonly [Key in 
  * Spawn describes an entity create creates: the options of createEntity but
  * the designer name, with typed spawn key values.
  */
-export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'team'> & {
+export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'team' | 'transmitAlways'> & {
   /**
    * subclass names the entity's game data entry, such as npc_boss_tier1 for
    * the lane Guardian. An NPC needs one.
@@ -208,6 +208,12 @@ export type Spawn<Keys> = Omit<EntityOptions, 'designerName' | 'subclass' | 'tea
   subclass?: string
   /** team is the entity's team number; 4 is neutral. */
   team?: number
+  /**
+   * transmitAlways sends the entity to every client, past the game's own
+   * rule, which never sends one without a model, such as a
+   * point_clientui_dialog.
+   */
+  transmitAlways?: boolean
   /** keys are the entity's spawn key values, each typed as the entity reads it. */
   keys?: Keys
 }
@@ -257,6 +263,7 @@ export function create<D extends DesignerName>(
     designerName,
     subclass: options.subclass ?? subclass ?? '',
     team: options.team ?? 0,
+    transmitAlways: options.transmitAlways ?? false,
     keyValues,
   })
   return handle === undefined ? undefined : (new make(handle) as DesignerClass<D>)
@@ -1637,6 +1644,38 @@ define(CNPC_Ratking_Rat, 'CNPC_Ratking_Rat', fieldsCNPC_Ratking_Rat)
 export class CCitadelHideoutPropBase extends CBaseAnimGraph {}
 define(CCitadelHideoutPropBase, 'CCitadelHideoutPropBase', {})
 
+const fieldsCCitadel_Artist_SolidBlocker = {
+  m_flTurnSolidTime: 'float32',
+} as const
+export class CCitadel_Artist_SolidBlocker extends CBaseAnimGraph {}
+export interface CCitadel_Artist_SolidBlocker extends Fields<typeof fieldsCCitadel_Artist_SolidBlocker> {}
+define(CCitadel_Artist_SolidBlocker, 'CCitadel_Artist_SolidBlocker', fieldsCCitadel_Artist_SolidBlocker)
+
+const fieldsCCitadel_Artist_StrokeBlocker = {
+  m_vStrokeStart: 'vector',
+  m_vStrokeEnd: 'vector',
+  m_hPrevBlocker: 'CCitadel_Artist_StrokeBlocker',
+  m_hNextBlocker: 'CCitadel_Artist_StrokeBlocker',
+  m_flStrokeRadius: 'float32',
+  m_flLifetime: 'float32',
+  m_vecOverlap: 'list:handle',
+  m_vecPrevOverlap: 'list:handle',
+  m_hBreaker: 'CBaseEntity',
+} as const
+export class CCitadel_Artist_StrokeBlocker extends CBaseAnimGraph {}
+export interface CCitadel_Artist_StrokeBlocker extends Fields<typeof fieldsCCitadel_Artist_StrokeBlocker> {}
+define(CCitadel_Artist_StrokeBlocker, 'CCitadel_Artist_StrokeBlocker', fieldsCCitadel_Artist_StrokeBlocker)
+
+const fieldsCCitadel_Artist_VisionBlocker = {
+  s_flBuildUpTime: 'float32',
+  s_flTearDownTime: 'float32',
+  m_flTurnSolidTime: 'float32',
+  m_flTearDownStartTime: 'float32',
+} as const
+export class CCitadel_Artist_VisionBlocker extends CBaseAnimGraph {}
+export interface CCitadel_Artist_VisionBlocker extends Fields<typeof fieldsCCitadel_Artist_VisionBlocker> {}
+define(CCitadel_Artist_VisionBlocker, 'CCitadel_Artist_VisionBlocker', fieldsCCitadel_Artist_VisionBlocker)
+
 const fieldsCCitadel_BreakableProp = {
   m_flOverrideInitialSpawnTime: 'float32',
   m_flOverrideRespawnTime: 'float32',
@@ -1647,6 +1686,9 @@ const fieldsCCitadel_BreakableProp = {
 export class CCitadel_BreakableProp extends CBaseAnimGraph {}
 export interface CCitadel_BreakableProp extends Fields<typeof fieldsCCitadel_BreakableProp> {}
 define(CCitadel_BreakableProp, 'CCitadel_BreakableProp', fieldsCCitadel_BreakableProp)
+
+export class CCitadel_BreakableProp_Hideout extends CCitadel_BreakableProp {}
+define(CCitadel_BreakableProp_Hideout, 'CCitadel_BreakableProp_Hideout', {})
 
 export class CCitadel_DeployablePreview extends CBaseAnimGraph {}
 define(CCitadel_DeployablePreview, 'CCitadel_DeployablePreview', {})
@@ -1736,6 +1778,14 @@ define(CCitadel_Pickup_Ability, 'CCitadel_Pickup_Ability', fieldsCCitadel_Pickup
 
 export class CCitadel_Pickup_Item extends CCitadel_Pickup_Ability {}
 define(CCitadel_Pickup_Item, 'CCitadel_Pickup_Item', {})
+
+const fieldsCCitadel_Pickup_ArtistDrawing = {
+  m_hPlayerOwner: 'CBaseEntity',
+  m_hPlayerVictim: 'CCitadelPlayerPawn',
+} as const
+export class CCitadel_Pickup_ArtistDrawing extends CCitadel_Pickup {}
+export interface CCitadel_Pickup_ArtistDrawing extends Fields<typeof fieldsCCitadel_Pickup_ArtistDrawing> {}
+define(CCitadel_Pickup_ArtistDrawing, 'CCitadel_Pickup_ArtistDrawing', fieldsCCitadel_Pickup_ArtistDrawing)
 
 export class CCitadel_Pickup_AssignedGold extends CCitadel_Pickup {}
 define(CCitadel_Pickup_AssignedGold, 'CCitadel_Pickup_AssignedGold', {})
@@ -3359,6 +3409,9 @@ define(CCitadel_Projectile_BatSwarmProjectile, 'CCitadel_Projectile_BatSwarmProj
 export class CCitadel_Projectile_BatSwarmExtraProjectile extends CCitadel_Projectile_BatSwarmProjectile {}
 define(CCitadel_Projectile_BatSwarmExtraProjectile, 'CCitadel_Projectile_BatSwarmExtraProjectile', {})
 
+export class CCitadel_Projectile_DeadpackMissile extends CCitadelTrackedProjectile {}
+define(CCitadel_Projectile_DeadpackMissile, 'CCitadel_Projectile_DeadpackMissile', {})
+
 export class CCitadel_Projectile_FortunaWeapon extends CCitadelTrackedProjectile {}
 define(CCitadel_Projectile_FortunaWeapon, 'CCitadel_Projectile_FortunaWeapon', {})
 
@@ -3384,6 +3437,13 @@ define(CProjectile_PunkgoatTether, 'CProjectile_PunkgoatTether', fieldsCProjecti
 
 export class CCitadel_Projectile_Archer_ChargedShot extends CCitadelProjectile {}
 define(CCitadel_Projectile_Archer_ChargedShot, 'CCitadel_Projectile_Archer_ChargedShot', {})
+
+const fieldsCCitadel_Projectile_ArtistGun = {
+  m_vecHitTargets: 'list:handle',
+} as const
+export class CCitadel_Projectile_ArtistGun extends CCitadelProjectile {}
+export interface CCitadel_Projectile_ArtistGun extends Fields<typeof fieldsCCitadel_Projectile_ArtistGun> {}
+define(CCitadel_Projectile_ArtistGun, 'CCitadel_Projectile_ArtistGun', fieldsCCitadel_Projectile_ArtistGun)
 
 export class CCitadel_Projectile_Bebop_Hook extends CCitadelProjectile {}
 define(CCitadel_Projectile_Bebop_Hook, 'CCitadel_Projectile_Bebop_Hook', {})
@@ -3494,6 +3554,12 @@ define(CDoormanBombProjectile, 'CDoormanBombProjectile', {})
 
 export class CItemExplosiveBarrel extends CCitadelProjectile {}
 define(CItemExplosiveBarrel, 'CItemExplosiveBarrel', {})
+
+export class CProjectile_Artist_BouncingPot extends CCitadelProjectile {}
+define(CProjectile_Artist_BouncingPot, 'CProjectile_Artist_BouncingPot', {})
+
+export class CProjectile_Artist_RollingProjectile extends CCitadelProjectile {}
+define(CProjectile_Artist_RollingProjectile, 'CProjectile_Artist_RollingProjectile', {})
 
 export class CProjectile_Boho_SkipGrenade extends CCitadelProjectile {}
 define(CProjectile_Boho_SkipGrenade, 'CProjectile_Boho_SkipGrenade', {})
@@ -5362,6 +5428,161 @@ define(CCitadel_Ability_PowerSlash, 'CCitadel_Ability_PowerSlash', fieldsCCitade
 export class CCitadel_Ability_Afterburn extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Afterburn, 'CCitadel_Ability_Afterburn', {})
 
+const fieldsCCitadel_Ability_Artist_BambooGrove = {
+  m_bActive: 'bool',
+} as const
+export class CCitadel_Ability_Artist_BambooGrove extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_BambooGrove extends Fields<typeof fieldsCCitadel_Ability_Artist_BambooGrove> {}
+define(CCitadel_Ability_Artist_BambooGrove, 'CCitadel_Ability_Artist_BambooGrove', fieldsCCitadel_Ability_Artist_BambooGrove)
+
+const fieldsCCitadel_Ability_Artist_BouncingPot = {
+  m_vecGroundAuras: 'list:handle',
+  m_vecHitUnits: 'list:handle',
+  m_tInitialShotID: 'uint32',
+  m_vLaunchPosition: 'vector',
+  m_qLaunchAngle: 'angles',
+} as const
+export class CCitadel_Ability_Artist_BouncingPot extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_BouncingPot extends Fields<typeof fieldsCCitadel_Ability_Artist_BouncingPot> {}
+define(CCitadel_Ability_Artist_BouncingPot, 'CCitadel_Ability_Artist_BouncingPot', fieldsCCitadel_Ability_Artist_BouncingPot)
+
+export class CCitadel_Ability_Artist_Cloudburst extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Artist_Cloudburst, 'CCitadel_Ability_Artist_Cloudburst', {})
+
+export class CCitadel_Ability_Artist_DamageZone extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Artist_DamageZone, 'CCitadel_Ability_Artist_DamageZone', {})
+
+const fieldsCCitadel_Ability_Artist_EmpowerAbilities = {
+  m_bActive: 'bool',
+} as const
+export class CCitadel_Ability_Artist_EmpowerAbilities extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_EmpowerAbilities extends Fields<typeof fieldsCCitadel_Ability_Artist_EmpowerAbilities> {}
+define(CCitadel_Ability_Artist_EmpowerAbilities, 'CCitadel_Ability_Artist_EmpowerAbilities', fieldsCCitadel_Ability_Artist_EmpowerAbilities)
+
+const fieldsCCitadel_Ability_Artist_FlyingLion = {
+  m_flFlyingStartTime: 'float32',
+  m_bFlying: 'bool',
+} as const
+export class CCitadel_Ability_Artist_FlyingLion extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_FlyingLion extends Fields<typeof fieldsCCitadel_Ability_Artist_FlyingLion> {}
+define(CCitadel_Ability_Artist_FlyingLion, 'CCitadel_Ability_Artist_FlyingLion', fieldsCCitadel_Ability_Artist_FlyingLion)
+
+const fieldsCCitadel_Ability_Artist_HealingBarrier = {
+  m_nCastParticleIndex: 'int32',
+} as const
+export class CCitadel_Ability_Artist_HealingBarrier extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_HealingBarrier extends Fields<typeof fieldsCCitadel_Ability_Artist_HealingBarrier> {}
+define(CCitadel_Ability_Artist_HealingBarrier, 'CCitadel_Ability_Artist_HealingBarrier', fieldsCCitadel_Ability_Artist_HealingBarrier)
+
+const fieldsCCitadel_Ability_Artist_HomingProjectile = {
+  m_bDealtStrokeDamageThisTick: 'bool',
+  m_vecDeployedProjectiles: 'list:handle',
+  m_tShootingLockoutEndTime: 'float32',
+} as const
+export class CCitadel_Ability_Artist_HomingProjectile extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_HomingProjectile extends Fields<typeof fieldsCCitadel_Ability_Artist_HomingProjectile> {}
+define(CCitadel_Ability_Artist_HomingProjectile, 'CCitadel_Ability_Artist_HomingProjectile', fieldsCCitadel_Ability_Artist_HomingProjectile)
+
+export class CCitadel_Ability_Artist_InkActive extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Artist_InkActive, 'CCitadel_Ability_Artist_InkActive', {})
+
+const fieldsCCitadel_Ability_Artist_InkBrush = {
+  m_bButtonDown: 'bool',
+  m_flAccumulatedDrawDistance: 'float32',
+} as const
+export class CCitadel_Ability_Artist_InkBrush extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_InkBrush extends Fields<typeof fieldsCCitadel_Ability_Artist_InkBrush> {}
+define(CCitadel_Ability_Artist_InkBrush, 'CCitadel_Ability_Artist_InkBrush', fieldsCCitadel_Ability_Artist_InkBrush)
+
+const fieldsCCitadel_Ability_Artist_LionDance = {
+  m_tEndTime: 'float32',
+  m_tNextPulseTime: 'float32',
+  m_bActive: 'bool',
+  m_iRemainingShots: 'int32',
+  m_vLaunchPosition: 'vector',
+  m_qLaunchAngle: 'angles',
+  m_pPointModifier: 'CBaseEntity',
+} as const
+export class CCitadel_Ability_Artist_LionDance extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_LionDance extends Fields<typeof fieldsCCitadel_Ability_Artist_LionDance> {}
+define(CCitadel_Ability_Artist_LionDance, 'CCitadel_Ability_Artist_LionDance', fieldsCCitadel_Ability_Artist_LionDance)
+
+const fieldsCCitadel_Ability_Artist_MultiHit = {
+  m_vecHitEnemies: 'list:handle',
+  m_tMultiHitEndTime: 'float32',
+  m_tSubCooldownEndTime: 'float32',
+  m_bActive: 'bool',
+  m_iCurrentHits: 'int32',
+} as const
+export class CCitadel_Ability_Artist_MultiHit extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_MultiHit extends Fields<typeof fieldsCCitadel_Ability_Artist_MultiHit> {}
+define(CCitadel_Ability_Artist_MultiHit, 'CCitadel_Ability_Artist_MultiHit', fieldsCCitadel_Ability_Artist_MultiHit)
+
+export class CCitadel_Ability_Artist_Pillar extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Artist_Pillar, 'CCitadel_Ability_Artist_Pillar', {})
+
+const fieldsCCitadel_Ability_Artist_PullBrush = {
+  m_flAccumulatedDrawDistance: 'float32',
+  m_bPainting: 'bool',
+  m_tStopPaintingTime: 'float32',
+  m_vecBrushPositions: 'list:vector',
+  m_vecBrushVelocity: 'vector',
+  m_vecBrushCurrentPosition: 'vector',
+} as const
+export class CCitadel_Ability_Artist_PullBrush extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_PullBrush extends Fields<typeof fieldsCCitadel_Ability_Artist_PullBrush> {}
+define(CCitadel_Ability_Artist_PullBrush, 'CCitadel_Ability_Artist_PullBrush', fieldsCCitadel_Ability_Artist_PullBrush)
+
+const fieldsCCitadel_Ability_Artist_RideTiger = {
+  m_bIsEnabled: 'bool',
+} as const
+export class CCitadel_Ability_Artist_RideTiger extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_RideTiger extends Fields<typeof fieldsCCitadel_Ability_Artist_RideTiger> {}
+define(CCitadel_Ability_Artist_RideTiger, 'CCitadel_Ability_Artist_RideTiger', fieldsCCitadel_Ability_Artist_RideTiger)
+
+const fieldsCCitadel_Ability_Artist_RollingProjectile = {
+  m_bActive: 'bool',
+  m_hDeployedProjectile: 'CCitadelProjectile',
+} as const
+export class CCitadel_Ability_Artist_RollingProjectile extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_RollingProjectile extends Fields<typeof fieldsCCitadel_Ability_Artist_RollingProjectile> {}
+define(CCitadel_Ability_Artist_RollingProjectile, 'CCitadel_Ability_Artist_RollingProjectile', fieldsCCitadel_Ability_Artist_RollingProjectile)
+
+export class CCitadel_Ability_Artist_RootingProjectile extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Artist_RootingProjectile, 'CCitadel_Ability_Artist_RootingProjectile', {})
+
+const fieldsCCitadel_Ability_Artist_ShieldProjectile = {
+  m_vHitEnts: 'list:handle',
+} as const
+export class CCitadel_Ability_Artist_ShieldProjectile extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_ShieldProjectile extends Fields<typeof fieldsCCitadel_Ability_Artist_ShieldProjectile> {}
+define(CCitadel_Ability_Artist_ShieldProjectile, 'CCitadel_Ability_Artist_ShieldProjectile', fieldsCCitadel_Ability_Artist_ShieldProjectile)
+
+const fieldsCCitadel_Ability_Artist_StoneTurtle = {
+  m_vecLaunchPosition: 'vector',
+  m_qLaunchAngle: 'angles',
+} as const
+export class CCitadel_Ability_Artist_StoneTurtle extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_StoneTurtle extends Fields<typeof fieldsCCitadel_Ability_Artist_StoneTurtle> {}
+define(CCitadel_Ability_Artist_StoneTurtle, 'CCitadel_Ability_Artist_StoneTurtle', fieldsCCitadel_Ability_Artist_StoneTurtle)
+
+const fieldsCCitadel_Ability_Artist_Tether = {
+  m_bSuccess: 'bool',
+  m_tLastSuccessfulLookTime: 'float32',
+  m_pSelectedTarget: 'CBaseEntity',
+  m_iPermanentBuffCount: 'int32',
+} as const
+export class CCitadel_Ability_Artist_Tether extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_Tether extends Fields<typeof fieldsCCitadel_Ability_Artist_Tether> {}
+define(CCitadel_Ability_Artist_Tether, 'CCitadel_Ability_Artist_Tether', fieldsCCitadel_Ability_Artist_Tether)
+
+const fieldsCCitadel_Ability_Artist_TransformingProjectile = {
+  m_vecHitUnits: 'list:handle',
+} as const
+export class CCitadel_Ability_Artist_TransformingProjectile extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Artist_TransformingProjectile extends Fields<typeof fieldsCCitadel_Ability_Artist_TransformingProjectile> {}
+define(CCitadel_Ability_Artist_TransformingProjectile, 'CCitadel_Ability_Artist_TransformingProjectile', fieldsCCitadel_Ability_Artist_TransformingProjectile)
+
 const fieldsCCitadel_Ability_Baba_BenchMelee = {
   m_eState: 'uint8',
   m_eAttackType: 'uint8',
@@ -5374,6 +5595,7 @@ const fieldsCCitadel_Ability_Baba_BenchMelee = {
   m_bDiveApplied: 'bool',
   m_vDashStartVelocity: 'vector',
   m_bAttackImpulseApplied: 'bool',
+  m_nAirborneAttackImpulses: 'int32',
   m_angForced: 'angles',
 } as const
 export class CCitadel_Ability_Baba_BenchMelee extends CCitadelBaseAbility {}
@@ -5776,6 +5998,66 @@ const fieldsCCitadel_Ability_Dash = {
 export class CCitadel_Ability_Dash extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_Dash extends Fields<typeof fieldsCCitadel_Ability_Dash> {}
 define(CCitadel_Ability_Dash, 'CCitadel_Ability_Dash', fieldsCCitadel_Ability_Dash)
+
+const fieldsCCitadel_Ability_Deadpack_ChargeBlast = {
+  m_vStartPoint: 'vector',
+  m_vEndPoint: 'vector',
+  m_vAimOffset: 'vector',
+  m_tLaunchHeldBeginTime: 'float32',
+  m_bTargetingActive: 'bool',
+} as const
+export class CCitadel_Ability_Deadpack_ChargeBlast extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Deadpack_ChargeBlast extends Fields<typeof fieldsCCitadel_Ability_Deadpack_ChargeBlast> {}
+define(CCitadel_Ability_Deadpack_ChargeBlast, 'CCitadel_Ability_Deadpack_ChargeBlast', fieldsCCitadel_Ability_Deadpack_ChargeBlast)
+
+const fieldsCCitadel_Ability_Deadpack_Flamethrower = {
+  m_flNextDamageTick: 'float32',
+  m_vecEntitiesHit: 'list:handle',
+  m_tLastDamageDealTime: 'float32',
+  m_tActivationTime: 'float32',
+  m_tPauseBeginTime: 'float32',
+  m_bBeaming: 'bool',
+} as const
+export class CCitadel_Ability_Deadpack_Flamethrower extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Deadpack_Flamethrower extends Fields<typeof fieldsCCitadel_Ability_Deadpack_Flamethrower> {}
+define(CCitadel_Ability_Deadpack_Flamethrower, 'CCitadel_Ability_Deadpack_Flamethrower', fieldsCCitadel_Ability_Deadpack_Flamethrower)
+
+const fieldsCCitadel_Ability_Deadpack_Rocketeer = {
+  m_vIntentSpaceVelocities: 'vector',
+  m_vIntentSpaceCurrent: 'vector',
+  m_vIntentSpaceTarget: 'vector',
+  m_vVelocity: 'vector',
+  m_tStateEnterTime: 'float32',
+  m_tGravityReductionStartTime: 'float32',
+  m_tGravityReductionEndTime: 'float32',
+  m_tJetpackInputHeldBeginTime: 'float32',
+  m_tLastDashJumpTime: 'float32',
+  m_vSputterIntents: 'vector',
+  m_vVTOLVel: 'vector',
+  m_flStartHeight: 'float32',
+  m_flInitialYaw: 'float32',
+  m_bDiveStraightDown: 'bool',
+  m_flCastDelayFrac: 'float32',
+  m_tHeatDecayStartTime: 'float32',
+  m_eState: 'uint8',
+} as const
+export class CCitadel_Ability_Deadpack_Rocketeer extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Deadpack_Rocketeer extends Fields<typeof fieldsCCitadel_Ability_Deadpack_Rocketeer> {}
+define(CCitadel_Ability_Deadpack_Rocketeer, 'CCitadel_Ability_Deadpack_Rocketeer', fieldsCCitadel_Ability_Deadpack_Rocketeer)
+
+const fieldsCCitadel_Ability_Deadpack_Ultimate = {
+  m_eState: 'uint32',
+  m_tStateTimeBegin: 'float32',
+  m_vStateOriginBegin: 'vector',
+  m_qStateAnglesBegin: 'angles',
+  m_hTarget: 'CBaseEntity',
+  m_flGoingUpTargetElevation: 'float32',
+  m_tLastUpwardVelocityTime: 'float32',
+  m_bIsApproachingApex: 'bool',
+} as const
+export class CCitadel_Ability_Deadpack_Ultimate extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Deadpack_Ultimate extends Fields<typeof fieldsCCitadel_Ability_Deadpack_Ultimate> {}
+define(CCitadel_Ability_Deadpack_Ultimate, 'CCitadel_Ability_Deadpack_Ultimate', fieldsCCitadel_Ability_Deadpack_Ultimate)
 
 export class CCitadel_Ability_DeathTax extends CCitadelBaseAbility {}
 define(CCitadel_Ability_DeathTax, 'CCitadel_Ability_DeathTax', {})
@@ -6767,6 +7049,23 @@ export class CCitadel_Ability_PrimaryWeapon extends CCitadelBaseAbility {}
 export interface CCitadel_Ability_PrimaryWeapon extends Fields<typeof fieldsCCitadel_Ability_PrimaryWeapon> {}
 define(CCitadel_Ability_PrimaryWeapon, 'CCitadel_Ability_PrimaryWeapon', fieldsCCitadel_Ability_PrimaryWeapon)
 
+const fieldsCCitadel_Ability_Artist_PrimaryWeapon = {
+  m_iCurrentShotCount: 'int32',
+} as const
+export class CCitadel_Ability_Artist_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
+export interface CCitadel_Ability_Artist_PrimaryWeapon extends Fields<typeof fieldsCCitadel_Ability_Artist_PrimaryWeapon> {}
+define(CCitadel_Ability_Artist_PrimaryWeapon, 'CCitadel_Ability_Artist_PrimaryWeapon', fieldsCCitadel_Ability_Artist_PrimaryWeapon)
+
+export class CCitadel_Ability_Artist_PrimaryWeapon2 extends CCitadel_Ability_PrimaryWeapon {}
+define(CCitadel_Ability_Artist_PrimaryWeapon2, 'CCitadel_Ability_Artist_PrimaryWeapon2', {})
+
+const fieldsCCitadel_Ability_Artist_ProjectileWeapon = {
+  m_iCurrentShotCount: 'int32',
+} as const
+export class CCitadel_Ability_Artist_ProjectileWeapon extends CCitadel_Ability_PrimaryWeapon {}
+export interface CCitadel_Ability_Artist_ProjectileWeapon extends Fields<typeof fieldsCCitadel_Ability_Artist_ProjectileWeapon> {}
+define(CCitadel_Ability_Artist_ProjectileWeapon, 'CCitadel_Ability_Artist_ProjectileWeapon', fieldsCCitadel_Ability_Artist_ProjectileWeapon)
+
 export class CCitadel_Ability_Boho_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 define(CCitadel_Ability_Boho_PrimaryWeapon, 'CCitadel_Ability_Boho_PrimaryWeapon', {})
 
@@ -6779,6 +7078,9 @@ const fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon = {
 export class CCitadel_Ability_ChessMaster_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 export interface CCitadel_Ability_ChessMaster_PrimaryWeapon extends Fields<typeof fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon> {}
 define(CCitadel_Ability_ChessMaster_PrimaryWeapon, 'CCitadel_Ability_ChessMaster_PrimaryWeapon', fieldsCCitadel_Ability_ChessMaster_PrimaryWeapon)
+
+export class CCitadel_Ability_Deadpack_PrimaryWeapon_Charge extends CCitadel_Ability_PrimaryWeapon {}
+define(CCitadel_Ability_Deadpack_PrimaryWeapon_Charge, 'CCitadel_Ability_Deadpack_PrimaryWeapon_Charge', {})
 
 export class CCitadel_Ability_Drifter_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 define(CCitadel_Ability_Drifter_PrimaryWeapon, 'CCitadel_Ability_Drifter_PrimaryWeapon', {})
@@ -12052,6 +12354,7 @@ interface Targets {
   CCitadel_Ability_Thumper_4: CCitadel_Ability_Thumper_4
   CCitadel_Ability_WreckingBall: CCitadel_Ability_WreckingBall
   CCitadel_Ability_Yakuza_Shakedown: CCitadel_Ability_Yakuza_Shakedown
+  CCitadel_Artist_StrokeBlocker: CCitadel_Artist_StrokeBlocker
   CCitadel_DoorwayPortal: CCitadel_DoorwayPortal
   CCitadel_GuidedArrow_OwlModel: CCitadel_GuidedArrow_OwlModel
   CCitadel_MagicianTurret: CCitadel_MagicianTurret

@@ -1269,6 +1269,8 @@ var CitadelCrateSpawnInitialDelay = Variable[float32]{"citadel_crate_spawn_initi
 
 var CitadelCrosshairOutOfRangeDist = Variable[float32]{"citadel_crosshair_out_of_range_dist"}
 
+var CitadelDeadpackInstantShot = Variable[bool]{"citadel_deadpack_instant_shot"}
+
 // CitadelDeathLingerTime: How logn does the player icon linger on the minimap
 // after they die.
 var CitadelDeathLingerTime = Variable[float32]{"citadel_death_linger_time"}

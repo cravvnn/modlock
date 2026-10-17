@@ -2604,6 +2604,80 @@ func (e CNPC_Ratking_Rat) VRunDir() Vector {
 
 type CCitadelHideoutPropBase CEntityInstance
 
+type CCitadel_Artist_SolidBlocker CEntityInstance
+
+func (e CCitadel_Artist_SolidBlocker) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Artist_SolidBlocker", name}
+}
+
+func (e CCitadel_Artist_SolidBlocker) FlTurnSolidTime() Number[float32] {
+	return Number[float32]{e.field("m_flTurnSolidTime")}
+}
+
+type CCitadel_Artist_StrokeBlocker CEntityInstance
+
+func (e CCitadel_Artist_StrokeBlocker) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Artist_StrokeBlocker", name}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) VStrokeStart() Vector {
+	return Vector{e.field("m_vStrokeStart")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) VStrokeEnd() Vector {
+	return Vector{e.field("m_vStrokeEnd")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) HPrevBlocker() Handle[CCitadel_Artist_StrokeBlocker] {
+	return Handle[CCitadel_Artist_StrokeBlocker]{e.field("m_hPrevBlocker")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) HNextBlocker() Handle[CCitadel_Artist_StrokeBlocker] {
+	return Handle[CCitadel_Artist_StrokeBlocker]{e.field("m_hNextBlocker")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) FlStrokeRadius() Number[float32] {
+	return Number[float32]{e.field("m_flStrokeRadius")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) FlLifetime() Number[float32] {
+	return Number[float32]{e.field("m_flLifetime")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) VecOverlap() List[uint32] {
+	return List[uint32]{e.field("m_vecOverlap")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) VecPrevOverlap() List[uint32] {
+	return List[uint32]{e.field("m_vecPrevOverlap")}
+}
+
+func (e CCitadel_Artist_StrokeBlocker) HBreaker() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hBreaker")}
+}
+
+type CCitadel_Artist_VisionBlocker CEntityInstance
+
+func (e CCitadel_Artist_VisionBlocker) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Artist_VisionBlocker", name}
+}
+
+func (e CCitadel_Artist_VisionBlocker) S_flBuildUpTime() Number[float32] {
+	return Number[float32]{e.field("s_flBuildUpTime")}
+}
+
+func (e CCitadel_Artist_VisionBlocker) S_flTearDownTime() Number[float32] {
+	return Number[float32]{e.field("s_flTearDownTime")}
+}
+
+func (e CCitadel_Artist_VisionBlocker) FlTurnSolidTime() Number[float32] {
+	return Number[float32]{e.field("m_flTurnSolidTime")}
+}
+
+func (e CCitadel_Artist_VisionBlocker) FlTearDownStartTime() Number[float32] {
+	return Number[float32]{e.field("m_flTearDownStartTime")}
+}
+
 type CCitadel_BreakableProp CEntityInstance
 
 func (e CCitadel_BreakableProp) field(name string) Field {
@@ -2629,6 +2703,8 @@ func (e CCitadel_BreakableProp) HBreaker() Handle[CCitadelPlayerPawn] {
 func (e CCitadel_BreakableProp) NMeleeHitsTaken() Number[int32] {
 	return Number[int32]{e.field("m_nMeleeHitsTaken")}
 }
+
+type CCitadel_BreakableProp_Hideout CEntityInstance
 
 type CCitadel_DeployablePreview CEntityInstance
 
@@ -2795,6 +2871,20 @@ func (e CCitadel_Pickup_Ability) BShowGoldCostInUI() Bool {
 }
 
 type CCitadel_Pickup_Item CEntityInstance
+
+type CCitadel_Pickup_ArtistDrawing CEntityInstance
+
+func (e CCitadel_Pickup_ArtistDrawing) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Pickup_ArtistDrawing", name}
+}
+
+func (e CCitadel_Pickup_ArtistDrawing) HPlayerOwner() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hPlayerOwner")}
+}
+
+func (e CCitadel_Pickup_ArtistDrawing) HPlayerVictim() Handle[CCitadelPlayerPawn] {
+	return Handle[CCitadelPlayerPawn]{e.field("m_hPlayerVictim")}
+}
 
 type CCitadel_Pickup_AssignedGold CEntityInstance
 
@@ -6140,6 +6230,8 @@ func (e CCitadel_Projectile_BatSwarmProjectile) SpawnTime() Number[float32] {
 
 type CCitadel_Projectile_BatSwarmExtraProjectile CEntityInstance
 
+type CCitadel_Projectile_DeadpackMissile CEntityInstance
+
 type CCitadel_Projectile_FortunaWeapon CEntityInstance
 
 type CCitadel_Projectile_HookBlade CEntityInstance
@@ -6167,6 +6259,16 @@ func (e CProjectile_PunkgoatTether) NRopeProjectileParticle() Number[int32] {
 }
 
 type CCitadel_Projectile_Archer_ChargedShot CEntityInstance
+
+type CCitadel_Projectile_ArtistGun CEntityInstance
+
+func (e CCitadel_Projectile_ArtistGun) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Projectile_ArtistGun", name}
+}
+
+func (e CCitadel_Projectile_ArtistGun) VecHitTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecHitTargets")}
+}
 
 type CCitadel_Projectile_Bebop_Hook CEntityInstance
 
@@ -6335,6 +6437,10 @@ func (e CCitadel_Projectile_WreckingBall) BBroken() Bool {
 type CDoormanBombProjectile CEntityInstance
 
 type CItemExplosiveBarrel CEntityInstance
+
+type CProjectile_Artist_BouncingPot CEntityInstance
+
+type CProjectile_Artist_RollingProjectile CEntityInstance
 
 type CProjectile_Boho_SkipGrenade CEntityInstance
 

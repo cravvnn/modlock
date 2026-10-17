@@ -467,7 +467,7 @@ the next frame after the release. A mod that stops also releases its hold.
 
 | Call                                                | Runs the handler                                              |
 | --------------------------------------------------- | ------------------------------------------------------------- |
-| `command(name, handler)`                            | When a player types `/name` in chat.                          |
+| `command(name, handler)`                            | On the frame after a player types `/name` in chat.            |
 | `onStart(handler)`                                  | When the server starts the mod, with its `--arg` values.      |
 | `onWorld(handler)`                                  | With the map's name each time a world loads.                  |
 | `onFrame(handler)`                                  | Once per server frame.                                        |
@@ -1088,7 +1088,7 @@ git submodule update --init --recursive
 go mod download github.com/aperturerobotics/protobuf github.com/aperturerobotics/abseil-cpp
 
 jobs=$(( $(getconf _NPROCESSORS_ONLN) / 2 ))
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel "$jobs"
 ctest --test-dir build --output-on-failure
 cmake --install build --prefix "$PWD/build/sdk"

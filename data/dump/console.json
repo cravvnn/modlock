@@ -1,5 +1,5 @@
 {
- "build": "6774",
+ "build": "6790",
  "variables": [
   {
    "name": "adsp_alley_min",
@@ -4575,6 +4575,17 @@
     "developmentonly",
     "gamedll",
     "replicated"
+   ]
+  },
+  {
+   "name": "citadel_deadpack_instant_shot",
+   "type": "CONSOLE_VARIABLE_TYPE_BOOL",
+   "default_value": "false",
+   "flags": [
+    "gamedll",
+    "replicated",
+    "cheat",
+    "release"
    ]
   },
   {
