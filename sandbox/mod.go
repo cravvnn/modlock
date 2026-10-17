@@ -85,7 +85,7 @@ func (m *Mod) instantiate(ctx context.Context, module []byte, output io.Writer) 
 		return err
 	}
 
-	// Link WASI, with only output, and the host.
+	// Link WASI, with only output and the clocks, and the host.
 	wasi_snapshot_preview1.MustInstantiate(ctx, m.runtime)
 	_, err = m.runtime.NewHostModuleBuilder("modlock").
 		NewFunctionBuilder().WithFunc(m.call).Export("host_call").
@@ -98,7 +98,8 @@ func (m *Mod) instantiate(ctx context.Context, module []byte, output io.Writer) 
 	// Instantiate and initialize the mod within the start budget.
 	started, cancel := context.WithTimeout(ctx, startBudget)
 	defer cancel()
-	moduleConfig := wazero.NewModuleConfig().WithStartFunctions()
+	// The mod reads the system clocks, as in the game, whose WASI has them.
+	moduleConfig := wazero.NewModuleConfig().WithStartFunctions().WithSysWalltime().WithSysNanotime()
 	if output != nil {
 		moduleConfig = moduleConfig.WithStdout(output).WithStderr(output)
 	}

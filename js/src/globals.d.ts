@@ -1,5 +1,7 @@
-// The globals the Modlock QuickJS runtime gives a mod, beyond the standard
-// ECMAScript library.
+// The globals every Modlock JavaScript runtime gives a mod, beyond the
+// standard ECMAScript library. A mod reads them through these declarations
+// alone: scriptc lowers a global only when the name resolves to its own
+// declaration, so a mod that declares one itself shadows it.
 
 /** Console writes lines to the server log under the mod's name. */
 interface Console {
@@ -17,6 +19,15 @@ interface Console {
 
 /** console writes to the server log. */
 declare var console: Console
+
+/** Performance reads a monotonic clock. */
+interface Performance {
+  /** now returns the milliseconds since the mod started, with a fraction. */
+  now(): number
+}
+
+/** performance is the mod's clock for timing its own work. */
+declare var performance: Performance
 
 /** TextEncoder encodes strings as UTF-8. */
 declare class TextEncoder {
