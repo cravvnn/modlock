@@ -7,6 +7,8 @@
 // module to modlock, replaces the panic import with a function that logs the
 // panic through host_call and traps, makes _initialize run the init export,
 // and adds modlock_event, which packs the reply's address and length.
+//
+// LowerJSX prepares a mod's TSX sources for scriptc, which compiles no JSX.
 package scriptc
 
 import (

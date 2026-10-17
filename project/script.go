@@ -75,7 +75,7 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 
 	// Compile a release build with scriptc when it can.
 	if mode == Release {
-		module, err := p.compileScriptc(ctx, library, output)
+		module, err := p.compileScriptc(ctx, library, tsgo, output)
 		if err == nil {
 			return p.writeBuild(module, wasm.Manifest_RUNTIME_WASM, Entry, ScriptEntry)
 		}

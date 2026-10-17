@@ -1,6 +1,7 @@
 package project
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/paralin/modlock/internal/npm"
 	"github.com/paralin/modlock/js"
@@ -15,16 +18,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-// scriptcDir is where a script project's scriptc build keeps its entry, its
-// profile and its output, beside the library it imports.
-var scriptcDir = filepath.Join("node_modules", ".scriptc")
+// scriptcEntryDir is the directory of the build's entry within the mirrored
+// project.
+const scriptcEntryDir = ".scriptc"
 
 // scriptcEntry is the build's entry. It loads the mod's main module, which
 // registers the mod's handlers, and exports the library's event dispatch,
 // since scriptc exports only functions the entry declares. The host
 // callbacks bind only in the entry, so it hands them to the library, each in
 // a closure: scriptc 0.3.4 traps on a callback passed as a bare value.
-const scriptcEntry = `import '../../%s'
+const scriptcEntry = `import '../%s'
 import { event as dispatch } from 'modlock/scriptc'
 
 declare function host_call(data: Uint8Array): number
@@ -40,26 +43,36 @@ export function event(size: number): Uint8Array {
 `
 
 // scriptcConfig is the TypeScript configuration of the scriptc build. It
-// extends the project's, and maps the library and the protobuf runtime to
-// their TypeScript source, which scriptc compiles with the mod in place of
-// their bundles and declarations.
+// extends the project's, compiles only the entry and what it imports, and
+// maps the library and the protobuf runtime to their TypeScript source, which
+// scriptc compiles with the mod in place of their bundles and declarations.
 type scriptcConfig struct {
-	Extends         string `json:"extends,omitempty"`
+	// Extends is the project's configuration, if it has one.
+	Extends string `json:"extends,omitempty"`
+	// Files is the entry alone.
+	Files []string `json:"files"`
+	// Include is empty, so the project's include adds no files.
+	Include []string `json:"include"`
+	// CompilerOptions are the options the build sets over the project's.
 	CompilerOptions struct {
 		// NoUncheckedIndexedAccess is off: the one program spans the
 		// protobuf runtime, written without it.
-		NoUncheckedIndexedAccess bool                `json:"noUncheckedIndexedAccess"`
-		Paths                    map[string][]string `json:"paths"`
+		NoUncheckedIndexedAccess bool `json:"noUncheckedIndexedAccess"`
+		// Paths map the library and the protobuf runtime to their source.
+		Paths map[string][]string `json:"paths"`
 	} `json:"compilerOptions"`
 }
 
 // writeScriptcConfig writes the scriptc build's TypeScript configuration into
 // dir, mapping the library to its source in library.
 func (p *Project) writeScriptcConfig(dir, library string) error {
-	var config scriptcConfig
-	if _, err := os.Stat(filepath.Join(p.Dir, "tsconfig.json")); err == nil {
-		config.Extends = "../../tsconfig.json"
+	// Extend the project's configuration, if it has one.
+	config := scriptcConfig{Files: []string{"entry.ts"}, Include: []string{}}
+	if project := filepath.Join(p.Dir, "tsconfig.json"); isFile(project) {
+		config.Extends = filepath.ToSlash(project)
 	}
+
+	// Map the library and the protobuf runtime to their source.
 	source := filepath.Join(library, js.Scriptc)
 	index := filepath.Join(source, "js", "src", "index.ts")
 	protobuf := filepath.Join(source, js.ScriptcProtobuf)
@@ -72,6 +85,8 @@ func (p *Project) writeScriptcConfig(dir, library string) error {
 		"@aptre/protobuf-es-lite":   {filepath.Join(protobuf, "index.ts")},
 		"@aptre/protobuf-es-lite/*": {filepath.Join(protobuf, "*.ts")},
 	}
+
+	// Write it.
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return err
@@ -80,51 +95,54 @@ func (p *Project) writeScriptcConfig(dir, library string) error {
 }
 
 // compileScriptc compiles the project with scriptc into a module fitted to
-// the mod boundary. The compiler's diagnostics go to output; they list what
-// keeps a mod from compiling.
-func (p *Project) compileScriptc(ctx context.Context, library string, output io.Writer) ([]byte, error) {
-	// Install the compiler, then write the entry and the profile.
+// the mod boundary. tsgo is the type checker, which lists the program's
+// files. The compiler's diagnostics go to output; they list what keeps a mod
+// from compiling.
+//
+// scriptc compiles a mirror of the program's sources outside any
+// node_modules, with each TSX file's JSX lowered to calls: scriptc compiles
+// no JSX, and it judges a bare import as an npm package whenever a
+// node_modules beside the source holds its declarations, even when the
+// configuration maps it to source.
+func (p *Project) compileScriptc(ctx context.Context, library, tsgo string, output io.Writer) ([]byte, error) {
+	// Install the compiler.
 	compiler, runtimePack, err := npm.Scriptc(ctx)
 	if err != nil {
 		return nil, err
 	}
-	dir := filepath.Join(p.Dir, scriptcDir)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, errors.Wrap(err, "write the scriptc entry")
+
+	// Make the mirror's directory, named as scriptc resolves it.
+	mirror, err := os.MkdirTemp("", "modlock-scriptc-")
+	if err != nil {
+		return nil, errors.Wrap(err, "mirror the mod's sources")
 	}
-	entry := fmt.Appendf(nil, scriptcEntry, scriptMain(p.Manifest.GetLanguage()))
-	if err := os.WriteFile(filepath.Join(dir, "entry.ts"), entry, 0o644); err != nil {
-		return nil, errors.Wrap(err, "write the scriptc entry")
-	}
-	if err := os.WriteFile(filepath.Join(dir, "profile.json"), scriptc.Profile("entry.ts"), 0o644); err != nil {
-		return nil, errors.Wrap(err, "write the scriptc profile")
-	}
-	if err := p.writeScriptcConfig(dir, library); err != nil {
-		return nil, errors.Wrap(err, "write the scriptc configuration")
+	defer os.RemoveAll(mirror)
+	if mirror, err = filepath.EvalSymlinks(mirror); err != nil {
+		return nil, errors.Wrap(err, "mirror the mod's sources")
 	}
 
-	// scriptc 0.3.4 judges a bare import as an npm package whenever
-	// node_modules holds its declarations, even when the configuration maps it
-	// to source, and refuses a package that ships no runtime. Hide the
-	// library's declarations, which the type checker has already read, while
-	// it compiles; the next build reinstalls them if putting them back fails.
-	installed := filepath.Join(p.Dir, libraryDir)
-	hidden := filepath.Join(dir, "modlock")
-	if err := os.RemoveAll(hidden); err != nil {
-		return nil, errors.Wrap(err, "hide the library declarations")
+	// Mirror the program's sources, and write the entry beside the mirrored
+	// project.
+	project, sources, err := p.mirrorSources(ctx, tsgo, mirror)
+	if err != nil {
+		return nil, err
 	}
-	if err := os.Rename(installed, hidden); err != nil {
-		return nil, errors.Wrap(err, "hide the library declarations")
+	dir := filepath.Join(project, scriptcEntryDir)
+	if err := p.writeScriptcEntry(dir, library); err != nil {
+		return nil, err
 	}
-	defer func() { _ = os.Rename(hidden, installed) }()
 
-	// Compile a WASI reactor, printing what keeps the mod from compiling.
+	// Compile a WASI reactor in the entry's directory.
+	var diagnostics bytes.Buffer
 	build := exec.CommandContext(ctx, compiler, "build", "--lib", "--profile", "profile.json", "-o", Entry)
 	build.Dir = dir
 	build.Env = append(os.Environ(), "SCRIPTC_TARGET=wasm32-wasi", "SCRIPTC_RUNTIME_PACK="+runtimePack)
-	build.Stdout = io.Discard
-	build.Stderr = output
-	if err := build.Run(); err != nil {
+	build.Stderr = &diagnostics
+	err = build.Run()
+
+	// Print what keeps the mod from compiling, naming the sources.
+	_, _ = sources.WriteString(output, diagnostics.String())
+	if err != nil {
 		return nil, errors.Wrap(err, "scriptc cannot compile the mod")
 	}
 
@@ -134,4 +152,111 @@ func (p *Project) compileScriptc(ctx context.Context, library string, output io.
 		return nil, errors.Wrap(err, "read the scriptc build")
 	}
 	return scriptc.Fit(built)
+}
+
+// writeScriptcEntry writes the build's entry, its profile and its
+// configuration into dir, mapping the library to its source in library.
+func (p *Project) writeScriptcEntry(dir, library string) error {
+	// Write the entry, which loads the project's main module.
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return errors.Wrap(err, "write the scriptc entry")
+	}
+	entry := fmt.Appendf(nil, scriptcEntry, scriptMain(p.Manifest.GetLanguage()))
+	if err := os.WriteFile(filepath.Join(dir, "entry.ts"), entry, 0o644); err != nil {
+		return errors.Wrap(err, "write the scriptc entry")
+	}
+
+	// Write the profile and the configuration that build it.
+	if err := os.WriteFile(filepath.Join(dir, "profile.json"), scriptc.Profile("entry.ts"), 0o644); err != nil {
+		return errors.Wrap(err, "write the scriptc profile")
+	}
+	if err := p.writeScriptcConfig(dir, library); err != nil {
+		return errors.Wrap(err, "write the scriptc configuration")
+	}
+	return nil
+}
+
+// mirrorSources copies the program's sources into mirror at their paths
+// below the directory that holds them all and the project, lowering each TSX
+// file into a TypeScript file. The program is what tsgo lists, less the
+// files in node_modules and tsgo's own. It returns the project's directory in
+// the mirror and a replacer that names mirrored files by their sources.
+func (p *Project) mirrorSources(ctx context.Context, tsgo, mirror string) (string, *strings.Replacer, error) {
+	// List the program's own files.
+	list := exec.CommandContext(ctx, tsgo, "--project", p.Dir, "--listFilesOnly")
+	list.Dir = p.Dir
+	listed, err := list.Output()
+	if err != nil {
+		return "", nil, errors.Wrap(err, "list the mod's sources")
+	}
+	tsgoDir := filepath.Dir(tsgo)
+	var files []string
+	for line := range strings.Lines(string(listed)) {
+		line = strings.TrimSpace(line)
+		file := filepath.Clean(filepath.FromSlash(line))
+		if line == "" || inDir(file, tsgoDir) || slices.Contains(strings.Split(file, string(filepath.Separator)), "node_modules") {
+			continue
+		}
+		files = append(files, file)
+	}
+
+	// Find the directory that holds them and the project.
+	project, err := filepath.Abs(p.Dir)
+	if err != nil {
+		return "", nil, errors.Wrap(err, "mirror the mod's sources")
+	}
+	root := project
+	for _, file := range files {
+		for !inDir(file, root) {
+			root = filepath.Dir(root)
+		}
+	}
+
+	// Copy each file, lowering TSX. A replacer pair maps each lowered file
+	// back to its source ahead of the pair for the whole mirror.
+	var names []string
+	for _, file := range files {
+		rel, err := filepath.Rel(root, file)
+		if err != nil {
+			return "", nil, errors.Wrap(err, "mirror the mod's sources")
+		}
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return "", nil, errors.Wrap(err, "mirror the mod's sources")
+		}
+		if strings.HasSuffix(rel, ".tsx") {
+			if data, err = scriptc.LowerJSX(data); err != nil {
+				return "", nil, errors.Wrapf(err, "lower the JSX in %s", file)
+			}
+			rel = strings.TrimSuffix(rel, "x")
+			names = append(names, filepath.Join(mirror, rel), file)
+		}
+		target := filepath.Join(mirror, rel)
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return "", nil, errors.Wrap(err, "mirror the mod's sources")
+		}
+		if err := os.WriteFile(target, data, 0o644); err != nil {
+			return "", nil, errors.Wrap(err, "mirror the mod's sources")
+		}
+	}
+	names = append(names, mirror, root)
+
+	// Locate the project in the mirror.
+	rel, err := filepath.Rel(root, project)
+	if err != nil {
+		return "", nil, errors.Wrap(err, "mirror the mod's sources")
+	}
+	return filepath.Join(mirror, rel), strings.NewReplacer(names...), nil
+}
+
+// isFile reports whether path names a file.
+func isFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
+// inDir reports whether path is dir or lies below it.
+func inDir(path, dir string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
