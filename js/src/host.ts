@@ -1,19 +1,45 @@
-// The host bridge the QuickJS runtime gives the bundle: calls to the game
-// and the events it delivers.
+// The host bridge: calls to the game and the events it delivers, through the
+// runtime the mod runs on. Each runtime's entry binds its own transport, so
+// the library itself reads no runtime globals.
 
 import { Call, Reply } from '../../proto/modlock/wasm.pb.js'
 
-/** ModlockHost is the bridge the QuickJS runtime installs as __modlock. */
-interface ModlockHost {
-  /** hostCall exchanges an encoded Call for the host's encoded Reply. */
-  hostCall(call: Uint8Array): Uint8Array
-  /** event receives each encoded Call the host delivers and returns its Reply. */
-  event?: (call: Uint8Array) => Uint8Array
+/** Transport exchanges an encoded Call for the host's encoded Reply. */
+export type Transport = (call: Uint8Array) => Uint8Array
+
+/** Dispatch answers one encoded Call the host delivers with its encoded Reply. */
+export type Dispatch = (call: Uint8Array) => Uint8Array
+
+/** unbound answers every call before a runtime binds the host as refused. */
+const unbound: Transport = () =>
+  Reply.toBinary({ error: 'the host is not bound yet' })
+
+/** transport carries calls to the host; the runtime's entry binds it. */
+let transport: Transport = unbound
+
+/** dispatch delivers the host's events to the library's handlers. */
+let dispatch: Dispatch | undefined
+
+/** bind routes the mod's host calls through t from now on. */
+export function bind(t: Transport): void {
+  transport = t
 }
 
-/** host is the runtime's bridge for the bundle's lifetime. */
-export const host = (globalThis as unknown as { __modlock: ModlockHost })
-  .__modlock
+/** serveEvents answers each event the host delivers with d. */
+export function serveEvents(d: Dispatch): void {
+  dispatch = d
+}
+
+/**
+ * deliver answers one encoded Call from the host. The library registers its
+ * dispatch when it loads, before any event can arrive.
+ */
+export function deliver(call: Uint8Array): Uint8Array {
+  if (dispatch === undefined) {
+    return Reply.toBinary({ error: 'the mod library is not loaded' })
+  }
+  return dispatch(call)
+}
 
 /**
  * call calls one Host method with its encoded request and returns the
@@ -23,8 +49,6 @@ export function call(
   method: string,
   request: Uint8Array,
 ): Uint8Array | undefined {
-  const reply = Reply.fromBinary(
-    host.hostCall(Call.toBinary({ method, request })),
-  )
+  const reply = Reply.fromBinary(transport(Call.toBinary({ method, request })))
   return reply.error ? undefined : (reply.response ?? new Uint8Array())
 }

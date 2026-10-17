@@ -254,20 +254,22 @@ export class Dropper {
 
   /** object returns what the builder's preview stands for. */
   private object(builder: Builder): SpotObject | undefined {
+    // A held object keeps its look at the aim; a new one takes its entry's.
     if (!builder.aim) {
       return undefined
     }
+    const { position, facing } = builder.aim
+    if (builder.held) {
+      return { ...builder.held, position, facing }
+    }
     const entry = this.catalog[builder.entry]!
-    const base = builder.held ?? {
+    return {
       model: entry.model,
+      position,
+      facing,
       scale: entry.scale ?? 1,
       bounce: entry.bounce ?? 0,
       placedBy: builder.steamId,
-    }
-    return {
-      ...base,
-      position: builder.aim.position,
-      facing: builder.aim.facing,
     }
   }
 

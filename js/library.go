@@ -1,8 +1,13 @@
 // Package js builds the modlock library that TypeScript and JavaScript mods
 // import: one ES module holding the calls into the game and its protobuf
 // runtime, the entity classes as a second module that imports the first, and
-// their declarations. It also bundles the renderer that draws mods'
-// interfaces in the player's game.
+// their declarations. Beside them it keeps the library's TypeScript source
+// and the protobuf runtime's, which scriptc compiles with a mod. It also
+// bundles the renderer that draws mods' interfaces in the player's game.
+//
+// A script project installs only the declarations, so editors and the type
+// checker see one modlock package and neither compiler mistakes it for an
+// npm dependency; each compiler resolves modlock to its own copy here.
 //
 // Library builds from the Modlock source when it is on disk: a checkout, or
 // the module cache of the build that links this package. A release build has
@@ -22,7 +27,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"slices"
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -45,15 +49,30 @@ var built embed.FS
 // installs as scripts/modlock/ui.js beside the layout in panorama/layout.
 const Renderer = "ui.js"
 
-// Files are the built library's files, which modlock build installs into
-// each script project.
-var Files = []string{"index.js", "index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.js", "entities.d.ts", "console.js", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "timer.d.ts"}
+// Declarations are the built library's declarations, which modlock build
+// installs into each script project.
+var Declarations = []string{"index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "timer.d.ts", "jsx-runtime.d.ts"}
+
+// jsxRuntime and jsxTypes are the library's JSX runtime, which the compiler
+// and the bundler import as modlock/jsx-runtime.
+const (
+	jsxRuntime = "export { Fragment, jsx, jsxs } from './index.js'\n"
+	jsxTypes   = "export { Fragment, JSX, jsx, jsxs } from './index.js'\n"
+)
+
+// Scriptc is the directory of the built library that holds the source scriptc
+// compiles: the library under js/src and proto/modlock, as in the Modlock
+// source, and the protobuf runtime under protobuf-es-lite.
+const Scriptc = "scriptc"
+
+// ScriptcProtobuf is the protobuf runtime's source directory under Scriptc.
+const ScriptcProtobuf = "protobuf-es-lite"
 
 // modulePath is the Modlock module path.
 const modulePath = "github.com/paralin/modlock"
 
 // protobufVersion is the protobuf runtime the library bundles.
-const protobufVersion = "0.6.0"
+const protobufVersion = "0.6.1"
 
 // banner is the legal comment that every bundle keeps for the protobuf
 // runtime it includes.
@@ -61,7 +80,7 @@ const banner = "/*! Includes protobuf-es-lite under the Apache License 2.0: http
 
 // revision changes whenever Build changes its output, so a cached build from
 // the same sources is rebuilt.
-const revision = "4"
+const revision = "6"
 
 // sources are the paths under the Modlock source that Build reads.
 var sources = []string{"js/src", "js/tsconfig.json", "proto/modlock", "panorama/src"}
@@ -87,15 +106,27 @@ func installEmbedded() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	sum := sha256.New()
-	names := append(slices.Clone(Files), Renderer)
-	for _, name := range names {
+	files := map[string][]byte{}
+	var names []string
+	err = fs.WalkDir(library, ".", func(name string, entry fs.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || name == ".gitignore" {
+			return err
+		}
 		data, err := fs.ReadFile(library, name)
 		if err != nil {
-			return "", errors.Wrap(err, "read the built-in modlock library")
+			return err
 		}
+		files[name] = data
+		names = append(names, name)
+		return nil
+	})
+	if err != nil {
+		return "", errors.Wrap(err, "read the built-in modlock library")
+	}
+	sum := sha256.New()
+	for _, name := range names {
 		_, _ = io.WriteString(sum, name+"\x00")
-		_, _ = sum.Write(data)
+		_, _ = sum.Write(files[name])
 	}
 	dir, err := fetch.Cache("library", "built-"+hex.EncodeToString(sum.Sum(nil))[:16])
 	if err != nil {
@@ -105,11 +136,7 @@ func installEmbedded() (string, error) {
 	// Copy the files into place whole.
 	err = fetch.Install(dir, func(staging string) error {
 		for _, name := range names {
-			data, err := fs.ReadFile(library, name)
-			if err != nil {
-				return err
-			}
-			if err := write(filepath.Join(staging, name), data); err != nil {
+			if err := write(filepath.Join(staging, filepath.FromSlash(name)), files[name]); err != nil {
 				return err
 			}
 		}
@@ -277,8 +304,10 @@ func Build(ctx context.Context, source, out string) error {
 		return err
 	}
 	files := map[string][]byte{
-		"globals.d.ts": globals,
-		"index.d.ts":   append([]byte("/// <reference path=\"./globals.d.ts\" />\n"), index...),
+		"globals.d.ts":     globals,
+		"index.d.ts":       append([]byte("/// <reference path=\"./globals.d.ts\" />\n"), index...),
+		"jsx-runtime.js":   []byte(jsxRuntime),
+		"jsx-runtime.d.ts": []byte(jsxTypes),
 	}
 	for _, name := range []string{"host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "timer.d.ts"} {
 		if files[name], err = os.ReadFile(filepath.Join(declared, name)); err != nil {
@@ -291,7 +320,7 @@ func Build(ctx context.Context, source, out string) error {
 		name    string
 		options api.BuildOptions
 	}{
-		{"index.js", api.BuildOptions{EntryPoints: []string{"js/src/index.ts"}, Format: api.FormatESModule, Target: api.ES2023}},
+		{"index.js", api.BuildOptions{EntryPoints: []string{"js/src/quickjs.ts"}, Format: api.FormatESModule, Target: api.ES2023}},
 		{"entities.js", api.BuildOptions{EntryPoints: []string{"js/src/entities.ts"}, Format: api.FormatESModule, Target: api.ES2023, External: []string{"modlock"}}},
 		{"console.js", api.BuildOptions{EntryPoints: []string{"js/src/console.ts"}, Format: api.FormatESModule, Target: api.ES2023, External: []string{"modlock"}}},
 		{Renderer, api.BuildOptions{EntryPoints: []string{"panorama/src/main.ts"}, Format: api.FormatIIFE, Target: api.ES2020, MinifyWhitespace: true, MinifyIdentifiers: true, MinifySyntax: true}},
@@ -315,7 +344,18 @@ func Build(ctx context.Context, source, out string) error {
 			return err
 		}
 	}
-	return nil
+
+	// Keep the library's source and the protobuf runtime's for scriptc.
+	err = walkSources(source, func(name string, data []byte) error {
+		if !strings.HasPrefix(name, "js/src/") && !strings.HasPrefix(name, "proto/") {
+			return nil
+		}
+		return write(filepath.Join(out, Scriptc, filepath.FromSlash(name)), data)
+	})
+	if err != nil {
+		return err
+	}
+	return copyTree(filepath.Join(protobuf, "src"), filepath.Join(out, Scriptc, ScriptcProtobuf))
 }
 
 // copyTree copies the files under from into to.

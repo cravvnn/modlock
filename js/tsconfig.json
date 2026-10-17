@@ -22,6 +22,8 @@
     "src/spot.ts",
     "src/dropper.ts",
     "src/entities.ts",
-    "src/console.ts"
+    "src/console.ts",
+    "src/quickjs.ts",
+    "src/scriptc.ts"
   ]
 }

@@ -41,6 +41,18 @@ function angles(value: { pitch?: number; yaw?: number; roll?: number } | undefin
   return { pitch: value?.pitch ?? 0, yaw: value?.yaw ?? 0, roll: value?.roll ?? 0 }
 }
 
+/** known decodes each of values, dropping those decode has no value for. */
+function known<V, T>(values: readonly V[] | undefined, decode: (v: V) => T | undefined): T[] {
+  const out: T[] = []
+  for (const v of values ?? []) {
+    const decoded = decode(v)
+    if (decoded !== undefined) {
+      out.push(decoded)
+    }
+  }
+  return out
+}
+
 /** reply encodes a successful Reply holding response. */
 function reply(response?: Uint8Array): Uint8Array {
   return pb.Reply.toBinary({ response })
@@ -585,7 +597,7 @@ func (w *tsWriter) fromValue(f *field, value string) string {
 func (w *tsWriter) fromField(f *field, value string) string {
 	switch {
 	case f.repeated && (f.enum != nil || f.message != nil && f.message.isUnion()):
-		return fmt.Sprintf("(%s ?? []).flatMap((v) => %s ?? [])", value, w.fromValue(f, "v"))
+		return fmt.Sprintf("known(%s, (v) => %s)", value, w.fromValue(f, "v"))
 	case f.repeated:
 		if read := w.fromValue(f, "v"); read != "v" {
 			return fmt.Sprintf("(%s ?? []).map((v) => %s)", value, read)

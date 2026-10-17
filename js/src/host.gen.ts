@@ -27,6 +27,18 @@ function angles(value: { pitch?: number; yaw?: number; roll?: number } | undefin
   return { pitch: value?.pitch ?? 0, yaw: value?.yaw ?? 0, roll: value?.roll ?? 0 }
 }
 
+/** known decodes each of values, dropping those decode has no value for. */
+function known<V, T>(values: readonly V[] | undefined, decode: (v: V) => T | undefined): T[] {
+  const out: T[] = []
+  for (const v of values ?? []) {
+    const decoded = decode(v)
+    if (decoded !== undefined) {
+      out.push(decoded)
+    }
+  }
+  return out
+}
+
 /** reply encodes a successful Reply holding response. */
 function reply(response?: Uint8Array): Uint8Array {
   return pb.Reply.toBinary({ response })
@@ -268,7 +280,7 @@ function fromMovementSample(message: pb.MovementSample): MovementSample {
     wallJumpNormal: vector(message.wallJumpNormal),
     wallJumpFacing: message.wallJumpFacing ?? 0,
     ziplineTime: message.ziplineTime,
-    actions: (message.actions ?? []).flatMap((v) => movementActionNames[v] ?? []),
+    actions: known(message.actions, (v) => movementActionNames[v]),
     casts: message.casts ?? [],
     command: message.command === undefined ? undefined : fromMovementCommand(message.command),
   }
@@ -2010,7 +2022,7 @@ export function readFieldList(entity: number, className: string, field: string, 
   const reply = call('ReadFieldList', pb.ReadFieldRequest.toBinary({ entity, className, field, type: fieldTypeValues[type] }))
   if (reply === undefined) return []
   const response = pb.FieldListResponse.fromBinary(reply)
-  return (response.values ?? []).flatMap((v) => fromFieldValue(v) ?? [])
+  return known(response.values, (v) => fromFieldValue(v))
 }
 
 /**

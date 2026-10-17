@@ -47,12 +47,10 @@ export type Length = number | `${number}%` | 'fit' | 'fill'
 
 /**
  * Edges are distances in pixels: one for every side, [vertical, horizontal],
- * or [top, right, bottom, left].
+ * or [top, right, bottom, left]. They are an array rather than a union of
+ * tuples, which scriptc does not compile.
  */
-export type Edges =
-  | number
-  | readonly [number, number]
-  | readonly [number, number, number, number]
+export type Edges = number | readonly number[]
 
 /** Style lays out and paints an element. Colors are '#rrggbb' or '#rrggbbaa'. */
 export interface Style {
@@ -87,11 +85,26 @@ export type Child =
 /** Component returns the elements that stand for its props. */
 export type Component<P> = (props: P) => Child
 
-/** UiElement is one element of an interface, as JSX builds it. */
+/**
+ * UiElement is one element of an interface, as JSX builds it. A component's
+ * element is a fragment holding what the component returned.
+ */
 export interface UiElement {
-  readonly type: string | Component<never>
-  readonly props: Readonly<Record<string, unknown>>
+  readonly type: string
+  readonly props: Props
   readonly key?: string
+}
+
+/**
+ * Props are an element's props: every intrinsic element's, by name, so the
+ * encoder reads them as typed fields. A component's props pass through to it.
+ */
+export interface Props {
+  readonly style?: Style
+  readonly children?: Child
+  readonly src?: string
+  readonly data?: string
+  readonly onPress?: (player: Player) => void
 }
 
 /** PanelProps lay out a panel, which groups its children. */
@@ -153,14 +166,24 @@ export declare namespace JSX {
   }
 }
 
-/** jsx builds one element; the TypeScript compiler calls it for JSX. */
+/**
+ * jsx builds one element, rendering a component in place; the TypeScript
+ * compiler calls it for JSX.
+ */
 export function jsx(
-  type: string | Component<never>,
-  props: Record<string, unknown>,
+  type: string | Component<Props>,
+  props: Props,
   key?: string | number,
 ): UiElement {
-  return { type, props, key: key === undefined ? undefined : String(key) }
+  const named = key === undefined ? undefined : String(key)
+  if (typeof type === 'function') {
+    return { type: fragment, props: { children: type(props) }, key: named }
+  }
+  return { type, props, key: named }
 }
+
+/** fragment is the type of a component's element. */
+const fragment = 'fragment'
 
 /** jsxs builds an element with several children, as jsx does. */
 export const jsxs = jsx
@@ -202,7 +225,10 @@ export function toast(player: Player, text: string, seconds = 4): boolean {
 
 /** press runs the handler of the button the player pressed. */
 export function press(player: Player, node: string): void {
-  screens.get(player.slot)?.presses.get(node)?.(player)
+  const pressed = screens.get(player.slot)?.presses.get(node)
+  if (pressed) {
+    pressed.handler(player)
+  }
 }
 
 /** tick advances the clock to the frame at seconds and fades expiring notices. */
@@ -328,8 +354,11 @@ interface Screen {
    * array, and ">" for what a component returned.
    */
   readonly ids: Map<string, string>
-  /** presses maps each button's id to its handler. */
-  readonly presses: Map<string, (player: Player) => void>
+  /**
+   * presses maps each button's id to its handler, held in a record since
+   * scriptc has no Map slot for a function.
+   */
+  readonly presses: Map<string, { readonly handler: (player: Player) => void }>
   /** next numbers the next new node, so an id is never reused. */
   next: number
 }
@@ -382,43 +411,40 @@ function render(previous: Screen | undefined, root: Child): Screen {
       add(node)
       return [node.id!]
     }
-    if (typeof child.type === 'function') {
-      return place((child.type as Component<unknown>)(child.props), `${at}>`)
+    if (child.type === fragment) {
+      return place(child.props.children, `${at}>`)
     }
 
     // Draw an intrinsic element.
     const props = child.props
     const node: Node = {
       id: id(at),
-      style: wireStyle(props.style as Style | undefined),
+      style: wireStyle(props.style),
     }
     switch (child.type) {
       case 'label':
         node.kind = Kind.LABEL
-        node.text = text(props.children as Child)
+        node.text = text(props.children)
         break
       case 'image':
         node.kind = Kind.IMAGE
-        node.image = typeof props.src === 'string' ? props.src : ''
+        node.image = props.src ?? ''
         break
       case 'button':
         node.kind = Kind.BUTTON
-        if (typeof props.onPress === 'function') {
-          screen.presses.set(
-            node.id!,
-            props.onPress as (player: Player) => void,
-          )
+        if (props.onPress) {
+          screen.presses.set(node.id!, { handler: props.onPress })
         }
-        node.children = place(props.children as Child, `${at}/`)
+        node.children = place(props.children, `${at}/`)
         break
       case 'layout':
         node.kind = Kind.LAYOUT
-        node.layout = typeof props.src === 'string' ? props.src : ''
-        node.data = typeof props.data === 'string' ? props.data : ''
+        node.layout = props.src ?? ''
+        node.data = props.data ?? ''
         break
       default:
         node.kind = Kind.PANEL
-        node.children = place(props.children as Child, `${at}/`)
+        node.children = place(props.children, `${at}/`)
     }
     add(node)
     return [node.id!]
@@ -487,6 +513,11 @@ const aligns = {
   bottom: Align.END,
 } as const
 
+/** align encodes an alignment. */
+function align(value: keyof typeof aligns | undefined): Align | undefined {
+  return value === undefined ? undefined : aligns[value]
+}
+
 /** wireStyle encodes style. */
 function wireStyle(style: Style | undefined): WireStyle | undefined {
   if (!style) {
@@ -501,15 +532,15 @@ function wireStyle(style: Style | undefined): WireStyle | undefined {
         : style.flow === 'right'
           ? Flow.RIGHT
           : undefined,
-    horizontalAlign: style.horizontalAlign && aligns[style.horizontalAlign],
-    verticalAlign: style.verticalAlign && aligns[style.verticalAlign],
+    horizontalAlign: align(style.horizontalAlign),
+    verticalAlign: align(style.verticalAlign),
     margin: edges(style.margin),
     padding: edges(style.padding),
     background: color(style.background),
     color: color(style.color),
     fontSize: style.fontSize,
     bold: style.bold,
-    textAlign: style.textAlign && aligns[style.textAlign],
+    textAlign: align(style.textAlign),
     borderRadius: style.borderRadius,
     opacity: style.opacity,
   }

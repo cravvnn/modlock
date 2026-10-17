@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/paralin/modlock/check"
+	"github.com/paralin/modlock/js"
 	"github.com/paralin/modlock/luau"
 	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/python"
@@ -163,7 +164,11 @@ func New(ctx context.Context, dir, name string, language wasm.Manifest_Language,
 	case wasm.Manifest_LANGUAGE_PYTHON:
 		return created, installTree(dir, python.Library)
 	case wasm.Manifest_LANGUAGE_TYPESCRIPT, wasm.Manifest_LANGUAGE_JAVASCRIPT:
-		return created, installLibrary(ctx, dir)
+		library, err := js.Library(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return created, installLibrary(library, dir)
 	}
 	for _, arguments := range [][]string{{"get", Module + "@" + version}, {"mod", "tidy"}} {
 		cmd := exec.CommandContext(ctx, "go", arguments...)

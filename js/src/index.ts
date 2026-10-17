@@ -29,7 +29,7 @@ import {
   Player,
   serveMod,
 } from './host.gen.js'
-import { host } from './host.js'
+import { serveEvents } from './host.js'
 import { advance } from './timer.js'
 import { press, tick } from './ui.js'
 
@@ -55,7 +55,7 @@ export {
   Fragment,
   hide,
   type ImageProps,
-  JSX,
+  type JSX,
   jsx,
   jsxs,
   type LabelProps,
@@ -68,9 +68,15 @@ export {
   type UiElement,
 } from './ui.js'
 
-/** log writes one line to the server log under the mod's name. */
-export function log(...parts: unknown[]): void {
-  logLine(parts.map(String).join(' '))
+/** LogPart is a value log writes as text. */
+export type LogPart = string | number | bigint | boolean | null | undefined
+
+/**
+ * log writes one line to the server log under the mod's name: its parts as
+ * text, separated by spaces.
+ */
+export function log(...parts: LogPart[]): void {
+  logLine(parts.map((part) => String(part)).join(' '))
 }
 
 /**
@@ -82,7 +88,7 @@ export type Service = (method: string, payload: Uint8Array) => Uint8Array
 
 /** serve answers the host's calls to service with handler, replacing its earlier handler. */
 export function serve(service: string, handler: Service): void {
-  services.set(service, handler)
+  services.set(service, { handler })
 }
 
 /**
@@ -95,7 +101,7 @@ export function command(
   name: string,
   handler: (player: Player, args: string) => void,
 ): void {
-  commands.set(name, handler)
+  commands.set(name, { handler })
 }
 
 /**
@@ -219,11 +225,17 @@ export function settingNumber(player: Player, key: string): number | undefined {
   return value === undefined ? undefined : Number(value)
 }
 
+// Maps hold each handler in a record, since scriptc has no Map slot for a
+// function.
+
 /** commands maps each registered command name to its handler. */
-const commands = new Map<string, (player: Player, args: string) => void>()
+const commands = new Map<
+  string,
+  { readonly handler: (player: Player, args: string) => void }
+>()
 
 /** services maps each service the mod serves to its handler. */
-const services = new Map<string, Service>()
+const services = new Map<string, { readonly handler: Service }>()
 
 // Each list runs in registration order.
 const starts: ((args: readonly string[]) => void)[] = []
@@ -267,13 +279,16 @@ const handlers: ModHandlers = {
     // Split the command line into its name and arguments.
     const line = event.line.trim()
     const space = line.indexOf(' ')
-    const handler = commands.get(space < 0 ? line : line.slice(0, space))
-    if (!handler) {
+    const registered = commands.get(space < 0 ? line : line.slice(0, space))
+    if (!registered) {
       return { claimed: false }
     }
 
     // Run the handler and claim the command.
-    handler(event.player, space < 0 ? '' : line.slice(space + 1).trim())
+    registered.handler(
+      event.player,
+      space < 0 ? '' : line.slice(space + 1).trim(),
+    )
     return { claimed: true }
   },
 
@@ -288,11 +303,11 @@ const handlers: ModHandlers = {
   },
 
   serve(event) {
-    const handler = services.get(event.service)
-    if (!handler) {
+    const registered = services.get(event.service)
+    if (!registered) {
       throw new Error(`the mod serves no service ${event.service}`)
     }
-    return { payload: handler(event.method, event.payload) }
+    return { payload: registered.handler(event.method, event.payload) }
   },
 
   damage(event) {
@@ -356,4 +371,4 @@ const handlers: ModHandlers = {
   },
 }
 
-host.event = (call) => serveMod(handlers, call)
+serveEvents((call) => serveMod(handlers, call))

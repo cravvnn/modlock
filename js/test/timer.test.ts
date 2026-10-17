@@ -1,16 +1,15 @@
 import { expect, test } from 'bun:test'
 
 import { Reply } from '../../proto/modlock/wasm.pb.js'
+import { bind } from '../src/host.js'
+import { advance, after, every, sequence } from '../src/timer.js'
 
 // The timers log a failing callback through the host bridge.
 const logged: Uint8Array[] = []
-;(globalThis as unknown as { __modlock: unknown }).__modlock = {
-  hostCall(call: Uint8Array) {
-    logged.push(call)
-    return Reply.toBinary({})
-  },
-}
-const { advance, after, every, sequence } = await import('../src/timer.js')
+bind((call) => {
+  logged.push(call)
+  return Reply.toBinary({})
+})
 
 /** clock is the game time of the latest frame the tests advanced to. */
 let clock = 100

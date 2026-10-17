@@ -21,26 +21,19 @@ import (
 // ScriptEntry is the bundled JavaScript's file name in a built mod.
 const ScriptEntry = "mod.js"
 
-// libraryDir is where a script project's copy of the modlock library lives,
-// so the type checker, the bundler and editors resolve imports of modlock.
+// libraryDir is where a script project's copy of the modlock library's
+// declarations lives, so the type checker and editors resolve imports of
+// modlock. The compilers resolve modlock to the built library instead.
 var libraryDir = filepath.Join("node_modules", "modlock")
 
-// libraryPackage is the library's package.json.
+// libraryPackage is the declarations' package.json.
 const libraryPackage = `{
   "name": "modlock",
   "type": "module",
-  "main": "index.js",
   "types": "index.d.ts",
   "sideEffects": false
 }
 `
-
-// jsxRuntime and jsxTypes are the library's JSX runtime, which the compiler
-// and the bundler import as modlock/jsx-runtime.
-const (
-	jsxRuntime = "export { Fragment, jsx, jsxs } from './index.js'\n"
-	jsxTypes   = "export { Fragment, JSX, jsx, jsxs } from './index.js'\n"
-)
 
 // scriptMain returns the source entry of a TypeScript or JavaScript project.
 func scriptMain(language wasm.Manifest_Language) string {
@@ -54,8 +47,12 @@ func scriptMain(language wasm.Manifest_Language) string {
 // compiles it with scriptc; a dev build, or a mod scriptc cannot compile,
 // bundles it with the library into one script for QuickJS.
 func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) error {
-	// Install the library and the type checker.
-	if err := installLibrary(ctx, p.Dir); err != nil {
+	// Install the library's declarations and the type checker.
+	library, err := js.Library(ctx)
+	if err != nil {
+		return err
+	}
+	if err := installLibrary(library, p.Dir); err != nil {
 		return err
 	}
 	tsgo, err := npm.Tsgo(ctx)
@@ -78,7 +75,7 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 
 	// Compile a release build with scriptc when it can.
 	if mode == Release {
-		module, err := p.compileScriptc(ctx, output)
+		module, err := p.compileScriptc(ctx, library, output)
 		if err == nil {
 			return p.writeBuild(module, wasm.Manifest_RUNTIME_WASM, Entry, ScriptEntry)
 		}
@@ -96,6 +93,7 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 		Target:          api.ES2023,
 		JSX:             api.JSXAutomatic,
 		JSXImportSource: "modlock",
+		Alias:           map[string]string{"modlock": library},
 		LogLevel:        api.LogLevelSilent,
 	})
 
@@ -138,20 +136,12 @@ func (p *Project) writeBuild(content []byte, runtime wasm.Manifest_Runtime, entr
 	return nil
 }
 
-// installLibrary copies the built library into the project in dir, leaving
-// files that already match alone.
-func installLibrary(ctx context.Context, dir string) error {
-	// Gather the library's files and the package that names them.
-	library, err := js.Library(ctx)
-	if err != nil {
-		return err
-	}
-	files := map[string][]byte{
-		"package.json":     []byte(libraryPackage),
-		"jsx-runtime.js":   []byte(jsxRuntime),
-		"jsx-runtime.d.ts": []byte(jsxTypes),
-	}
-	for _, name := range js.Files {
+// installLibrary installs the declarations of the built library in library
+// into the script project in dir, removing any other file there.
+func installLibrary(library, dir string) error {
+	// Gather the declarations and the package that names them.
+	files := map[string][]byte{"package.json": []byte(libraryPackage)}
+	for _, name := range js.Declarations {
 		content, err := os.ReadFile(filepath.Join(library, name))
 		if err != nil {
 			return errors.Wrap(err, "install the modlock library")
@@ -159,7 +149,7 @@ func installLibrary(ctx context.Context, dir string) error {
 		files[name] = content
 	}
 
-	// Write each file that differs.
+	// Write each file that differs, and remove the rest.
 	installed := filepath.Join(dir, libraryDir)
 	if err := os.MkdirAll(installed, 0o755); err != nil {
 		return errors.Wrap(err, "install the modlock library")
@@ -171,6 +161,17 @@ func installLibrary(ctx context.Context, dir string) error {
 		}
 		if err := os.WriteFile(path, content, 0o644); err != nil {
 			return errors.Wrap(err, "install the modlock library")
+		}
+	}
+	entries, err := os.ReadDir(installed)
+	if err != nil {
+		return errors.Wrap(err, "install the modlock library")
+	}
+	for _, entry := range entries {
+		if _, ok := files[entry.Name()]; !ok {
+			if err := os.RemoveAll(filepath.Join(installed, entry.Name())); err != nil {
+				return errors.Wrap(err, "install the modlock library")
+			}
 		}
 	}
 	return nil
