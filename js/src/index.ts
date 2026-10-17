@@ -30,7 +30,7 @@ import {
   serveMod,
 } from './host.gen.js'
 import { host } from './host.js'
-import { advance } from './timer.js'
+import { advance, after } from './timer.js'
 import { press, tick } from './ui.js'
 
 export { Buttons, Layers } from './bits.js'
@@ -55,7 +55,7 @@ export {
   Fragment,
   hide,
   type ImageProps,
-  JSX,
+  type JSX,
   jsx,
   jsxs,
   type LabelProps,
@@ -87,9 +87,10 @@ export function serve(service: string, handler: Service): void {
 
 /**
  * command calls handler when a player types /name in chat or their client
- * sends the console command name to the server. The handler receives the
- * text after the name, trimmed of surrounding spaces. Registering a name
- * again replaces its handler.
+ * sends the console command name to the server. The handler runs with the
+ * next server frame, before the frame handlers, and receives the text after
+ * the name, trimmed of surrounding spaces. Registering a name again replaces
+ * its handler.
  */
 export function command(
   name: string,
@@ -272,8 +273,11 @@ const handlers: ModHandlers = {
       return { claimed: false }
     }
 
-    // Run the handler and claim the command.
-    handler(event.player, space < 0 ? '' : line.slice(space + 1).trim())
+    // Claim the command and run its handler with the next frame. The server
+    // reads a client's commands under a CPU budget and drops the client when
+    // one handler spends it; slow work in a frame only delays that frame.
+    const args = space < 0 ? '' : line.slice(space + 1).trim()
+    after(0, () => handler(event.player, args))
     return { claimed: true }
   },
 

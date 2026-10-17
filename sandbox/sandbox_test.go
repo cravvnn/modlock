@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/paralin/modlock/proto/modlock/control"
 )
@@ -32,6 +33,7 @@ func TestSandbox(t *testing.T) {
 	// Start the sandbox, keeping each event as one line.
 	var mu sync.Mutex
 	var events []string
+	messaged := make(chan struct{}, 1)
 	ctx := context.Background()
 	box := Start(ctx, Config{
 		Mods: []string{dist},
@@ -39,6 +41,9 @@ func TestSandbox(t *testing.T) {
 			mu.Lock()
 			defer mu.Unlock()
 			events = append(events, event.String())
+			if event.GetMessage() != nil {
+				messaged <- struct{}{}
+			}
 		},
 	})
 	defer box.Stop()
@@ -49,6 +54,13 @@ func TestSandbox(t *testing.T) {
 	}
 	if handled, err := box.Command(ctx, "nope"); err != nil || handled {
 		t.Fatalf("nope: handled %v, %v", handled, err)
+	}
+
+	// A claimed command runs with the next frame.
+	select {
+	case <-messaged:
+	case <-time.After(10 * time.Second):
+		t.Fatal("/hello did not answer within 10 s")
 	}
 	if pressed, err := box.Press(ctx, "missing", 0, "button"); err != nil || pressed {
 		t.Fatalf("press in a missing mod: pressed %v, %v", pressed, err)

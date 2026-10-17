@@ -61,9 +61,10 @@ type handlers struct {
 // registered is the mod's single set of handlers.
 var registered = &handlers{commands: map[string]func(Player, string){}, services: map[string]Service{}}
 
-// Command calls handler when a player types /name in chat. The handler
-// receives the text after the name, trimmed of surrounding spaces.
-// Registering a name again replaces its handler.
+// Command calls handler when a player types /name in chat. The handler runs
+// with the next server frame, before the frame handlers, and receives the
+// text after the name, trimmed of surrounding spaces. Registering a name
+// again replaces its handler.
 func Command(name string, handler func(p Player, args string)) {
 	registered.commands[name] = handler
 }
@@ -176,8 +177,11 @@ func (h *handlers) Command(event *CommandEvent) (*CommandResult, error) {
 		return &CommandResult{}, nil
 	}
 
-	// Run the handler and claim the command.
-	handler(Player{Slot: event.GetPlayer()}, strings.TrimSpace(args))
+	// Claim the command and run its handler with the next frame. The server
+	// reads a client's commands under a CPU budget and drops the client when
+	// one handler spends it; slow work in a frame only delays that frame.
+	player, args := Player{Slot: event.GetPlayer()}, strings.TrimSpace(args)
+	After(0, func() { handler(player, args) })
 	return &CommandResult{Claimed: true}, nil
 }
 
