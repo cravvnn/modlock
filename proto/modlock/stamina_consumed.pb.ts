@@ -4,10 +4,7 @@
 
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.engine";
 
 /**
  * StaminaConsumed decodes Deadlock user message 337. Field numbers follow
@@ -19,62 +16,43 @@ export const protobufPackage = "modlock.engine";
 export interface StaminaConsumed {
   /**
    * EntindexTarget is the engine entity index of the pawn spending stamina.
-   *
-   * @generated from field: optional int32 entindex_target = 1 [default = -1];
    */
   entindexTarget?: number;
   /**
    * StaminaBefore is the resource value immediately before this consumption.
-   *
-   * @generated from field: optional float stamina_before = 3;
    */
   staminaBefore?: number;
   /**
    * StaminaAfter is the resource value immediately after this consumption.
-   *
-   * @generated from field: optional float stamina_after = 4;
    */
   staminaAfter?: number;
   /**
    * Drained reports whether this action drained the resource.
-   *
-   * @generated from field: optional bool drained = 5;
    */
   drained?: boolean;
   /**
    * StaminaMax is the pawn's current stamina capacity.
-   *
-   * @generated from field: optional float stamina_max = 6;
    */
   staminaMax?: number;
   /**
    * Gametime is the engine timestamp of this action.
-   *
-   * @generated from field: optional float gametime = 7;
    */
   gametime?: number;
   /**
    * PlaySound is presentation data and does not affect accounting.
-   *
-   * @generated from field: optional bool play_sound = 8;
    */
   playSound?: boolean;
+}
 
-};
-
-export const StaminaConsumed: MessageType<StaminaConsumed> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.StaminaConsumed",
-    fields: [
-        { no: 1, name: "entindex_target", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 3, name: "stamina_before", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 4, name: "stamina_after", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 5, name: "drained", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 6, name: "stamina_max", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 7, name: "gametime", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 8, name: "play_sound", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const StaminaConsumed: MessageType<StaminaConsumed> = /* @__PURE__ */ createMessageType<StaminaConsumed>("modlock.engine.StaminaConsumed", () => [
+  [1, "entindex_target", 5, 4],
+  [3, "stamina_before", 2, 4],
+  [4, "stamina_after", 2, 4],
+  [5, "drained", 8, 4],
+  [6, "stamina_max", 2, 4],
+  [7, "gametime", 2, 4],
+  [8, "play_sound", 8, 4],
+]);
 
 /**
  * Damage decodes the attribution subset of Deadlock user message 300. Field
@@ -85,46 +63,31 @@ export const StaminaConsumed: MessageType<StaminaConsumed> = /* @__PURE__ */ cre
 export interface Damage {
   /**
    * Damage is the positive health damage reported for this hit.
-   *
-   * @generated from field: optional int32 damage = 1;
    */
   damage?: number;
   /**
    * EntindexVictim identifies the hit entity without restricting its category.
-   *
-   * @generated from field: optional int32 entindex_victim = 6 [default = -1];
    */
   entindexVictim?: number;
   /**
    * EntindexAttacker identifies the entity credited with the hit.
-   *
-   * @generated from field: optional int32 entindex_attacker = 8 [default = -1];
    */
   entindexAttacker?: number;
   /**
    * HitgroupId identifies the hit region; Source HitGroup_t assigns head to 1.
-   *
-   * @generated from field: optional int32 hitgroup_id = 21;
    */
   hitgroupId?: number;
   /**
    * ServerTick is the authoritative simulation tick used for deduplication.
-   *
-   * @generated from field: optional int32 server_tick = 29;
    */
   serverTick?: number;
+}
 
-};
-
-export const Damage: MessageType<Damage> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.Damage",
-    fields: [
-        { no: 1, name: "damage", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 6, name: "entindex_victim", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 8, name: "entindex_attacker", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 21, name: "hitgroup_id", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 29, name: "server_tick", kind: "scalar", T: ScalarType.INT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const Damage: MessageType<Damage> = /* @__PURE__ */ createMessageType<Damage>("modlock.engine.Damage", () => [
+  [1, "damage", 5, 4],
+  [6, "entindex_victim", 5, 4],
+  [8, "entindex_attacker", 5, 4],
+  [21, "hitgroup_id", 5, 4],
+  [29, "server_tick", 5, 4],
+]);
 

@@ -2,14 +2,41 @@
 // @generated from file github.com/paralin/modlock/proto/modlock/cli/cli.proto (package modlock.cli, syntax proto3)
 /* eslint-disable */
 
+import { HostEvent } from "../control/control.pb.js";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 import { Release } from "../publish/publish.pb.js";
-import { HostEvent } from "../control/control.pb.js";
 
-export const protobufPackage = "modlock.cli";
+
+/**
+ * Event is one thing the command line did or saw.
+ *
+ * @generated from message modlock.cli.Event
+ */
+export interface Event {
+  /**
+   * Body selects the event.
+   *
+   * @generated from oneof modlock.cli.Event.body
+   */
+  body?:
+    | { value?: undefined; case: undefined }
+    | { value: string; case: "note" }
+    | { value: Building; case: "building" }
+    | { value: Built; case: "built" }
+    | { value: HostEvent; case: "host" }
+    | { value: Published; case: "published" }
+    | { value: Sandbox; case: "sandbox" };
+}
+
+export const Event: MessageType<Event> = /* @__PURE__ */ createMessageType<Event>("modlock.cli.Event", () => [
+  [1, "note", 9, 0, 0, "body"],
+  [2, "building", 11, 0, Building.codec, "body"],
+  [3, "built", 11, 0, Built.codec, "body"],
+  [4, "host", 11, 0, HostEvent.codec, "body"],
+  [5, "published", 11, 0, Published.codec, "body"],
+  [6, "sandbox", 11, 0, Sandbox.codec, "body"],
+]);
 
 /**
  * Building identifies the project a build started for.
@@ -19,78 +46,13 @@ export const protobufPackage = "modlock.cli";
 export interface Building {
   /**
    * Dir is the project directory.
-   *
-   * @generated from field: string dir = 1;
    */
   dir?: string;
+}
 
-};
-
-export const Building: MessageType<Building> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Building",
-    fields: [
-        { no: 1, name: "dir", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Diagnostic is one problem found in a source file.
- *
- * @generated from message modlock.cli.Diagnostic
- */
-export interface Diagnostic {
-  /**
-   * File is the file's absolute path.
-   *
-   * @generated from field: string file = 1;
-   */
-  file?: string;
-  /**
-   * Line is the 1-based line.
-   *
-   * @generated from field: uint32 line = 2;
-   */
-  line?: number;
-  /**
-   * Column is the 1-based column, zero when unknown.
-   *
-   * @generated from field: uint32 column = 3;
-   */
-  column?: number;
-  /**
-   * Message describes the problem.
-   *
-   * @generated from field: string message = 4;
-   */
-  message?: string;
-  /**
-   * Source names the tool that found it: tsgo, esbuild, go vet or go build.
-   *
-   * @generated from field: string source = 5;
-   */
-  source?: string;
-  /**
-   * Code is the tool's code for the problem, such as TS2322, if it has one.
-   *
-   * @generated from field: string code = 6;
-   */
-  code?: string;
-
-};
-
-export const Diagnostic: MessageType<Diagnostic> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Diagnostic",
-    fields: [
-        { no: 1, name: "file", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "line", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "column", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "message", kind: "scalar", T: ScalarType.STRING },
-        { no: 5, name: "source", kind: "scalar", T: ScalarType.STRING },
-        { no: 6, name: "code", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Building: MessageType<Building> = /* @__PURE__ */ createMessageType<Building>("modlock.cli.Building", () => [
+  [1, "dir", 9],
+]);
 
 /**
  * Built reports a finished build. A failed build leaves the previous built mod
@@ -101,79 +63,70 @@ export const Diagnostic: MessageType<Diagnostic> = /* @__PURE__ */ createMessage
 export interface Built {
   /**
    * Dir is the project directory.
-   *
-   * @generated from field: string dir = 1;
    */
   dir?: string;
   /**
    * Ok is true when the build wrote the built mod.
-   *
-   * @generated from field: bool ok = 2;
    */
   ok?: boolean;
   /**
    * Error explains a failed build in one line.
-   *
-   * @generated from field: string error = 3;
    */
   error?: string;
   /**
    * Diagnostics lists the problems the checks and compilers found. A finished
    * build replaces the previous build's diagnostics.
-   *
-   * @generated from field: repeated modlock.cli.Diagnostic diagnostics = 4;
    */
   diagnostics?: Diagnostic[];
+}
 
-};
-
-export const Built: MessageType<Built> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Built",
-    fields: [
-        { no: 1, name: "dir", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "ok", kind: "scalar", T: ScalarType.BOOL },
-        { no: 3, name: "error", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "diagnostics", kind: "message", T: () => Diagnostic, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Built: MessageType<Built> = /* @__PURE__ */ createMessageType<Built>("modlock.cli.Built", () => [
+  [1, "dir", 9],
+  [2, "ok", 8],
+  [3, "error", 9],
+  [4, "diagnostics", 11, 1, Diagnostic.codec],
+]);
 
 /**
- * Published reports a release.
+ * Diagnostic is one problem found in a source file.
  *
- * @generated from message modlock.cli.Published
+ * @generated from message modlock.cli.Diagnostic
  */
-export interface Published {
+export interface Diagnostic {
   /**
-   * Provider is where the mod went: hyperline, archive or github.
-   *
-   * @generated from field: string provider = 1;
+   * File is the file's absolute path.
    */
-  provider?: string;
+  file?: string;
   /**
-   * Release is the release hyperline.gg recorded.
-   *
-   * @generated from field: modlock.publish.Release release = 2;
+   * Line is the 1-based line.
    */
-  release?: Release;
+  line?: number;
   /**
-   * Location is the archive's path or the GitHub release tag.
-   *
-   * @generated from field: string location = 3;
+   * Column is the 1-based column, zero when unknown.
    */
-  location?: string;
+  column?: number;
+  /**
+   * Message describes the problem.
+   */
+  message?: string;
+  /**
+   * Source names the tool that found it: tsgo, esbuild, go vet or go build.
+   */
+  source?: string;
+  /**
+   * Code is the tool's code for the problem, such as TS2322, if it has one.
+   */
+  code?: string;
+}
 
-};
-
-export const Published: MessageType<Published> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Published",
-    fields: [
-        { no: 1, name: "provider", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "release", kind: "message", T: () => Release },
-        { no: 3, name: "location", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Diagnostic: MessageType<Diagnostic> = /* @__PURE__ */ createMessageType<Diagnostic>("modlock.cli.Diagnostic", () => [
+  [1, "file", 9],
+  [2, "line", 13],
+  [3, "column", 13],
+  [4, "message", 9],
+  [5, "source", 9],
+  [6, "code", 9],
+]);
 
 /**
  * Sandbox reports a session in the sandbox: the mods run without the game,
@@ -186,101 +139,35 @@ export interface Sandbox {
   /**
    * Reason explains why the session runs in the sandbox, such as a missing
    * game.
-   *
-   * @generated from field: string reason = 1;
    */
   reason?: string;
+}
 
-};
-
-export const Sandbox: MessageType<Sandbox> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Sandbox",
-    fields: [
-        { no: 1, name: "reason", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Sandbox: MessageType<Sandbox> = /* @__PURE__ */ createMessageType<Sandbox>("modlock.cli.Sandbox", () => [
+  [1, "reason", 9],
+]);
 
 /**
- * Event is one thing the command line did or saw.
+ * Input is one thing the stand-in player does in the sandbox.
  *
- * @generated from message modlock.cli.Event
+ * @generated from message modlock.cli.Input
  */
-export interface Event {
-
+export interface Input {
   /**
-   * Body selects the event.
+   * Body selects the input.
    *
-   * @generated from oneof modlock.cli.Event.body
+   * @generated from oneof modlock.cli.Input.body
    */
-  body?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * Note is a line of progress for the creator.
-     *
-     * @generated from field: string note = 1;
-     */
-    value: string;
-    case: "note";
-  } | {
-    /**
-     * Building reports that a build of the project started.
-     *
-     * @generated from field: modlock.cli.Building building = 2;
-     */
-    value: Building;
-    case: "building";
-  } | {
-    /**
-     * Built reports a finished build.
-     *
-     * @generated from field: modlock.cli.Built built = 3;
-     */
-    value: Built;
-    case: "built";
-  } | {
-    /**
-     * Host carries an event from the running server.
-     *
-     * @generated from field: modlock.control.HostEvent host = 4;
-     */
-    value: HostEvent;
-    case: "host";
-  } | {
-    /**
-     * Published reports a release the provider recorded.
-     *
-     * @generated from field: modlock.cli.Published published = 5;
-     */
-    value: Published;
-    case: "published";
-  } | {
-    /**
-     * Sandbox reports that the session runs the mods in the sandbox, without
-     * the game, and why.
-     *
-     * @generated from field: modlock.cli.Sandbox sandbox = 6;
-     */
-    value: Sandbox;
-    case: "sandbox";
-  };
+  body?:
+    | { value?: undefined; case: undefined }
+    | { value: string; case: "command" }
+    | { value: Press; case: "press" };
+}
 
-};
-
-export const Event: MessageType<Event> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Event",
-    fields: [
-        { no: 1, name: "note", kind: "scalar", T: ScalarType.STRING, oneof: "body" },
-        { no: 2, name: "building", kind: "message", T: () => Building, oneof: "body" },
-        { no: 3, name: "built", kind: "message", T: () => Built, oneof: "body" },
-        { no: 4, name: "host", kind: "message", T: () => HostEvent, oneof: "body" },
-        { no: 5, name: "published", kind: "message", T: () => Published, oneof: "body" },
-        { no: 6, name: "sandbox", kind: "message", T: () => Sandbox, oneof: "body" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Input: MessageType<Input> = /* @__PURE__ */ createMessageType<Input>("modlock.cli.Input", () => [
+  [1, "command", 9, 0, 0, "body"],
+  [2, "press", 11, 0, Press.codec, "body"],
+]);
 
 /**
  * Press identifies a button in the interface a mod shows a player.
@@ -290,76 +177,47 @@ export const Event: MessageType<Event> = /* @__PURE__ */ createMessageType({
 export interface Press {
   /**
    * Mod is the mod's name.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Slot identifies the player.
-   *
-   * @generated from field: int32 slot = 2;
    */
   slot?: number;
   /**
    * Node is the button's id in the mod's tree.
-   *
-   * @generated from field: string node = 3;
    */
   node?: string;
+}
 
-};
-
-export const Press: MessageType<Press> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Press",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "node", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Press: MessageType<Press> = /* @__PURE__ */ createMessageType<Press>("modlock.cli.Press", () => [
+  [1, "mod", 9],
+  [2, "slot", 5],
+  [3, "node", 9],
+]);
 
 /**
- * Input is one thing the stand-in player does in the sandbox.
+ * Published reports a release.
  *
- * @generated from message modlock.cli.Input
+ * @generated from message modlock.cli.Published
  */
-export interface Input {
-
+export interface Published {
   /**
-   * Body selects the input.
-   *
-   * @generated from oneof modlock.cli.Input.body
+   * Provider is where the mod went: hyperline, archive or github.
    */
-  body?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * Command is a line the player types in chat, such as "/hello".
-     *
-     * @generated from field: string command = 1;
-     */
-    value: string;
-    case: "command";
-  } | {
-    /**
-     * Press presses a button in a mod's interface.
-     *
-     * @generated from field: modlock.cli.Press press = 2;
-     */
-    value: Press;
-    case: "press";
-  };
+  provider?: string;
+  /**
+   * Release is the release hyperline.gg recorded.
+   */
+  release?: Release;
+  /**
+   * Location is the archive's path or the GitHub release tag.
+   */
+  location?: string;
+}
 
-};
-
-export const Input: MessageType<Input> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.cli.Input",
-    fields: [
-        { no: 1, name: "command", kind: "scalar", T: ScalarType.STRING, oneof: "body" },
-        { no: 2, name: "press", kind: "message", T: () => Press, oneof: "body" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Published: MessageType<Published> = /* @__PURE__ */ createMessageType<Published>("modlock.cli.Published", () => [
+  [1, "provider", 9],
+  [2, "release", 11, 0, Release.codec],
+  [3, "location", 9],
+]);
 

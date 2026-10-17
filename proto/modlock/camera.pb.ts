@@ -6,10 +6,7 @@ import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import { EulerAngles, Vec3 } from "./types.pb.js";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock";
 
 /**
  * Interpolation selects how values move between authored keys.
@@ -19,39 +16,26 @@ export const protobufPackage = "modlock";
 export enum Interpolation {
   /**
    * INTERPOLATION_UNSPECIFIED is the unspecified interpolation.
-   *
-   * @generated from enum value: INTERPOLATION_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
    * INTERPOLATION_LINEAR moves at a constant rate between keys.
-   *
-   * @generated from enum value: INTERPOLATION_LINEAR = 1;
    */
   LINEAR = 1,
 
   /**
    * INTERPOLATION_SMOOTH uses shape-preserving cubic Hermite between keys.
-   *
-   * @generated from enum value: INTERPOLATION_SMOOTH = 2;
    */
   SMOOTH = 2,
 
   /**
    * INTERPOLATION_STEP holds the previous key's value until the next key.
-   *
-   * @generated from enum value: INTERPOLATION_STEP = 3;
    */
   STEP = 3,
 }
 
-export const Interpolation_Enum = /* @__PURE__ */ createEnumType("modlock.Interpolation", [
-  [0, "INTERPOLATION_UNSPECIFIED"],
-  [1, "INTERPOLATION_LINEAR"],
-  [2, "INTERPOLATION_SMOOTH"],
-  [3, "INTERPOLATION_STEP"],
-]);
+export const Interpolation_Enum = /* @__PURE__ */ createEnumType("modlock.Interpolation", [[0, "INTERPOLATION_UNSPECIFIED"], [1, "INTERPOLATION_LINEAR"], [2, "INTERPOLATION_SMOOTH"], [3, "INTERPOLATION_STEP"]]);
 
 /**
  * RotationMode selects how yaw and roll cross the 180-degree seam.
@@ -61,31 +45,21 @@ export const Interpolation_Enum = /* @__PURE__ */ createEnumType("modlock.Interp
 export enum RotationMode {
   /**
    * ROTATION_MODE_UNSPECIFIED is the unspecified rotation mode.
-   *
-   * @generated from enum value: ROTATION_MODE_UNSPECIFIED = 0;
    */
   UNSPECIFIED = 0,
 
   /**
    * ROTATION_MODE_SHORTEST travels the shorter arc between keys.
-   *
-   * @generated from enum value: ROTATION_MODE_SHORTEST = 1;
    */
   SHORTEST = 1,
 
   /**
    * ROTATION_MODE_UNWRAPPED preserves authored full turns.
-   *
-   * @generated from enum value: ROTATION_MODE_UNWRAPPED = 2;
    */
   UNWRAPPED = 2,
 }
 
-export const RotationMode_Enum = /* @__PURE__ */ createEnumType("modlock.RotationMode", [
-  [0, "ROTATION_MODE_UNSPECIFIED"],
-  [1, "ROTATION_MODE_SHORTEST"],
-  [2, "ROTATION_MODE_UNWRAPPED"],
-]);
+export const RotationMode_Enum = /* @__PURE__ */ createEnumType("modlock.RotationMode", [[0, "ROTATION_MODE_UNSPECIFIED"], [1, "ROTATION_MODE_SHORTEST"], [2, "ROTATION_MODE_UNWRAPPED"]]);
 
 /**
  * CameraPose is one evaluated camera state: position, orientation, and
@@ -96,34 +70,23 @@ export const RotationMode_Enum = /* @__PURE__ */ createEnumType("modlock.Rotatio
 export interface CameraPose {
   /**
    * Position is the world-space camera position.
-   *
-   * @generated from field: modlock.Vec3 position = 1;
    */
   position?: Vec3;
   /**
    * Angles is the camera orientation in degrees.
-   *
-   * @generated from field: modlock.EulerAngles angles = 2;
    */
   angles?: EulerAngles;
   /**
    * AspectRatio is the framing ratio at this instant.
-   *
-   * @generated from field: double aspect_ratio = 3;
    */
   aspectRatio?: number;
+}
 
-};
-
-export const CameraPose: MessageType<CameraPose> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.CameraPose",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-        { no: 2, name: "angles", kind: "message", T: () => EulerAngles },
-        { no: 3, name: "aspect_ratio", kind: "scalar", T: ScalarType.DOUBLE },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CameraPose: MessageType<CameraPose> = /* @__PURE__ */ createMessageType<CameraPose>("modlock.CameraPose", () => [
+  [1, "position", 11, 0, Vec3.codec],
+  [2, "angles", 11, 0, EulerAngles.codec],
+  [3, "aspect_ratio", 1],
+]);
 
 /**
  * CameraKeyframe is one authored camera pose at a shot-relative time.
@@ -134,41 +97,28 @@ export interface CameraKeyframe {
   /**
    * Time is the shot-relative second of this key; keys are strictly
    * increasing and nonnegative.
-   *
-   * @generated from field: double time = 1;
    */
   time?: number;
   /**
    * Position is the world-space camera position.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Angles is the camera orientation in degrees.
-   *
-   * @generated from field: modlock.EulerAngles angles = 3;
    */
   angles?: EulerAngles;
   /**
    * AspectRatio is the authored framing ratio at this key.
-   *
-   * @generated from field: double aspect_ratio = 4;
    */
   aspectRatio?: number;
+}
 
-};
-
-export const CameraKeyframe: MessageType<CameraKeyframe> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.CameraKeyframe",
-    fields: [
-        { no: 1, name: "time", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "angles", kind: "message", T: () => EulerAngles },
-        { no: 4, name: "aspect_ratio", kind: "scalar", T: ScalarType.DOUBLE },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CameraKeyframe: MessageType<CameraKeyframe> = /* @__PURE__ */ createMessageType<CameraKeyframe>("modlock.CameraKeyframe", () => [
+  [1, "time", 1],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "angles", 11, 0, EulerAngles.codec],
+  [4, "aspect_ratio", 1],
+]);
 
 /**
  * CameraPath is an authored, validated camera path. Evaluation is
@@ -179,39 +129,26 @@ export const CameraKeyframe: MessageType<CameraKeyframe> = /* @__PURE__ */ creat
 export interface CameraPath {
   /**
    * Keys are the authored camera keyframes in strictly increasing time order.
-   *
-   * @generated from field: repeated modlock.CameraKeyframe keys = 1;
    */
   keys?: CameraKeyframe[];
   /**
    * Interpolation selects movement between keys for position and angles.
-   *
-   * @generated from field: modlock.Interpolation interpolation = 2;
    */
   interpolation?: Interpolation;
   /**
    * RotationMode selects yaw and roll seam handling.
-   *
-   * @generated from field: modlock.RotationMode rotation_mode = 3;
    */
   rotationMode?: RotationMode;
   /**
    * LensInterpolation selects movement for the aspect-ratio channel.
-   *
-   * @generated from field: modlock.Interpolation lens_interpolation = 4;
    */
   lensInterpolation?: Interpolation;
+}
 
-};
-
-export const CameraPath: MessageType<CameraPath> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.CameraPath",
-    fields: [
-        { no: 1, name: "keys", kind: "message", T: () => CameraKeyframe, repeated: true },
-        { no: 2, name: "interpolation", kind: "enum", T: Interpolation_Enum },
-        { no: 3, name: "rotation_mode", kind: "enum", T: RotationMode_Enum },
-        { no: 4, name: "lens_interpolation", kind: "enum", T: Interpolation_Enum },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CameraPath: MessageType<CameraPath> = /* @__PURE__ */ createMessageType<CameraPath>("modlock.CameraPath", () => [
+  [1, "keys", 11, 1, CameraKeyframe.codec],
+  [2, "interpolation", 14, 0, Interpolation_Enum],
+  [3, "rotation_mode", 14, 0, RotationMode_Enum],
+  [4, "lens_interpolation", 14, 0, Interpolation_Enum],
+]);
 

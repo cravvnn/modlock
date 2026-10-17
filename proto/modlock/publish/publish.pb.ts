@@ -5,10 +5,7 @@
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.publish";
 
 /**
  * ReviewState is a release's review decision.
@@ -18,39 +15,26 @@ export const protobufPackage = "modlock.publish";
 export enum ReviewState {
   /**
    * REVIEW_STATE_UNKNOWN awaits a decision, as PENDING does.
-   *
-   * @generated from enum value: REVIEW_STATE_UNKNOWN = 0;
    */
   UNKNOWN = 0,
 
   /**
    * REVIEW_STATE_PENDING awaits a person's decision.
-   *
-   * @generated from enum value: REVIEW_STATE_PENDING = 1;
    */
   PENDING = 1,
 
   /**
    * REVIEW_STATE_APPROVED may be played.
-   *
-   * @generated from enum value: REVIEW_STATE_APPROVED = 2;
    */
   APPROVED = 2,
 
   /**
    * REVIEW_STATE_REJECTED was refused.
-   *
-   * @generated from enum value: REVIEW_STATE_REJECTED = 3;
    */
   REJECTED = 3,
 }
 
-export const ReviewState_Enum = /* @__PURE__ */ createEnumType("modlock.publish.ReviewState", [
-  [0, "REVIEW_STATE_UNKNOWN"],
-  [1, "REVIEW_STATE_PENDING"],
-  [2, "REVIEW_STATE_APPROVED"],
-  [3, "REVIEW_STATE_REJECTED"],
-]);
+export const ReviewState_Enum = /* @__PURE__ */ createEnumType("modlock.publish.ReviewState", [[0, "REVIEW_STATE_UNKNOWN"], [1, "REVIEW_STATE_PENDING"], [2, "REVIEW_STATE_APPROVED"], [3, "REVIEW_STATE_REJECTED"]]);
 
 /**
  * SignInExchange trades the one-use code the browser handed back, with the
@@ -61,57 +45,18 @@ export const ReviewState_Enum = /* @__PURE__ */ createEnumType("modlock.publish.
 export interface SignInExchange {
   /**
    * Code is the one-use code from the browser.
-   *
-   * @generated from field: string code = 1;
    */
   code?: string;
   /**
    * Verifier is the secret whose hash the sign-in page received.
-   *
-   * @generated from field: string verifier = 2;
    */
   verifier?: string;
+}
 
-};
-
-export const SignInExchange: MessageType<SignInExchange> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.SignInExchange",
-    fields: [
-        { no: 1, name: "code", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "verifier", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Account names the signed-in player.
- *
- * @generated from message modlock.publish.Account
- */
-export interface Account {
-  /**
-   * DisplayName is the player's name.
-   *
-   * @generated from field: string display_name = 4;
-   */
-  displayName?: string;
-  /**
-   * SteamId64 is the player's Steam account.
-   *
-   * @generated from field: uint64 steam_id64 = 6;
-   */
-  steamId64?: bigint;
-
-};
-
-export const Account: MessageType<Account> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.Account",
-    fields: [
-        { no: 4, name: "display_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 6, name: "steam_id64", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SignInExchange: MessageType<SignInExchange> = /* @__PURE__ */ createMessageType<SignInExchange>("modlock.publish.SignInExchange", () => [
+  [1, "code", 9],
+  [2, "verifier", 9],
+]);
 
 /**
  * SignedIn is the session the exchange returns.
@@ -121,34 +66,44 @@ export const Account: MessageType<Account> = /* @__PURE__ */ createMessageType({
 export interface SignedIn {
   /**
    * Token is the bearer credential.
-   *
-   * @generated from field: string token = 1;
    */
   token?: string;
   /**
    * ExpiresAt is the session's expiry in Unix milliseconds.
-   *
-   * @generated from field: int64 expires_at = 2;
    */
   expiresAt?: bigint;
   /**
    * Account is the signed-in account.
-   *
-   * @generated from field: modlock.publish.Account account = 3;
    */
   account?: Account;
+}
 
-};
+export const SignedIn: MessageType<SignedIn> = /* @__PURE__ */ createMessageType<SignedIn>("modlock.publish.SignedIn", () => [
+  [1, "token", 9],
+  [2, "expires_at", 3],
+  [3, "account", 11, 0, Account.codec],
+]);
 
-export const SignedIn: MessageType<SignedIn> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.SignedIn",
-    fields: [
-        { no: 1, name: "token", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "expires_at", kind: "scalar", T: ScalarType.INT64 },
-        { no: 3, name: "account", kind: "message", T: () => Account },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * Account names the signed-in player.
+ *
+ * @generated from message modlock.publish.Account
+ */
+export interface Account {
+  /**
+   * DisplayName is the player's name.
+   */
+  displayName?: string;
+  /**
+   * SteamId64 is the player's Steam account.
+   */
+  steamId64?: bigint;
+}
+
+export const Account: MessageType<Account> = /* @__PURE__ */ createMessageType<Account>("modlock.publish.Account", () => [
+  [4, "display_name", 9],
+  [6, "steam_id64", 4],
+]);
 
 /**
  * Release is a published release as the service reports it.
@@ -158,48 +113,33 @@ export const SignedIn: MessageType<SignedIn> = /* @__PURE__ */ createMessageType
 export interface Release {
   /**
    * Slug is the mod's slug.
-   *
-   * @generated from field: string slug = 1;
    */
   slug?: string;
   /**
    * Version is the release's version.
-   *
-   * @generated from field: string version = 2;
    */
   version?: string;
   /**
    * Name is the mod's name.
-   *
-   * @generated from field: string name = 3;
    */
   name?: string;
   /**
    * ReviewState is the release's review decision.
-   *
-   * @generated from field: modlock.publish.ReviewState review_state = 10;
    */
   reviewState?: ReviewState;
   /**
    * ReviewNote explains the decision.
-   *
-   * @generated from field: string review_note = 13;
    */
   reviewNote?: string;
+}
 
-};
-
-export const Release: MessageType<Release> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.Release",
-    fields: [
-        { no: 1, name: "slug", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "version", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 10, name: "review_state", kind: "enum", T: ReviewState_Enum },
-        { no: 13, name: "review_note", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Release: MessageType<Release> = /* @__PURE__ */ createMessageType<Release>("modlock.publish.Release", () => [
+  [1, "slug", 9],
+  [2, "version", 9],
+  [3, "name", 9],
+  [10, "review_state", 14, 0, ReviewState_Enum],
+  [13, "review_note", 9],
+]);
 
 /**
  * Error is a refused request's explanation.
@@ -209,27 +149,18 @@ export const Release: MessageType<Release> = /* @__PURE__ */ createMessageType({
 export interface Error {
   /**
    * Code names the refusal for programs.
-   *
-   * @generated from field: string code = 1;
    */
   code?: string;
   /**
    * Message explains the refusal to the creator.
-   *
-   * @generated from field: string message = 2;
    */
   message?: string;
+}
 
-};
-
-export const Error: MessageType<Error> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.Error",
-    fields: [
-        { no: 1, name: "code", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "message", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Error: MessageType<Error> = /* @__PURE__ */ createMessageType<Error>("modlock.publish.Error", () => [
+  [1, "code", 9],
+  [2, "message", 9],
+]);
 
 /**
  * Session is the saved sign-in for one service origin.
@@ -239,39 +170,26 @@ export const Error: MessageType<Error> = /* @__PURE__ */ createMessageType({
 export interface Session {
   /**
    * Origin is the service that issued the session.
-   *
-   * @generated from field: string origin = 1;
    */
   origin?: string;
   /**
    * Token is the bearer credential.
-   *
-   * @generated from field: string token = 2;
    */
   token?: string;
   /**
    * ExpiresAt is the session's expiry in Unix milliseconds.
-   *
-   * @generated from field: int64 expires_at = 3;
    */
   expiresAt?: bigint;
   /**
    * Name is the signed-in player's name.
-   *
-   * @generated from field: string name = 4;
    */
   name?: string;
+}
 
-};
-
-export const Session: MessageType<Session> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.publish.Session",
-    fields: [
-        { no: 1, name: "origin", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "token", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "expires_at", kind: "scalar", T: ScalarType.INT64 },
-        { no: 4, name: "name", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Session: MessageType<Session> = /* @__PURE__ */ createMessageType<Session>("modlock.publish.Session", () => [
+  [1, "origin", 9],
+  [2, "token", 9],
+  [3, "expires_at", 3],
+  [4, "name", 9],
+]);
 

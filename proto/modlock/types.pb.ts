@@ -4,10 +4,7 @@
 
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock";
 
 /**
  * Vec3 is a position or direction in world space, in game units.
@@ -17,34 +14,23 @@ export const protobufPackage = "modlock";
 export interface Vec3 {
   /**
    * X identifies the component along the game world east-west axis.
-   *
-   * @generated from field: double x = 1;
    */
   x?: number;
   /**
    * Y identifies the component along the game world north-south axis.
-   *
-   * @generated from field: double y = 2;
    */
   y?: number;
   /**
    * Z identifies the component along the game world vertical axis.
-   *
-   * @generated from field: double z = 3;
    */
   z?: number;
+}
 
-};
-
-export const Vec3: MessageType<Vec3> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.Vec3",
-    fields: [
-        { no: 1, name: "x", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 2, name: "y", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 3, name: "z", kind: "scalar", T: ScalarType.DOUBLE },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Vec3: MessageType<Vec3> = /* @__PURE__ */ createMessageType<Vec3>("modlock.Vec3", () => [
+  [1, "x", 1],
+  [2, "y", 1],
+  [3, "z", 1],
+]);
 
 /**
  * EulerAngles is an orientation in degrees around the game world axes.
@@ -54,34 +40,23 @@ export const Vec3: MessageType<Vec3> = /* @__PURE__ */ createMessageType({
 export interface EulerAngles {
   /**
    * Pitch identifies the rotation around the lateral axis, in degrees.
-   *
-   * @generated from field: double pitch = 1;
    */
   pitch?: number;
   /**
    * Yaw identifies the rotation around the vertical axis, in degrees.
-   *
-   * @generated from field: double yaw = 2;
    */
   yaw?: number;
   /**
    * Roll identifies the rotation around the longitudinal axis, in degrees.
-   *
-   * @generated from field: double roll = 3;
    */
   roll?: number;
+}
 
-};
-
-export const EulerAngles: MessageType<EulerAngles> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.EulerAngles",
-    fields: [
-        { no: 1, name: "pitch", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 2, name: "yaw", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 3, name: "roll", kind: "scalar", T: ScalarType.DOUBLE },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EulerAngles: MessageType<EulerAngles> = /* @__PURE__ */ createMessageType<EulerAngles>("modlock.EulerAngles", () => [
+  [1, "pitch", 1],
+  [2, "yaw", 1],
+  [3, "roll", 1],
+]);
 
 /**
  * StaminaEvidence is a complete server-observed expenditure counter for one
@@ -93,25 +68,16 @@ export const EulerAngles: MessageType<EulerAngles> = /* @__PURE__ */ createMessa
 export interface StaminaEvidence {
   /**
    * TotalSpent is cumulative consumption in bars during this observation epoch.
-   *
-   * @generated from field: double total_spent = 1;
    */
   totalSpent?: number;
   /**
    * Epoch changes when observation continuity or the observed pawn changes.
-   *
-   * @generated from field: uint64 epoch = 2;
    */
   epoch?: bigint;
+}
 
-};
-
-export const StaminaEvidence: MessageType<StaminaEvidence> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.StaminaEvidence",
-    fields: [
-        { no: 1, name: "total_spent", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 2, name: "epoch", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const StaminaEvidence: MessageType<StaminaEvidence> = /* @__PURE__ */ createMessageType<StaminaEvidence>("modlock.StaminaEvidence", () => [
+  [1, "total_spent", 1],
+  [2, "epoch", 4],
+]);
 

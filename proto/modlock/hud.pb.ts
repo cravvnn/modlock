@@ -5,10 +5,7 @@
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.engine";
 
 /**
  * ScreenEffectState matches Deadlock PostProcessingGameStates.
@@ -18,55 +15,36 @@ export const protobufPackage = "modlock.engine";
 export enum ScreenEffectState {
   /**
    * SCREEN_EFFECT_STATE_KILLED is the stock death treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_KILLED = 0;
    */
   KILLED = 0,
 
   /**
    * SCREEN_EFFECT_STATE_BLACK fades the view to black.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_BLACK = 1;
    */
   BLACK = 1,
 
   /**
    * SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM is the Doorman hotel treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM = 2;
    */
   DOORMAN_HOTEL_VICTIM = 2,
 
   /**
    * SCREEN_EFFECT_STATE_BLINDED is the stock blind treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_BLINDED = 3;
    */
   BLINDED = 3,
 
   /**
    * SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER is Drifter's darkness view.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER = 4;
    */
   DRIFTER_DARKNESS_CASTER = 4,
 
   /**
    * SCREEN_EFFECT_STATE_MATCH_INTRO is the match start treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_STATE_MATCH_INTRO = 5;
    */
   MATCH_INTRO = 5,
 }
 
-export const ScreenEffectState_Enum = /* @__PURE__ */ createEnumType("modlock.engine.ScreenEffectState", [
-  [0, "SCREEN_EFFECT_STATE_KILLED"],
-  [1, "SCREEN_EFFECT_STATE_BLACK"],
-  [2, "SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM"],
-  [3, "SCREEN_EFFECT_STATE_BLINDED"],
-  [4, "SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER"],
-  [5, "SCREEN_EFFECT_STATE_MATCH_INTRO"],
-]);
+export const ScreenEffectState_Enum = /* @__PURE__ */ createEnumType("modlock.engine.ScreenEffectState", [[0, "SCREEN_EFFECT_STATE_KILLED"], [1, "SCREEN_EFFECT_STATE_BLACK"], [2, "SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM"], [3, "SCREEN_EFFECT_STATE_BLINDED"], [4, "SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER"], [5, "SCREEN_EFFECT_STATE_MATCH_INTRO"]]);
 
 /**
  * HudTextMessage matches native CUserMessageTextMsg, message 124.
@@ -76,27 +54,18 @@ export const ScreenEffectState_Enum = /* @__PURE__ */ createEnumType("modlock.en
 export interface HudTextMessage {
   /**
    * Dest selects the native print destination; 4 is HUD_PRINTCENTER.
-   *
-   * @generated from field: optional uint32 dest = 1;
    */
   dest?: number;
   /**
    * Param contains the text followed by any native format substitutions.
-   *
-   * @generated from field: repeated string param = 2;
    */
   param?: string[];
+}
 
-};
-
-export const HudTextMessage: MessageType<HudTextMessage> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.HudTextMessage",
-    fields: [
-        { no: 1, name: "dest", kind: "scalar", T: ScalarType.UINT32, opt: true },
-        { no: 2, name: "param", kind: "scalar", T: ScalarType.STRING, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const HudTextMessage: MessageType<HudTextMessage> = /* @__PURE__ */ createMessageType<HudTextMessage>("modlock.engine.HudTextMessage", () => [
+  [1, "dest", 13, 4],
+  [2, "param", 9, 1],
+]);
 
 /**
  * HudAnnouncement matches Deadlock CCitadelUserMsg_HudGameAnnouncement, message 363.
@@ -106,48 +75,33 @@ export const HudTextMessage: MessageType<HudTextMessage> = /* @__PURE__ */ creat
 export interface HudAnnouncement {
   /**
    * TitleLocstring is the announcement title or localization token.
-   *
-   * @generated from field: optional string title_locstring = 1;
    */
   titleLocstring?: string;
   /**
    * DescriptionLocstring is the announcement description or localization token.
-   *
-   * @generated from field: optional string description_locstring = 2;
    */
   descriptionLocstring?: string;
   /**
    * Classname adds existing native announcement style classes.
-   *
-   * @generated from field: repeated string classname = 3;
    */
   classname?: string[];
   /**
    * DialogVariableName identifies an optional localized substitution.
-   *
-   * @generated from field: repeated string dialog_variable_name = 4;
    */
   dialogVariableName?: string[];
   /**
    * DialogVariableLocstring supplies the localized substitution.
-   *
-   * @generated from field: repeated string dialog_variable_locstring = 5;
    */
   dialogVariableLocstring?: string[];
+}
 
-};
-
-export const HudAnnouncement: MessageType<HudAnnouncement> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.HudAnnouncement",
-    fields: [
-        { no: 1, name: "title_locstring", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 2, name: "description_locstring", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 3, name: "classname", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 4, name: "dialog_variable_name", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 5, name: "dialog_variable_locstring", kind: "scalar", T: ScalarType.STRING, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const HudAnnouncement: MessageType<HudAnnouncement> = /* @__PURE__ */ createMessageType<HudAnnouncement>("modlock.engine.HudAnnouncement", () => [
+  [1, "title_locstring", 9, 4],
+  [2, "description_locstring", 9, 4],
+  [3, "classname", 9, 1],
+  [4, "dialog_variable_name", 9, 1],
+  [5, "dialog_variable_locstring", 9, 1],
+]);
 
 /**
  * ScreenEffect matches Deadlock CCitadelUserMsg_PostProcessingAnim, message 332.
@@ -160,61 +114,37 @@ export interface ScreenEffect {
   /**
    * EntindexOwner is the entity the effect belongs to, normally the
    * recipient's pawn.
-   *
-   * @generated from field: optional int32 entindex_owner = 1 [default = -1];
    */
   entindexOwner?: number;
   /**
    * ClearAllStates ends every running instance of state instead of starting one.
-   *
-   * @generated from field: optional bool clear_all_states = 2;
    */
   clearAllStates?: boolean;
   /**
    * State selects the stock post-processing resource.
-   *
-   * @generated from field: optional modlock.engine.ScreenEffectState state = 3;
    */
   state?: ScreenEffectState;
   /**
    * Delay, FadeInTime, HoldTime and FadeOutTime are seconds, applied in order.
-   *
-   * @generated from field: optional float delay = 4;
    */
   delay?: number;
-  /**
-   * @generated from field: optional float fade_in_time = 5;
-   */
   fadeInTime?: number;
-  /**
-   * @generated from field: optional float hold_time = 6;
-   */
   holdTime?: number;
-  /**
-   * @generated from field: optional float fade_out_time = 7;
-   */
   fadeOutTime?: number;
   /**
    * Scale weights the effect; the client stores it with each instance.
-   *
-   * @generated from field: optional float scale = 8;
    */
   scale?: number;
+}
 
-};
-
-export const ScreenEffect: MessageType<ScreenEffect> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.ScreenEffect",
-    fields: [
-        { no: 1, name: "entindex_owner", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 2, name: "clear_all_states", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 3, name: "state", kind: "enum", T: ScreenEffectState_Enum, opt: true },
-        { no: 4, name: "delay", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 5, name: "fade_in_time", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 6, name: "hold_time", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 7, name: "fade_out_time", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 8, name: "scale", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const ScreenEffect: MessageType<ScreenEffect> = /* @__PURE__ */ createMessageType<ScreenEffect>("modlock.engine.ScreenEffect", () => [
+  [1, "entindex_owner", 5, 4],
+  [2, "clear_all_states", 8, 4],
+  [3, "state", 14, 4, ScreenEffectState_Enum],
+  [4, "delay", 2, 4],
+  [5, "fade_in_time", 2, 4],
+  [6, "hold_time", 2, 4],
+  [7, "fade_out_time", 2, 4],
+  [8, "scale", 2, 4],
+]);
 

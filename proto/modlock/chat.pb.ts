@@ -4,10 +4,7 @@
 
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.engine";
 
 /**
  * PlayerChatMessage matches native CUserMessageSayText2, message 118.
@@ -18,62 +15,43 @@ export const protobufPackage = "modlock.engine";
 export interface PlayerChatMessage {
   /**
    * EntityIndex identifies the sender's native controller; zero is server chat.
-   *
-   * @generated from field: optional int32 entity_index = 1 [default = -1];
    */
   entityIndex?: number;
   /**
    * Chat distinguishes a player chat line from another text notification.
-   *
-   * @generated from field: optional bool chat = 2;
    */
   chat?: boolean;
   /**
    * MessageName selects the native localization template and chat audience.
-   *
-   * @generated from field: optional string message_name = 3;
    */
   messageName?: string;
   /**
    * PlayerName is the first native template parameter, the sender's display name.
-   *
-   * @generated from field: optional string player_name = 4;
    */
   playerName?: string;
   /**
    * Text is the second native template parameter, the accepted chat text.
-   *
-   * @generated from field: optional string text = 5;
    */
   text?: string;
   /**
    * Param3 preserves the third native template parameter.
-   *
-   * @generated from field: optional string param3 = 6;
    */
   param3?: string;
   /**
    * Param4 preserves the fourth native template parameter.
-   *
-   * @generated from field: optional string param4 = 7;
    */
   param4?: string;
+}
 
-};
-
-export const PlayerChatMessage: MessageType<PlayerChatMessage> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.PlayerChatMessage",
-    fields: [
-        { no: 1, name: "entity_index", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 2, name: "chat", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 3, name: "message_name", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 4, name: "player_name", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 5, name: "text", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 6, name: "param3", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 7, name: "param4", kind: "scalar", T: ScalarType.STRING, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const PlayerChatMessage: MessageType<PlayerChatMessage> = /* @__PURE__ */ createMessageType<PlayerChatMessage>("modlock.engine.PlayerChatMessage", () => [
+  [1, "entity_index", 5, 4],
+  [2, "chat", 8, 4],
+  [3, "message_name", 9, 4],
+  [4, "player_name", 9, 4],
+  [5, "text", 9, 4],
+  [6, "param3", 9, 4],
+  [7, "param4", 9, 4],
+]);
 
 /**
  * ChatMessage matches CCitadelUserMsg_ChatMsg, message 314, from the game chat box.
@@ -83,32 +61,21 @@ export const PlayerChatMessage: MessageType<PlayerChatMessage> = /* @__PURE__ */
 export interface ChatMessage {
   /**
    * PlayerSlot identifies the sender's zero-based client slot.
-   *
-   * @generated from field: optional int32 player_slot = 1 [default = -1];
    */
   playerSlot?: number;
   /**
    * Text contains the accepted player chat.
-   *
-   * @generated from field: optional string text = 2;
    */
   text?: string;
   /**
    * AllChat distinguishes global chat from team chat.
-   *
-   * @generated from field: optional bool all_chat = 3;
    */
   allChat?: boolean;
+}
 
-};
-
-export const ChatMessage: MessageType<ChatMessage> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.engine.ChatMessage",
-    fields: [
-        { no: 1, name: "player_slot", kind: "scalar", T: ScalarType.INT32, opt: true, default: -1 },
-        { no: 2, name: "text", kind: "scalar", T: ScalarType.STRING, opt: true },
-        { no: 3, name: "all_chat", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: false,
-});
+export const ChatMessage: MessageType<ChatMessage> = /* @__PURE__ */ createMessageType<ChatMessage>("modlock.engine.ChatMessage", () => [
+  [1, "player_slot", 5, 4],
+  [2, "text", 9, 4],
+  [3, "all_chat", 8, 4],
+]);
 

@@ -5,10 +5,7 @@
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.ui";
 
 /**
  * Kind selects the panel a node draws.
@@ -18,30 +15,22 @@ export const protobufPackage = "modlock.ui";
 export enum Kind {
   /**
    * KIND_PANEL groups and lays out its children.
-   *
-   * @generated from enum value: KIND_PANEL = 0;
    */
   PANEL = 0,
 
   /**
    * KIND_LABEL shows text.
-   *
-   * @generated from enum value: KIND_LABEL = 1;
    */
   LABEL = 1,
 
   /**
    * KIND_IMAGE shows an image.
-   *
-   * @generated from enum value: KIND_IMAGE = 2;
    */
   IMAGE = 2,
 
   /**
    * KIND_BUTTON holds its children and reports each press to the mod. A
    * button takes clicks only while the player has a cursor.
-   *
-   * @generated from enum value: KIND_BUTTON = 3;
    */
   BUTTON = 3,
 
@@ -50,19 +39,11 @@ export enum Kind {
    * script runs in the player's game and talks to the mod through its own
    * console commands. Only a host that has reviewed the mod's content loads
    * it; Modlock's renderer draws an empty panel.
-   *
-   * @generated from enum value: KIND_LAYOUT = 4;
    */
   LAYOUT = 4,
 }
 
-export const Kind_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Kind", [
-  [0, "KIND_PANEL"],
-  [1, "KIND_LABEL"],
-  [2, "KIND_IMAGE"],
-  [3, "KIND_BUTTON"],
-  [4, "KIND_LAYOUT"],
-]);
+export const Kind_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Kind", [[0, "KIND_PANEL"], [1, "KIND_LABEL"], [2, "KIND_IMAGE"], [3, "KIND_BUTTON"], [4, "KIND_LAYOUT"]]);
 
 /**
  * Flow arranges a node's children.
@@ -72,31 +53,21 @@ export const Kind_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Kind", [
 export enum Flow {
   /**
    * FLOW_NONE stacks children on top of each other.
-   *
-   * @generated from enum value: FLOW_NONE = 0;
    */
   NONE = 0,
 
   /**
    * FLOW_DOWN places children in a column.
-   *
-   * @generated from enum value: FLOW_DOWN = 1;
    */
   DOWN = 1,
 
   /**
    * FLOW_RIGHT places children in a row.
-   *
-   * @generated from enum value: FLOW_RIGHT = 2;
    */
   RIGHT = 2,
 }
 
-export const Flow_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Flow", [
-  [0, "FLOW_NONE"],
-  [1, "FLOW_DOWN"],
-  [2, "FLOW_RIGHT"],
-]);
+export const Flow_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Flow", [[0, "FLOW_NONE"], [1, "FLOW_DOWN"], [2, "FLOW_RIGHT"]]);
 
 /**
  * Align places a node or text along one axis.
@@ -106,252 +77,21 @@ export const Flow_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Flow", [
 export enum Align {
   /**
    * ALIGN_START places it at the left or top.
-   *
-   * @generated from enum value: ALIGN_START = 0;
    */
   START = 0,
 
   /**
    * ALIGN_CENTER centers it.
-   *
-   * @generated from enum value: ALIGN_CENTER = 1;
    */
   CENTER = 1,
 
   /**
    * ALIGN_END places it at the right or bottom.
-   *
-   * @generated from enum value: ALIGN_END = 2;
    */
   END = 2,
 }
 
-export const Align_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Align", [
-  [0, "ALIGN_START"],
-  [1, "ALIGN_CENTER"],
-  [2, "ALIGN_END"],
-]);
-
-/**
- * Length is a size along one axis.
- *
- * @generated from message modlock.ui.Length
- */
-export interface Length {
-
-  /**
-   * Value selects the unit.
-   *
-   * @generated from oneof modlock.ui.Length.value
-   */
-  value?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * Pixels is a fixed size.
-     *
-     * @generated from field: float pixels = 1;
-     */
-    value: number;
-    case: "pixels";
-  } | {
-    /**
-     * Percent is a share of the parent's size, from 0 to 100.
-     *
-     * @generated from field: float percent = 2;
-     */
-    value: number;
-    case: "percent";
-  } | {
-    /**
-     * FitChildren sizes the node to its children.
-     *
-     * @generated from field: bool fit_children = 3;
-     */
-    value: boolean;
-    case: "fitChildren";
-  } | {
-    /**
-     * Fill shares the space left in the parent's flow by this weight.
-     *
-     * @generated from field: float fill = 4;
-     */
-    value: number;
-    case: "fill";
-  };
-
-};
-
-export const Length: MessageType<Length> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Length",
-    fields: [
-        { no: 1, name: "pixels", kind: "scalar", T: ScalarType.FLOAT, oneof: "value" },
-        { no: 2, name: "percent", kind: "scalar", T: ScalarType.FLOAT, oneof: "value" },
-        { no: 3, name: "fit_children", kind: "scalar", T: ScalarType.BOOL, oneof: "value" },
-        { no: 4, name: "fill", kind: "scalar", T: ScalarType.FLOAT, oneof: "value" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Edges are pixel distances on each side.
- *
- * @generated from message modlock.ui.Edges
- */
-export interface Edges {
-  /**
-   * Top is the distance on the top side.
-   *
-   * @generated from field: float top = 1;
-   */
-  top?: number;
-  /**
-   * Right is the distance on the right side.
-   *
-   * @generated from field: float right = 2;
-   */
-  right?: number;
-  /**
-   * Bottom is the distance on the bottom side.
-   *
-   * @generated from field: float bottom = 3;
-   */
-  bottom?: number;
-  /**
-   * Left is the distance on the left side.
-   *
-   * @generated from field: float left = 4;
-   */
-  left?: number;
-
-};
-
-export const Edges: MessageType<Edges> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Edges",
-    fields: [
-        { no: 1, name: "top", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 2, name: "right", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 3, name: "bottom", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 4, name: "left", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Style is the closed set of layout and paint properties a node may set. A
- * zero value leaves the panel's default.
- *
- * @generated from message modlock.ui.Style
- */
-export interface Style {
-  /**
-   * Width is the node's width.
-   *
-   * @generated from field: modlock.ui.Length width = 1;
-   */
-  width?: Length;
-  /**
-   * Height is the node's height.
-   *
-   * @generated from field: modlock.ui.Length height = 2;
-   */
-  height?: Length;
-  /**
-   * Flow arranges the node's children.
-   *
-   * @generated from field: modlock.ui.Flow flow = 3;
-   */
-  flow?: Flow;
-  /**
-   * HorizontalAlign places the node within its parent's width.
-   *
-   * @generated from field: modlock.ui.Align horizontal_align = 4;
-   */
-  horizontalAlign?: Align;
-  /**
-   * VerticalAlign places the node within its parent's height.
-   *
-   * @generated from field: modlock.ui.Align vertical_align = 5;
-   */
-  verticalAlign?: Align;
-  /**
-   * Margin is the space outside the node, in pixels.
-   *
-   * @generated from field: modlock.ui.Edges margin = 6;
-   */
-  margin?: Edges;
-  /**
-   * Padding is the space between the node's edge and its children, in pixels.
-   *
-   * @generated from field: modlock.ui.Edges padding = 7;
-   */
-  padding?: Edges;
-  /**
-   * Background is the fill color as 0xRRGGBBAA; zero is transparent.
-   *
-   * @generated from field: fixed32 background = 8;
-   */
-  background?: number;
-  /**
-   * Color is the text color as 0xRRGGBBAA; zero keeps the default.
-   *
-   * @generated from field: fixed32 color = 9;
-   */
-  color?: number;
-  /**
-   * FontSize is the text size in pixels; zero keeps the default.
-   *
-   * @generated from field: float font_size = 10;
-   */
-  fontSize?: number;
-  /**
-   * Bold sets bold text.
-   *
-   * @generated from field: bool bold = 11;
-   */
-  bold?: boolean;
-  /**
-   * TextAlign places text within a label.
-   *
-   * @generated from field: modlock.ui.Align text_align = 12;
-   */
-  textAlign?: Align;
-  /**
-   * BorderRadius rounds the corners, in pixels.
-   *
-   * @generated from field: float border_radius = 13;
-   */
-  borderRadius?: number;
-  /**
-   * Opacity fades the node and its children, from 0 to 1; unset is opaque.
-   *
-   * @generated from field: optional float opacity = 14;
-   */
-  opacity?: number;
-
-};
-
-export const Style: MessageType<Style> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Style",
-    fields: [
-        { no: 1, name: "width", kind: "message", T: () => Length },
-        { no: 2, name: "height", kind: "message", T: () => Length },
-        { no: 3, name: "flow", kind: "enum", T: Flow_Enum },
-        { no: 4, name: "horizontal_align", kind: "enum", T: Align_Enum },
-        { no: 5, name: "vertical_align", kind: "enum", T: Align_Enum },
-        { no: 6, name: "margin", kind: "message", T: () => Edges },
-        { no: 7, name: "padding", kind: "message", T: () => Edges },
-        { no: 8, name: "background", kind: "scalar", T: ScalarType.FIXED32 },
-        { no: 9, name: "color", kind: "scalar", T: ScalarType.FIXED32 },
-        { no: 10, name: "font_size", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 11, name: "bold", kind: "scalar", T: ScalarType.BOOL },
-        { no: 12, name: "text_align", kind: "enum", T: Align_Enum },
-        { no: 13, name: "border_radius", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 14, name: "opacity", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Align_Enum = /* @__PURE__ */ createEnumType("modlock.ui.Align", [[0, "ALIGN_START"], [1, "ALIGN_CENTER"], [2, "ALIGN_END"]]);
 
 /**
  * Node is one panel in a tree. The root's id is empty; it is a full-screen
@@ -362,48 +102,34 @@ export const Style: MessageType<Style> = /* @__PURE__ */ createMessageType({
 export interface Node {
   /**
    * Id names the node within its tree.
-   *
-   * @generated from field: string id = 1;
    */
   id?: string;
   /**
    * Kind selects the panel the node draws.
-   *
-   * @generated from field: modlock.ui.Kind kind = 2;
    */
   kind?: Kind;
   /**
    * Children lists the ids of the node's children in drawing order. A node
    * that no parent lists is not drawn.
-   *
-   * @generated from field: repeated string children = 3;
    */
   children?: string[];
   /**
    * Text is a label's words.
-   *
-   * @generated from field: string text = 4;
    */
   text?: string;
   /**
    * Image is an image's path in the game's content, such as
    * "file://{images}/heroes/wraith_card.psd".
-   *
-   * @generated from field: string image = 5;
    */
   image?: string;
   /**
    * Style lays out and paints the node.
-   *
-   * @generated from field: modlock.ui.Style style = 6;
    */
   style?: Style;
   /**
    * Layout is a layout's path within the mod's content addon, such as
    * "inventory.xml": one or more segments of letters, digits, '_', '-' and
    * '.', none of them "..", ending in ".xml".
-   *
-   * @generated from field: string layout = 7;
    */
   layout?: string;
   /**
@@ -412,27 +138,159 @@ export interface Node {
    * and after each change it plays the sound event "modlock_data_changed",
    * which no sound has, so a script that registers for the unhandled
    * PlaySoundEffect event hears it and reads the attribute again.
-   *
-   * @generated from field: string data = 8;
    */
   data?: string;
+}
 
-};
+export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>("modlock.ui.Node", () => [
+  [1, "id", 9],
+  [2, "kind", 14, 0, Kind_Enum],
+  [3, "children", 9, 1],
+  [4, "text", 9],
+  [5, "image", 9],
+  [6, "style", 11, 0, Style.codec],
+  [7, "layout", 9],
+  [8, "data", 9],
+]);
 
-export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Node",
-    fields: [
-        { no: 1, name: "id", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "kind", kind: "enum", T: Kind_Enum },
-        { no: 3, name: "children", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 4, name: "text", kind: "scalar", T: ScalarType.STRING },
-        { no: 5, name: "image", kind: "scalar", T: ScalarType.STRING },
-        { no: 6, name: "style", kind: "message", T: () => Style },
-        { no: 7, name: "layout", kind: "scalar", T: ScalarType.STRING },
-        { no: 8, name: "data", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * Style is the closed set of layout and paint properties a node may set. A
+ * zero value leaves the panel's default.
+ *
+ * @generated from message modlock.ui.Style
+ */
+export interface Style {
+  /**
+   * Width is the node's width.
+   */
+  width?: Length;
+  /**
+   * Height is the node's height.
+   */
+  height?: Length;
+  /**
+   * Flow arranges the node's children.
+   */
+  flow?: Flow;
+  /**
+   * HorizontalAlign places the node within its parent's width.
+   */
+  horizontalAlign?: Align;
+  /**
+   * VerticalAlign places the node within its parent's height.
+   */
+  verticalAlign?: Align;
+  /**
+   * Margin is the space outside the node, in pixels.
+   */
+  margin?: Edges;
+  /**
+   * Padding is the space between the node's edge and its children, in pixels.
+   */
+  padding?: Edges;
+  /**
+   * Background is the fill color as 0xRRGGBBAA; zero is transparent.
+   */
+  background?: number;
+  /**
+   * Color is the text color as 0xRRGGBBAA; zero keeps the default.
+   */
+  color?: number;
+  /**
+   * FontSize is the text size in pixels; zero keeps the default.
+   */
+  fontSize?: number;
+  /**
+   * Bold sets bold text.
+   */
+  bold?: boolean;
+  /**
+   * TextAlign places text within a label.
+   */
+  textAlign?: Align;
+  /**
+   * BorderRadius rounds the corners, in pixels.
+   */
+  borderRadius?: number;
+  /**
+   * Opacity fades the node and its children, from 0 to 1; unset is opaque.
+   */
+  opacity?: number;
+}
+
+export const Style: MessageType<Style> = /* @__PURE__ */ createMessageType<Style>("modlock.ui.Style", () => [
+  [1, "width", 11, 0, Length.codec],
+  [2, "height", 11, 0, Length.codec],
+  [3, "flow", 14, 0, Flow_Enum],
+  [4, "horizontal_align", 14, 0, Align_Enum],
+  [5, "vertical_align", 14, 0, Align_Enum],
+  [6, "margin", 11, 0, Edges.codec],
+  [7, "padding", 11, 0, Edges.codec],
+  [8, "background", 7],
+  [9, "color", 7],
+  [10, "font_size", 2],
+  [11, "bold", 8],
+  [12, "text_align", 14, 0, Align_Enum],
+  [13, "border_radius", 2],
+  [14, "opacity", 2, 4],
+]);
+
+/**
+ * Length is a size along one axis.
+ *
+ * @generated from message modlock.ui.Length
+ */
+export interface Length {
+  /**
+   * Value selects the unit.
+   *
+   * @generated from oneof modlock.ui.Length.value
+   */
+  value?:
+    | { value?: undefined; case: undefined }
+    | { value: number; case: "pixels" }
+    | { value: number; case: "percent" }
+    | { value: boolean; case: "fitChildren" }
+    | { value: number; case: "fill" };
+}
+
+export const Length: MessageType<Length> = /* @__PURE__ */ createMessageType<Length>("modlock.ui.Length", () => [
+  [1, "pixels", 2, 0, 0, "value"],
+  [2, "percent", 2, 0, 0, "value"],
+  [3, "fit_children", 8, 0, 0, "value"],
+  [4, "fill", 2, 0, 0, "value"],
+]);
+
+/**
+ * Edges are pixel distances on each side.
+ *
+ * @generated from message modlock.ui.Edges
+ */
+export interface Edges {
+  /**
+   * Top is the distance on the top side.
+   */
+  top?: number;
+  /**
+   * Right is the distance on the right side.
+   */
+  right?: number;
+  /**
+   * Bottom is the distance on the bottom side.
+   */
+  bottom?: number;
+  /**
+   * Left is the distance on the left side.
+   */
+  left?: number;
+}
+
+export const Edges: MessageType<Edges> = /* @__PURE__ */ createMessageType<Edges>("modlock.ui.Edges", () => [
+  [1, "top", 2],
+  [2, "right", 2],
+  [3, "bottom", 2],
+  [4, "left", 2],
+]);
 
 /**
  * Change updates one player's tree. Reset clears the tree first; then each
@@ -444,34 +302,23 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType({
 export interface Change {
   /**
    * Reset clears the tree before the rest of the change applies.
-   *
-   * @generated from field: bool reset = 1;
    */
   reset?: boolean;
   /**
    * Set holds the new or changed nodes.
-   *
-   * @generated from field: repeated modlock.ui.Node set = 2;
    */
   set?: Node[];
   /**
    * Removed holds the ids of the nodes to drop.
-   *
-   * @generated from field: repeated string removed = 3;
    */
   removed?: string[];
+}
 
-};
-
-export const Change: MessageType<Change> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Change",
-    fields: [
-        { no: 1, name: "reset", kind: "scalar", T: ScalarType.BOOL },
-        { no: 2, name: "set", kind: "message", T: () => Node, repeated: true },
-        { no: 3, name: "removed", kind: "scalar", T: ScalarType.STRING, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Change: MessageType<Change> = /* @__PURE__ */ createMessageType<Change>("modlock.ui.Change", () => [
+  [1, "reset", 8],
+  [2, "set", 11, 1, Node.codec],
+  [3, "removed", 9, 1],
+]);
 
 /**
  * Tree is one mod's whole tree for one player.
@@ -481,27 +328,18 @@ export const Change: MessageType<Change> = /* @__PURE__ */ createMessageType({
 export interface Tree {
   /**
    * Mod is the mod's name.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Nodes holds every node, the root included.
-   *
-   * @generated from field: repeated modlock.ui.Node nodes = 2;
    */
   nodes?: Node[];
+}
 
-};
-
-export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Tree",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "nodes", kind: "message", T: () => Node, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType<Tree>("modlock.ui.Tree", () => [
+  [1, "mod", 9],
+  [2, "nodes", 11, 1, Node.codec],
+]);
 
 /**
  * Screen is everything one player's renderer draws: each mod's tree.
@@ -511,18 +349,11 @@ export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType({
 export interface Screen {
   /**
    * Trees holds one tree per mod that shows this player anything.
-   *
-   * @generated from field: repeated modlock.ui.Tree trees = 1;
    */
   trees?: Tree[];
+}
 
-};
-
-export const Screen: MessageType<Screen> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.ui.Screen",
-    fields: [
-        { no: 1, name: "trees", kind: "message", T: () => Tree, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Screen: MessageType<Screen> = /* @__PURE__ */ createMessageType<Screen>("modlock.ui.Screen", () => [
+  [1, "trees", 11, 1, Tree.codec],
+]);
 

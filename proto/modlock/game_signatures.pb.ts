@@ -5,10 +5,7 @@
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 
-export const protobufPackage = "modlock.gamedata";
 
 /**
  * GameModule is one game binary that carries scanned code.
@@ -18,180 +15,26 @@ export const protobufPackage = "modlock.gamedata";
 export enum GameModule {
   /**
    * GAME_MODULE_UNKNOWN names no binary; an entry that lists it is skipped.
-   *
-   * @generated from enum value: GAME_MODULE_UNKNOWN = 0;
    */
   UNKNOWN = 0,
 
   /**
    * GAME_MODULE_SERVER is server.dll.
-   *
-   * @generated from enum value: GAME_MODULE_SERVER = 1;
    */
   SERVER = 1,
 
   /**
    * GAME_MODULE_CLIENT is client.dll.
-   *
-   * @generated from enum value: GAME_MODULE_CLIENT = 2;
    */
   CLIENT = 2,
 
   /**
    * GAME_MODULE_ENGINE is engine2.dll.
-   *
-   * @generated from enum value: GAME_MODULE_ENGINE = 3;
    */
   ENGINE = 3,
 }
 
-export const GameModule_Enum = /* @__PURE__ */ createEnumType("modlock.gamedata.GameModule", [
-  [0, "GAME_MODULE_UNKNOWN"],
-  [1, "GAME_MODULE_SERVER"],
-  [2, "GAME_MODULE_CLIENT"],
-  [3, "GAME_MODULE_ENGINE"],
-]);
-
-/**
- * GameSignature is one byte pattern and the address its unique match
- * resolves to.
- *
- * @generated from message modlock.gamedata.GameSignature
- */
-export interface GameSignature {
-  /**
-   * Id is the stable name callers resolve, such as "pawn.respawn".
-   *
-   * @generated from field: string id = 1;
-   */
-  id?: string;
-  /**
-   * Modules lists every binary whose image carries the pattern exactly once.
-   *
-   * @generated from field: repeated modlock.gamedata.GameModule modules = 2;
-   */
-  modules?: GameModule[];
-  /**
-   * Pattern is the byte signature for the current game build in hex pairs;
-   * "??" marks a wildcard byte.
-   *
-   * @generated from field: string pattern = 3;
-   */
-  pattern?: string;
-  /**
-   * Shape describes the native function or instruction that was matched.
-   *
-   * @generated from field: string shape = 6;
-   */
-  shape?: string;
-
-  /**
-   * Target selects a relative operand inside the match. Without one, the
-   * entry resolves to the first matched byte, usually a function entry.
-   *
-   * @generated from oneof modlock.gamedata.GameSignature.target
-   */
-  target?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * CallAt is the offset into the match of an E8 rel32 call; the entry
-     * resolves to the call's target.
-     *
-     * @generated from field: uint32 call_at = 4;
-     */
-    value: number;
-    case: "callAt";
-  } | {
-    /**
-     * RipRelativeAt is the offset into the match of a seven-byte REX.W
-     * instruction (LEA or MOV) with rel32 at offset + 3; the entry resolves to
-     * its address operand.
-     *
-     * @generated from field: uint32 rip_relative_at = 5;
-     */
-    value: number;
-    case: "ripRelativeAt";
-  };
-
-};
-
-export const GameSignature: MessageType<GameSignature> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.gamedata.GameSignature",
-    fields: [
-        { no: 1, name: "id", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "modules", kind: "enum", T: GameModule_Enum, repeated: true },
-        { no: 3, name: "pattern", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "call_at", kind: "scalar", T: ScalarType.UINT32, oneof: "target" },
-        { no: 5, name: "rip_relative_at", kind: "scalar", T: ScalarType.UINT32, oneof: "target" },
-        { no: 6, name: "shape", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * VirtualSlot is one virtual function modlock calls or hooks through its
- * class's dispatch table. The function is the one table entry whose entry
- * bytes match the pattern, so a game update that inserts a virtual ahead of it
- * moves the index without breaking the slot.
- *
- * @generated from message modlock.gamedata.VirtualSlot
- */
-export interface VirtualSlot {
-  /**
-   * Id is the stable name callers resolve, such as "engine-server.globals".
-   *
-   * @generated from field: string id = 1;
-   */
-  id?: string;
-  /**
-   * Module is the file that defines the class, such as "server.dll".
-   *
-   * @generated from field: string module = 2;
-   */
-  module?: string;
-  /**
-   * ClassName is the implementing class's RTTI name, such as "CBaseEntity".
-   *
-   * @generated from field: string class_name = 3;
-   */
-  className?: string;
-  /**
-   * Index is the function's position in the class's primary table on the
-   * game build the pattern was taken from.
-   *
-   * @generated from field: uint32 index = 4;
-   */
-  index?: number;
-  /**
-   * Pattern matches the function's entry bytes in hex pairs; "??" marks a
-   * wildcard byte. It must match exactly one function of the table.
-   *
-   * @generated from field: string pattern = 5;
-   */
-  pattern?: string;
-  /**
-   * Shape names the function.
-   *
-   * @generated from field: string shape = 6;
-   */
-  shape?: string;
-
-};
-
-export const VirtualSlot: MessageType<VirtualSlot> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.gamedata.VirtualSlot",
-    fields: [
-        { no: 1, name: "id", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "module", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "index", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 5, name: "pattern", kind: "scalar", T: ScalarType.STRING },
-        { no: 6, name: "shape", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const GameModule_Enum = /* @__PURE__ */ createEnumType("modlock.gamedata.GameModule", [[0, "GAME_MODULE_UNKNOWN"], [1, "GAME_MODULE_SERVER"], [2, "GAME_MODULE_CLIENT"], [3, "GAME_MODULE_ENGINE"]]);
 
 /**
  * GameSignatureFile is the game data file modlock-host reads at start: every
@@ -204,25 +47,107 @@ export const VirtualSlot: MessageType<VirtualSlot> = /* @__PURE__ */ createMessa
 export interface GameSignatureFile {
   /**
    * Signatures holds one entry per id, sorted by id.
-   *
-   * @generated from field: repeated modlock.gamedata.GameSignature signatures = 1;
    */
   signatures?: GameSignature[];
   /**
    * Slots holds one entry per id, sorted by id.
-   *
-   * @generated from field: repeated modlock.gamedata.VirtualSlot slots = 2;
    */
   slots?: VirtualSlot[];
+}
 
-};
+export const GameSignatureFile: MessageType<GameSignatureFile> = /* @__PURE__ */ createMessageType<GameSignatureFile>("modlock.gamedata.GameSignatureFile", () => [
+  [1, "signatures", 11, 1, GameSignature.codec],
+  [2, "slots", 11, 1, VirtualSlot.codec],
+]);
 
-export const GameSignatureFile: MessageType<GameSignatureFile> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.gamedata.GameSignatureFile",
-    fields: [
-        { no: 1, name: "signatures", kind: "message", T: () => GameSignature, repeated: true },
-        { no: 2, name: "slots", kind: "message", T: () => VirtualSlot, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * GameSignature is one byte pattern and the address its unique match
+ * resolves to.
+ *
+ * @generated from message modlock.gamedata.GameSignature
+ */
+export interface GameSignature {
+  /**
+   * Id is the stable name callers resolve, such as "pawn.respawn".
+   */
+  id?: string;
+  /**
+   * Modules lists every binary whose image carries the pattern exactly once.
+   */
+  modules?: GameModule[];
+  /**
+   * Pattern is the byte signature for the current game build in hex pairs;
+   * "??" marks a wildcard byte.
+   */
+  pattern?: string;
+  /**
+   * Shape describes the native function or instruction that was matched.
+   */
+  shape?: string;
+  /**
+   * Target selects a relative operand inside the match. Without one, the
+   * entry resolves to the first matched byte, usually a function entry.
+   *
+   * @generated from oneof modlock.gamedata.GameSignature.target
+   */
+  target?:
+    | { value?: undefined; case: undefined }
+    | { value: number; case: "callAt" }
+    | { value: number; case: "ripRelativeAt" };
+}
+
+export const GameSignature: MessageType<GameSignature> = /* @__PURE__ */ createMessageType<GameSignature>("modlock.gamedata.GameSignature", () => [
+  [1, "id", 9],
+  [2, "modules", 14, 3, GameModule_Enum],
+  [3, "pattern", 9],
+  [4, "call_at", 13, 0, 0, "target"],
+  [5, "rip_relative_at", 13, 0, 0, "target"],
+  [6, "shape", 9],
+]);
+
+/**
+ * VirtualSlot is one virtual function modlock calls or hooks through its
+ * class's dispatch table. The function is the one table entry whose entry
+ * bytes match the pattern, so a game update that inserts a virtual ahead of it
+ * moves the index without breaking the slot.
+ *
+ * @generated from message modlock.gamedata.VirtualSlot
+ */
+export interface VirtualSlot {
+  /**
+   * Id is the stable name callers resolve, such as "engine-server.globals".
+   */
+  id?: string;
+  /**
+   * Module is the file that defines the class, such as "server.dll".
+   */
+  module?: string;
+  /**
+   * ClassName is the implementing class's RTTI name, such as "CBaseEntity".
+   */
+  className?: string;
+  /**
+   * Index is the function's position in the class's primary table on the
+   * game build the pattern was taken from.
+   */
+  index?: number;
+  /**
+   * Pattern matches the function's entry bytes in hex pairs; "??" marks a
+   * wildcard byte. It must match exactly one function of the table.
+   */
+  pattern?: string;
+  /**
+   * Shape names the function.
+   */
+  shape?: string;
+}
+
+export const VirtualSlot: MessageType<VirtualSlot> = /* @__PURE__ */ createMessageType<VirtualSlot>("modlock.gamedata.VirtualSlot", () => [
+  [1, "id", 9],
+  [2, "module", 9],
+  [3, "class_name", 9],
+  [4, "index", 13],
+  [5, "pattern", 9],
+  [6, "shape", 9],
+]);
 

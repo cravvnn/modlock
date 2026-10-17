@@ -4,13 +4,10 @@
 
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
-import { createEmptyMessageType, createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
+import { createMessageType } from "@aptre/protobuf-es-lite/message";
 import { EulerAngles, Vec3 } from "./types.pb.js";
 import { Change } from "./ui.pb.js";
 
-export const protobufPackage = "modlock.wasm";
 
 /**
  * MovementAction is a movement fact the game announced for a hero.
@@ -18,83 +15,25 @@ export const protobufPackage = "modlock.wasm";
  * @generated from enum modlock.wasm.MovementAction
  */
 export enum MovementAction {
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_UNKNOWN = 0;
-   */
   UNKNOWN = 0,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_LANDED = 1;
-   */
   LANDED = 1,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_ZIPLINE_ATTACHED = 2;
-   */
   ZIPLINE_ATTACHED = 2,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_GROUND_DASH = 3;
-   */
   GROUND_DASH = 3,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_SLIDE = 4;
-   */
   SLIDE = 4,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_BOUNCE_PAD = 5;
-   */
   BOUNCE_PAD = 5,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_DASH_JUMP = 6;
-   */
   DASH_JUMP = 6,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_AIR_JUMP = 7;
-   */
   AIR_JUMP = 7,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_WALL_JUMP = 8;
-   */
   WALL_JUMP = 8,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_AIR_DASH = 9;
-   */
   AIR_DASH = 9,
-
-  /**
-   * @generated from enum value: MOVEMENT_ACTION_MELEE_STARTED = 10;
-   */
   MELEE_STARTED = 10,
 
   /**
    * AbilityExecuted is any ability the hero cast.
-   *
-   * @generated from enum value: MOVEMENT_ACTION_ABILITY_EXECUTED = 11;
    */
   ABILITY_EXECUTED = 11,
 }
 
-export const MovementAction_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.MovementAction", [
-  [0, "MOVEMENT_ACTION_UNKNOWN"],
-  [1, "MOVEMENT_ACTION_LANDED"],
-  [2, "MOVEMENT_ACTION_ZIPLINE_ATTACHED"],
-  [3, "MOVEMENT_ACTION_GROUND_DASH"],
-  [4, "MOVEMENT_ACTION_SLIDE"],
-  [5, "MOVEMENT_ACTION_BOUNCE_PAD"],
-  [6, "MOVEMENT_ACTION_DASH_JUMP"],
-  [7, "MOVEMENT_ACTION_AIR_JUMP"],
-  [8, "MOVEMENT_ACTION_WALL_JUMP"],
-  [9, "MOVEMENT_ACTION_AIR_DASH"],
-  [10, "MOVEMENT_ACTION_MELEE_STARTED"],
-  [11, "MOVEMENT_ACTION_ABILITY_EXECUTED"],
-]);
+export const MovementAction_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.MovementAction", [[0, "MOVEMENT_ACTION_UNKNOWN"], [1, "MOVEMENT_ACTION_LANDED"], [2, "MOVEMENT_ACTION_ZIPLINE_ATTACHED"], [3, "MOVEMENT_ACTION_GROUND_DASH"], [4, "MOVEMENT_ACTION_SLIDE"], [5, "MOVEMENT_ACTION_BOUNCE_PAD"], [6, "MOVEMENT_ACTION_DASH_JUMP"], [7, "MOVEMENT_ACTION_AIR_JUMP"], [8, "MOVEMENT_ACTION_WALL_JUMP"], [9, "MOVEMENT_ACTION_AIR_DASH"], [10, "MOVEMENT_ACTION_MELEE_STARTED"], [11, "MOVEMENT_ACTION_ABILITY_EXECUTED"]]);
 
 /**
  * ScreenEffect is a stock full-screen view effect.
@@ -104,47 +43,31 @@ export const MovementAction_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.
 export enum ScreenEffect {
   /**
    * SCREEN_EFFECT_KILLED is the death treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_KILLED = 0;
    */
   KILLED = 0,
 
   /**
    * SCREEN_EFFECT_BLACK fades the view to black.
-   *
-   * @generated from enum value: SCREEN_EFFECT_BLACK = 1;
    */
   BLACK = 1,
 
   /**
    * SCREEN_EFFECT_BLINDED is the blind treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_BLINDED = 2;
    */
   BLINDED = 2,
 
   /**
    * SCREEN_EFFECT_DARKNESS is Drifter's darkness view.
-   *
-   * @generated from enum value: SCREEN_EFFECT_DARKNESS = 3;
    */
   DARKNESS = 3,
 
   /**
    * SCREEN_EFFECT_MATCH_INTRO is the match start treatment.
-   *
-   * @generated from enum value: SCREEN_EFFECT_MATCH_INTRO = 4;
    */
   MATCH_INTRO = 4,
 }
 
-export const ScreenEffect_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.ScreenEffect", [
-  [0, "SCREEN_EFFECT_KILLED"],
-  [1, "SCREEN_EFFECT_BLACK"],
-  [2, "SCREEN_EFFECT_BLINDED"],
-  [3, "SCREEN_EFFECT_DARKNESS"],
-  [4, "SCREEN_EFFECT_MATCH_INTRO"],
-]);
+export const ScreenEffect_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.ScreenEffect", [[0, "SCREEN_EFFECT_KILLED"], [1, "SCREEN_EFFECT_BLACK"], [2, "SCREEN_EFFECT_BLINDED"], [3, "SCREEN_EFFECT_DARKNESS"], [4, "SCREEN_EFFECT_MATCH_INTRO"]]);
 
 /**
  * FieldType is how ReadField and WriteField interpret a field's storage.
@@ -154,113 +77,53 @@ export const ScreenEffect_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Sc
 export enum FieldType {
   /**
    * FIELD_TYPE_UNKNOWN is an unset type, which the host refuses.
-   *
-   * @generated from enum value: FIELD_TYPE_UNKNOWN = 0;
    */
   UNKNOWN = 0,
 
   /**
    * FIELD_TYPE_BOOL is one byte read as a boolean.
-   *
-   * @generated from enum value: FIELD_TYPE_BOOL = 1;
    */
   BOOL = 1,
 
   /**
    * FIELD_TYPE_INT8 through FIELD_TYPE_UINT32 are integers read as numbers.
-   *
-   * @generated from enum value: FIELD_TYPE_INT8 = 2;
    */
   INT8 = 2,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_INT16 = 3;
-   */
   INT16 = 3,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_INT32 = 4;
-   */
   INT32 = 4,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_UINT8 = 5;
-   */
   UINT8 = 5,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_UINT16 = 6;
-   */
   UINT16 = 6,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_UINT32 = 7;
-   */
   UINT32 = 7,
 
   /**
    * FIELD_TYPE_INT64 and FIELD_TYPE_UINT64 are 64-bit integers.
-   *
-   * @generated from enum value: FIELD_TYPE_INT64 = 8;
    */
   INT64 = 8,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_UINT64 = 9;
-   */
   UINT64 = 9,
 
   /**
    * FIELD_TYPE_FLOAT32 and FIELD_TYPE_FLOAT64 are floating point numbers.
-   *
-   * @generated from enum value: FIELD_TYPE_FLOAT32 = 10;
    */
   FLOAT32 = 10,
-
-  /**
-   * @generated from enum value: FIELD_TYPE_FLOAT64 = 11;
-   */
   FLOAT64 = 11,
 
   /**
    * FIELD_TYPE_VECTOR is three floats, such as a position or angles.
-   *
-   * @generated from enum value: FIELD_TYPE_VECTOR = 12;
    */
   VECTOR = 12,
 
   /**
    * FIELD_TYPE_HANDLE is an entity handle, read as a number.
-   *
-   * @generated from enum value: FIELD_TYPE_HANDLE = 13;
    */
   HANDLE = 13,
 
   /**
    * FIELD_TYPE_STRING is a string the field points to.
-   *
-   * @generated from enum value: FIELD_TYPE_STRING = 14;
    */
   STRING = 14,
 }
 
-export const FieldType_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.FieldType", [
-  [0, "FIELD_TYPE_UNKNOWN"],
-  [1, "FIELD_TYPE_BOOL"],
-  [2, "FIELD_TYPE_INT8"],
-  [3, "FIELD_TYPE_INT16"],
-  [4, "FIELD_TYPE_INT32"],
-  [5, "FIELD_TYPE_UINT8"],
-  [6, "FIELD_TYPE_UINT16"],
-  [7, "FIELD_TYPE_UINT32"],
-  [8, "FIELD_TYPE_INT64"],
-  [9, "FIELD_TYPE_UINT64"],
-  [10, "FIELD_TYPE_FLOAT32"],
-  [11, "FIELD_TYPE_FLOAT64"],
-  [12, "FIELD_TYPE_VECTOR"],
-  [13, "FIELD_TYPE_HANDLE"],
-  [14, "FIELD_TYPE_STRING"],
-]);
+export const FieldType_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.FieldType", [[0, "FIELD_TYPE_UNKNOWN"], [1, "FIELD_TYPE_BOOL"], [2, "FIELD_TYPE_INT8"], [3, "FIELD_TYPE_INT16"], [4, "FIELD_TYPE_INT32"], [5, "FIELD_TYPE_UINT8"], [6, "FIELD_TYPE_UINT16"], [7, "FIELD_TYPE_UINT32"], [8, "FIELD_TYPE_INT64"], [9, "FIELD_TYPE_UINT64"], [10, "FIELD_TYPE_FLOAT32"], [11, "FIELD_TYPE_FLOAT64"], [12, "FIELD_TYPE_VECTOR"], [13, "FIELD_TYPE_HANDLE"], [14, "FIELD_TYPE_STRING"]]);
 
 /**
  * PickupKind is a kind of item players collect by walking over it.
@@ -270,244 +133,16 @@ export const FieldType_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Field
 export enum PickupKind {
   /**
    * PICKUP_KIND_URN is the soul urn, which its carrier delivers.
-   *
-   * @generated from enum value: PICKUP_KIND_URN = 0;
    */
   URN = 0,
 
   /**
    * PICKUP_KIND_MOVEMENT_BUFF is the movement speed buff.
-   *
-   * @generated from enum value: PICKUP_KIND_MOVEMENT_BUFF = 1;
    */
   MOVEMENT_BUFF = 1,
 }
 
-export const PickupKind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.PickupKind", [
-  [0, "PICKUP_KIND_URN"],
-  [1, "PICKUP_KIND_MOVEMENT_BUFF"],
-]);
-
-/**
- * Runtime is the WebAssembly module that runs a built mod.
- *
- * @generated from enum modlock.wasm.Manifest.Runtime
- */
-export enum Manifest_Runtime {
-  /**
-   * RUNTIME_UNKNOWN is an unset or unsupported runtime.
-   *
-   * @generated from enum value: RUNTIME_UNKNOWN = 0;
-   */
-  UNKNOWN = 0,
-
-  /**
-   * RUNTIME_WASM runs the entry itself, a module compiled from the mod.
-   *
-   * @generated from enum value: RUNTIME_WASM = 1;
-   */
-  WASM = 1,
-
-  /**
-   * RUNTIME_QUICKJS runs the entry, one JavaScript bundle, on QuickJS.
-   *
-   * @generated from enum value: RUNTIME_QUICKJS = 2;
-   */
-  QUICKJS = 2,
-
-  /**
-   * RUNTIME_LUAU runs the entry, a zip of Luau sources, on Luau.
-   *
-   * @generated from enum value: RUNTIME_LUAU = 3;
-   */
-  LUAU = 3,
-
-  /**
-   * RUNTIME_PYTHON runs the entry, a zip of Python sources, on CPython.
-   *
-   * @generated from enum value: RUNTIME_PYTHON = 4;
-   */
-  PYTHON = 4,
-}
-
-export const Manifest_Runtime_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Manifest.Runtime", [
-  [0, "RUNTIME_UNKNOWN"],
-  [1, "RUNTIME_WASM"],
-  [2, "RUNTIME_QUICKJS"],
-  [3, "RUNTIME_LUAU"],
-  [4, "RUNTIME_PYTHON"],
-]);
-
-/**
- * Language is the language a mod's source is written in.
- *
- * @generated from enum modlock.wasm.Manifest.Language
- */
-export enum Manifest_Language {
-  /**
-   * LANGUAGE_UNKNOWN is an unset or unsupported language.
-   *
-   * @generated from enum value: LANGUAGE_UNKNOWN = 0;
-   */
-  UNKNOWN = 0,
-
-  /**
-   * LANGUAGE_GO builds with Go into a module of its own.
-   *
-   * @generated from enum value: LANGUAGE_GO = 1;
-   */
-  GO = 1,
-
-  /**
-   * LANGUAGE_TYPESCRIPT bundles to JavaScript for QuickJS.
-   *
-   * @generated from enum value: LANGUAGE_TYPESCRIPT = 2;
-   */
-  TYPESCRIPT = 2,
-
-  /**
-   * LANGUAGE_JAVASCRIPT bundles for QuickJS, type checked from JSDoc.
-   *
-   * @generated from enum value: LANGUAGE_JAVASCRIPT = 3;
-   */
-  JAVASCRIPT = 3,
-
-  /**
-   * LANGUAGE_LUAU runs on Luau.
-   *
-   * @generated from enum value: LANGUAGE_LUAU = 4;
-   */
-  LUAU = 4,
-
-  /**
-   * LANGUAGE_PYTHON runs on CPython.
-   *
-   * @generated from enum value: LANGUAGE_PYTHON = 5;
-   */
-  PYTHON = 5,
-}
-
-export const Manifest_Language_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Manifest.Language", [
-  [0, "LANGUAGE_UNKNOWN"],
-  [1, "LANGUAGE_GO"],
-  [2, "LANGUAGE_TYPESCRIPT"],
-  [3, "LANGUAGE_JAVASCRIPT"],
-  [4, "LANGUAGE_LUAU"],
-  [5, "LANGUAGE_PYTHON"],
-]);
-
-/**
- * Kind is the kind of value a setting holds.
- *
- * @generated from enum modlock.wasm.Setting.Kind
- */
-export enum Setting_Kind {
-  /**
-   * KIND_UNKNOWN is an unset or unsupported kind.
-   *
-   * @generated from enum value: KIND_UNKNOWN = 0;
-   */
-  UNKNOWN = 0,
-
-  /**
-   * KIND_CHOICE is one of the setting's choices.
-   *
-   * @generated from enum value: KIND_CHOICE = 1;
-   */
-  CHOICE = 1,
-
-  /**
-   * KIND_SWITCH is on or off.
-   *
-   * @generated from enum value: KIND_SWITCH = 2;
-   */
-  SWITCH = 2,
-
-  /**
-   * KIND_NUMBER is a number from min to max, on a step from min when step
-   * is above zero.
-   *
-   * @generated from enum value: KIND_NUMBER = 3;
-   */
-  NUMBER = 3,
-}
-
-export const Setting_Kind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Setting.Kind", [
-  [0, "KIND_UNKNOWN"],
-  [1, "KIND_CHOICE"],
-  [2, "KIND_SWITCH"],
-  [3, "KIND_NUMBER"],
-]);
-
-/**
- * Kind is how a metric combines the values added to it.
- *
- * @generated from enum modlock.wasm.Metric.Kind
- */
-export enum Metric_Kind {
-  /**
-   * KIND_UNKNOWN is an unset or unsupported kind.
-   *
-   * @generated from enum value: KIND_UNKNOWN = 0;
-   */
-  UNKNOWN = 0,
-
-  /**
-   * KIND_COUNT counts the calls.
-   *
-   * @generated from enum value: KIND_COUNT = 1;
-   */
-  COUNT = 1,
-
-  /**
-   * KIND_SUM adds the values.
-   *
-   * @generated from enum value: KIND_SUM = 2;
-   */
-  SUM = 2,
-
-  /**
-   * KIND_MAX keeps the largest value.
-   *
-   * @generated from enum value: KIND_MAX = 3;
-   */
-  MAX = 3,
-}
-
-export const Metric_Kind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Metric.Kind", [
-  [0, "KIND_UNKNOWN"],
-  [1, "KIND_COUNT"],
-  [2, "KIND_SUM"],
-  [3, "KIND_MAX"],
-]);
-
-/**
- * Model is a movement model the host runs every tick.
- *
- * @generated from enum modlock.wasm.Movement.Model
- */
-export enum Movement_Model {
-  /**
-   * MODEL_NATIVE is the game's own movement.
-   *
-   * @generated from enum value: MODEL_NATIVE = 0;
-   */
-  NATIVE = 0,
-
-  /**
-   * MODEL_QUAKEWORLD is QuakeWorld's player movement against the map's
-   * Quake collision, maps/<map>.bsp, a version 29 BSP. Heroes are solid
-   * boxes to each other, and a landing raises a Landed event.
-   *
-   * @generated from enum value: MODEL_QUAKEWORLD = 1;
-   */
-  QUAKEWORLD = 1,
-}
-
-export const Movement_Model_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Movement.Model", [
-  [0, "MODEL_NATIVE"],
-  [1, "MODEL_QUAKEWORLD"],
-]);
+export const PickupKind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.PickupKind", [[0, "PICKUP_KIND_URN"], [1, "PICKUP_KIND_MOVEMENT_BUFF"]]);
 
 /**
  * Call is one method call across the boundary: a mod calling the game
@@ -519,27 +154,18 @@ export const Movement_Model_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.
 export interface Call {
   /**
    * Method names the method, such as "Chat".
-   *
-   * @generated from field: string method = 1;
    */
   method?: string;
   /**
    * Request is the method's encoded request.
-   *
-   * @generated from field: bytes request = 2;
    */
   request?: Uint8Array;
+}
 
-};
-
-export const Call: MessageType<Call> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Call",
-    fields: [
-        { no: 1, name: "method", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "request", kind: "scalar", T: ScalarType.BYTES },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Call: MessageType<Call> = /* @__PURE__ */ createMessageType<Call>("modlock.wasm.Call", () => [
+  [1, "method", 9],
+  [2, "request", 12],
+]);
 
 /**
  * Reply answers one Call.
@@ -549,27 +175,18 @@ export const Call: MessageType<Call> = /* @__PURE__ */ createMessageType({
 export interface Reply {
   /**
    * Error describes why the call failed, or is empty on success.
-   *
-   * @generated from field: string error = 1;
    */
   error?: string;
   /**
    * Response is the method's encoded response.
-   *
-   * @generated from field: bytes response = 2;
    */
   response?: Uint8Array;
+}
 
-};
-
-export const Reply: MessageType<Reply> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Reply",
-    fields: [
-        { no: 1, name: "error", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "response", kind: "scalar", T: ScalarType.BYTES },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Reply: MessageType<Reply> = /* @__PURE__ */ createMessageType<Reply>("modlock.wasm.Reply", () => [
+  [1, "error", 9],
+  [2, "response", 12],
+]);
 
 /**
  * Empty is a request or response without fields.
@@ -577,10 +194,9 @@ export const Reply: MessageType<Reply> = /* @__PURE__ */ createMessageType({
  * @generated from message modlock.wasm.Empty
  */
 export interface Empty {
+}
 
-};
-
-export const Empty: MessageType<Empty> = /* @__PURE__ */ createEmptyMessageType<Empty>("modlock.wasm.Empty", true);
+export const Empty: MessageType<Empty> = /* @__PURE__ */ createMessageType<Empty>("modlock.wasm.Empty", () => []);
 
 /**
  * StartEvent describes the server the mod starts in.
@@ -590,36 +206,25 @@ export const Empty: MessageType<Empty> = /* @__PURE__ */ createEmptyMessageType<
 export interface StartEvent {
   /**
    * Args holds the arguments that follow -- on the host command line.
-   *
-   * @generated from field: repeated string args = 1;
    */
   args?: string[];
   /**
    * CheckOnly is true when the host checks the mod without starting a game;
    * every call but Log then fails.
-   *
-   * @generated from field: bool check_only = 2;
    */
   checkOnly?: boolean;
   /**
    * Source holds an interpreted mod's entry, which the interpreter module
    * evaluates during start. It is empty for a compiled mod.
-   *
-   * @generated from field: bytes source = 3;
    */
   source?: Uint8Array;
+}
 
-};
-
-export const StartEvent: MessageType<StartEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StartEvent",
-    fields: [
-        { no: 1, name: "args", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 2, name: "check_only", kind: "scalar", T: ScalarType.BOOL },
-        { no: 3, name: "source", kind: "scalar", T: ScalarType.BYTES },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const StartEvent: MessageType<StartEvent> = /* @__PURE__ */ createMessageType<StartEvent>("modlock.wasm.StartEvent", () => [
+  [1, "args", 9, 1],
+  [2, "check_only", 8],
+  [3, "source", 12],
+]);
 
 /**
  * StartResult declares which events the mod consumes.
@@ -629,34 +234,158 @@ export const StartEvent: MessageType<StartEvent> = /* @__PURE__ */ createMessage
 export interface StartResult {
   /**
    * Frames asks for a Frame event every server frame.
-   *
-   * @generated from field: bool frames = 1;
    */
   frames?: boolean;
   /**
    * Damage asks for a Damage event before each hit.
-   *
-   * @generated from field: bool damage = 2;
    */
   damage?: boolean;
   /**
    * Damaged asks for a Damaged event after each hit.
-   *
-   * @generated from field: bool damaged = 3;
    */
   damaged?: boolean;
+}
 
-};
+export const StartResult: MessageType<StartResult> = /* @__PURE__ */ createMessageType<StartResult>("modlock.wasm.StartResult", () => [
+  [1, "frames", 8],
+  [2, "damage", 8],
+  [3, "damaged", 8],
+]);
 
-export const StartResult: MessageType<StartResult> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StartResult",
-    fields: [
-        { no: 1, name: "frames", kind: "scalar", T: ScalarType.BOOL },
-        { no: 2, name: "damage", kind: "scalar", T: ScalarType.BOOL },
-        { no: 3, name: "damaged", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * FrameEvent identifies one server frame.
+ *
+ * @generated from message modlock.wasm.FrameEvent
+ */
+export interface FrameEvent {
+  /**
+   * Tick is the server tick, or zero when the clock is unavailable.
+   */
+  tick?: bigint;
+  /**
+   * TimeSeconds is the game clock at this frame, in seconds.
+   */
+  timeSeconds?: number;
+  /**
+   * Movement holds one sample per watched, live hero when this frame starts a
+   * new tick, and is empty otherwise.
+   */
+  movement?: MovementSample[];
+}
+
+export const FrameEvent: MessageType<FrameEvent> = /* @__PURE__ */ createMessageType<FrameEvent>("modlock.wasm.FrameEvent", () => [
+  [1, "tick", 4],
+  [2, "time_seconds", 1],
+  [3, "movement", 11, 1, MovementSample.codec],
+]);
+
+/**
+ * MovementSample is one watched hero's movement on one tick, as the game keeps
+ * it. A hero whose position, velocity or ground the game does not provide has
+ * no sample; another field the game did not provide is absent or zero.
+ *
+ * @generated from message modlock.wasm.MovementSample
+ */
+export interface MovementSample {
+  /**
+   * Player is the hero's player slot.
+   */
+  player?: number;
+  /**
+   * Pawn is the hero's entity handle.
+   */
+  pawn?: number;
+  /**
+   * Position is the hero's origin, at its feet.
+   */
+  position?: Vec3;
+  /**
+   * Velocity is the hero's motion in units per second.
+   */
+  velocity?: Vec3;
+  /**
+   * Grounded is true while the hero stands on something. Sliding, Mantling,
+   * Climbing and Dashing are the game's movement states.
+   */
+  grounded?: boolean;
+  sliding?: boolean;
+  mantling?: boolean;
+  climbing?: boolean;
+  dashing?: boolean;
+  /**
+   * JumpAbility is the hero's jump ability, and WallJumps the game's count of
+   * consecutive wall jumps on it.
+   */
+  jumpAbility?: number;
+  wallJumps?: number;
+  /**
+   * MantleAbility is the hero's mantle ability, and MantleStart the game time
+   * its latest mantle began.
+   */
+  mantleAbility?: number;
+  mantleStart?: number;
+  /**
+   * WallContact is where the hero was when the jump ability last found a wall
+   * to jump off; it holds still once no wall qualifies.
+   */
+  wallContact?: Vec3;
+  /**
+   * WallNormal is the last wall touched, never cleared.
+   */
+  wallNormal?: Vec3;
+  /**
+   * WallJumpNormal is the normal the latest wall jump used.
+   */
+  wallJumpNormal?: Vec3;
+  /**
+   * WallJumpFacing is the game's EWallJumpFacing, zero when not on a wall.
+   */
+  wallJumpFacing?: number;
+  /**
+   * ZiplineTime is the game time the hero last rode a zipline; it advances on
+   * every tick of a ride.
+   */
+  ziplineTime?: number;
+  /**
+   * Actions are the movement facts the game announced since the last tick.
+   */
+  actions?: MovementAction[];
+  /**
+   * Casts are the abilities the hero cast since the last tick, one per
+   * MOVEMENT_ACTION_ABILITY_EXECUTED, by entity handle as Ability.entity
+   * reports it; Abilities names each one's slot.
+   */
+  casts?: number[];
+  /**
+   * Command is the movement the hero's player commanded since the last
+   * sample, absent before the game ran any of it.
+   */
+  command?: MovementCommand;
+}
+
+export const MovementSample: MessageType<MovementSample> = /* @__PURE__ */ createMessageType<MovementSample>("modlock.wasm.MovementSample", () => [
+  [1, "player", 5],
+  [2, "pawn", 13],
+  [3, "position", 11, 0, Vec3.codec],
+  [4, "velocity", 11, 0, Vec3.codec],
+  [6, "grounded", 8],
+  [7, "sliding", 8],
+  [8, "mantling", 8],
+  [9, "climbing", 8],
+  [10, "dashing", 8],
+  [11, "jump_ability", 13],
+  [12, "wall_jumps", 5],
+  [13, "mantle_ability", 13],
+  [14, "mantle_start", 2],
+  [15, "wall_contact", 11, 0, Vec3.codec],
+  [16, "wall_normal", 11, 0, Vec3.codec],
+  [17, "wall_jump_normal", 11, 0, Vec3.codec],
+  [18, "wall_jump_facing", 13],
+  [19, "zipline_time", 2, 4],
+  [20, "actions", 14, 3, MovementAction_Enum],
+  [21, "casts", 13, 3],
+  [22, "command", 11, 0, MovementCommand.codec],
+]);
 
 /**
  * MovementCommand is the movement a player commanded over one tick. The
@@ -671,253 +400,31 @@ export interface MovementCommand {
    * Held, Changed and Scroll are the game's InButtonState masks as Buttons
    * bits: the buttons down, the buttons that went down or up, and the
    * presses of scroll-wheel buttons.
-   *
-   * @generated from field: uint64 held = 1;
    */
   held?: bigint;
-  /**
-   * @generated from field: uint64 changed = 2;
-   */
   changed?: bigint;
-  /**
-   * @generated from field: uint64 scroll = 3;
-   */
   scroll?: bigint;
   /**
    * Forward, Left and Up are the movement axes, from -1 to 1.
-   *
-   * @generated from field: float forward = 4;
    */
   forward?: number;
-  /**
-   * @generated from field: float left = 5;
-   */
   left?: number;
-  /**
-   * @generated from field: float up = 6;
-   */
   up?: number;
   /**
    * Grounded is true when the hero stood on something as the tick began.
-   *
-   * @generated from field: bool grounded = 7;
    */
   grounded?: boolean;
+}
 
-};
-
-export const MovementCommand: MessageType<MovementCommand> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MovementCommand",
-    fields: [
-        { no: 1, name: "held", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 2, name: "changed", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 3, name: "scroll", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 4, name: "forward", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 5, name: "left", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 6, name: "up", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 7, name: "grounded", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * MovementSample is one watched hero's movement on one tick, as the game keeps
- * it. A hero whose position, velocity or ground the game does not provide has
- * no sample; another field the game did not provide is absent or zero.
- *
- * @generated from message modlock.wasm.MovementSample
- */
-export interface MovementSample {
-  /**
-   * Player is the hero's player slot.
-   *
-   * @generated from field: int32 player = 1;
-   */
-  player?: number;
-  /**
-   * Pawn is the hero's entity handle.
-   *
-   * @generated from field: uint32 pawn = 2;
-   */
-  pawn?: number;
-  /**
-   * Position is the hero's origin, at its feet.
-   *
-   * @generated from field: modlock.Vec3 position = 3;
-   */
-  position?: Vec3;
-  /**
-   * Velocity is the hero's motion in units per second.
-   *
-   * @generated from field: modlock.Vec3 velocity = 4;
-   */
-  velocity?: Vec3;
-  /**
-   * Grounded is true while the hero stands on something. Sliding, Mantling,
-   * Climbing and Dashing are the game's movement states.
-   *
-   * @generated from field: bool grounded = 6;
-   */
-  grounded?: boolean;
-  /**
-   * @generated from field: bool sliding = 7;
-   */
-  sliding?: boolean;
-  /**
-   * @generated from field: bool mantling = 8;
-   */
-  mantling?: boolean;
-  /**
-   * @generated from field: bool climbing = 9;
-   */
-  climbing?: boolean;
-  /**
-   * @generated from field: bool dashing = 10;
-   */
-  dashing?: boolean;
-  /**
-   * JumpAbility is the hero's jump ability, and WallJumps the game's count of
-   * consecutive wall jumps on it.
-   *
-   * @generated from field: uint32 jump_ability = 11;
-   */
-  jumpAbility?: number;
-  /**
-   * @generated from field: int32 wall_jumps = 12;
-   */
-  wallJumps?: number;
-  /**
-   * MantleAbility is the hero's mantle ability, and MantleStart the game time
-   * its latest mantle began.
-   *
-   * @generated from field: uint32 mantle_ability = 13;
-   */
-  mantleAbility?: number;
-  /**
-   * @generated from field: float mantle_start = 14;
-   */
-  mantleStart?: number;
-  /**
-   * WallContact is where the hero was when the jump ability last found a wall
-   * to jump off; it holds still once no wall qualifies.
-   *
-   * @generated from field: modlock.Vec3 wall_contact = 15;
-   */
-  wallContact?: Vec3;
-  /**
-   * WallNormal is the last wall touched, never cleared.
-   *
-   * @generated from field: modlock.Vec3 wall_normal = 16;
-   */
-  wallNormal?: Vec3;
-  /**
-   * WallJumpNormal is the normal the latest wall jump used.
-   *
-   * @generated from field: modlock.Vec3 wall_jump_normal = 17;
-   */
-  wallJumpNormal?: Vec3;
-  /**
-   * WallJumpFacing is the game's EWallJumpFacing, zero when not on a wall.
-   *
-   * @generated from field: uint32 wall_jump_facing = 18;
-   */
-  wallJumpFacing?: number;
-  /**
-   * ZiplineTime is the game time the hero last rode a zipline; it advances on
-   * every tick of a ride.
-   *
-   * @generated from field: optional float zipline_time = 19;
-   */
-  ziplineTime?: number;
-  /**
-   * Actions are the movement facts the game announced since the last tick.
-   *
-   * @generated from field: repeated modlock.wasm.MovementAction actions = 20;
-   */
-  actions?: MovementAction[];
-  /**
-   * Casts are the abilities the hero cast since the last tick, one per
-   * MOVEMENT_ACTION_ABILITY_EXECUTED, by entity handle as Ability.entity
-   * reports it; Abilities names each one's slot.
-   *
-   * @generated from field: repeated uint32 casts = 21;
-   */
-  casts?: number[];
-  /**
-   * Command is the movement the hero's player commanded since the last
-   * sample, absent before the game ran any of it.
-   *
-   * @generated from field: optional modlock.wasm.MovementCommand command = 22;
-   */
-  command?: MovementCommand;
-
-};
-
-export const MovementSample: MessageType<MovementSample> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MovementSample",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "pawn", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "position", kind: "message", T: () => Vec3 },
-        { no: 4, name: "velocity", kind: "message", T: () => Vec3 },
-        { no: 6, name: "grounded", kind: "scalar", T: ScalarType.BOOL },
-        { no: 7, name: "sliding", kind: "scalar", T: ScalarType.BOOL },
-        { no: 8, name: "mantling", kind: "scalar", T: ScalarType.BOOL },
-        { no: 9, name: "climbing", kind: "scalar", T: ScalarType.BOOL },
-        { no: 10, name: "dashing", kind: "scalar", T: ScalarType.BOOL },
-        { no: 11, name: "jump_ability", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 12, name: "wall_jumps", kind: "scalar", T: ScalarType.INT32 },
-        { no: 13, name: "mantle_ability", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 14, name: "mantle_start", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 15, name: "wall_contact", kind: "message", T: () => Vec3 },
-        { no: 16, name: "wall_normal", kind: "message", T: () => Vec3 },
-        { no: 17, name: "wall_jump_normal", kind: "message", T: () => Vec3 },
-        { no: 18, name: "wall_jump_facing", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 19, name: "zipline_time", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 20, name: "actions", kind: "enum", T: MovementAction_Enum, repeated: true },
-        { no: 21, name: "casts", kind: "scalar", T: ScalarType.UINT32, repeated: true },
-        { no: 22, name: "command", kind: "message", T: () => MovementCommand, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * FrameEvent identifies one server frame.
- *
- * @generated from message modlock.wasm.FrameEvent
- */
-export interface FrameEvent {
-  /**
-   * Tick is the server tick, or zero when the clock is unavailable.
-   *
-   * @generated from field: uint64 tick = 1;
-   */
-  tick?: bigint;
-  /**
-   * TimeSeconds is the game clock at this frame, in seconds.
-   *
-   * @generated from field: double time_seconds = 2;
-   */
-  timeSeconds?: number;
-  /**
-   * Movement holds one sample per watched, live hero when this frame starts a
-   * new tick, and is empty otherwise.
-   *
-   * @generated from field: repeated modlock.wasm.MovementSample movement = 3;
-   */
-  movement?: MovementSample[];
-
-};
-
-export const FrameEvent: MessageType<FrameEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FrameEvent",
-    fields: [
-        { no: 1, name: "tick", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 2, name: "time_seconds", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 3, name: "movement", kind: "message", T: () => MovementSample, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MovementCommand: MessageType<MovementCommand> = /* @__PURE__ */ createMessageType<MovementCommand>("modlock.wasm.MovementCommand", () => [
+  [1, "held", 4],
+  [2, "changed", 4],
+  [3, "scroll", 4],
+  [4, "forward", 2],
+  [5, "left", 2],
+  [6, "up", 2],
+  [7, "grounded", 8],
+]);
 
 /**
  * CommandEvent carries one command line from a player: a chat line that
@@ -929,27 +436,18 @@ export const FrameEvent: MessageType<FrameEvent> = /* @__PURE__ */ createMessage
 export interface CommandEvent {
   /**
    * Player is the player who typed the command.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Line is the complete command line, starting with the command name.
-   *
-   * @generated from field: string line = 2;
    */
   line?: string;
+}
 
-};
-
-export const CommandEvent: MessageType<CommandEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.CommandEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "line", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CommandEvent: MessageType<CommandEvent> = /* @__PURE__ */ createMessageType<CommandEvent>("modlock.wasm.CommandEvent", () => [
+  [1, "player", 5],
+  [2, "line", 9],
+]);
 
 /**
  * CommandResult answers whether the mod handled a command.
@@ -960,20 +458,13 @@ export interface CommandResult {
   /**
    * Claimed ends the command's dispatch; the game and later mods do not see
    * it.
-   *
-   * @generated from field: bool claimed = 1;
    */
   claimed?: boolean;
+}
 
-};
-
-export const CommandResult: MessageType<CommandResult> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.CommandResult",
-    fields: [
-        { no: 1, name: "claimed", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CommandResult: MessageType<CommandResult> = /* @__PURE__ */ createMessageType<CommandResult>("modlock.wasm.CommandResult", () => [
+  [1, "claimed", 8],
+]);
 
 /**
  * WorldEvent announces a loaded world.
@@ -983,20 +474,13 @@ export const CommandResult: MessageType<CommandResult> = /* @__PURE__ */ createM
 export interface WorldEvent {
   /**
    * Map names the world's map.
-   *
-   * @generated from field: string map = 1;
    */
   map?: string;
+}
 
-};
-
-export const WorldEvent: MessageType<WorldEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.WorldEvent",
-    fields: [
-        { no: 1, name: "map", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const WorldEvent: MessageType<WorldEvent> = /* @__PURE__ */ createMessageType<WorldEvent>("modlock.wasm.WorldEvent", () => [
+  [1, "map", 9],
+]);
 
 /**
  * UiPressEvent reports a press on a button in a player's interface.
@@ -1006,27 +490,18 @@ export const WorldEvent: MessageType<WorldEvent> = /* @__PURE__ */ createMessage
 export interface UiPressEvent {
   /**
    * Player is the player who pressed.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Node is the id of the pressed button.
-   *
-   * @generated from field: string node = 2;
    */
   node?: string;
+}
 
-};
-
-export const UiPressEvent: MessageType<UiPressEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.UiPressEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "node", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const UiPressEvent: MessageType<UiPressEvent> = /* @__PURE__ */ createMessageType<UiPressEvent>("modlock.wasm.UiPressEvent", () => [
+  [1, "player", 5],
+  [2, "node", 9],
+]);
 
 /**
  * ServiceCall calls one method of a service outside Modlock. A host that
@@ -1039,34 +514,23 @@ export const UiPressEvent: MessageType<UiPressEvent> = /* @__PURE__ */ createMes
 export interface ServiceCall {
   /**
    * Service names the service, such as "arena.match".
-   *
-   * @generated from field: string service = 1;
    */
   service?: string;
   /**
    * Method names the method within the service.
-   *
-   * @generated from field: string method = 2;
    */
   method?: string;
   /**
    * Payload is the call's argument.
-   *
-   * @generated from field: bytes payload = 3;
    */
   payload?: Uint8Array;
+}
 
-};
-
-export const ServiceCall: MessageType<ServiceCall> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ServiceCall",
-    fields: [
-        { no: 1, name: "service", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "method", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "payload", kind: "scalar", T: ScalarType.BYTES },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ServiceCall: MessageType<ServiceCall> = /* @__PURE__ */ createMessageType<ServiceCall>("modlock.wasm.ServiceCall", () => [
+  [1, "service", 9],
+  [2, "method", 9],
+  [3, "payload", 12],
+]);
 
 /**
  * ServiceReply is a service's answer.
@@ -1076,20 +540,13 @@ export const ServiceCall: MessageType<ServiceCall> = /* @__PURE__ */ createMessa
 export interface ServiceReply {
   /**
    * Payload is the answer.
-   *
-   * @generated from field: bytes payload = 1;
    */
   payload?: Uint8Array;
+}
 
-};
-
-export const ServiceReply: MessageType<ServiceReply> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ServiceReply",
-    fields: [
-        { no: 1, name: "payload", kind: "scalar", T: ScalarType.BYTES },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ServiceReply: MessageType<ServiceReply> = /* @__PURE__ */ createMessageType<ServiceReply>("modlock.wasm.ServiceReply", () => [
+  [1, "payload", 12],
+]);
 
 /**
  * DamageEvent is one hit before the game applies it. Handles are zero when
@@ -1100,64 +557,45 @@ export const ServiceReply: MessageType<ServiceReply> = /* @__PURE__ */ createMes
 export interface DamageEvent {
   /**
    * Victim is the entity taking the hit.
-   *
-   * @generated from field: uint32 victim = 1;
    */
   victim?: number;
   /**
    * Attacker is the entity credited with the hit. Zero makes the hit a
    * hazard, such as poison gas, which credits no one and ignores the
    * inflictor and hit group.
-   *
-   * @generated from field: uint32 attacker = 2;
    */
   attacker?: number;
   /**
    * Inflictor is what delivered the hit, such as a projectile.
-   *
-   * @generated from field: uint32 inflictor = 3;
    */
   inflictor?: number;
   /**
    * Ability is the ability that dealt the hit.
-   *
-   * @generated from field: uint32 ability = 4;
    */
   ability?: number;
   /**
    * Flags are the game's damage flags.
-   *
-   * @generated from field: uint64 flags = 5;
    */
   flags?: bigint;
   /**
    * HitGroup is the body part hit; 1 is the head and -1 means none.
-   *
-   * @generated from field: int32 hit_group = 6;
    */
   hitGroup?: number;
   /**
    * Amount is the hit's damage before resistances.
-   *
-   * @generated from field: float amount = 7;
    */
   amount?: number;
+}
 
-};
-
-export const DamageEvent: MessageType<DamageEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.DamageEvent",
-    fields: [
-        { no: 1, name: "victim", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "attacker", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "inflictor", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "ability", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 5, name: "flags", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 6, name: "hit_group", kind: "scalar", T: ScalarType.INT32 },
-        { no: 7, name: "amount", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const DamageEvent: MessageType<DamageEvent> = /* @__PURE__ */ createMessageType<DamageEvent>("modlock.wasm.DamageEvent", () => [
+  [1, "victim", 13],
+  [2, "attacker", 13],
+  [3, "inflictor", 13],
+  [4, "ability", 13],
+  [5, "flags", 4],
+  [6, "hit_group", 5],
+  [7, "amount", 2],
+]);
 
 /**
  * DamageResult answers a DamageEvent. An empty result lets the hit through.
@@ -1167,27 +605,18 @@ export const DamageEvent: MessageType<DamageEvent> = /* @__PURE__ */ createMessa
 export interface DamageResult {
   /**
    * Block cancels the hit's health loss, force, effects and procs.
-   *
-   * @generated from field: optional bool block = 1;
    */
   block?: boolean;
   /**
    * Amount replaces the hit's damage when present.
-   *
-   * @generated from field: optional float amount = 2;
    */
   amount?: number;
+}
 
-};
-
-export const DamageResult: MessageType<DamageResult> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.DamageResult",
-    fields: [
-        { no: 1, name: "block", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 2, name: "amount", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const DamageResult: MessageType<DamageResult> = /* @__PURE__ */ createMessageType<DamageResult>("modlock.wasm.DamageResult", () => [
+  [1, "block", 8, 4],
+  [2, "amount", 2, 4],
+]);
 
 /**
  * DamagedEvent reports one hit the game applied.
@@ -1197,57 +626,40 @@ export const DamageResult: MessageType<DamageResult> = /* @__PURE__ */ createMes
 export interface DamagedEvent {
   /**
    * Victim is the entity that took the hit.
-   *
-   * @generated from field: uint32 victim = 1;
    */
   victim?: number;
   /**
    * Attacker is the entity credited with the hit, or zero for a hazard.
-   *
-   * @generated from field: uint32 attacker = 2;
    */
   attacker?: number;
   /**
    * Ability is the ability that dealt the hit.
-   *
-   * @generated from field: uint32 ability = 3;
    */
   ability?: number;
   /**
    * HealthLost is the health the hit removed, after resistances.
-   *
-   * @generated from field: int32 health_lost = 4;
    */
   healthLost?: number;
   /**
    * HealthBefore is the victim's health before the hit; a hit that removes
    * all of it kills.
-   *
-   * @generated from field: int32 health_before = 5;
    */
   healthBefore?: number;
   /**
    * Dealt is the hit's damage after resistances, before the victim's health
    * capped it.
-   *
-   * @generated from field: int32 dealt = 6;
    */
   dealt?: number;
+}
 
-};
-
-export const DamagedEvent: MessageType<DamagedEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.DamagedEvent",
-    fields: [
-        { no: 1, name: "victim", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "attacker", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "ability", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "health_lost", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "health_before", kind: "scalar", T: ScalarType.INT32 },
-        { no: 6, name: "dealt", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const DamagedEvent: MessageType<DamagedEvent> = /* @__PURE__ */ createMessageType<DamagedEvent>("modlock.wasm.DamagedEvent", () => [
+  [1, "victim", 13],
+  [2, "attacker", 13],
+  [3, "ability", 13],
+  [4, "health_lost", 5],
+  [5, "health_before", 5],
+  [6, "dealt", 5],
+]);
 
 /**
  * InputEvent is one player's watched buttons that went down or up.
@@ -1257,34 +669,23 @@ export const DamagedEvent: MessageType<DamagedEvent> = /* @__PURE__ */ createMes
 export interface InputEvent {
   /**
    * Player is the player who pressed.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Pressed holds one bit per button that went down.
-   *
-   * @generated from field: uint64 pressed = 2;
    */
   pressed?: bigint;
   /**
    * Released holds one bit per button that went up.
-   *
-   * @generated from field: uint64 released = 3;
    */
   released?: bigint;
+}
 
-};
-
-export const InputEvent: MessageType<InputEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.InputEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "pressed", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 3, name: "released", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const InputEvent: MessageType<InputEvent> = /* @__PURE__ */ createMessageType<InputEvent>("modlock.wasm.InputEvent", () => [
+  [1, "player", 5],
+  [2, "pressed", 4],
+  [3, "released", 4],
+]);
 
 /**
  * RestoredEvent reports how a RestoreHero ended.
@@ -1294,28 +695,19 @@ export const InputEvent: MessageType<InputEvent> = /* @__PURE__ */ createMessage
 export interface RestoredEvent {
   /**
    * Player is the player whose hero was restored.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Error describes why the hero does not match its target, or is empty when
    * it held the target for a second.
-   *
-   * @generated from field: string error = 2;
    */
   error?: string;
+}
 
-};
-
-export const RestoredEvent: MessageType<RestoredEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RestoredEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "error", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const RestoredEvent: MessageType<RestoredEvent> = /* @__PURE__ */ createMessageType<RestoredEvent>("modlock.wasm.RestoredEvent", () => [
+  [1, "player", 5],
+  [2, "error", 9],
+]);
 
 /**
  * NpcsRestoredEvent reports how a RestoreNpcs ended.
@@ -1326,20 +718,13 @@ export interface NpcsRestoredEvent {
   /**
    * Error describes the unit that does not match its target, or is empty
    * when every target was found in place.
-   *
-   * @generated from field: string error = 1;
    */
   error?: string;
+}
 
-};
-
-export const NpcsRestoredEvent: MessageType<NpcsRestoredEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcsRestoredEvent",
-    fields: [
-        { no: 1, name: "error", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const NpcsRestoredEvent: MessageType<NpcsRestoredEvent> = /* @__PURE__ */ createMessageType<NpcsRestoredEvent>("modlock.wasm.NpcsRestoredEvent", () => [
+  [1, "error", 9],
+]);
 
 /**
  * LaunchEvent is a watched projectile's first frame.
@@ -1349,48 +734,33 @@ export const NpcsRestoredEvent: MessageType<NpcsRestoredEvent> = /* @__PURE__ */
 export interface LaunchEvent {
   /**
    * Entity is the projectile's entity handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Name is the projectile's designer name.
-   *
-   * @generated from field: string name = 2;
    */
   name?: string;
   /**
    * Owner is the entity that fired it, or zero.
-   *
-   * @generated from field: uint32 owner = 3;
    */
   owner?: number;
   /**
    * Player is the slot of the player whose hero fired it, or -1.
-   *
-   * @generated from field: int32 player = 4;
    */
   player?: number;
   /**
    * Position is where the projectile is.
-   *
-   * @generated from field: modlock.Vec3 position = 5;
    */
   position?: Vec3;
+}
 
-};
-
-export const LaunchEvent: MessageType<LaunchEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.LaunchEvent",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "owner", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "position", kind: "message", T: () => Vec3 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const LaunchEvent: MessageType<LaunchEvent> = /* @__PURE__ */ createMessageType<LaunchEvent>("modlock.wasm.LaunchEvent", () => [
+  [1, "entity", 13],
+  [2, "name", 9],
+  [3, "owner", 13],
+  [4, "player", 5],
+  [5, "position", 11, 0, Vec3.codec],
+]);
 
 /**
  * ImpactEvent is a watched projectile striking something.
@@ -1400,68 +770,46 @@ export const LaunchEvent: MessageType<LaunchEvent> = /* @__PURE__ */ createMessa
 export interface ImpactEvent {
   /**
    * Entity is the projectile's entity handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Name is the projectile's designer name.
-   *
-   * @generated from field: string name = 2;
    */
   name?: string;
   /**
    * Owner is the entity that fired it, or zero.
-   *
-   * @generated from field: uint32 owner = 3;
    */
   owner?: number;
   /**
    * Player is the slot of the player whose hero fired it, or -1.
-   *
-   * @generated from field: int32 player = 4;
    */
   player?: number;
   /**
    * Start and End are the projectile's movement this frame, which ended in
    * the strike.
-   *
-   * @generated from field: modlock.Vec3 start = 5;
    */
   start?: Vec3;
-  /**
-   * @generated from field: modlock.Vec3 end = 6;
-   */
   end?: Vec3;
   /**
    * Position is where it struck.
-   *
-   * @generated from field: modlock.Vec3 position = 7;
    */
   position?: Vec3;
   /**
    * Hit is the entity struck, or zero for the world.
-   *
-   * @generated from field: uint32 hit = 8;
    */
   hit?: number;
+}
 
-};
-
-export const ImpactEvent: MessageType<ImpactEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ImpactEvent",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "owner", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "start", kind: "message", T: () => Vec3 },
-        { no: 6, name: "end", kind: "message", T: () => Vec3 },
-        { no: 7, name: "position", kind: "message", T: () => Vec3 },
-        { no: 8, name: "hit", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ImpactEvent: MessageType<ImpactEvent> = /* @__PURE__ */ createMessageType<ImpactEvent>("modlock.wasm.ImpactEvent", () => [
+  [1, "entity", 13],
+  [2, "name", 9],
+  [3, "owner", 13],
+  [4, "player", 5],
+  [5, "start", 11, 0, Vec3.codec],
+  [6, "end", 11, 0, Vec3.codec],
+  [7, "position", 11, 0, Vec3.codec],
+  [8, "hit", 13],
+]);
 
 /**
  * LandedEvent is one hero landing.
@@ -1471,34 +819,23 @@ export const ImpactEvent: MessageType<ImpactEvent> = /* @__PURE__ */ createMessa
 export interface LandedEvent {
   /**
    * Player is the slot of the player who landed.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * On is the slot of the player landed on, or -1 for the world.
-   *
-   * @generated from field: int32 on = 2;
    */
   on?: number;
   /**
    * Speed is the downward speed just before landing, in units per second.
-   *
-   * @generated from field: float speed = 3;
    */
   speed?: number;
+}
 
-};
-
-export const LandedEvent: MessageType<LandedEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.LandedEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "on", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "speed", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const LandedEvent: MessageType<LandedEvent> = /* @__PURE__ */ createMessageType<LandedEvent>("modlock.wasm.LandedEvent", () => [
+  [1, "player", 5],
+  [2, "on", 5],
+  [3, "speed", 2],
+]);
 
 /**
  * SettingChangedEvent is one player's new value of one setting.
@@ -1508,34 +845,23 @@ export const LandedEvent: MessageType<LandedEvent> = /* @__PURE__ */ createMessa
 export interface SettingChangedEvent {
   /**
    * Player is the player's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Key names the setting.
-   *
-   * @generated from field: string key = 2;
    */
   key?: string;
   /**
    * Value is the new value.
-   *
-   * @generated from field: string value = 3;
    */
   value?: string;
+}
 
-};
-
-export const SettingChangedEvent: MessageType<SettingChangedEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SettingChangedEvent",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "key", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "value", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SettingChangedEvent: MessageType<SettingChangedEvent> = /* @__PURE__ */ createMessageType<SettingChangedEvent>("modlock.wasm.SettingChangedEvent", () => [
+  [1, "player", 5],
+  [2, "key", 9],
+  [3, "value", 9],
+]);
 
 /**
  * LogRequest carries one log line.
@@ -1545,20 +871,13 @@ export const SettingChangedEvent: MessageType<SettingChangedEvent> = /* @__PURE_
 export interface LogRequest {
   /**
    * Message is the text to log, without a trailing newline.
-   *
-   * @generated from field: string message = 1;
    */
   message?: string;
+}
 
-};
-
-export const LogRequest: MessageType<LogRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.LogRequest",
-    fields: [
-        { no: 1, name: "message", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const LogRequest: MessageType<LogRequest> = /* @__PURE__ */ createMessageType<LogRequest>("modlock.wasm.LogRequest", () => [
+  [1, "message", 9],
+]);
 
 /**
  * ServerCommandRequest carries one server console line.
@@ -1568,20 +887,13 @@ export const LogRequest: MessageType<LogRequest> = /* @__PURE__ */ createMessage
 export interface ServerCommandRequest {
   /**
    * Command is the console line, without a trailing newline.
-   *
-   * @generated from field: string command = 1;
    */
   command?: string;
+}
 
-};
-
-export const ServerCommandRequest: MessageType<ServerCommandRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ServerCommandRequest",
-    fields: [
-        { no: 1, name: "command", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ServerCommandRequest: MessageType<ServerCommandRequest> = /* @__PURE__ */ createMessageType<ServerCommandRequest>("modlock.wasm.ServerCommandRequest", () => [
+  [1, "command", 9],
+]);
 
 /**
  * PlayerRequest addresses one player.
@@ -1591,20 +903,13 @@ export const ServerCommandRequest: MessageType<ServerCommandRequest> = /* @__PUR
 export interface PlayerRequest {
   /**
    * Player is the player's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
+}
 
-};
-
-export const PlayerRequest: MessageType<PlayerRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PlayerRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerRequest: MessageType<PlayerRequest> = /* @__PURE__ */ createMessageType<PlayerRequest>("modlock.wasm.PlayerRequest", () => [
+  [1, "player", 5],
+]);
 
 /**
  * PlayerSettingRequest names one of a player's settings.
@@ -1614,27 +919,18 @@ export const PlayerRequest: MessageType<PlayerRequest> = /* @__PURE__ */ createM
 export interface PlayerSettingRequest {
   /**
    * Player is the player's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Key names a setting the manifest declares.
-   *
-   * @generated from field: string key = 2;
    */
   key?: string;
+}
 
-};
-
-export const PlayerSettingRequest: MessageType<PlayerSettingRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PlayerSettingRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "key", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerSettingRequest: MessageType<PlayerSettingRequest> = /* @__PURE__ */ createMessageType<PlayerSettingRequest>("modlock.wasm.PlayerSettingRequest", () => [
+  [1, "player", 5],
+  [2, "key", 9],
+]);
 
 /**
  * SettingResponse holds a setting's value.
@@ -1645,20 +941,13 @@ export interface SettingResponse {
   /**
    * Value is the value as text: a choice's value, "true" or "false", or a
    * number.
-   *
-   * @generated from field: string value = 1;
    */
   value?: string;
+}
 
-};
-
-export const SettingResponse: MessageType<SettingResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SettingResponse",
-    fields: [
-        { no: 1, name: "value", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SettingResponse: MessageType<SettingResponse> = /* @__PURE__ */ createMessageType<SettingResponse>("modlock.wasm.SettingResponse", () => [
+  [1, "value", 9],
+]);
 
 /**
  * AddMetricRequest adds to one of a player's metric totals.
@@ -1668,43 +957,30 @@ export const SettingResponse: MessageType<SettingResponse> = /* @__PURE__ */ cre
 export interface AddMetricRequest {
   /**
    * Player is the player's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Name names a metric the manifest declares.
-   *
-   * @generated from field: string name = 2;
    */
   name?: string;
   /**
    * Value is the amount a sum adds and the value a maximum compares; a
    * count adds one.
-   *
-   * @generated from field: double value = 3;
    */
   value?: number;
   /**
    * Label is one of the metric's declared labels, or empty for a metric
    * without labels.
-   *
-   * @generated from field: optional string label = 4;
    */
   label?: string;
+}
 
-};
-
-export const AddMetricRequest: MessageType<AddMetricRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AddMetricRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "value", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 4, name: "label", kind: "scalar", T: ScalarType.STRING, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const AddMetricRequest: MessageType<AddMetricRequest> = /* @__PURE__ */ createMessageType<AddMetricRequest>("modlock.wasm.AddMetricRequest", () => [
+  [1, "player", 5],
+  [2, "name", 9],
+  [3, "value", 1],
+  [4, "label", 9, 4],
+]);
 
 /**
  * HoldReloadRequest holds or releases the mod's running build.
@@ -1715,20 +991,13 @@ export interface HoldReloadRequest {
   /**
    * Held is true to keep the running build through a reload, and false to
    * let a waiting reload apply.
-   *
-   * @generated from field: bool held = 1;
    */
   held?: boolean;
+}
 
-};
-
-export const HoldReloadRequest: MessageType<HoldReloadRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HoldReloadRequest",
-    fields: [
-        { no: 1, name: "held", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HoldReloadRequest: MessageType<HoldReloadRequest> = /* @__PURE__ */ createMessageType<HoldReloadRequest>("modlock.wasm.HoldReloadRequest", () => [
+  [1, "held", 8],
+]);
 
 /**
  * SetPlayerSettingRequest changes one of a player's settings.
@@ -1738,34 +1007,23 @@ export const HoldReloadRequest: MessageType<HoldReloadRequest> = /* @__PURE__ */
 export interface SetPlayerSettingRequest {
   /**
    * Player is the player's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Key names a setting the manifest declares.
-   *
-   * @generated from field: string key = 2;
    */
   key?: string;
   /**
    * Value is one of the setting's values, as SettingResponse holds it.
-   *
-   * @generated from field: string value = 3;
    */
   value?: string;
+}
 
-};
-
-export const SetPlayerSettingRequest: MessageType<SetPlayerSettingRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetPlayerSettingRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "key", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "value", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetPlayerSettingRequest: MessageType<SetPlayerSettingRequest> = /* @__PURE__ */ createMessageType<SetPlayerSettingRequest>("modlock.wasm.SetPlayerSettingRequest", () => [
+  [1, "player", 5],
+  [2, "key", 9],
+  [3, "value", 9],
+]);
 
 /**
  * ChatRequest addresses server chat to one player.
@@ -1773,27 +1031,17 @@ export const SetPlayerSettingRequest: MessageType<SetPlayerSettingRequest> = /* 
  * @generated from message modlock.wasm.ChatRequest
  */
 export interface ChatRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Text is the chat line.
-   *
-   * @generated from field: string text = 2;
    */
   text?: string;
+}
 
-};
-
-export const ChatRequest: MessageType<ChatRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ChatRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ChatRequest: MessageType<ChatRequest> = /* @__PURE__ */ createMessageType<ChatRequest>("modlock.wasm.ChatRequest", () => [
+  [1, "player", 5],
+  [2, "text", 9],
+]);
 
 /**
  * CenterTextRequest replaces one player's center text.
@@ -1801,27 +1049,17 @@ export const ChatRequest: MessageType<ChatRequest> = /* @__PURE__ */ createMessa
  * @generated from message modlock.wasm.CenterTextRequest
  */
 export interface CenterTextRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Text is the text to show; empty text clears it.
-   *
-   * @generated from field: string text = 2;
    */
   text?: string;
+}
 
-};
-
-export const CenterTextRequest: MessageType<CenterTextRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.CenterTextRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CenterTextRequest: MessageType<CenterTextRequest> = /* @__PURE__ */ createMessageType<CenterTextRequest>("modlock.wasm.CenterTextRequest", () => [
+  [1, "player", 5],
+  [2, "text", 9],
+]);
 
 /**
  * AnnounceRequest addresses a game announcement to one player.
@@ -1829,34 +1067,22 @@ export const CenterTextRequest: MessageType<CenterTextRequest> = /* @__PURE__ */
  * @generated from message modlock.wasm.AnnounceRequest
  */
 export interface AnnounceRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Title is the announcement's heading.
-   *
-   * @generated from field: string title = 2;
    */
   title?: string;
   /**
    * Text is the announcement's body.
-   *
-   * @generated from field: string text = 3;
    */
   text?: string;
+}
 
-};
-
-export const AnnounceRequest: MessageType<AnnounceRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AnnounceRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "title", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const AnnounceRequest: MessageType<AnnounceRequest> = /* @__PURE__ */ createMessageType<AnnounceRequest>("modlock.wasm.AnnounceRequest", () => [
+  [1, "player", 5],
+  [2, "title", 9],
+  [3, "text", 9],
+]);
 
 /**
  * PrecacheOptions names what the next world loads ahead of use.
@@ -1866,27 +1092,31 @@ export const AnnounceRequest: MessageType<AnnounceRequest> = /* @__PURE__ */ cre
 export interface PrecacheOptions {
   /**
    * Heroes are hero names, such as hero_wraith.
-   *
-   * @generated from field: repeated string heroes = 1;
    */
   heroes?: string[];
   /**
    * Resources are model and particle paths, such as models/props/crate.vmdl.
-   *
-   * @generated from field: repeated string resources = 2;
    */
   resources?: string[];
+}
 
-};
+export const PrecacheOptions: MessageType<PrecacheOptions> = /* @__PURE__ */ createMessageType<PrecacheOptions>("modlock.wasm.PrecacheOptions", () => [
+  [1, "heroes", 9, 1],
+  [2, "resources", 9, 1],
+]);
 
-export const PrecacheOptions: MessageType<PrecacheOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PrecacheOptions",
-    fields: [
-        { no: 1, name: "heroes", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 2, name: "resources", kind: "scalar", T: ScalarType.STRING, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * PlayersResponse lists the occupied player slots in slot order.
+ *
+ * @generated from message modlock.wasm.PlayersResponse
+ */
+export interface PlayersResponse {
+  players?: Connection[];
+}
+
+export const PlayersResponse: MessageType<PlayersResponse> = /* @__PURE__ */ createMessageType<PlayersResponse>("modlock.wasm.PlayersResponse", () => [
+  [1, "players", 11, 1, Connection.codec],
+]);
 
 /**
  * Connection is one occupied player slot.
@@ -1896,143 +1126,51 @@ export const PrecacheOptions: MessageType<PrecacheOptions> = /* @__PURE__ */ cre
 export interface Connection {
   /**
    * Player is the connection's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * SteamId identifies a human's account, or is zero for a bot.
-   *
-   * @generated from field: uint64 steam_id = 2;
    */
   steamId?: bigint;
   /**
    * Name is the player's name.
-   *
-   * @generated from field: string name = 3;
    */
   name?: string;
   /**
    * Bot is true for a bot player.
-   *
-   * @generated from field: bool bot = 4;
    */
   bot?: boolean;
   /**
    * Ready is true once a human has finished joining; bots are always ready.
-   *
-   * @generated from field: bool ready = 5;
    */
   ready?: boolean;
   /**
    * Generation changes each time a new connection takes the slot.
-   *
-   * @generated from field: uint32 generation = 6;
    */
   generation?: number;
+}
 
-};
-
-export const Connection: MessageType<Connection> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Connection",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "steam_id", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 3, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "bot", kind: "scalar", T: ScalarType.BOOL },
-        { no: 5, name: "ready", kind: "scalar", T: ScalarType.BOOL },
-        { no: 6, name: "generation", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Connection: MessageType<Connection> = /* @__PURE__ */ createMessageType<Connection>("modlock.wasm.Connection", () => [
+  [1, "player", 5],
+  [2, "steam_id", 4],
+  [3, "name", 9],
+  [4, "bot", 8],
+  [5, "ready", 8],
+  [6, "generation", 13],
+]);
 
 /**
- * PlayersResponse lists the occupied player slots in slot order.
+ * PawnResponse holds the player's hero, absent without a live one.
  *
- * @generated from message modlock.wasm.PlayersResponse
+ * @generated from message modlock.wasm.PawnResponse
  */
-export interface PlayersResponse {
-  /**
-   * @generated from field: repeated modlock.wasm.Connection players = 1;
-   */
-  players?: Connection[];
+export interface PawnResponse {
+  pawn?: Pawn;
+}
 
-};
-
-export const PlayersResponse: MessageType<PlayersResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PlayersResponse",
-    fields: [
-        { no: 1, name: "players", kind: "message", T: () => Connection, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Score is one player's scoreboard counters since the match began, as the
- * game counts them.
- *
- * @generated from message modlock.wasm.Score
- */
-export interface Score {
-  /**
-   * @generated from field: int32 kills = 1;
-   */
-  kills?: number;
-  /**
-   * @generated from field: int32 deaths = 2;
-   */
-  deaths?: number;
-  /**
-   * @generated from field: int32 assists = 3;
-   */
-  assists?: number;
-  /**
-   * LastHits counts enemy troopers and neutrals the player finished.
-   *
-   * @generated from field: int32 last_hits = 4;
-   */
-  lastHits?: number;
-  /**
-   * Denies counts allied troopers the player finished before an enemy could.
-   *
-   * @generated from field: int32 denies = 5;
-   */
-  denies?: number;
-  /**
-   * HeroDamage is the damage the player dealt to enemy heroes.
-   *
-   * @generated from field: int32 hero_damage = 6;
-   */
-  heroDamage?: number;
-  /**
-   * HeroHealing is the healing the player gave other heroes.
-   *
-   * @generated from field: int32 hero_healing = 7;
-   */
-  heroHealing?: number;
-  /**
-   * NetWorth is the souls the player has earned, spent or not.
-   *
-   * @generated from field: int32 net_worth = 8;
-   */
-  netWorth?: number;
-
-};
-
-export const Score: MessageType<Score> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Score",
-    fields: [
-        { no: 1, name: "kills", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "deaths", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "assists", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "last_hits", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "denies", kind: "scalar", T: ScalarType.INT32 },
-        { no: 6, name: "hero_damage", kind: "scalar", T: ScalarType.INT32 },
-        { no: 7, name: "hero_healing", kind: "scalar", T: ScalarType.INT32 },
-        { no: 8, name: "net_worth", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PawnResponse: MessageType<PawnResponse> = /* @__PURE__ */ createMessageType<PawnResponse>("modlock.wasm.PawnResponse", () => [
+  [1, "pawn", 11, 0, Pawn.codec],
+]);
 
 /**
  * Pawn is one player's hero this frame.
@@ -2042,148 +1180,133 @@ export const Score: MessageType<Score> = /* @__PURE__ */ createMessageType({
 export interface Pawn {
   /**
    * Entity is the hero's entity handle, which ReadField reads.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Hero identifies the hero, as SelectHero returns it.
-   *
-   * @generated from field: uint32 hero = 2;
    */
   hero?: number;
   /**
    * Team is the hero's team number.
-   *
-   * @generated from field: int32 team = 3;
    */
   team?: number;
   /**
    * Health is the hero's health; zero or less is dead.
-   *
-   * @generated from field: int32 health = 4;
    */
   health?: number;
   /**
    * MaxHealth is the hero's networked maximum health.
-   *
-   * @generated from field: int32 max_health = 5;
    */
   maxHealth?: number;
   /**
    * Position is the hero's origin, at its feet.
-   *
-   * @generated from field: modlock.Vec3 position = 6;
    */
   position?: Vec3;
   /**
    * EyeAngles is where the hero aims.
-   *
-   * @generated from field: modlock.EulerAngles eye_angles = 7;
    */
   eyeAngles?: EulerAngles;
   /**
    * CameraAngles is where the player's camera looks.
-   *
-   * @generated from field: modlock.EulerAngles camera_angles = 8;
    */
   cameraAngles?: EulerAngles;
   /**
    * Stamina is the hero's stamina, absent until it has spawned fully.
-   *
-   * @generated from field: optional float stamina = 9;
    */
   stamina?: number;
   /**
    * MaxStamina is the hero's maximum stamina, present with stamina.
-   *
-   * @generated from field: optional float max_stamina = 10;
    */
   maxStamina?: number;
   /**
    * Generation is the connection generation the hero belongs to.
-   *
-   * @generated from field: uint32 generation = 11;
    */
   generation?: number;
   /**
    * Souls is the souls the player holds.
-   *
-   * @generated from field: int32 souls = 12;
    */
   souls?: number;
   /**
    * EyePosition is where the hero's view starts, for aiming traces.
-   *
-   * @generated from field: modlock.Vec3 eye_position = 13;
    */
   eyePosition?: Vec3;
   /**
    * Velocity is the hero's motion in units per second.
-   *
-   * @generated from field: modlock.Vec3 velocity = 14;
    */
   velocity?: Vec3;
   /**
    * CarryingUrn is whether the hero carries the soul urn, absent when the
    * game's modifier states cannot be read.
-   *
-   * @generated from field: optional bool carrying_urn = 15;
    */
   carryingUrn?: boolean;
   /**
    * Score is the player's scoreboard, absent when the game's scoreboard
    * cannot be read.
-   *
-   * @generated from field: optional modlock.wasm.Score score = 16;
    */
   score?: Score;
+}
 
-};
-
-export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Pawn",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "hero", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "max_health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 6, name: "position", kind: "message", T: () => Vec3 },
-        { no: 7, name: "eye_angles", kind: "message", T: () => EulerAngles },
-        { no: 8, name: "camera_angles", kind: "message", T: () => EulerAngles },
-        { no: 9, name: "stamina", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 10, name: "max_stamina", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 11, name: "generation", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 12, name: "souls", kind: "scalar", T: ScalarType.INT32 },
-        { no: 13, name: "eye_position", kind: "message", T: () => Vec3 },
-        { no: 14, name: "velocity", kind: "message", T: () => Vec3 },
-        { no: 15, name: "carrying_urn", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 16, name: "score", kind: "message", T: () => Score, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType<Pawn>("modlock.wasm.Pawn", () => [
+  [1, "entity", 13],
+  [2, "hero", 13],
+  [3, "team", 5],
+  [4, "health", 5],
+  [5, "max_health", 5],
+  [6, "position", 11, 0, Vec3.codec],
+  [7, "eye_angles", 11, 0, EulerAngles.codec],
+  [8, "camera_angles", 11, 0, EulerAngles.codec],
+  [9, "stamina", 2, 4],
+  [10, "max_stamina", 2, 4],
+  [11, "generation", 13],
+  [12, "souls", 5],
+  [13, "eye_position", 11, 0, Vec3.codec],
+  [14, "velocity", 11, 0, Vec3.codec],
+  [15, "carrying_urn", 8, 4],
+  [16, "score", 11, 0, Score.codec],
+]);
 
 /**
- * PawnResponse holds the player's hero, absent without a live one.
+ * Score is one player's scoreboard counters since the match began, as the
+ * game counts them.
  *
- * @generated from message modlock.wasm.PawnResponse
+ * @generated from message modlock.wasm.Score
  */
-export interface PawnResponse {
+export interface Score {
+  kills?: number;
+  deaths?: number;
+  assists?: number;
   /**
-   * @generated from field: modlock.wasm.Pawn pawn = 1;
+   * LastHits counts enemy troopers and neutrals the player finished.
    */
-  pawn?: Pawn;
+  lastHits?: number;
+  /**
+   * Denies counts allied troopers the player finished before an enemy could.
+   */
+  denies?: number;
+  /**
+   * HeroDamage is the damage the player dealt to enemy heroes.
+   */
+  heroDamage?: number;
+  /**
+   * HeroHealing is the healing the player gave other heroes.
+   */
+  heroHealing?: number;
+  /**
+   * NetWorth is the souls the player has earned, spent or not.
+   */
+  netWorth?: number;
+}
 
-};
-
-export const PawnResponse: MessageType<PawnResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PawnResponse",
-    fields: [
-        { no: 1, name: "pawn", kind: "message", T: () => Pawn },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Score: MessageType<Score> = /* @__PURE__ */ createMessageType<Score>("modlock.wasm.Score", () => [
+  [1, "kills", 5],
+  [2, "deaths", 5],
+  [3, "assists", 5],
+  [4, "last_hits", 5],
+  [5, "denies", 5],
+  [6, "hero_damage", 5],
+  [7, "hero_healing", 5],
+  [8, "net_worth", 5],
+]);
 
 /**
  * SelectHeroRequest gives a player a hero.
@@ -2191,52 +1314,29 @@ export const PawnResponse: MessageType<PawnResponse> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.SelectHeroRequest
  */
 export interface SelectHeroRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Team is the team number to join: 2 or 3.
-   *
-   * @generated from field: int32 team = 4;
    */
   team?: number;
-
   /**
    * Hero names the hero, such as hero_wraith, or gives its identifier as
    * Pawn.hero reports it.
    *
    * @generated from oneof modlock.wasm.SelectHeroRequest.hero
    */
-  hero?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * @generated from field: string hero_name = 2;
-     */
-    value: string;
-    case: "heroName";
-  } | {
-    /**
-     * @generated from field: uint32 hero_id = 3;
-     */
-    value: number;
-    case: "heroId";
-  };
+  hero?:
+    | { value?: undefined; case: undefined }
+    | { value: string; case: "heroName" }
+    | { value: number; case: "heroId" };
+}
 
-};
-
-export const SelectHeroRequest: MessageType<SelectHeroRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SelectHeroRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "hero_name", kind: "scalar", T: ScalarType.STRING, oneof: "hero" },
-        { no: 3, name: "hero_id", kind: "scalar", T: ScalarType.UINT32, oneof: "hero" },
-        { no: 4, name: "team", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SelectHeroRequest: MessageType<SelectHeroRequest> = /* @__PURE__ */ createMessageType<SelectHeroRequest>("modlock.wasm.SelectHeroRequest", () => [
+  [1, "player", 5],
+  [2, "hero_name", 9, 0, 0, "hero"],
+  [3, "hero_id", 13, 0, 0, "hero"],
+  [4, "team", 5],
+]);
 
 /**
  * HeroResponse identifies the hero SelectHero gave.
@@ -2244,20 +1344,12 @@ export const SelectHeroRequest: MessageType<SelectHeroRequest> = /* @__PURE__ */
  * @generated from message modlock.wasm.HeroResponse
  */
 export interface HeroResponse {
-  /**
-   * @generated from field: uint32 hero = 1;
-   */
   hero?: number;
+}
 
-};
-
-export const HeroResponse: MessageType<HeroResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HeroResponse",
-    fields: [
-        { no: 1, name: "hero", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HeroResponse: MessageType<HeroResponse> = /* @__PURE__ */ createMessageType<HeroResponse>("modlock.wasm.HeroResponse", () => [
+  [1, "hero", 13],
+]);
 
 /**
  * WatchRequest names a spectator and the hero they follow.
@@ -2267,28 +1359,19 @@ export const HeroResponse: MessageType<HeroResponse> = /* @__PURE__ */ createMes
 export interface WatchRequest {
   /**
    * Player is the spectator's server slot.
-   *
-   * @generated from field: int32 player = 1;
    */
   player?: number;
   /**
    * Target is the entity handle of the hero to follow, as Pawn.entity
    * reports it.
-   *
-   * @generated from field: uint32 target = 2;
    */
   target?: number;
+}
 
-};
-
-export const WatchRequest: MessageType<WatchRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.WatchRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "target", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const WatchRequest: MessageType<WatchRequest> = /* @__PURE__ */ createMessageType<WatchRequest>("modlock.wasm.WatchRequest", () => [
+  [1, "player", 5],
+  [2, "target", 13],
+]);
 
 /**
  * FreezeRequest holds or releases one player's hero.
@@ -2296,27 +1379,17 @@ export const WatchRequest: MessageType<WatchRequest> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.FreezeRequest
  */
 export interface FreezeRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Frozen holds the hero when true or omitted; false releases it.
-   *
-   * @generated from field: optional bool frozen = 2;
    */
   frozen?: boolean;
+}
 
-};
-
-export const FreezeRequest: MessageType<FreezeRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FreezeRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "frozen", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FreezeRequest: MessageType<FreezeRequest> = /* @__PURE__ */ createMessageType<FreezeRequest>("modlock.wasm.FreezeRequest", () => [
+  [1, "player", 5],
+  [2, "frozen", 8, 4],
+]);
 
 /**
  * RefreshAbilityRequest names one ability of a player's hero.
@@ -2324,27 +1397,30 @@ export const FreezeRequest: MessageType<FreezeRequest> = /* @__PURE__ */ createM
  * @generated from message modlock.wasm.RefreshAbilityRequest
  */
 export interface RefreshAbilityRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Ability is the ability's name.
-   *
-   * @generated from field: string ability = 2;
    */
   ability?: string;
+}
 
-};
+export const RefreshAbilityRequest: MessageType<RefreshAbilityRequest> = /* @__PURE__ */ createMessageType<RefreshAbilityRequest>("modlock.wasm.RefreshAbilityRequest", () => [
+  [1, "player", 5],
+  [2, "ability", 9],
+]);
 
-export const RefreshAbilityRequest: MessageType<RefreshAbilityRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RefreshAbilityRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "ability", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * AbilitiesResponse lists a hero's abilities in the hero's order.
+ *
+ * @generated from message modlock.wasm.AbilitiesResponse
+ */
+export interface AbilitiesResponse {
+  abilities?: Ability[];
+}
+
+export const AbilitiesResponse: MessageType<AbilitiesResponse> = /* @__PURE__ */ createMessageType<AbilitiesResponse>("modlock.wasm.AbilitiesResponse", () => [
+  [1, "abilities", 11, 1, Ability.codec],
+]);
 
 /**
  * Ability is one ability a hero owns.
@@ -2354,114 +1430,66 @@ export const RefreshAbilityRequest: MessageType<RefreshAbilityRequest> = /* @__P
 export interface Ability {
   /**
    * Name is the ability's name, such as citadel_ability_hornet_snipe.
-   *
-   * @generated from field: string name = 1;
    */
   name?: string;
   /**
    * Slot is the ability's place on the hero: 0 to 3 are the ability keys.
-   *
-   * @generated from field: int32 slot = 2;
    */
   slot?: number;
   /**
    * Entity is the ability's entity handle, as DamageEvent.ability reports
    * it.
-   *
-   * @generated from field: uint32 entity = 3;
    */
   entity?: number;
   /**
    * Upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
    * its upgrades.
-   *
-   * @generated from field: uint32 upgrades = 4;
    */
   upgrades?: number;
   /**
    * Charges is the charges the ability holds.
-   *
-   * @generated from field: int32 charges = 5;
    */
   charges?: number;
   /**
    * CooldownEnd is the game time its cooldown ends, or zero without one.
-   *
-   * @generated from field: float cooldown_end = 6;
    */
   cooldownEnd?: number;
   /**
    * Id identifies the ability's definition, as replays record it.
-   *
-   * @generated from field: uint32 id = 7;
    */
   id?: number;
   /**
    * State is the packed upgrade word; its high half is upgrades.
-   *
-   * @generated from field: uint32 state = 8;
    */
   state?: number;
   /**
    * CooldownStart is the game time its cooldown began.
-   *
-   * @generated from field: float cooldown_start = 9;
    */
   cooldownStart?: number;
   /**
    * RechargeStart is the game time its next charge began recovering.
-   *
-   * @generated from field: float recharge_start = 10;
    */
   rechargeStart?: number;
   /**
    * RechargeEnd is the game time its next charge returns, or zero without
    * one.
-   *
-   * @generated from field: float recharge_end = 11;
    */
   rechargeEnd?: number;
+}
 
-};
-
-export const Ability: MessageType<Ability> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Ability",
-    fields: [
-        { no: 1, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 4, name: "upgrades", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 5, name: "charges", kind: "scalar", T: ScalarType.INT32 },
-        { no: 6, name: "cooldown_end", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 7, name: "id", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 8, name: "state", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 9, name: "cooldown_start", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 10, name: "recharge_start", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 11, name: "recharge_end", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * AbilitiesResponse lists a hero's abilities in the hero's order.
- *
- * @generated from message modlock.wasm.AbilitiesResponse
- */
-export interface AbilitiesResponse {
-  /**
-   * @generated from field: repeated modlock.wasm.Ability abilities = 1;
-   */
-  abilities?: Ability[];
-
-};
-
-export const AbilitiesResponse: MessageType<AbilitiesResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AbilitiesResponse",
-    fields: [
-        { no: 1, name: "abilities", kind: "message", T: () => Ability, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Ability: MessageType<Ability> = /* @__PURE__ */ createMessageType<Ability>("modlock.wasm.Ability", () => [
+  [1, "name", 9],
+  [2, "slot", 5],
+  [3, "entity", 13],
+  [4, "upgrades", 13],
+  [5, "charges", 5],
+  [6, "cooldown_end", 2],
+  [7, "id", 13],
+  [8, "state", 13],
+  [9, "cooldown_start", 2],
+  [10, "recharge_start", 2],
+  [11, "recharge_end", 2],
+]);
 
 /**
  * AbilityOptions changes one ability of a player's hero.
@@ -2469,56 +1497,38 @@ export const AbilitiesResponse: MessageType<AbilitiesResponse> = /* @__PURE__ */
  * @generated from message modlock.wasm.AbilityOptions
  */
 export interface AbilityOptions {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Ability is the ability's name.
-   *
-   * @generated from field: string ability = 2;
    */
   ability?: string;
   /**
    * Upgrades replaces the bought tiers, as Ability.upgrades: 0b1111 unlocks
    * it with all three upgrades.
-   *
-   * @generated from field: optional uint32 upgrades = 3;
    */
   upgrades?: number;
   /**
    * Charges replaces the charges the ability holds, keeping its timers.
-   *
-   * @generated from field: optional int32 charges = 4;
    */
   charges?: number;
   /**
    * CooldownEnd replaces the game time its cooldown ends.
-   *
-   * @generated from field: optional float cooldown_end = 5;
    */
   cooldownEnd?: number;
   /**
    * RechargeEnd replaces the game time its next charge returns.
-   *
-   * @generated from field: optional float recharge_end = 6;
    */
   rechargeEnd?: number;
+}
 
-};
-
-export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AbilityOptions",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "ability", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "upgrades", kind: "scalar", T: ScalarType.UINT32, opt: true },
-        { no: 4, name: "charges", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 5, name: "cooldown_end", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 6, name: "recharge_end", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ createMessageType<AbilityOptions>("modlock.wasm.AbilityOptions", () => [
+  [1, "player", 5],
+  [2, "ability", 9],
+  [3, "upgrades", 13, 4],
+  [4, "charges", 5, 4],
+  [5, "cooldown_end", 2, 4],
+  [6, "recharge_end", 2, 4],
+]);
 
 /**
  * GiveItemRequest gives one player's hero an item.
@@ -2526,27 +1536,17 @@ export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ creat
  * @generated from message modlock.wasm.GiveItemRequest
  */
 export interface GiveItemRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Item is the item's name, such as upgrade_fleetfoot_boots.
-   *
-   * @generated from field: string item = 2;
    */
   item?: string;
+}
 
-};
-
-export const GiveItemRequest: MessageType<GiveItemRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.GiveItemRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "item", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const GiveItemRequest: MessageType<GiveItemRequest> = /* @__PURE__ */ createMessageType<GiveItemRequest>("modlock.wasm.GiveItemRequest", () => [
+  [1, "player", 5],
+  [2, "item", 9],
+]);
 
 /**
  * ReplaceAbilityRequest puts an ability in one of a player's ability slots.
@@ -2554,34 +1554,22 @@ export const GiveItemRequest: MessageType<GiveItemRequest> = /* @__PURE__ */ cre
  * @generated from message modlock.wasm.ReplaceAbilityRequest
  */
 export interface ReplaceAbilityRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Index is the ability slot, as Ability.slot.
-   *
-   * @generated from field: uint32 index = 2;
    */
   index?: number;
   /**
    * Ability is the new ability's name, such as ability_viper_slide.
-   *
-   * @generated from field: string ability = 3;
    */
   ability?: string;
+}
 
-};
-
-export const ReplaceAbilityRequest: MessageType<ReplaceAbilityRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ReplaceAbilityRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "index", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "ability", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ReplaceAbilityRequest: MessageType<ReplaceAbilityRequest> = /* @__PURE__ */ createMessageType<ReplaceAbilityRequest>("modlock.wasm.ReplaceAbilityRequest", () => [
+  [1, "player", 5],
+  [2, "index", 13],
+  [3, "ability", 9],
+]);
 
 /**
  * HoldModifierRequest holds or releases an ability's modifier on one
@@ -2590,35 +1578,23 @@ export const ReplaceAbilityRequest: MessageType<ReplaceAbilityRequest> = /* @__P
  * @generated from message modlock.wasm.HoldModifierRequest
  */
 export interface HoldModifierRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Modifier names the modifier as "<ability>/<modifier>", such as
    * upgrade_fleetfoot_boots/modifier_fleetfoot_boots.
-   *
-   * @generated from field: string modifier = 2;
    */
   modifier?: string;
   /**
    * Active holds the modifier when true or omitted; false releases the hold.
-   *
-   * @generated from field: optional bool active = 3;
    */
   active?: boolean;
+}
 
-};
-
-export const HoldModifierRequest: MessageType<HoldModifierRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HoldModifierRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "modifier", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "active", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HoldModifierRequest: MessageType<HoldModifierRequest> = /* @__PURE__ */ createMessageType<HoldModifierRequest>("modlock.wasm.HoldModifierRequest", () => [
+  [1, "player", 5],
+  [2, "modifier", 9],
+  [3, "active", 8, 4],
+]);
 
 /**
  * GiveModifierRequest gives one player's living hero an ability's modifier.
@@ -2626,35 +1602,23 @@ export const HoldModifierRequest: MessageType<HoldModifierRequest> = /* @__PURE_
  * @generated from message modlock.wasm.GiveModifierRequest
  */
 export interface GiveModifierRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Modifier names the modifier as "<ability>/<modifier>", such as
    * ability_smoke_bomb/smokebomb_modifier_invis.
-   *
-   * @generated from field: string modifier = 2;
    */
   modifier?: string;
   /**
    * Seconds is how long the modifier lasts.
-   *
-   * @generated from field: float seconds = 3;
    */
   seconds?: number;
+}
 
-};
-
-export const GiveModifierRequest: MessageType<GiveModifierRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.GiveModifierRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "modifier", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "seconds", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const GiveModifierRequest: MessageType<GiveModifierRequest> = /* @__PURE__ */ createMessageType<GiveModifierRequest>("modlock.wasm.GiveModifierRequest", () => [
+  [1, "player", 5],
+  [2, "modifier", 9],
+  [3, "seconds", 2],
+]);
 
 /**
  * TeleportRequest places one player's hero.
@@ -2662,41 +1626,27 @@ export const GiveModifierRequest: MessageType<GiveModifierRequest> = /* @__PURE_
  * @generated from message modlock.wasm.TeleportRequest
  */
 export interface TeleportRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Position is the hero's new origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is where the hero and camera face afterwards.
-   *
-   * @generated from field: modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Velocity replaces the hero's motion when present.
-   *
-   * @generated from field: optional modlock.Vec3 velocity = 4;
    */
   velocity?: Vec3;
+}
 
-};
-
-export const TeleportRequest: MessageType<TeleportRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TeleportRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles },
-        { no: 4, name: "velocity", kind: "message", T: () => Vec3, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const TeleportRequest: MessageType<TeleportRequest> = /* @__PURE__ */ createMessageType<TeleportRequest>("modlock.wasm.TeleportRequest", () => [
+  [1, "player", 5],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "velocity", 11, 0, Vec3.codec],
+]);
 
 /**
  * MovePlayerRequest moves one player's hero a step.
@@ -2704,86 +1654,27 @@ export const TeleportRequest: MessageType<TeleportRequest> = /* @__PURE__ */ cre
  * @generated from message modlock.wasm.MovePlayerRequest
  */
 export interface MovePlayerRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Position is the hero's new origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is where the hero aims; the body turns only by its yaw.
-   *
-   * @generated from field: modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Velocity is the hero's motion, which drives its run animation.
-   *
-   * @generated from field: optional modlock.Vec3 velocity = 4;
    */
   velocity?: Vec3;
+}
 
-};
-
-export const MovePlayerRequest: MessageType<MovePlayerRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MovePlayerRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles },
-        { no: 4, name: "velocity", kind: "message", T: () => Vec3, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * Steering is one recorded movement command and the pose its step ends on.
- *
- * @generated from message modlock.wasm.Steering
- */
-export interface Steering {
-  /**
-   * @generated from field: modlock.wasm.MovementCommand command = 1;
-   */
-  command?: MovementCommand;
-  /**
-   * Position, Velocity and Grounded are the pose the step ends on.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
-   */
-  position?: Vec3;
-  /**
-   * @generated from field: modlock.Vec3 velocity = 3;
-   */
-  velocity?: Vec3;
-  /**
-   * @generated from field: bool grounded = 4;
-   */
-  grounded?: boolean;
-  /**
-   * Facing is where the command looks, which aims the hero and its animation.
-   *
-   * @generated from field: modlock.EulerAngles facing = 5;
-   */
-  facing?: EulerAngles;
-
-};
-
-export const Steering: MessageType<Steering> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Steering",
-    fields: [
-        { no: 1, name: "command", kind: "message", T: () => MovementCommand },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "velocity", kind: "message", T: () => Vec3 },
-        { no: 4, name: "grounded", kind: "scalar", T: ScalarType.BOOL },
-        { no: 5, name: "facing", kind: "message", T: () => EulerAngles },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MovePlayerRequest: MessageType<MovePlayerRequest> = /* @__PURE__ */ createMessageType<MovePlayerRequest>("modlock.wasm.MovePlayerRequest", () => [
+  [1, "player", 5],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "velocity", 11, 0, Vec3.codec],
+]);
 
 /**
  * SteerRequest replays one movement command on a player's hero, or releases
@@ -2792,25 +1683,41 @@ export const Steering: MessageType<Steering> = /* @__PURE__ */ createMessageType
  * @generated from message modlock.wasm.SteerRequest
  */
 export interface SteerRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
-  /**
-   * @generated from field: optional modlock.wasm.Steering steering = 2;
-   */
   steering?: Steering;
+}
 
-};
+export const SteerRequest: MessageType<SteerRequest> = /* @__PURE__ */ createMessageType<SteerRequest>("modlock.wasm.SteerRequest", () => [
+  [1, "player", 5],
+  [2, "steering", 11, 0, Steering.codec],
+]);
 
-export const SteerRequest: MessageType<SteerRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SteerRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "steering", kind: "message", T: () => Steering, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * Steering is one recorded movement command and the pose its step ends on.
+ *
+ * @generated from message modlock.wasm.Steering
+ */
+export interface Steering {
+  command?: MovementCommand;
+  /**
+   * Position, Velocity and Grounded are the pose the step ends on.
+   */
+  position?: Vec3;
+  velocity?: Vec3;
+  grounded?: boolean;
+  /**
+   * Facing is where the command looks, which aims the hero and its animation.
+   */
+  facing?: EulerAngles;
+}
+
+export const Steering: MessageType<Steering> = /* @__PURE__ */ createMessageType<Steering>("modlock.wasm.Steering", () => [
+  [1, "command", 11, 0, MovementCommand.codec],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "velocity", 11, 0, Vec3.codec],
+  [4, "grounded", 8],
+  [5, "facing", 11, 0, EulerAngles.codec],
+]);
 
 /**
  * AdjustSoulsRequest changes one player's souls.
@@ -2818,34 +1725,22 @@ export const SteerRequest: MessageType<SteerRequest> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.AdjustSoulsRequest
  */
 export interface AdjustSoulsRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Delta adds souls, or spends them when negative.
-   *
-   * @generated from field: int32 delta = 2;
    */
   delta?: number;
   /**
    * Silent hides the game's souls notice.
-   *
-   * @generated from field: optional bool silent = 3;
    */
   silent?: boolean;
+}
 
-};
-
-export const AdjustSoulsRequest: MessageType<AdjustSoulsRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AdjustSoulsRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "delta", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "silent", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const AdjustSoulsRequest: MessageType<AdjustSoulsRequest> = /* @__PURE__ */ createMessageType<AdjustSoulsRequest>("modlock.wasm.AdjustSoulsRequest", () => [
+  [1, "player", 5],
+  [2, "delta", 5],
+  [3, "silent", 8, 4],
+]);
 
 /**
  * StartingSoulsRequest sets the souls one player's hero spawns with.
@@ -2853,27 +1748,17 @@ export const AdjustSoulsRequest: MessageType<AdjustSoulsRequest> = /* @__PURE__ 
  * @generated from message modlock.wasm.StartingSoulsRequest
  */
 export interface StartingSoulsRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Souls is the amount the player should hold at least.
-   *
-   * @generated from field: int32 souls = 2;
    */
   souls?: number;
+}
 
-};
-
-export const StartingSoulsRequest: MessageType<StartingSoulsRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StartingSoulsRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "souls", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const StartingSoulsRequest: MessageType<StartingSoulsRequest> = /* @__PURE__ */ createMessageType<StartingSoulsRequest>("modlock.wasm.StartingSoulsRequest", () => [
+  [1, "player", 5],
+  [2, "souls", 5],
+]);
 
 /**
  * ResetHeroRequest rebuilds one player's hero with a fresh build.
@@ -2881,27 +1766,17 @@ export const StartingSoulsRequest: MessageType<StartingSoulsRequest> = /* @__PUR
  * @generated from message modlock.wasm.ResetHeroRequest
  */
 export interface ResetHeroRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Souls is the amount the player holds after the reset.
-   *
-   * @generated from field: int32 souls = 2;
    */
   souls?: number;
+}
 
-};
-
-export const ResetHeroRequest: MessageType<ResetHeroRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ResetHeroRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "souls", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ResetHeroRequest: MessageType<ResetHeroRequest> = /* @__PURE__ */ createMessageType<ResetHeroRequest>("modlock.wasm.ResetHeroRequest", () => [
+  [1, "player", 5],
+  [2, "souls", 5],
+]);
 
 /**
  * HealRequest restores health to a player's hero.
@@ -2909,27 +1784,17 @@ export const ResetHeroRequest: MessageType<ResetHeroRequest> = /* @__PURE__ */ c
  * @generated from message modlock.wasm.HealRequest
  */
 export interface HealRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Amount is the health to add; the hero stops at its maximum.
-   *
-   * @generated from field: int32 amount = 2;
    */
   amount?: number;
+}
 
-};
-
-export const HealRequest: MessageType<HealRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HealRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "amount", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HealRequest: MessageType<HealRequest> = /* @__PURE__ */ createMessageType<HealRequest>("modlock.wasm.HealRequest", () => [
+  [1, "player", 5],
+  [2, "amount", 5],
+]);
 
 /**
  * SetStaminaRequest sets one player's stamina.
@@ -2937,28 +1802,18 @@ export const HealRequest: MessageType<HealRequest> = /* @__PURE__ */ createMessa
  * @generated from message modlock.wasm.SetStaminaRequest
  */
 export interface SetStaminaRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Stamina is the hero's new stamina; the hero stops at zero and at its
    * maximum.
-   *
-   * @generated from field: float stamina = 2;
    */
   stamina?: number;
+}
 
-};
-
-export const SetStaminaRequest: MessageType<SetStaminaRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetStaminaRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "stamina", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetStaminaRequest: MessageType<SetStaminaRequest> = /* @__PURE__ */ createMessageType<SetStaminaRequest>("modlock.wasm.SetStaminaRequest", () => [
+  [1, "player", 5],
+  [2, "stamina", 2],
+]);
 
 /**
  * SoundRequest plays one sound on a player's hero.
@@ -2966,27 +1821,17 @@ export const SetStaminaRequest: MessageType<SetStaminaRequest> = /* @__PURE__ */
  * @generated from message modlock.wasm.SoundRequest
  */
 export interface SoundRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Sound is the game sound event's name, such as Player.ClaimOrb.
-   *
-   * @generated from field: string sound = 2;
    */
   sound?: string;
+}
 
-};
-
-export const SoundRequest: MessageType<SoundRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SoundRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "sound", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SoundRequest: MessageType<SoundRequest> = /* @__PURE__ */ createMessageType<SoundRequest>("modlock.wasm.SoundRequest", () => [
+  [1, "player", 5],
+  [2, "sound", 9],
+]);
 
 /**
  * MoveEntityRequest places one entity.
@@ -2996,41 +1841,28 @@ export const SoundRequest: MessageType<SoundRequest> = /* @__PURE__ */ createMes
 export interface MoveEntityRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Position is the entity's new origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing replaces the entity's angles when present.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Velocity replaces the entity's motion when present.
-   *
-   * @generated from field: optional modlock.Vec3 velocity = 4;
    */
   velocity?: Vec3;
+}
 
-};
-
-export const MoveEntityRequest: MessageType<MoveEntityRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MoveEntityRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 4, name: "velocity", kind: "message", T: () => Vec3, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MoveEntityRequest: MessageType<MoveEntityRequest> = /* @__PURE__ */ createMessageType<MoveEntityRequest>("modlock.wasm.MoveEntityRequest", () => [
+  [1, "entity", 13],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "velocity", 11, 0, Vec3.codec],
+]);
 
 /**
  * EmitSoundRequest plays one sound on an entity.
@@ -3040,27 +1872,18 @@ export const MoveEntityRequest: MessageType<MoveEntityRequest> = /* @__PURE__ */
 export interface EmitSoundRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Sound is the game sound event's name.
-   *
-   * @generated from field: string sound = 2;
    */
   sound?: string;
+}
 
-};
-
-export const EmitSoundRequest: MessageType<EmitSoundRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EmitSoundRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "sound", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EmitSoundRequest: MessageType<EmitSoundRequest> = /* @__PURE__ */ createMessageType<EmitSoundRequest>("modlock.wasm.EmitSoundRequest", () => [
+  [1, "entity", 13],
+  [2, "sound", 9],
+]);
 
 /**
  * SetVelocityRequest replaces one hero's motion.
@@ -3068,27 +1891,17 @@ export const EmitSoundRequest: MessageType<EmitSoundRequest> = /* @__PURE__ */ c
  * @generated from message modlock.wasm.SetVelocityRequest
  */
 export interface SetVelocityRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Velocity is the hero's new motion in units per second.
-   *
-   * @generated from field: modlock.Vec3 velocity = 2;
    */
   velocity?: Vec3;
+}
 
-};
-
-export const SetVelocityRequest: MessageType<SetVelocityRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetVelocityRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "velocity", kind: "message", T: () => Vec3 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetVelocityRequest: MessageType<SetVelocityRequest> = /* @__PURE__ */ createMessageType<SetVelocityRequest>("modlock.wasm.SetVelocityRequest", () => [
+  [1, "player", 5],
+  [2, "velocity", 11, 0, Vec3.codec],
+]);
 
 /**
  * WatchMovementRequest starts or stops one player's movement samples.
@@ -3096,25 +1909,14 @@ export const SetVelocityRequest: MessageType<SetVelocityRequest> = /* @__PURE__ 
  * @generated from message modlock.wasm.WatchMovementRequest
  */
 export interface WatchMovementRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
-  /**
-   * @generated from field: bool watch = 2;
-   */
   watch?: boolean;
+}
 
-};
-
-export const WatchMovementRequest: MessageType<WatchMovementRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.WatchMovementRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "watch", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const WatchMovementRequest: MessageType<WatchMovementRequest> = /* @__PURE__ */ createMessageType<WatchMovementRequest>("modlock.wasm.WatchMovementRequest", () => [
+  [1, "player", 5],
+  [2, "watch", 8],
+]);
 
 /**
  * ButtonsResponse holds the buttons a player holds.
@@ -3122,20 +1924,12 @@ export const WatchMovementRequest: MessageType<WatchMovementRequest> = /* @__PUR
  * @generated from message modlock.wasm.ButtonsResponse
  */
 export interface ButtonsResponse {
-  /**
-   * @generated from field: uint64 buttons = 1;
-   */
   buttons?: bigint;
+}
 
-};
-
-export const ButtonsResponse: MessageType<ButtonsResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ButtonsResponse",
-    fields: [
-        { no: 1, name: "buttons", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ButtonsResponse: MessageType<ButtonsResponse> = /* @__PURE__ */ createMessageType<ButtonsResponse>("modlock.wasm.ButtonsResponse", () => [
+  [1, "buttons", 4],
+]);
 
 /**
  * ProjectileOptions selects the projectiles a mod watches.
@@ -3145,29 +1939,107 @@ export const ButtonsResponse: MessageType<ButtonsResponse> = /* @__PURE__ */ cre
 export interface ProjectileOptions {
   /**
    * Names lists designer names, such as rocket_launcher_rocket_projectile.
-   *
-   * @generated from field: repeated string names = 1;
    */
   names?: string[];
   /**
    * KeepMomentum gives each live hero back the motion it had before a
    * watched projectile's explosion, so the mod's Impact handler sets the
    * push.
-   *
-   * @generated from field: optional bool keep_momentum = 2;
    */
   keepMomentum?: boolean;
+}
 
-};
+export const ProjectileOptions: MessageType<ProjectileOptions> = /* @__PURE__ */ createMessageType<ProjectileOptions>("modlock.wasm.ProjectileOptions", () => [
+  [1, "names", 9, 1],
+  [2, "keep_momentum", 8, 4],
+]);
 
-export const ProjectileOptions: MessageType<ProjectileOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ProjectileOptions",
-    fields: [
-        { no: 1, name: "names", kind: "scalar", T: ScalarType.STRING, repeated: true },
-        { no: 2, name: "keep_momentum", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * RestoreHeroRequest starts restoring a player's live hero to a target.
+ *
+ * @generated from message modlock.wasm.RestoreHeroRequest
+ */
+export interface RestoreHeroRequest {
+  player?: number;
+  /**
+   * Target is the state to give the hero.
+   */
+  target?: HeroTarget;
+}
+
+export const RestoreHeroRequest: MessageType<RestoreHeroRequest> = /* @__PURE__ */ createMessageType<RestoreHeroRequest>("modlock.wasm.RestoreHeroRequest", () => [
+  [1, "player", 5],
+  [2, "target", 11, 0, HeroTarget.codec],
+]);
+
+/**
+ * HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
+ * hero's own.
+ *
+ * @generated from message modlock.wasm.HeroTarget
+ */
+export interface HeroTarget {
+  /**
+   * Position is the hero's origin.
+   */
+  position?: Vec3;
+  /**
+   * Facing is where the camera faces; a bot's hero faces it.
+   */
+  facing?: EulerAngles;
+  /**
+   * Fresh gives full health and stamina and readies every ability, in place
+   * of health, max health, upgrade bonuses and timers. A bot's ability
+   * upgrades may grow while the restore runs.
+   */
+  fresh?: boolean;
+  /**
+   * Level sets the hero's level.
+   */
+  level?: number;
+  /**
+   * Health and MaxHealth set the hero's health and its base maximum. Both
+   * are required unless the target is fresh.
+   */
+  health?: number;
+  maxHealth?: number;
+  /**
+   * UpgradeBonuses are the three stat bonuses purchases add, as replays
+   * record them.
+   */
+  upgradeBonuses?: number[];
+  /**
+   * Abilities sets the hero's abilities in their slots.
+   */
+  abilities?: EquipmentTarget[];
+  /**
+   * Items lists the items that replace the hero's when ReplaceItems is set.
+   */
+  items?: EquipmentTarget[];
+  /**
+   * ReplaceItems replaces every item the hero owns with Items; an empty list
+   * removes them.
+   */
+  replaceItems?: boolean;
+  /**
+   * Timers sets the charges and cooldowns of owned abilities and items.
+   */
+  timers?: TimerTarget[];
+}
+
+export const HeroTarget: MessageType<HeroTarget> = /* @__PURE__ */ createMessageType<HeroTarget>("modlock.wasm.HeroTarget", () => [
+  [1, "position", 11, 0, Vec3.codec],
+  [2, "facing", 11, 0, EulerAngles.codec],
+  [3, "fresh", 8, 4],
+  [4, "level", 5, 4],
+  [5, "health", 5, 4],
+  [6, "max_health", 5, 4],
+  [7, "upgrade_bonuses", 2, 3],
+  [8, "abilities", 11, 1, EquipmentTarget.codec],
+  [9, "items", 11, 1, EquipmentTarget.codec],
+  [10, "replace_items", 8, 4],
+  [11, "timers", 11, 1, TimerTarget.codec],
+]);
 
 /**
  * EquipmentTarget is one ability or item a HeroTarget gives the hero.
@@ -3177,35 +2049,24 @@ export const ProjectileOptions: MessageType<ProjectileOptions> = /* @__PURE__ */
 export interface EquipmentTarget {
   /**
    * Id identifies the definition, as Ability.id.
-   *
-   * @generated from field: uint32 id = 1;
    */
   id?: number;
   /**
    * Slot is its place on the hero, as Ability.slot; abilities need one, and
    * an item without one goes where the game puts it.
-   *
-   * @generated from field: optional int32 slot = 2;
    */
   slot?: number;
   /**
    * State is the packed upgrade word, as Ability.state.
-   *
-   * @generated from field: uint32 state = 3;
    */
   state?: number;
+}
 
-};
-
-export const EquipmentTarget: MessageType<EquipmentTarget> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EquipmentTarget",
-    fields: [
-        { no: 1, name: "id", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "slot", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 3, name: "state", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EquipmentTarget: MessageType<EquipmentTarget> = /* @__PURE__ */ createMessageType<EquipmentTarget>("modlock.wasm.EquipmentTarget", () => [
+  [1, "id", 13],
+  [2, "slot", 5, 4],
+  [3, "state", 13],
+]);
 
 /**
  * TimerTarget sets one owned ability's or item's charges and cooldowns.
@@ -3217,176 +2078,55 @@ export const EquipmentTarget: MessageType<EquipmentTarget> = /* @__PURE__ */ cre
 export interface TimerTarget {
   /**
    * Id identifies the ability, as Ability.id.
-   *
-   * @generated from field: uint32 id = 1;
    */
   id?: number;
   /**
    * Charges is the charges it holds.
-   *
-   * @generated from field: int32 charges = 2;
    */
   charges?: number;
   /**
    * CooldownStart and CooldownEnd bound its cooldown.
-   *
-   * @generated from field: optional float cooldown_start = 3;
    */
   cooldownStart?: number;
-  /**
-   * @generated from field: optional float cooldown_end = 4;
-   */
   cooldownEnd?: number;
   /**
    * RechargeStart and RechargeEnd bound the recovery of its next charge.
-   *
-   * @generated from field: optional float recharge_start = 5;
    */
   rechargeStart?: number;
-  /**
-   * @generated from field: optional float recharge_end = 6;
-   */
   rechargeEnd?: number;
+}
 
-};
-
-export const TimerTarget: MessageType<TimerTarget> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TimerTarget",
-    fields: [
-        { no: 1, name: "id", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "charges", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "cooldown_start", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 4, name: "cooldown_end", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 5, name: "recharge_start", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 6, name: "recharge_end", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const TimerTarget: MessageType<TimerTarget> = /* @__PURE__ */ createMessageType<TimerTarget>("modlock.wasm.TimerTarget", () => [
+  [1, "id", 13],
+  [2, "charges", 5],
+  [3, "cooldown_start", 2, 4],
+  [4, "cooldown_end", 2, 4],
+  [5, "recharge_start", 2, 4],
+  [6, "recharge_end", 2, 4],
+]);
 
 /**
- * HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
- * hero's own.
+ * ScreenEffectRequest plays a screen effect on one player's view.
  *
- * @generated from message modlock.wasm.HeroTarget
+ * @generated from message modlock.wasm.ScreenEffectRequest
  */
-export interface HeroTarget {
-  /**
-   * Position is the hero's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 1;
-   */
-  position?: Vec3;
-  /**
-   * Facing is where the camera faces; a bot's hero faces it.
-   *
-   * @generated from field: modlock.EulerAngles facing = 2;
-   */
-  facing?: EulerAngles;
-  /**
-   * Fresh gives full health and stamina and readies every ability, in place
-   * of health, max health, upgrade bonuses and timers. A bot's ability
-   * upgrades may grow while the restore runs.
-   *
-   * @generated from field: optional bool fresh = 3;
-   */
-  fresh?: boolean;
-  /**
-   * Level sets the hero's level.
-   *
-   * @generated from field: optional int32 level = 4;
-   */
-  level?: number;
-  /**
-   * Health and MaxHealth set the hero's health and its base maximum. Both
-   * are required unless the target is fresh.
-   *
-   * @generated from field: optional int32 health = 5;
-   */
-  health?: number;
-  /**
-   * @generated from field: optional int32 max_health = 6;
-   */
-  maxHealth?: number;
-  /**
-   * UpgradeBonuses are the three stat bonuses purchases add, as replays
-   * record them.
-   *
-   * @generated from field: repeated float upgrade_bonuses = 7;
-   */
-  upgradeBonuses?: number[];
-  /**
-   * Abilities sets the hero's abilities in their slots.
-   *
-   * @generated from field: repeated modlock.wasm.EquipmentTarget abilities = 8;
-   */
-  abilities?: EquipmentTarget[];
-  /**
-   * Items lists the items that replace the hero's when ReplaceItems is set.
-   *
-   * @generated from field: repeated modlock.wasm.EquipmentTarget items = 9;
-   */
-  items?: EquipmentTarget[];
-  /**
-   * ReplaceItems replaces every item the hero owns with Items; an empty list
-   * removes them.
-   *
-   * @generated from field: optional bool replace_items = 10;
-   */
-  replaceItems?: boolean;
-  /**
-   * Timers sets the charges and cooldowns of owned abilities and items.
-   *
-   * @generated from field: repeated modlock.wasm.TimerTarget timers = 11;
-   */
-  timers?: TimerTarget[];
-
-};
-
-export const HeroTarget: MessageType<HeroTarget> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HeroTarget",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-        { no: 2, name: "facing", kind: "message", T: () => EulerAngles },
-        { no: 3, name: "fresh", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 4, name: "level", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 5, name: "health", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 6, name: "max_health", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 7, name: "upgrade_bonuses", kind: "scalar", T: ScalarType.FLOAT, repeated: true },
-        { no: 8, name: "abilities", kind: "message", T: () => EquipmentTarget, repeated: true },
-        { no: 9, name: "items", kind: "message", T: () => EquipmentTarget, repeated: true },
-        { no: 10, name: "replace_items", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 11, name: "timers", kind: "message", T: () => TimerTarget, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * RestoreHeroRequest starts restoring a player's live hero to a target.
- *
- * @generated from message modlock.wasm.RestoreHeroRequest
- */
-export interface RestoreHeroRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
+export interface ScreenEffectRequest {
   player?: number;
   /**
-   * Target is the state to give the hero.
-   *
-   * @generated from field: modlock.wasm.HeroTarget target = 2;
+   * Effect is the effect to play.
    */
-  target?: HeroTarget;
+  effect?: ScreenEffect;
+  /**
+   * Timing is the effect's timing; omitted, the effect's own.
+   */
+  timing?: ScreenTiming;
+}
 
-};
-
-export const RestoreHeroRequest: MessageType<RestoreHeroRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RestoreHeroRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "target", kind: "message", T: () => HeroTarget },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ScreenEffectRequest: MessageType<ScreenEffectRequest> = /* @__PURE__ */ createMessageType<ScreenEffectRequest>("modlock.wasm.ScreenEffectRequest", () => [
+  [1, "player", 5],
+  [2, "effect", 14, 0, ScreenEffect_Enum],
+  [3, "timing", 11, 0, ScreenTiming.codec],
+]);
 
 /**
  * ScreenTiming is a screen effect's timing in seconds.
@@ -3396,76 +2136,28 @@ export const RestoreHeroRequest: MessageType<RestoreHeroRequest> = /* @__PURE__ 
 export interface ScreenTiming {
   /**
    * Delay is the time before the effect starts.
-   *
-   * @generated from field: optional float delay = 1;
    */
   delay?: number;
   /**
    * FadeIn is the time the effect takes to reach full strength.
-   *
-   * @generated from field: optional float fade_in = 2;
    */
   fadeIn?: number;
   /**
    * Hold is the time the effect stays at full strength.
-   *
-   * @generated from field: optional float hold = 3;
    */
   hold?: number;
   /**
    * FadeOut is the time the effect takes to end.
-   *
-   * @generated from field: optional float fade_out = 4;
    */
   fadeOut?: number;
+}
 
-};
-
-export const ScreenTiming: MessageType<ScreenTiming> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ScreenTiming",
-    fields: [
-        { no: 1, name: "delay", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 2, name: "fade_in", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 3, name: "hold", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 4, name: "fade_out", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * ScreenEffectRequest plays a screen effect on one player's view.
- *
- * @generated from message modlock.wasm.ScreenEffectRequest
- */
-export interface ScreenEffectRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
-  player?: number;
-  /**
-   * Effect is the effect to play.
-   *
-   * @generated from field: modlock.wasm.ScreenEffect effect = 2;
-   */
-  effect?: ScreenEffect;
-  /**
-   * Timing is the effect's timing; omitted, the effect's own.
-   *
-   * @generated from field: optional modlock.wasm.ScreenTiming timing = 3;
-   */
-  timing?: ScreenTiming;
-
-};
-
-export const ScreenEffectRequest: MessageType<ScreenEffectRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ScreenEffectRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "effect", kind: "enum", T: ScreenEffect_Enum },
-        { no: 3, name: "timing", kind: "message", T: () => ScreenTiming, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ScreenTiming: MessageType<ScreenTiming> = /* @__PURE__ */ createMessageType<ScreenTiming>("modlock.wasm.ScreenTiming", () => [
+  [1, "delay", 2, 4],
+  [2, "fade_in", 2, 4],
+  [3, "hold", 2, 4],
+  [4, "fade_out", 2, 4],
+]);
 
 /**
  * ClearScreenEffectRequest ends a screen effect on one player's view.
@@ -3473,27 +2165,17 @@ export const ScreenEffectRequest: MessageType<ScreenEffectRequest> = /* @__PURE_
  * @generated from message modlock.wasm.ClearScreenEffectRequest
  */
 export interface ClearScreenEffectRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Effect is the effect to end.
-   *
-   * @generated from field: modlock.wasm.ScreenEffect effect = 2;
    */
   effect?: ScreenEffect;
+}
 
-};
-
-export const ClearScreenEffectRequest: MessageType<ClearScreenEffectRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ClearScreenEffectRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "effect", kind: "enum", T: ScreenEffect_Enum },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ClearScreenEffectRequest: MessageType<ClearScreenEffectRequest> = /* @__PURE__ */ createMessageType<ClearScreenEffectRequest>("modlock.wasm.ClearScreenEffectRequest", () => [
+  [1, "player", 5],
+  [2, "effect", 14, 0, ScreenEffect_Enum],
+]);
 
 /**
  * ReadFieldRequest names one schema field of a live entity.
@@ -3503,41 +2185,41 @@ export const ClearScreenEffectRequest: MessageType<ClearScreenEffectRequest> = /
 export interface ReadFieldRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * ClassName is the server class that declares the field, or a subclass.
-   *
-   * @generated from field: string class_name = 2;
    */
   className?: string;
   /**
    * Field is the field's schema name, such as m_iHealth.
-   *
-   * @generated from field: string field = 3;
    */
   field?: string;
   /**
    * Type is how to read the field.
-   *
-   * @generated from field: modlock.wasm.FieldType type = 4;
    */
   type?: FieldType;
+}
 
-};
+export const ReadFieldRequest: MessageType<ReadFieldRequest> = /* @__PURE__ */ createMessageType<ReadFieldRequest>("modlock.wasm.ReadFieldRequest", () => [
+  [1, "entity", 13],
+  [2, "class_name", 9],
+  [3, "field", 9],
+  [4, "type", 14, 0, FieldType_Enum],
+]);
 
-export const ReadFieldRequest: MessageType<ReadFieldRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ReadFieldRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "field", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "type", kind: "enum", T: FieldType_Enum },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * FieldResponse holds the value ReadField read.
+ *
+ * @generated from message modlock.wasm.FieldResponse
+ */
+export interface FieldResponse {
+  value?: FieldValue;
+}
+
+export const FieldResponse: MessageType<FieldResponse> = /* @__PURE__ */ createMessageType<FieldResponse>("modlock.wasm.FieldResponse", () => [
+  [1, "value", 11, 0, FieldValue.codec],
+]);
 
 /**
  * FieldValue is one field's value. The host accepts any numeric case for a
@@ -3548,79 +2230,25 @@ export const ReadFieldRequest: MessageType<ReadFieldRequest> = /* @__PURE__ */ c
  * @generated from message modlock.wasm.FieldValue
  */
 export interface FieldValue {
-
   /**
    * @generated from oneof modlock.wasm.FieldValue.value
    */
-  value?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * @generated from field: bool boolean = 1;
-     */
-    value: boolean;
-    case: "boolean";
-  } | {
-    /**
-     * @generated from field: double number = 2;
-     */
-    value: number;
-    case: "number";
-  } | {
-    /**
-     * @generated from field: int64 integer = 3;
-     */
-    value: bigint;
-    case: "integer";
-  } | {
-    /**
-     * @generated from field: string text = 4;
-     */
-    value: string;
-    case: "text";
-  } | {
-    /**
-     * @generated from field: modlock.Vec3 vector = 5;
-     */
-    value: Vec3;
-    case: "vector";
-  };
+  value?:
+    | { value?: undefined; case: undefined }
+    | { value: boolean; case: "boolean" }
+    | { value: number; case: "number" }
+    | { value: bigint; case: "integer" }
+    | { value: string; case: "text" }
+    | { value: Vec3; case: "vector" };
+}
 
-};
-
-export const FieldValue: MessageType<FieldValue> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FieldValue",
-    fields: [
-        { no: 1, name: "boolean", kind: "scalar", T: ScalarType.BOOL, oneof: "value" },
-        { no: 2, name: "number", kind: "scalar", T: ScalarType.DOUBLE, oneof: "value" },
-        { no: 3, name: "integer", kind: "scalar", T: ScalarType.INT64, oneof: "value" },
-        { no: 4, name: "text", kind: "scalar", T: ScalarType.STRING, oneof: "value" },
-        { no: 5, name: "vector", kind: "message", T: () => Vec3, oneof: "value" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * FieldResponse holds the value ReadField read.
- *
- * @generated from message modlock.wasm.FieldResponse
- */
-export interface FieldResponse {
-  /**
-   * @generated from field: modlock.wasm.FieldValue value = 1;
-   */
-  value?: FieldValue;
-
-};
-
-export const FieldResponse: MessageType<FieldResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FieldResponse",
-    fields: [
-        { no: 1, name: "value", kind: "message", T: () => FieldValue },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FieldValue: MessageType<FieldValue> = /* @__PURE__ */ createMessageType<FieldValue>("modlock.wasm.FieldValue", () => [
+  [1, "boolean", 8, 0, 0, "value"],
+  [2, "number", 1, 0, 0, "value"],
+  [3, "integer", 3, 0, 0, "value"],
+  [4, "text", 9, 0, 0, "value"],
+  [5, "vector", 11, 0, Vec3.codec, "value"],
+]);
 
 /**
  * FieldListResponse holds the elements ReadFieldList read.
@@ -3628,20 +2256,12 @@ export const FieldResponse: MessageType<FieldResponse> = /* @__PURE__ */ createM
  * @generated from message modlock.wasm.FieldListResponse
  */
 export interface FieldListResponse {
-  /**
-   * @generated from field: repeated modlock.wasm.FieldValue values = 1;
-   */
   values?: FieldValue[];
+}
 
-};
-
-export const FieldListResponse: MessageType<FieldListResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FieldListResponse",
-    fields: [
-        { no: 1, name: "values", kind: "message", T: () => FieldValue, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FieldListResponse: MessageType<FieldListResponse> = /* @__PURE__ */ createMessageType<FieldListResponse>("modlock.wasm.FieldListResponse", () => [
+  [1, "values", 11, 1, FieldValue.codec],
+]);
 
 /**
  * WriteFieldListRequest replaces the elements of one list field of a live
@@ -3652,48 +2272,33 @@ export const FieldListResponse: MessageType<FieldListResponse> = /* @__PURE__ */
 export interface WriteFieldListRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * ClassName is the server class that declares the field, or a subclass.
-   *
-   * @generated from field: string class_name = 2;
    */
   className?: string;
   /**
    * Field is the field's schema name, such as m_vecBannedHeroes.
-   *
-   * @generated from field: string field = 3;
    */
   field?: string;
   /**
    * Type is how to write each element.
-   *
-   * @generated from field: modlock.wasm.FieldType type = 4;
    */
   type?: FieldType;
   /**
    * Values are the list's new elements, each in the form WriteField takes.
-   *
-   * @generated from field: repeated modlock.wasm.FieldValue values = 5;
    */
   values?: FieldValue[];
+}
 
-};
-
-export const WriteFieldListRequest: MessageType<WriteFieldListRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.WriteFieldListRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "field", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "type", kind: "enum", T: FieldType_Enum },
-        { no: 5, name: "values", kind: "message", T: () => FieldValue, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const WriteFieldListRequest: MessageType<WriteFieldListRequest> = /* @__PURE__ */ createMessageType<WriteFieldListRequest>("modlock.wasm.WriteFieldListRequest", () => [
+  [1, "entity", 13],
+  [2, "class_name", 9],
+  [3, "field", 9],
+  [4, "type", 14, 0, FieldType_Enum],
+  [5, "values", 11, 1, FieldValue.codec],
+]);
 
 /**
  * WriteFieldRequest writes one schema field of a live entity.
@@ -3703,48 +2308,33 @@ export const WriteFieldListRequest: MessageType<WriteFieldListRequest> = /* @__P
 export interface WriteFieldRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * ClassName is the server class that declares the field, or a subclass.
-   *
-   * @generated from field: string class_name = 2;
    */
   className?: string;
   /**
    * Field is the field's schema name, such as m_iClip.
-   *
-   * @generated from field: string field = 3;
    */
   field?: string;
   /**
    * Type is how to write the field.
-   *
-   * @generated from field: modlock.wasm.FieldType type = 4;
    */
   type?: FieldType;
   /**
    * Value is the field's new value.
-   *
-   * @generated from field: modlock.wasm.FieldValue value = 5;
    */
   value?: FieldValue;
+}
 
-};
-
-export const WriteFieldRequest: MessageType<WriteFieldRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.WriteFieldRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "field", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "type", kind: "enum", T: FieldType_Enum },
-        { no: 5, name: "value", kind: "message", T: () => FieldValue },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const WriteFieldRequest: MessageType<WriteFieldRequest> = /* @__PURE__ */ createMessageType<WriteFieldRequest>("modlock.wasm.WriteFieldRequest", () => [
+  [1, "entity", 13],
+  [2, "class_name", 9],
+  [3, "field", 9],
+  [4, "type", 14, 0, FieldType_Enum],
+  [5, "value", 11, 0, FieldValue.codec],
+]);
 
 /**
  * ModifierStateRequest asks whether a modifier state is active on an entity.
@@ -3754,27 +2344,18 @@ export const WriteFieldRequest: MessageType<WriteFieldRequest> = /* @__PURE__ */
 export interface ModifierStateRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * State is the EModifierState name, such as MODIFIER_STATE_PARRY_ACTIVE.
-   *
-   * @generated from field: string state = 2;
    */
   state?: string;
+}
 
-};
-
-export const ModifierStateRequest: MessageType<ModifierStateRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ModifierStateRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "state", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ModifierStateRequest: MessageType<ModifierStateRequest> = /* @__PURE__ */ createMessageType<ModifierStateRequest>("modlock.wasm.ModifierStateRequest", () => [
+  [1, "entity", 13],
+  [2, "state", 9],
+]);
 
 /**
  * ActiveResponse reports whether a state is active.
@@ -3782,20 +2363,12 @@ export const ModifierStateRequest: MessageType<ModifierStateRequest> = /* @__PUR
  * @generated from message modlock.wasm.ActiveResponse
  */
 export interface ActiveResponse {
-  /**
-   * @generated from field: bool active = 1;
-   */
   active?: boolean;
+}
 
-};
-
-export const ActiveResponse: MessageType<ActiveResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ActiveResponse",
-    fields: [
-        { no: 1, name: "active", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ActiveResponse: MessageType<ActiveResponse> = /* @__PURE__ */ createMessageType<ActiveResponse>("modlock.wasm.ActiveResponse", () => [
+  [1, "active", 8],
+]);
 
 /**
  * HoldModifierStateRequest holds one modifier state on an entity, or
@@ -3806,34 +2379,23 @@ export const ActiveResponse: MessageType<ActiveResponse> = /* @__PURE__ */ creat
 export interface HoldModifierStateRequest {
   /**
    * Entity is the entity handle, such as Pawn.entity.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * State is the state's name, such as MODIFIER_STATE_ITEMS_DISABLED.
-   *
-   * @generated from field: string state = 2;
    */
   state?: string;
   /**
    * Active holds the state when true or omitted; false releases the hold.
-   *
-   * @generated from field: optional bool active = 3;
    */
   active?: boolean;
+}
 
-};
-
-export const HoldModifierStateRequest: MessageType<HoldModifierStateRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HoldModifierStateRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "state", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "active", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HoldModifierStateRequest: MessageType<HoldModifierStateRequest> = /* @__PURE__ */ createMessageType<HoldModifierStateRequest>("modlock.wasm.HoldModifierStateRequest", () => [
+  [1, "entity", 13],
+  [2, "state", 9],
+  [3, "active", 8, 4],
+]);
 
 /**
  * ModelOptions describes a model placed in the world.
@@ -3843,63 +2405,44 @@ export const HoldModifierStateRequest: MessageType<HoldModifierStateRequest> = /
 export interface ModelOptions {
   /**
    * Resource is the model's path, which the mod precached.
-   *
-   * @generated from field: string resource = 1;
    */
   resource?: string;
   /**
    * Position is the model's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is the model's rotation.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Scale multiplies the model's size; the default is 1.
-   *
-   * @generated from field: optional float scale = 4;
    */
   scale?: number;
   /**
    * Color tints the model as 0xRRGGBBAA.
-   *
-   * @generated from field: optional fixed32 color = 5;
    */
   color?: number;
   /**
    * Glow outlines the model through walls.
-   *
-   * @generated from field: optional bool glow = 6;
    */
   glow?: boolean;
   /**
    * Solid makes heroes and traces collide with the model's physics shape,
    * scaled with the model. Without it, everything passes through.
-   *
-   * @generated from field: optional bool solid = 7;
    */
   solid?: boolean;
+}
 
-};
-
-export const ModelOptions: MessageType<ModelOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ModelOptions",
-    fields: [
-        { no: 1, name: "resource", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 4, name: "scale", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 5, name: "color", kind: "scalar", T: ScalarType.FIXED32, opt: true },
-        { no: 6, name: "glow", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 7, name: "solid", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ModelOptions: MessageType<ModelOptions> = /* @__PURE__ */ createMessageType<ModelOptions>("modlock.wasm.ModelOptions", () => [
+  [1, "resource", 9],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "scale", 2, 4],
+  [5, "color", 7, 4],
+  [6, "glow", 8, 4],
+  [7, "solid", 8, 4],
+]);
 
 /**
  * TextOptions describes text that floats in the world.
@@ -3909,92 +2452,43 @@ export const ModelOptions: MessageType<ModelOptions> = /* @__PURE__ */ createMes
 export interface TextOptions {
   /**
    * Text is the words to show; a newline starts a second line.
-   *
-   * @generated from field: string text = 1;
    */
   text?: string;
   /**
    * Position is the text's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is the text's rotation when it does not face the camera.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * FontSize is the text's size; the default is 100.
-   *
-   * @generated from field: optional float font_size = 4;
    */
   fontSize?: number;
   /**
    * Color is the text's color as 0xRRGGBBAA; the default is white.
-   *
-   * @generated from field: optional fixed32 color = 5;
    */
   color?: number;
   /**
    * FaceCamera turns the text toward each viewer.
-   *
-   * @generated from field: optional bool face_camera = 6;
    */
   faceCamera?: boolean;
   /**
    * Scale multiplies the text's size in the world; the default is 1.
-   *
-   * @generated from field: optional float scale = 7;
    */
   scale?: number;
+}
 
-};
-
-export const TextOptions: MessageType<TextOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TextOptions",
-    fields: [
-        { no: 1, name: "text", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 4, name: "font_size", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-        { no: 5, name: "color", kind: "scalar", T: ScalarType.FIXED32, opt: true },
-        { no: 6, name: "face_camera", kind: "scalar", T: ScalarType.BOOL, opt: true },
-        { no: 7, name: "scale", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * ParticlePoint places one control point of a particle effect.
- *
- * @generated from message modlock.wasm.ParticlePoint
- */
-export interface ParticlePoint {
-  /**
-   * Index is the control point's number.
-   *
-   * @generated from field: int32 index = 1;
-   */
-  index?: number;
-  /**
-   * Position is the control point's value.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
-   */
-  position?: Vec3;
-
-};
-
-export const ParticlePoint: MessageType<ParticlePoint> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ParticlePoint",
-    fields: [
-        { no: 1, name: "index", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const TextOptions: MessageType<TextOptions> = /* @__PURE__ */ createMessageType<TextOptions>("modlock.wasm.TextOptions", () => [
+  [1, "text", 9],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "font_size", 2, 4],
+  [5, "color", 7, 4],
+  [6, "face_camera", 8, 4],
+  [7, "scale", 2, 4],
+]);
 
 /**
  * ParticleOptions describes a particle effect.
@@ -4005,62 +2499,64 @@ export interface ParticleOptions {
   /**
    * Resource is the particle system's path, which the mod precached, such
    * as particles/abilities/assassinate_laser_targetting.vpcf.
-   *
-   * @generated from field: string resource = 1;
    */
   resource?: string;
   /**
    * Position is the effect's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is the effect's rotation.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Color tints the effect as 0xRRGGBBAA.
-   *
-   * @generated from field: optional fixed32 color = 4;
    */
   color?: number;
   /**
    * TintPoint is the control point the color sets.
-   *
-   * @generated from field: optional int32 tint_point = 5;
    */
   tintPoint?: number;
   /**
    * Point sets one control point to a position, such as a beam's far end.
-   *
-   * @generated from field: optional modlock.wasm.ParticlePoint point = 6;
    */
   point?: ParticlePoint;
   /**
    * Parent is the handle of an entity the effect follows, such as a hero's.
-   *
-   * @generated from field: optional uint32 parent = 7;
    */
   parent?: number;
+}
 
-};
+export const ParticleOptions: MessageType<ParticleOptions> = /* @__PURE__ */ createMessageType<ParticleOptions>("modlock.wasm.ParticleOptions", () => [
+  [1, "resource", 9],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "color", 7, 4],
+  [5, "tint_point", 5, 4],
+  [6, "point", 11, 0, ParticlePoint.codec],
+  [7, "parent", 13, 4],
+]);
 
-export const ParticleOptions: MessageType<ParticleOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ParticleOptions",
-    fields: [
-        { no: 1, name: "resource", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 4, name: "color", kind: "scalar", T: ScalarType.FIXED32, opt: true },
-        { no: 5, name: "tint_point", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 6, name: "point", kind: "message", T: () => ParticlePoint, opt: true },
-        { no: 7, name: "parent", kind: "scalar", T: ScalarType.UINT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * ParticlePoint places one control point of a particle effect.
+ *
+ * @generated from message modlock.wasm.ParticlePoint
+ */
+export interface ParticlePoint {
+  /**
+   * Index is the control point's number.
+   */
+  index?: number;
+  /**
+   * Position is the control point's value.
+   */
+  position?: Vec3;
+}
+
+export const ParticlePoint: MessageType<ParticlePoint> = /* @__PURE__ */ createMessageType<ParticlePoint>("modlock.wasm.ParticlePoint", () => [
+  [1, "index", 5],
+  [2, "position", 11, 0, Vec3.codec],
+]);
 
 /**
  * FogOptions describes an oriented box of tinted fog.
@@ -4070,55 +2566,38 @@ export const ParticleOptions: MessageType<ParticleOptions> = /* @__PURE__ */ cre
 export interface FogOptions {
   /**
    * Position is the box's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 1;
    */
   position?: Vec3;
   /**
    * Facing is the box's rotation.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 2;
    */
   facing?: EulerAngles;
   /**
    * Mins is the box's lower corner, relative to position.
-   *
-   * @generated from field: modlock.Vec3 mins = 3;
    */
   mins?: Vec3;
   /**
    * Maxs is the box's upper corner, relative to position.
-   *
-   * @generated from field: modlock.Vec3 maxs = 4;
    */
   maxs?: Vec3;
   /**
    * Strength is the fog's density.
-   *
-   * @generated from field: float strength = 5;
    */
   strength?: number;
   /**
    * Color tints the fog as 0xRRGGBBAA; alpha is ignored.
-   *
-   * @generated from field: fixed32 color = 6;
    */
   color?: number;
+}
 
-};
-
-export const FogOptions: MessageType<FogOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FogOptions",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-        { no: 2, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 3, name: "mins", kind: "message", T: () => Vec3 },
-        { no: 4, name: "maxs", kind: "message", T: () => Vec3 },
-        { no: 5, name: "strength", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 6, name: "color", kind: "scalar", T: ScalarType.FIXED32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FogOptions: MessageType<FogOptions> = /* @__PURE__ */ createMessageType<FogOptions>("modlock.wasm.FogOptions", () => [
+  [1, "position", 11, 0, Vec3.codec],
+  [2, "facing", 11, 0, EulerAngles.codec],
+  [3, "mins", 11, 0, Vec3.codec],
+  [4, "maxs", 11, 0, Vec3.codec],
+  [5, "strength", 2],
+  [6, "color", 7],
+]);
 
 /**
  * ObjectResponse holds the object a Create call placed.
@@ -4126,20 +2605,12 @@ export const FogOptions: MessageType<FogOptions> = /* @__PURE__ */ createMessage
  * @generated from message modlock.wasm.ObjectResponse
  */
 export interface ObjectResponse {
-  /**
-   * @generated from field: uint32 object = 1;
-   */
   object?: number;
+}
 
-};
-
-export const ObjectResponse: MessageType<ObjectResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ObjectResponse",
-    fields: [
-        { no: 1, name: "object", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ObjectResponse: MessageType<ObjectResponse> = /* @__PURE__ */ createMessageType<ObjectResponse>("modlock.wasm.ObjectResponse", () => [
+  [1, "object", 13],
+]);
 
 /**
  * EntityRequest addresses one live entity.
@@ -4149,20 +2620,26 @@ export const ObjectResponse: MessageType<ObjectResponse> = /* @__PURE__ */ creat
 export interface EntityRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
+}
 
-};
+export const EntityRequest: MessageType<EntityRequest> = /* @__PURE__ */ createMessageType<EntityRequest>("modlock.wasm.EntityRequest", () => [
+  [1, "entity", 13],
+]);
 
-export const EntityRequest: MessageType<EntityRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * EntityClassResponse names a live entity's class.
+ *
+ * @generated from message modlock.wasm.EntityClassResponse
+ */
+export interface EntityClassResponse {
+  name?: EntityClassName;
+}
+
+export const EntityClassResponse: MessageType<EntityClassResponse> = /* @__PURE__ */ createMessageType<EntityClassResponse>("modlock.wasm.EntityClassResponse", () => [
+  [1, "name", 11, 0, EntityClassName.codec],
+]);
 
 /**
  * EntityClassName names one entity's class two ways.
@@ -4172,48 +2649,18 @@ export const EntityRequest: MessageType<EntityRequest> = /* @__PURE__ */ createM
 export interface EntityClassName {
   /**
    * ClassName is the server schema class, such as CCitadelPlayerPawn.
-   *
-   * @generated from field: string class_name = 1;
    */
   className?: string;
   /**
    * DesignerName is the name maps and spawns use, such as npc_trooper.
-   *
-   * @generated from field: string designer_name = 2;
    */
   designerName?: string;
+}
 
-};
-
-export const EntityClassName: MessageType<EntityClassName> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityClassName",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "designer_name", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * EntityClassResponse names a live entity's class.
- *
- * @generated from message modlock.wasm.EntityClassResponse
- */
-export interface EntityClassResponse {
-  /**
-   * @generated from field: modlock.wasm.EntityClassName name = 1;
-   */
-  name?: EntityClassName;
-
-};
-
-export const EntityClassResponse: MessageType<EntityClassResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityClassResponse",
-    fields: [
-        { no: 1, name: "name", kind: "message", T: () => EntityClassName },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EntityClassName: MessageType<EntityClassName> = /* @__PURE__ */ createMessageType<EntityClassName>("modlock.wasm.EntityClassName", () => [
+  [1, "class_name", 9],
+  [2, "designer_name", 9],
+]);
 
 /**
  * EntityResponse holds one entity handle.
@@ -4221,20 +2668,12 @@ export const EntityClassResponse: MessageType<EntityClassResponse> = /* @__PURE_
  * @generated from message modlock.wasm.EntityResponse
  */
 export interface EntityResponse {
-  /**
-   * @generated from field: uint32 entity = 1;
-   */
   entity?: number;
+}
 
-};
-
-export const EntityResponse: MessageType<EntityResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityResponse",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EntityResponse: MessageType<EntityResponse> = /* @__PURE__ */ createMessageType<EntityResponse>("modlock.wasm.EntityResponse", () => [
+  [1, "entity", 13],
+]);
 
 /**
  * ObjectRequest addresses one object the mod created.
@@ -4244,20 +2683,13 @@ export const EntityResponse: MessageType<EntityResponse> = /* @__PURE__ */ creat
 export interface ObjectRequest {
   /**
    * Object identifies the object among the mod's objects.
-   *
-   * @generated from field: uint32 object = 1;
    */
   object?: number;
+}
 
-};
-
-export const ObjectRequest: MessageType<ObjectRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.ObjectRequest",
-    fields: [
-        { no: 1, name: "object", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ObjectRequest: MessageType<ObjectRequest> = /* @__PURE__ */ createMessageType<ObjectRequest>("modlock.wasm.ObjectRequest", () => [
+  [1, "object", 13],
+]);
 
 /**
  * MoveObjectRequest moves one object the mod created.
@@ -4265,34 +2697,22 @@ export const ObjectRequest: MessageType<ObjectRequest> = /* @__PURE__ */ createM
  * @generated from message modlock.wasm.MoveObjectRequest
  */
 export interface MoveObjectRequest {
-  /**
-   * @generated from field: uint32 object = 1;
-   */
   object?: number;
   /**
    * Position is the object's new origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is the object's new rotation, kept when omitted.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
+}
 
-};
-
-export const MoveObjectRequest: MessageType<MoveObjectRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MoveObjectRequest",
-    fields: [
-        { no: 1, name: "object", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MoveObjectRequest: MessageType<MoveObjectRequest> = /* @__PURE__ */ createMessageType<MoveObjectRequest>("modlock.wasm.MoveObjectRequest", () => [
+  [1, "object", 13],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+]);
 
 /**
  * SetTextRequest replaces a text object's words.
@@ -4300,27 +2720,17 @@ export const MoveObjectRequest: MessageType<MoveObjectRequest> = /* @__PURE__ */
  * @generated from message modlock.wasm.SetTextRequest
  */
 export interface SetTextRequest {
-  /**
-   * @generated from field: uint32 object = 1;
-   */
   object?: number;
   /**
    * Text is the new words.
-   *
-   * @generated from field: string text = 2;
    */
   text?: string;
+}
 
-};
-
-export const SetTextRequest: MessageType<SetTextRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetTextRequest",
-    fields: [
-        { no: 1, name: "object", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetTextRequest: MessageType<SetTextRequest> = /* @__PURE__ */ createMessageType<SetTextRequest>("modlock.wasm.SetTextRequest", () => [
+  [1, "object", 13],
+  [2, "text", 9],
+]);
 
 /**
  * SetObjectHiddenRequest hides one object from one player or shows it again.
@@ -4328,34 +2738,22 @@ export const SetTextRequest: MessageType<SetTextRequest> = /* @__PURE__ */ creat
  * @generated from message modlock.wasm.SetObjectHiddenRequest
  */
 export interface SetObjectHiddenRequest {
-  /**
-   * @generated from field: uint32 object = 1;
-   */
   object?: number;
   /**
    * Player is the server slot of the player who stops or resumes seeing it.
-   *
-   * @generated from field: int32 player = 2;
    */
   player?: number;
   /**
    * Hidden is true to hide the object and false to show it.
-   *
-   * @generated from field: bool hidden = 3;
    */
   hidden?: boolean;
+}
 
-};
-
-export const SetObjectHiddenRequest: MessageType<SetObjectHiddenRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetObjectHiddenRequest",
-    fields: [
-        { no: 1, name: "object", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "hidden", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetObjectHiddenRequest: MessageType<SetObjectHiddenRequest> = /* @__PURE__ */ createMessageType<SetObjectHiddenRequest>("modlock.wasm.SetObjectHiddenRequest", () => [
+  [1, "object", 13],
+  [2, "player", 5],
+  [3, "hidden", 8],
+]);
 
 /**
  * BotOptions describes a bot player.
@@ -4365,59 +2763,35 @@ export const SetObjectHiddenRequest: MessageType<SetObjectHiddenRequest> = /* @_
 export interface BotOptions {
   /**
    * Name is the bot's player name.
-   *
-   * @generated from field: string name = 1;
    */
   name?: string;
   /**
    * Team is the team number to join: 2 or 3.
-   *
-   * @generated from field: int32 team = 2;
    */
   team?: number;
   /**
    * Position is where the bot appears.
-   *
-   * @generated from field: optional modlock.Vec3 position = 5;
    */
   position?: Vec3;
-
   /**
    * Hero names the bot's hero, such as hero_wraith, or gives its identifier
    * as Pawn.hero reports it.
    *
    * @generated from oneof modlock.wasm.BotOptions.hero
    */
-  hero?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * @generated from field: string hero_name = 3;
-     */
-    value: string;
-    case: "heroName";
-  } | {
-    /**
-     * @generated from field: uint32 hero_id = 4;
-     */
-    value: number;
-    case: "heroId";
-  };
+  hero?:
+    | { value?: undefined; case: undefined }
+    | { value: string; case: "heroName" }
+    | { value: number; case: "heroId" };
+}
 
-};
-
-export const BotOptions: MessageType<BotOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.BotOptions",
-    fields: [
-        { no: 1, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "hero_name", kind: "scalar", T: ScalarType.STRING, oneof: "hero" },
-        { no: 4, name: "hero_id", kind: "scalar", T: ScalarType.UINT32, oneof: "hero" },
-        { no: 5, name: "position", kind: "message", T: () => Vec3, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const BotOptions: MessageType<BotOptions> = /* @__PURE__ */ createMessageType<BotOptions>("modlock.wasm.BotOptions", () => [
+  [1, "name", 9],
+  [2, "team", 5],
+  [3, "hero_name", 9, 0, 0, "hero"],
+  [4, "hero_id", 13, 0, 0, "hero"],
+  [5, "position", 11, 0, Vec3.codec],
+]);
 
 /**
  * BotResponse holds the bot AddBot added.
@@ -4425,20 +2799,12 @@ export const BotOptions: MessageType<BotOptions> = /* @__PURE__ */ createMessage
  * @generated from message modlock.wasm.BotResponse
  */
 export interface BotResponse {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
+}
 
-};
-
-export const BotResponse: MessageType<BotResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.BotResponse",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const BotResponse: MessageType<BotResponse> = /* @__PURE__ */ createMessageType<BotResponse>("modlock.wasm.BotResponse", () => [
+  [1, "player", 5],
+]);
 
 /**
  * InputRequest names buttons for every player. Buttons are the game's input
@@ -4449,20 +2815,13 @@ export const BotResponse: MessageType<BotResponse> = /* @__PURE__ */ createMessa
 export interface InputRequest {
   /**
    * Buttons holds one bit per button; zero names none.
-   *
-   * @generated from field: uint64 buttons = 1;
    */
   buttons?: bigint;
+}
 
-};
-
-export const InputRequest: MessageType<InputRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.InputRequest",
-    fields: [
-        { no: 1, name: "buttons", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const InputRequest: MessageType<InputRequest> = /* @__PURE__ */ createMessageType<InputRequest>("modlock.wasm.InputRequest", () => [
+  [1, "buttons", 4],
+]);
 
 /**
  * PlayerInputRequest names buttons for one player.
@@ -4470,27 +2829,17 @@ export const InputRequest: MessageType<InputRequest> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.PlayerInputRequest
  */
 export interface PlayerInputRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Buttons holds one bit per button.
-   *
-   * @generated from field: uint64 buttons = 2;
    */
   buttons?: bigint;
+}
 
-};
-
-export const PlayerInputRequest: MessageType<PlayerInputRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PlayerInputRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "buttons", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerInputRequest: MessageType<PlayerInputRequest> = /* @__PURE__ */ createMessageType<PlayerInputRequest>("modlock.wasm.PlayerInputRequest", () => [
+  [1, "player", 5],
+  [2, "buttons", 4],
+]);
 
 /**
  * RemapInputRequest replaces the button the mod remaps for every hero.
@@ -4500,34 +2849,23 @@ export const PlayerInputRequest: MessageType<PlayerInputRequest> = /* @__PURE__ 
 export interface RemapInputRequest {
   /**
    * From holds the buttons the player presses; zero stops remapping.
-   *
-   * @generated from field: uint64 from = 1;
    */
   from?: bigint;
   /**
    * To holds the buttons the hero receives in their place.
-   *
-   * @generated from field: uint64 to = 2;
    */
   to?: bigint;
   /**
    * Repeat marks to as newly pressed in every input while from is held.
-   *
-   * @generated from field: optional bool repeat = 3;
    */
   repeat?: boolean;
+}
 
-};
-
-export const RemapInputRequest: MessageType<RemapInputRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RemapInputRequest",
-    fields: [
-        { no: 1, name: "from", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 2, name: "to", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 3, name: "repeat", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const RemapInputRequest: MessageType<RemapInputRequest> = /* @__PURE__ */ createMessageType<RemapInputRequest>("modlock.wasm.RemapInputRequest", () => [
+  [1, "from", 4],
+  [2, "to", 4],
+  [3, "repeat", 8, 4],
+]);
 
 /**
  * UiRequest changes the interface the mod shows one player.
@@ -4535,27 +2873,95 @@ export const RemapInputRequest: MessageType<RemapInputRequest> = /* @__PURE__ */
  * @generated from message modlock.wasm.UiRequest
  */
 export interface UiRequest {
-  /**
-   * @generated from field: int32 player = 1;
-   */
   player?: number;
   /**
    * Change updates the player's tree.
-   *
-   * @generated from field: modlock.ui.Change change = 2;
    */
   change?: Change;
+}
 
-};
+export const UiRequest: MessageType<UiRequest> = /* @__PURE__ */ createMessageType<UiRequest>("modlock.wasm.UiRequest", () => [
+  [1, "player", 5],
+  [2, "change", 11, 0, Change.codec],
+]);
 
-export const UiRequest: MessageType<UiRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.UiRequest",
-    fields: [
-        { no: 1, name: "player", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "change", kind: "message", T: () => Change },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * EntityOptions describes an entity to create.
+ *
+ * @generated from message modlock.wasm.EntityOptions
+ */
+export interface EntityOptions {
+  /**
+   * DesignerName is the entity's designer name, such as npc_trooper_boss.
+   */
+  designerName?: string;
+  /**
+   * Subclass names the entity's game data entry, such as npc_boss_tier1 for
+   * the lane Guardian, for an entity that reads one while spawning. An NPC
+   * needs one.
+   */
+  subclass?: string;
+  /**
+   * Team is the entity's team number; 4 is neutral.
+   */
+  team?: number;
+  /**
+   * Position is the entity's origin.
+   */
+  position?: Vec3;
+  /**
+   * Facing is where the entity faces.
+   */
+  facing?: EulerAngles;
+  /**
+   * KeyValues are the entity's spawn key values, as a map sets them, such as
+   * model or rendercolor.
+   */
+  keyValues?: KeyValue[];
+  /**
+   * Fields are schema fields the host writes after it creates the entity and
+   * before the entity spawns. A write that fails cancels the creation.
+   */
+  fields?: FieldWrite[];
+  /**
+   * TransmitAlways sends the entity to every client, past the game's own
+   * rule, which never sends one without a model, such as a
+   * point_clientui_dialog.
+   */
+  transmitAlways?: boolean;
+}
+
+export const EntityOptions: MessageType<EntityOptions> = /* @__PURE__ */ createMessageType<EntityOptions>("modlock.wasm.EntityOptions", () => [
+  [1, "designer_name", 9],
+  [2, "subclass", 9],
+  [3, "team", 5],
+  [4, "position", 11, 0, Vec3.codec],
+  [5, "facing", 11, 0, EulerAngles.codec],
+  [6, "key_values", 11, 1, KeyValue.codec],
+  [7, "fields", 11, 1, FieldWrite.codec],
+  [8, "transmit_always", 8, 4],
+]);
+
+/**
+ * KeyValue is one spawn key value.
+ *
+ * @generated from message modlock.wasm.KeyValue
+ */
+export interface KeyValue {
+  /**
+   * Key is the key value's name, such as skin.
+   */
+  key?: string;
+  /**
+   * Value is the key value's value.
+   */
+  value?: EntityValue;
+}
+
+export const KeyValue: MessageType<KeyValue> = /* @__PURE__ */ createMessageType<KeyValue>("modlock.wasm.KeyValue", () => [
+  [1, "key", 9],
+  [2, "value", 11, 0, EntityValue.codec],
+]);
 
 /**
  * EntityValue is a value a map gives an entity: a spawn key value or an
@@ -4566,217 +2972,27 @@ export const UiRequest: MessageType<UiRequest> = /* @__PURE__ */ createMessageTy
  * @generated from message modlock.wasm.EntityValue
  */
 export interface EntityValue {
-
   /**
    * @generated from oneof modlock.wasm.EntityValue.value
    */
-  value?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * @generated from field: bool boolean = 1;
-     */
-    value: boolean;
-    case: "boolean";
-  } | {
-    /**
-     * @generated from field: int32 integer = 2;
-     */
-    value: number;
-    case: "integer";
-  } | {
-    /**
-     * @generated from field: float number = 3;
-     */
-    value: number;
-    case: "number";
-  } | {
-    /**
-     * @generated from field: string text = 4;
-     */
-    value: string;
-    case: "text";
-  } | {
-    /**
-     * @generated from field: modlock.Vec3 vector = 5;
-     */
-    value: Vec3;
-    case: "vector";
-  } | {
-    /**
-     * @generated from field: fixed32 color = 6;
-     */
-    value: number;
-    case: "color";
-  };
+  value?:
+    | { value?: undefined; case: undefined }
+    | { value: boolean; case: "boolean" }
+    | { value: number; case: "integer" }
+    | { value: number; case: "number" }
+    | { value: string; case: "text" }
+    | { value: Vec3; case: "vector" }
+    | { value: number; case: "color" };
+}
 
-};
-
-export const EntityValue: MessageType<EntityValue> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityValue",
-    fields: [
-        { no: 1, name: "boolean", kind: "scalar", T: ScalarType.BOOL, oneof: "value" },
-        { no: 2, name: "integer", kind: "scalar", T: ScalarType.INT32, oneof: "value" },
-        { no: 3, name: "number", kind: "scalar", T: ScalarType.FLOAT, oneof: "value" },
-        { no: 4, name: "text", kind: "scalar", T: ScalarType.STRING, oneof: "value" },
-        { no: 5, name: "vector", kind: "message", T: () => Vec3, oneof: "value" },
-        { no: 6, name: "color", kind: "scalar", T: ScalarType.FIXED32, oneof: "value" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * KeyValue is one spawn key value.
- *
- * @generated from message modlock.wasm.KeyValue
- */
-export interface KeyValue {
-  /**
-   * Key is the key value's name, such as skin.
-   *
-   * @generated from field: string key = 1;
-   */
-  key?: string;
-  /**
-   * Value is the key value's value.
-   *
-   * @generated from field: modlock.wasm.EntityValue value = 2;
-   */
-  value?: EntityValue;
-
-};
-
-export const KeyValue: MessageType<KeyValue> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.KeyValue",
-    fields: [
-        { no: 1, name: "key", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "value", kind: "message", T: () => EntityValue },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * FieldWrite writes one schema field of an entity the host creates.
- *
- * @generated from message modlock.wasm.FieldWrite
- */
-export interface FieldWrite {
-  /**
-   * ClassName is the server class that declares the field, or a subclass.
-   *
-   * @generated from field: string class_name = 1;
-   */
-  className?: string;
-  /**
-   * Field is the field's schema name, such as m_iLane.
-   *
-   * @generated from field: string field = 2;
-   */
-  field?: string;
-  /**
-   * Type is how to write the field.
-   *
-   * @generated from field: modlock.wasm.FieldType type = 3;
-   */
-  type?: FieldType;
-  /**
-   * Value is the field's value.
-   *
-   * @generated from field: modlock.wasm.FieldValue value = 4;
-   */
-  value?: FieldValue;
-
-};
-
-export const FieldWrite: MessageType<FieldWrite> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FieldWrite",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "field", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "type", kind: "enum", T: FieldType_Enum },
-        { no: 4, name: "value", kind: "message", T: () => FieldValue },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * EntityOptions describes an entity to create.
- *
- * @generated from message modlock.wasm.EntityOptions
- */
-export interface EntityOptions {
-  /**
-   * DesignerName is the entity's designer name, such as npc_trooper_boss.
-   *
-   * @generated from field: string designer_name = 1;
-   */
-  designerName?: string;
-  /**
-   * Subclass names the entity's game data entry, such as npc_boss_tier1 for
-   * the lane Guardian, for an entity that reads one while spawning. An NPC
-   * needs one.
-   *
-   * @generated from field: string subclass = 2;
-   */
-  subclass?: string;
-  /**
-   * Team is the entity's team number; 4 is neutral.
-   *
-   * @generated from field: int32 team = 3;
-   */
-  team?: number;
-  /**
-   * Position is the entity's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 4;
-   */
-  position?: Vec3;
-  /**
-   * Facing is where the entity faces.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 5;
-   */
-  facing?: EulerAngles;
-  /**
-   * KeyValues are the entity's spawn key values, as a map sets them, such as
-   * model or rendercolor.
-   *
-   * @generated from field: repeated modlock.wasm.KeyValue key_values = 6;
-   */
-  keyValues?: KeyValue[];
-  /**
-   * Fields are schema fields the host writes after it creates the entity and
-   * before the entity spawns. A write that fails cancels the creation.
-   *
-   * @generated from field: repeated modlock.wasm.FieldWrite fields = 7;
-   */
-  fields?: FieldWrite[];
-  /**
-   * TransmitAlways sends the entity to every client, past the game's own
-   * rule, which never sends one without a model, such as a
-   * point_clientui_dialog.
-   *
-   * @generated from field: optional bool transmit_always = 8;
-   */
-  transmitAlways?: boolean;
-
-};
-
-export const EntityOptions: MessageType<EntityOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntityOptions",
-    fields: [
-        { no: 1, name: "designer_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "subclass", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "position", kind: "message", T: () => Vec3 },
-        { no: 5, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 6, name: "key_values", kind: "message", T: () => KeyValue, repeated: true },
-        { no: 7, name: "fields", kind: "message", T: () => FieldWrite, repeated: true },
-        { no: 8, name: "transmit_always", kind: "scalar", T: ScalarType.BOOL, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EntityValue: MessageType<EntityValue> = /* @__PURE__ */ createMessageType<EntityValue>("modlock.wasm.EntityValue", () => [
+  [1, "boolean", 8, 0, 0, "value"],
+  [2, "integer", 5, 0, 0, "value"],
+  [3, "number", 2, 0, 0, "value"],
+  [4, "text", 9, 0, 0, "value"],
+  [5, "vector", 11, 0, Vec3.codec, "value"],
+  [6, "color", 7, 0, 0, "value"],
+]);
 
 /**
  * FireInputRequest sends one input to an entity.
@@ -4786,43 +3002,30 @@ export const EntityOptions: MessageType<EntityOptions> = /* @__PURE__ */ createM
 export interface FireInputRequest {
   /**
    * Entity is the entity's handle.
-   *
-   * @generated from field: uint32 entity = 1;
    */
   entity?: number;
   /**
    * Input is the input's name, such as Skin or Kill.
-   *
-   * @generated from field: string input = 2;
    */
   input?: string;
   /**
    * Value is the input's parameter, absent for an input that takes none.
-   *
-   * @generated from field: optional modlock.wasm.EntityValue value = 3;
    */
   value?: EntityValue;
   /**
    * Activator is the handle of the entity that caused the input, such as a
    * player's hero. Inputs that act on one player, such as
    * LocalPlayerAddCSSClass, act on the activator's player.
-   *
-   * @generated from field: optional uint32 activator = 4;
    */
   activator?: number;
+}
 
-};
-
-export const FireInputRequest: MessageType<FireInputRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FireInputRequest",
-    fields: [
-        { no: 1, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "input", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "value", kind: "message", T: () => EntityValue, opt: true },
-        { no: 4, name: "activator", kind: "scalar", T: ScalarType.UINT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FireInputRequest: MessageType<FireInputRequest> = /* @__PURE__ */ createMessageType<FireInputRequest>("modlock.wasm.FireInputRequest", () => [
+  [1, "entity", 13],
+  [2, "input", 9],
+  [3, "value", 11, 0, EntityValue.codec],
+  [4, "activator", 13, 4],
+]);
 
 /**
  * NpcOptions describes a unit that is not a player, such as a trooper.
@@ -4833,80 +3036,88 @@ export interface NpcOptions {
   /**
    * ClassName is the unit's entity class, such as npc_trooper or
    * npc_trooper_boss.
-   *
-   * @generated from field: string class_name = 1;
    */
   className?: string;
   /**
    * Unit names the unit's game data entry, such as trooper_melee, or is empty
    * for a unit that needs none.
-   *
-   * @generated from field: string unit = 2;
    */
   unit?: string;
   /**
    * Team is the unit's team number; 4 is neutral.
-   *
-   * @generated from field: int32 team = 3;
    */
   team?: number;
   /**
    * Position is the unit's origin, at its feet.
-   *
-   * @generated from field: modlock.Vec3 position = 4;
    */
   position?: Vec3;
   /**
    * Facing is where the unit faces.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 5;
    */
   facing?: EulerAngles;
   /**
    * Health is the unit's health; the default is the unit's own.
-   *
-   * @generated from field: optional int32 health = 6;
    */
   health?: number;
   /**
    * MaxHealth is the unit's maximum health; the default is health.
-   *
-   * @generated from field: optional int32 max_health = 7;
    */
   maxHealth?: number;
   /**
    * Lane is the lane the unit walks. A unit whose class walks none, unlike a
    * trooper, refuses it.
-   *
-   * @generated from field: optional uint32 lane = 8;
    */
   lane?: number;
   /**
    * Fields are schema fields the host writes after it creates the unit and
    * before the unit spawns, such as m_iInitialTeamNum, which the game reads
    * only while spawning. A write that fails cancels the spawn.
-   *
-   * @generated from field: repeated modlock.wasm.FieldWrite fields = 9;
    */
   fields?: FieldWrite[];
+}
 
-};
+export const NpcOptions: MessageType<NpcOptions> = /* @__PURE__ */ createMessageType<NpcOptions>("modlock.wasm.NpcOptions", () => [
+  [1, "class_name", 9],
+  [2, "unit", 9],
+  [3, "team", 5],
+  [4, "position", 11, 0, Vec3.codec],
+  [5, "facing", 11, 0, EulerAngles.codec],
+  [6, "health", 5, 4],
+  [7, "max_health", 5, 4],
+  [8, "lane", 13, 4],
+  [9, "fields", 11, 1, FieldWrite.codec],
+]);
 
-export const NpcOptions: MessageType<NpcOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcOptions",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "unit", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "position", kind: "message", T: () => Vec3 },
-        { no: 5, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 6, name: "health", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 7, name: "max_health", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 8, name: "lane", kind: "scalar", T: ScalarType.UINT32, opt: true },
-        { no: 9, name: "fields", kind: "message", T: () => FieldWrite, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * FieldWrite writes one schema field of an entity the host creates.
+ *
+ * @generated from message modlock.wasm.FieldWrite
+ */
+export interface FieldWrite {
+  /**
+   * ClassName is the server class that declares the field, or a subclass.
+   */
+  className?: string;
+  /**
+   * Field is the field's schema name, such as m_iLane.
+   */
+  field?: string;
+  /**
+   * Type is how to write the field.
+   */
+  type?: FieldType;
+  /**
+   * Value is the field's value.
+   */
+  value?: FieldValue;
+}
+
+export const FieldWrite: MessageType<FieldWrite> = /* @__PURE__ */ createMessageType<FieldWrite>("modlock.wasm.FieldWrite", () => [
+  [1, "class_name", 9],
+  [2, "field", 9],
+  [3, "type", 14, 0, FieldType_Enum],
+  [4, "value", 11, 0, FieldValue.codec],
+]);
 
 /**
  * NpcResponse holds the unit SpawnNpc added.
@@ -4914,20 +3125,12 @@ export const NpcOptions: MessageType<NpcOptions> = /* @__PURE__ */ createMessage
  * @generated from message modlock.wasm.NpcResponse
  */
 export interface NpcResponse {
-  /**
-   * @generated from field: uint32 npc = 1;
-   */
   npc?: number;
+}
 
-};
-
-export const NpcResponse: MessageType<NpcResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcResponse",
-    fields: [
-        { no: 1, name: "npc", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const NpcResponse: MessageType<NpcResponse> = /* @__PURE__ */ createMessageType<NpcResponse>("modlock.wasm.NpcResponse", () => [
+  [1, "npc", 13],
+]);
 
 /**
  * NpcRequest addresses one unit the mod spawned.
@@ -4937,20 +3140,26 @@ export const NpcResponse: MessageType<NpcResponse> = /* @__PURE__ */ createMessa
 export interface NpcRequest {
   /**
    * Npc is the unit's entity handle, as damage events report it.
-   *
-   * @generated from field: uint32 npc = 1;
    */
   npc?: number;
+}
 
-};
+export const NpcRequest: MessageType<NpcRequest> = /* @__PURE__ */ createMessageType<NpcRequest>("modlock.wasm.NpcRequest", () => [
+  [1, "npc", 13],
+]);
 
-export const NpcRequest: MessageType<NpcRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcRequest",
-    fields: [
-        { no: 1, name: "npc", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * NpcStateResponse holds a live unit's state, absent once it is gone.
+ *
+ * @generated from message modlock.wasm.NpcStateResponse
+ */
+export interface NpcStateResponse {
+  state?: NpcState;
+}
+
+export const NpcStateResponse: MessageType<NpcStateResponse> = /* @__PURE__ */ createMessageType<NpcStateResponse>("modlock.wasm.NpcStateResponse", () => [
+  [1, "state", 11, 0, NpcState.codec],
+]);
 
 /**
  * NpcState is a unit's state this frame.
@@ -4960,69 +3169,33 @@ export const NpcRequest: MessageType<NpcRequest> = /* @__PURE__ */ createMessage
 export interface NpcState {
   /**
    * Position is the unit's origin.
-   *
-   * @generated from field: modlock.Vec3 position = 1;
    */
   position?: Vec3;
   /**
    * Facing is where the unit faces.
-   *
-   * @generated from field: modlock.EulerAngles facing = 2;
    */
   facing?: EulerAngles;
   /**
    * Health is the unit's health.
-   *
-   * @generated from field: int32 health = 3;
    */
   health?: number;
   /**
    * MaxHealth is the unit's maximum health.
-   *
-   * @generated from field: int32 max_health = 4;
    */
   maxHealth?: number;
   /**
    * Team is the unit's team number.
-   *
-   * @generated from field: int32 team = 5;
    */
   team?: number;
+}
 
-};
-
-export const NpcState: MessageType<NpcState> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcState",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-        { no: 2, name: "facing", kind: "message", T: () => EulerAngles },
-        { no: 3, name: "health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "max_health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 5, name: "team", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * NpcStateResponse holds a live unit's state, absent once it is gone.
- *
- * @generated from message modlock.wasm.NpcStateResponse
- */
-export interface NpcStateResponse {
-  /**
-   * @generated from field: modlock.wasm.NpcState state = 1;
-   */
-  state?: NpcState;
-
-};
-
-export const NpcStateResponse: MessageType<NpcStateResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcStateResponse",
-    fields: [
-        { no: 1, name: "state", kind: "message", T: () => NpcState },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const NpcState: MessageType<NpcState> = /* @__PURE__ */ createMessageType<NpcState>("modlock.wasm.NpcState", () => [
+  [1, "position", 11, 0, Vec3.codec],
+  [2, "facing", 11, 0, EulerAngles.codec],
+  [3, "health", 5],
+  [4, "max_health", 5],
+  [5, "team", 5],
+]);
 
 /**
  * MoveNpcRequest places one unit.
@@ -5030,41 +3203,27 @@ export const NpcStateResponse: MessageType<NpcStateResponse> = /* @__PURE__ */ c
  * @generated from message modlock.wasm.MoveNpcRequest
  */
 export interface MoveNpcRequest {
-  /**
-   * @generated from field: uint32 npc = 1;
-   */
   npc?: number;
   /**
    * Position is the unit's new origin.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
   /**
    * Facing is where the unit faces afterwards.
-   *
-   * @generated from field: optional modlock.EulerAngles facing = 3;
    */
   facing?: EulerAngles;
   /**
    * Velocity is the unit's motion, which drives its walk animation.
-   *
-   * @generated from field: optional modlock.Vec3 velocity = 4;
    */
   velocity?: Vec3;
+}
 
-};
-
-export const MoveNpcRequest: MessageType<MoveNpcRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MoveNpcRequest",
-    fields: [
-        { no: 1, name: "npc", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-        { no: 3, name: "facing", kind: "message", T: () => EulerAngles, opt: true },
-        { no: 4, name: "velocity", kind: "message", T: () => Vec3, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MoveNpcRequest: MessageType<MoveNpcRequest> = /* @__PURE__ */ createMessageType<MoveNpcRequest>("modlock.wasm.MoveNpcRequest", () => [
+  [1, "npc", 13],
+  [2, "position", 11, 0, Vec3.codec],
+  [3, "facing", 11, 0, EulerAngles.codec],
+  [4, "velocity", 11, 0, Vec3.codec],
+]);
 
 /**
  * SetNpcHealthRequest sets one unit's health.
@@ -5072,34 +3231,22 @@ export const MoveNpcRequest: MessageType<MoveNpcRequest> = /* @__PURE__ */ creat
  * @generated from message modlock.wasm.SetNpcHealthRequest
  */
 export interface SetNpcHealthRequest {
-  /**
-   * @generated from field: uint32 npc = 1;
-   */
   npc?: number;
   /**
    * Health is the unit's new health.
-   *
-   * @generated from field: int32 health = 2;
    */
   health?: number;
   /**
    * MaxHealth is the unit's new maximum health; the default is health.
-   *
-   * @generated from field: optional int32 max_health = 3;
    */
   maxHealth?: number;
+}
 
-};
-
-export const SetNpcHealthRequest: MessageType<SetNpcHealthRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SetNpcHealthRequest",
-    fields: [
-        { no: 1, name: "npc", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "max_health", kind: "scalar", T: ScalarType.INT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const SetNpcHealthRequest: MessageType<SetNpcHealthRequest> = /* @__PURE__ */ createMessageType<SetNpcHealthRequest>("modlock.wasm.SetNpcHealthRequest", () => [
+  [1, "npc", 13],
+  [2, "health", 5],
+  [3, "max_health", 5, 4],
+]);
 
 /**
  * AliveResponse reports whether a unit or pickup was still in the world.
@@ -5107,20 +3254,12 @@ export const SetNpcHealthRequest: MessageType<SetNpcHealthRequest> = /* @__PURE_
  * @generated from message modlock.wasm.AliveResponse
  */
 export interface AliveResponse {
-  /**
-   * @generated from field: bool alive = 1;
-   */
   alive?: boolean;
+}
 
-};
-
-export const AliveResponse: MessageType<AliveResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AliveResponse",
-    fields: [
-        { no: 1, name: "alive", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const AliveResponse: MessageType<AliveResponse> = /* @__PURE__ */ createMessageType<AliveResponse>("modlock.wasm.AliveResponse", () => [
+  [1, "alive", 8],
+]);
 
 /**
  * CreatePickupRequest places one pickup.
@@ -5130,27 +3269,18 @@ export const AliveResponse: MessageType<AliveResponse> = /* @__PURE__ */ createM
 export interface CreatePickupRequest {
   /**
    * Kind is the pickup.
-   *
-   * @generated from field: modlock.wasm.PickupKind kind = 1;
    */
   kind?: PickupKind;
   /**
    * Position is where the pickup rests.
-   *
-   * @generated from field: modlock.Vec3 position = 2;
    */
   position?: Vec3;
+}
 
-};
-
-export const CreatePickupRequest: MessageType<CreatePickupRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.CreatePickupRequest",
-    fields: [
-        { no: 1, name: "kind", kind: "enum", T: PickupKind_Enum },
-        { no: 2, name: "position", kind: "message", T: () => Vec3 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CreatePickupRequest: MessageType<CreatePickupRequest> = /* @__PURE__ */ createMessageType<CreatePickupRequest>("modlock.wasm.CreatePickupRequest", () => [
+  [1, "kind", 14, 0, PickupKind_Enum],
+  [2, "position", 11, 0, Vec3.codec],
+]);
 
 /**
  * PickupResponse holds the pickup CreatePickup placed.
@@ -5158,20 +3288,12 @@ export const CreatePickupRequest: MessageType<CreatePickupRequest> = /* @__PURE_
  * @generated from message modlock.wasm.PickupResponse
  */
 export interface PickupResponse {
-  /**
-   * @generated from field: uint32 pickup = 1;
-   */
   pickup?: number;
+}
 
-};
-
-export const PickupResponse: MessageType<PickupResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PickupResponse",
-    fields: [
-        { no: 1, name: "pickup", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PickupResponse: MessageType<PickupResponse> = /* @__PURE__ */ createMessageType<PickupResponse>("modlock.wasm.PickupResponse", () => [
+  [1, "pickup", 13],
+]);
 
 /**
  * PickupRequest addresses one pickup the mod placed.
@@ -5181,20 +3303,13 @@ export const PickupResponse: MessageType<PickupResponse> = /* @__PURE__ */ creat
 export interface PickupRequest {
   /**
    * Pickup is the pickup's entity handle.
-   *
-   * @generated from field: uint32 pickup = 1;
    */
   pickup?: number;
+}
 
-};
-
-export const PickupRequest: MessageType<PickupRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PickupRequest",
-    fields: [
-        { no: 1, name: "pickup", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PickupRequest: MessageType<PickupRequest> = /* @__PURE__ */ createMessageType<PickupRequest>("modlock.wasm.PickupRequest", () => [
+  [1, "pickup", 13],
+]);
 
 /**
  * FindEntitiesRequest names the entity class to find.
@@ -5204,20 +3319,13 @@ export const PickupRequest: MessageType<PickupRequest> = /* @__PURE__ */ createM
 export interface FindEntitiesRequest {
   /**
    * ClassName is the exact entity class, such as zip_line_node.
-   *
-   * @generated from field: string class_name = 1;
    */
   className?: string;
+}
 
-};
-
-export const FindEntitiesRequest: MessageType<FindEntitiesRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.FindEntitiesRequest",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const FindEntitiesRequest: MessageType<FindEntitiesRequest> = /* @__PURE__ */ createMessageType<FindEntitiesRequest>("modlock.wasm.FindEntitiesRequest", () => [
+  [1, "class_name", 9],
+]);
 
 /**
  * RemoveEntitiesRequest names the entity class to remove.
@@ -5227,20 +3335,13 @@ export const FindEntitiesRequest: MessageType<FindEntitiesRequest> = /* @__PURE_
 export interface RemoveEntitiesRequest {
   /**
    * ClassName is the exact entity class, such as npc_trooper.
-   *
-   * @generated from field: string class_name = 1;
    */
   className?: string;
+}
 
-};
-
-export const RemoveEntitiesRequest: MessageType<RemoveEntitiesRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RemoveEntitiesRequest",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const RemoveEntitiesRequest: MessageType<RemoveEntitiesRequest> = /* @__PURE__ */ createMessageType<RemoveEntitiesRequest>("modlock.wasm.RemoveEntitiesRequest", () => [
+  [1, "class_name", 9],
+]);
 
 /**
  * EntitiesResponse lists entities by handle.
@@ -5250,20 +3351,13 @@ export const RemoveEntitiesRequest: MessageType<RemoveEntitiesRequest> = /* @__P
 export interface EntitiesResponse {
   /**
    * Entities are the entity handles.
-   *
-   * @generated from field: repeated uint32 entities = 1;
    */
   entities?: number[];
+}
 
-};
-
-export const EntitiesResponse: MessageType<EntitiesResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.EntitiesResponse",
-    fields: [
-        { no: 1, name: "entities", kind: "scalar", T: ScalarType.UINT32, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const EntitiesResponse: MessageType<EntitiesResponse> = /* @__PURE__ */ createMessageType<EntitiesResponse>("modlock.wasm.EntitiesResponse", () => [
+  [1, "entities", 13, 3],
+]);
 
 /**
  * CountResponse holds how many entities a call changed.
@@ -5271,20 +3365,12 @@ export const EntitiesResponse: MessageType<EntitiesResponse> = /* @__PURE__ */ c
  * @generated from message modlock.wasm.CountResponse
  */
 export interface CountResponse {
-  /**
-   * @generated from field: int32 count = 1;
-   */
   count?: number;
+}
 
-};
-
-export const CountResponse: MessageType<CountResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.CountResponse",
-    fields: [
-        { no: 1, name: "count", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const CountResponse: MessageType<CountResponse> = /* @__PURE__ */ createMessageType<CountResponse>("modlock.wasm.CountResponse", () => [
+  [1, "count", 5],
+]);
 
 /**
  * HitOptions describes damage the mod deals.
@@ -5294,59 +3380,42 @@ export const CountResponse: MessageType<CountResponse> = /* @__PURE__ */ createM
 export interface HitOptions {
   /**
    * Victim is the entity to hurt.
-   *
-   * @generated from field: uint32 victim = 1;
    */
   victim?: number;
   /**
    * Attacker is the entity credited with the hit. Without one the hit is a
    * hazard, such as poison gas, which credits no one and ignores the
    * inflictor and hit group.
-   *
-   * @generated from field: optional uint32 attacker = 2;
    */
   attacker?: number;
   /**
    * Inflictor is what delivered the hit; the default is the attacker.
-   *
-   * @generated from field: optional uint32 inflictor = 3;
    */
   inflictor?: number;
   /**
    * Amount is the damage before resistances.
-   *
-   * @generated from field: float amount = 4;
    */
   amount?: number;
   /**
    * HitGroup is the body part hit; 1 is the head. The default is the game's
    * choice.
-   *
-   * @generated from field: optional int32 hit_group = 5;
    */
   hitGroup?: number;
   /**
    * Ability is the entity handle of the ability that dealt the hit, as
    * Ability.entity reports it.
-   *
-   * @generated from field: optional uint32 ability = 6;
    */
   ability?: number;
+}
 
-};
-
-export const HitOptions: MessageType<HitOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HitOptions",
-    fields: [
-        { no: 1, name: "victim", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 2, name: "attacker", kind: "scalar", T: ScalarType.UINT32, opt: true },
-        { no: 3, name: "inflictor", kind: "scalar", T: ScalarType.UINT32, opt: true },
-        { no: 4, name: "amount", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 5, name: "hit_group", kind: "scalar", T: ScalarType.INT32, opt: true },
-        { no: 6, name: "ability", kind: "scalar", T: ScalarType.UINT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HitOptions: MessageType<HitOptions> = /* @__PURE__ */ createMessageType<HitOptions>("modlock.wasm.HitOptions", () => [
+  [1, "victim", 13],
+  [2, "attacker", 13, 4],
+  [3, "inflictor", 13, 4],
+  [4, "amount", 2],
+  [5, "hit_group", 5, 4],
+  [6, "ability", 13, 4],
+]);
 
 /**
  * TraceOptions describes a line to test against the world. Layers are bits
@@ -5358,49 +3427,47 @@ export const HitOptions: MessageType<HitOptions> = /* @__PURE__ */ createMessage
 export interface TraceOptions {
   /**
    * Start is where the line begins.
-   *
-   * @generated from field: modlock.Vec3 start = 1;
    */
   start?: Vec3;
   /**
    * End is where the line ends.
-   *
-   * @generated from field: modlock.Vec3 end = 2;
    */
   end?: Vec3;
   /**
    * Layers selects what the line can hit; the default is solid and
    * hitboxes.
-   *
-   * @generated from field: optional uint64 layers = 3;
    */
   layers?: bigint;
   /**
    * Exclude removes things in these layers from the hits.
-   *
-   * @generated from field: optional uint64 exclude = 4;
    */
   exclude?: bigint;
   /**
    * Ignore lists entity handles the line passes through.
-   *
-   * @generated from field: repeated uint32 ignore = 5;
    */
   ignore?: number[];
+}
 
-};
+export const TraceOptions: MessageType<TraceOptions> = /* @__PURE__ */ createMessageType<TraceOptions>("modlock.wasm.TraceOptions", () => [
+  [1, "start", 11, 0, Vec3.codec],
+  [2, "end", 11, 0, Vec3.codec],
+  [3, "layers", 4, 4],
+  [4, "exclude", 4, 4],
+  [5, "ignore", 13, 3],
+]);
 
-export const TraceOptions: MessageType<TraceOptions> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TraceOptions",
-    fields: [
-        { no: 1, name: "start", kind: "message", T: () => Vec3 },
-        { no: 2, name: "end", kind: "message", T: () => Vec3 },
-        { no: 3, name: "layers", kind: "scalar", T: ScalarType.UINT64, opt: true },
-        { no: 4, name: "exclude", kind: "scalar", T: ScalarType.UINT64, opt: true },
-        { no: 5, name: "ignore", kind: "scalar", T: ScalarType.UINT32, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * TraceResponse holds where a line hit, absent for a miss.
+ *
+ * @generated from message modlock.wasm.TraceResponse
+ */
+export interface TraceResponse {
+  hit?: TraceHit;
+}
+
+export const TraceResponse: MessageType<TraceResponse> = /* @__PURE__ */ createMessageType<TraceResponse>("modlock.wasm.TraceResponse", () => [
+  [1, "hit", 11, 0, TraceHit.codec],
+]);
 
 /**
  * TraceHit is where a traced line first hit something.
@@ -5410,62 +3477,41 @@ export const TraceOptions: MessageType<TraceOptions> = /* @__PURE__ */ createMes
 export interface TraceHit {
   /**
    * Position is the hit point.
-   *
-   * @generated from field: modlock.Vec3 position = 1;
    */
   position?: Vec3;
   /**
    * Normal is the surface's direction at the hit point.
-   *
-   * @generated from field: modlock.Vec3 normal = 2;
    */
   normal?: Vec3;
   /**
    * StartSolid is true when the line began inside something solid.
-   *
-   * @generated from field: bool start_solid = 3;
    */
   startSolid?: boolean;
   /**
    * Entity is the entity hit, or zero for the world.
-   *
-   * @generated from field: uint32 entity = 4;
    */
   entity?: number;
+}
 
-};
-
-export const TraceHit: MessageType<TraceHit> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TraceHit",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-        { no: 2, name: "normal", kind: "message", T: () => Vec3 },
-        { no: 3, name: "start_solid", kind: "scalar", T: ScalarType.BOOL },
-        { no: 4, name: "entity", kind: "scalar", T: ScalarType.UINT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const TraceHit: MessageType<TraceHit> = /* @__PURE__ */ createMessageType<TraceHit>("modlock.wasm.TraceHit", () => [
+  [1, "position", 11, 0, Vec3.codec],
+  [2, "normal", 11, 0, Vec3.codec],
+  [3, "start_solid", 8],
+  [4, "entity", 13],
+]);
 
 /**
- * TraceResponse holds where a line hit, absent for a miss.
+ * RestoreNpcsRequest lists the units the map should hold.
  *
- * @generated from message modlock.wasm.TraceResponse
+ * @generated from message modlock.wasm.RestoreNpcsRequest
  */
-export interface TraceResponse {
-  /**
-   * @generated from field: modlock.wasm.TraceHit hit = 1;
-   */
-  hit?: TraceHit;
+export interface RestoreNpcsRequest {
+  npcs?: NpcTarget[];
+}
 
-};
-
-export const TraceResponse: MessageType<TraceResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.TraceResponse",
-    fields: [
-        { no: 1, name: "hit", kind: "message", T: () => TraceHit },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const RestoreNpcsRequest: MessageType<RestoreNpcsRequest> = /* @__PURE__ */ createMessageType<RestoreNpcsRequest>("modlock.wasm.RestoreNpcsRequest", () => [
+  [1, "npcs", 11, 1, NpcTarget.codec],
+]);
 
 /**
  * NpcTarget is one unit or objective RestoreNpcs places, as replays record
@@ -5479,95 +3525,50 @@ export interface NpcTarget {
    * npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
    * npc_base_defense_sentry, npc_super_neutral or
    * npc_neutral_sinners_sacrifice.
-   *
-   * @generated from field: string class_name = 1;
    */
   className?: string;
   /**
    * Id identifies the unit's game data entry.
-   *
-   * @generated from field: uint32 id = 2;
    */
   id?: number;
   /**
    * Team is the unit's team number; 4 is neutral.
-   *
-   * @generated from field: int32 team = 3;
    */
   team?: number;
   /**
    * Position is the unit's origin, at its feet.
-   *
-   * @generated from field: modlock.Vec3 position = 4;
    */
   position?: Vec3;
   /**
    * Facing is where the unit faces.
-   *
-   * @generated from field: modlock.EulerAngles facing = 5;
    */
   facing?: EulerAngles;
   /**
    * Velocity is the unit's motion in units per second.
-   *
-   * @generated from field: optional modlock.Vec3 velocity = 6;
    */
   velocity?: Vec3;
   /**
    * Health and MaxHealth are the unit's health.
-   *
-   * @generated from field: int32 health = 7;
    */
   health?: number;
-  /**
-   * @generated from field: int32 max_health = 8;
-   */
   maxHealth?: number;
   /**
    * Lane is the lane a trooper walks; troopers need one.
-   *
-   * @generated from field: optional uint32 lane = 9;
    */
   lane?: number;
+}
 
-};
-
-export const NpcTarget: MessageType<NpcTarget> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.NpcTarget",
-    fields: [
-        { no: 1, name: "class_name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "id", kind: "scalar", T: ScalarType.UINT32 },
-        { no: 3, name: "team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 4, name: "position", kind: "message", T: () => Vec3 },
-        { no: 5, name: "facing", kind: "message", T: () => EulerAngles },
-        { no: 6, name: "velocity", kind: "message", T: () => Vec3, opt: true },
-        { no: 7, name: "health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 8, name: "max_health", kind: "scalar", T: ScalarType.INT32 },
-        { no: 9, name: "lane", kind: "scalar", T: ScalarType.UINT32, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * RestoreNpcsRequest lists the units the map should hold.
- *
- * @generated from message modlock.wasm.RestoreNpcsRequest
- */
-export interface RestoreNpcsRequest {
-  /**
-   * @generated from field: repeated modlock.wasm.NpcTarget npcs = 1;
-   */
-  npcs?: NpcTarget[];
-
-};
-
-export const RestoreNpcsRequest: MessageType<RestoreNpcsRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RestoreNpcsRequest",
-    fields: [
-        { no: 1, name: "npcs", kind: "message", T: () => NpcTarget, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const NpcTarget: MessageType<NpcTarget> = /* @__PURE__ */ createMessageType<NpcTarget>("modlock.wasm.NpcTarget", () => [
+  [1, "class_name", 9],
+  [2, "id", 13],
+  [3, "team", 5],
+  [4, "position", 11, 0, Vec3.codec],
+  [5, "facing", 11, 0, EulerAngles.codec],
+  [6, "velocity", 11, 0, Vec3.codec],
+  [7, "health", 5],
+  [8, "max_health", 5],
+  [9, "lane", 13, 4],
+]);
 
 /**
  * PauseRequest pauses or resumes the game.
@@ -5575,20 +3576,12 @@ export const RestoreNpcsRequest: MessageType<RestoreNpcsRequest> = /* @__PURE__ 
  * @generated from message modlock.wasm.PauseRequest
  */
 export interface PauseRequest {
-  /**
-   * @generated from field: bool paused = 1;
-   */
   paused?: boolean;
+}
 
-};
-
-export const PauseRequest: MessageType<PauseRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.PauseRequest",
-    fields: [
-        { no: 1, name: "paused", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PauseRequest: MessageType<PauseRequest> = /* @__PURE__ */ createMessageType<PauseRequest>("modlock.wasm.PauseRequest", () => [
+  [1, "paused", 8],
+]);
 
 /**
  * MatchClockResponse holds the match time.
@@ -5596,20 +3589,12 @@ export const PauseRequest: MessageType<PauseRequest> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.MatchClockResponse
  */
 export interface MatchClockResponse {
-  /**
-   * @generated from field: float seconds = 1;
-   */
   seconds?: number;
+}
 
-};
-
-export const MatchClockResponse: MessageType<MatchClockResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MatchClockResponse",
-    fields: [
-        { no: 1, name: "seconds", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MatchClockResponse: MessageType<MatchClockResponse> = /* @__PURE__ */ createMessageType<MatchClockResponse>("modlock.wasm.MatchClockResponse", () => [
+  [1, "seconds", 2],
+]);
 
 /**
  * HoldMatchClockRequest holds the match clock, or releases it.
@@ -5619,20 +3604,26 @@ export const MatchClockResponse: MessageType<MatchClockResponse> = /* @__PURE__ 
 export interface HoldMatchClockRequest {
   /**
    * Seconds is the time to hold; omitted releases the clock.
-   *
-   * @generated from field: optional float seconds = 1;
    */
   seconds?: number;
+}
 
-};
+export const HoldMatchClockRequest: MessageType<HoldMatchClockRequest> = /* @__PURE__ */ createMessageType<HoldMatchClockRequest>("modlock.wasm.HoldMatchClockRequest", () => [
+  [1, "seconds", 2, 4],
+]);
 
-export const HoldMatchClockRequest: MessageType<HoldMatchClockRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.HoldMatchClockRequest",
-    fields: [
-        { no: 1, name: "seconds", kind: "scalar", T: ScalarType.FLOAT, opt: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * RiftResponse holds the Rift objective's state.
+ *
+ * @generated from message modlock.wasm.RiftResponse
+ */
+export interface RiftResponse {
+  state?: RiftState;
+}
+
+export const RiftResponse: MessageType<RiftResponse> = /* @__PURE__ */ createMessageType<RiftResponse>("modlock.wasm.RiftResponse", () => [
+  [1, "state", 11, 0, RiftState.codec],
+]);
 
 /**
  * RiftState is the Rift objective's timing as the game holds it. Times are
@@ -5643,68 +3634,26 @@ export const HoldMatchClockRequest: MessageType<HoldMatchClockRequest> = /* @__P
 export interface RiftState {
   /**
    * ScoringTeam is the team holding the Rift, or zero.
-   *
-   * @generated from field: int32 scoring_team = 1;
    */
   scoringTeam?: number;
-  /**
-   * @generated from field: float scoring_time = 2;
-   */
   scoringTime?: number;
-  /**
-   * @generated from field: float cash_in_started = 3;
-   */
   cashInStarted?: number;
-  /**
-   * @generated from field: float give_up_time = 4;
-   */
   giveUpTime?: number;
   /**
    * NextSpawn is when the Rift next opens.
-   *
-   * @generated from field: float next_spawn = 5;
    */
   nextSpawn?: number;
-  /**
-   * @generated from field: float spawn_window = 6;
-   */
   spawnWindow?: number;
+}
 
-};
-
-export const RiftState: MessageType<RiftState> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RiftState",
-    fields: [
-        { no: 1, name: "scoring_team", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "scoring_time", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 3, name: "cash_in_started", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 4, name: "give_up_time", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 5, name: "next_spawn", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 6, name: "spawn_window", kind: "scalar", T: ScalarType.FLOAT },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * RiftResponse holds the Rift objective's state.
- *
- * @generated from message modlock.wasm.RiftResponse
- */
-export interface RiftResponse {
-  /**
-   * @generated from field: modlock.wasm.RiftState state = 1;
-   */
-  state?: RiftState;
-
-};
-
-export const RiftResponse: MessageType<RiftResponse> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.RiftResponse",
-    fields: [
-        { no: 1, name: "state", kind: "message", T: () => RiftState },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const RiftState: MessageType<RiftState> = /* @__PURE__ */ createMessageType<RiftState>("modlock.wasm.RiftState", () => [
+  [1, "scoring_team", 5],
+  [2, "scoring_time", 2],
+  [3, "cash_in_started", 2],
+  [4, "give_up_time", 2],
+  [5, "next_spawn", 2],
+  [6, "spawn_window", 2],
+]);
 
 /**
  * StartRiftRequest starts the Rift objective at an authored position.
@@ -5712,136 +3661,157 @@ export const RiftResponse: MessageType<RiftResponse> = /* @__PURE__ */ createMes
  * @generated from message modlock.wasm.StartRiftRequest
  */
 export interface StartRiftRequest {
-  /**
-   * @generated from field: modlock.Vec3 position = 1;
-   */
   position?: Vec3;
+}
 
-};
-
-export const StartRiftRequest: MessageType<StartRiftRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StartRiftRequest",
-    fields: [
-        { no: 1, name: "position", kind: "message", T: () => Vec3 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const StartRiftRequest: MessageType<StartRiftRequest> = /* @__PURE__ */ createMessageType<StartRiftRequest>("modlock.wasm.StartRiftRequest", () => [
+  [1, "position", 11, 0, Vec3.codec],
+]);
 
 /**
- * Movement selects the movement model heroes walk and jump with.
+ * Manifest describes a mod in its mod.json. A source project's manifest names
+ * its language; modlock build writes a built mod's manifest beside the entry,
+ * naming its runtime and entry instead.
  *
- * @generated from message modlock.wasm.Movement
+ * @generated from message modlock.wasm.Manifest
  */
-export interface Movement {
+export interface Manifest {
   /**
-   * @generated from field: modlock.wasm.Movement.Model model = 1;
+   * Slug identifies the mod: lowercase letters, digits and hyphens.
    */
-  model?: Movement_Model;
+  slug?: string;
   /**
-   * Scale is game units per Quake unit; zero means 1.
-   *
-   * @generated from field: float scale = 2;
+   * Name is the mod's display name.
    */
-  scale?: number;
+  name?: string;
   /**
-   * Unpredicted_buttons are left out of the commands the client predicts.
-   * They name inputs the mod remaps or blocks on the server, so the client
-   * predicts no cast or shot the server will not make.
-   *
-   * @generated from field: uint64 unpredicted_buttons = 3;
+   * Version is the mod's semantic version.
    */
-  unpredictedButtons?: bigint;
+  version?: string;
+  /**
+   * Language is the source language, set in a source project.
+   */
+  language?: Manifest_Language;
+  /**
+   * Runtime is the module that runs the built mod.
+   */
+  runtime?: Manifest_Runtime;
+  /**
+   * Entry is the built mod's entry file, relative to mod.json.
+   */
+  entry?: string;
+  /**
+   * Map is the map the mod plays on; empty plays the default map.
+   */
+  map?: string;
+  /**
+   * Movement replaces how heroes move on the server and in each player's
+   * game.
+   */
+  movement?: Movement;
+  /**
+   * Abilities change abilities' data on the server and in each player's
+   * game.
+   */
+  abilities?: AbilityTuning[];
+  /**
+   * Settings are the choices each player makes about the mod, which the mod
+   * reads with PlayerSetting.
+   */
+  settings?: Setting[];
+  /**
+   * Metrics are the measures the mod keeps for each player, which the mod
+   * adds to with AddMetric.
+   */
+  metrics?: Metric[];
+}
 
-};
-
-export const Movement: MessageType<Movement> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Movement",
-    fields: [
-        { no: 1, name: "model", kind: "enum", T: Movement_Model_Enum },
-        { no: 2, name: "scale", kind: "scalar", T: ScalarType.FLOAT },
-        { no: 3, name: "unpredicted_buttons", kind: "scalar", T: ScalarType.UINT64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType<Manifest>("modlock.wasm.Manifest", () => [
+  [1, "slug", 9],
+  [2, "name", 9],
+  [3, "version", 9],
+  [4, "language", 14, 0, Manifest_Language_Enum],
+  [5, "runtime", 14, 0, Manifest_Runtime_Enum],
+  [6, "entry", 9],
+  [7, "map", 9],
+  [8, "movement", 11, 0, Movement.codec],
+  [9, "abilities", 11, 1, AbilityTuning.codec],
+  [10, "settings", 11, 1, Setting.codec],
+  [11, "metrics", 11, 1, Metric.codec],
+]);
 
 /**
- * AbilityTuning changes one ability's data where the game keeps it parsed.
+ * Runtime is the WebAssembly module that runs a built mod.
  *
- * @generated from message modlock.wasm.AbilityTuning
+ * @generated from enum modlock.wasm.Manifest.Runtime
  */
-export interface AbilityTuning {
+export enum Manifest_Runtime {
   /**
-   * Ability is the ability's name, such as gunslinger_rocket_launcher.
-   *
-   * @generated from field: string ability = 1;
+   * RUNTIME_UNKNOWN is an unset or unsupported runtime.
    */
-  ability?: string;
-  /**
-   * Properties replaces the values of the ability's named properties, such
-   * as AbilityCooldown.
-   *
-   * @generated from field: map<string, float> properties = 2;
-   */
-  properties?: { [key: string]: number };
-  /**
-   * Fields writes float schema fields, named as a path of class.field steps
-   * from the ability's data, such as
-   * CitadelAbilityVData.m_projectileInfo/ProjectileInfo_t.m_flSpeed.
-   *
-   * @generated from field: map<string, float> fields = 3;
-   */
-  fields?: { [key: string]: number };
-  /**
-   * CopyFields copies the field at each value's path over the field at its
-   * key's path; both must be the same size.
-   *
-   * @generated from field: map<string, string> copy_fields = 4;
-   */
-  copyFields?: { [key: string]: string };
+  UNKNOWN = 0,
 
-};
+  /**
+   * RUNTIME_WASM runs the entry itself, a module compiled from the mod.
+   */
+  WASM = 1,
 
-export const AbilityTuning: MessageType<AbilityTuning> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.AbilityTuning",
-    fields: [
-        { no: 1, name: "ability", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "properties", kind: "map", K: ScalarType.STRING, V: {kind: "scalar", T: ScalarType.FLOAT} },
-        { no: 3, name: "fields", kind: "map", K: ScalarType.STRING, V: {kind: "scalar", T: ScalarType.FLOAT} },
-        { no: 4, name: "copy_fields", kind: "map", K: ScalarType.STRING, V: {kind: "scalar", T: ScalarType.STRING} },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+  /**
+   * RUNTIME_QUICKJS runs the entry, one JavaScript bundle, on QuickJS.
+   */
+  QUICKJS = 2,
+
+  /**
+   * RUNTIME_LUAU runs the entry, a zip of Luau sources, on Luau.
+   */
+  LUAU = 3,
+
+  /**
+   * RUNTIME_PYTHON runs the entry, a zip of Python sources, on CPython.
+   */
+  PYTHON = 4,
+}
+
+export const Manifest_Runtime_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Manifest.Runtime", [[0, "RUNTIME_UNKNOWN"], [1, "RUNTIME_WASM"], [2, "RUNTIME_QUICKJS"], [3, "RUNTIME_LUAU"], [4, "RUNTIME_PYTHON"]]);
 
 /**
- * SettingChoice is one value of a choice setting.
+ * Language is the language a mod's source is written in.
  *
- * @generated from message modlock.wasm.SettingChoice
+ * @generated from enum modlock.wasm.Manifest.Language
  */
-export interface SettingChoice {
+export enum Manifest_Language {
   /**
-   * Value is the value the mod reads: letters, digits, dots, underscores
-   * and hyphens.
-   *
-   * @generated from field: string value = 1;
+   * LANGUAGE_UNKNOWN is an unset or unsupported language.
    */
-  value?: string;
+  UNKNOWN = 0,
+
   /**
-   * Label names the choice to players; empty shows the value.
-   *
-   * @generated from field: string label = 2;
+   * LANGUAGE_GO builds with Go into a module of its own.
    */
-  label?: string;
+  GO = 1,
 
-};
+  /**
+   * LANGUAGE_TYPESCRIPT bundles to JavaScript for QuickJS.
+   */
+  TYPESCRIPT = 2,
 
-export const SettingChoice: MessageType<SettingChoice> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.SettingChoice",
-    fields: [
-        { no: 1, name: "value", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "label", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+  /**
+   * LANGUAGE_JAVASCRIPT bundles for QuickJS, type checked from JSDoc.
+   */
+  JAVASCRIPT = 3,
+
+  /**
+   * LANGUAGE_LUAU runs on Luau.
+   */
+  LUAU = 4,
+
+  /**
+   * LANGUAGE_PYTHON runs on CPython.
+   */
+  PYTHON = 5,
+}
+
+export const Manifest_Language_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Manifest.Language", [[0, "LANGUAGE_UNKNOWN"], [1, "LANGUAGE_GO"], [2, "LANGUAGE_TYPESCRIPT"], [3, "LANGUAGE_JAVASCRIPT"], [4, "LANGUAGE_LUAU"], [5, "LANGUAGE_PYTHON"]]);
 
 /**
  * Setting is one choice a player makes about a mod, such as a HUD layout.
@@ -5853,64 +3823,92 @@ export interface Setting {
   /**
    * Key names the setting in the mod's code: up to 64 letters, digits and
    * underscores, not starting with a digit.
-   *
-   * @generated from field: string key = 1;
    */
   key?: string;
   /**
    * Label names the setting to players.
-   *
-   * @generated from field: string label = 2;
    */
   label?: string;
-  /**
-   * @generated from field: modlock.wasm.Setting.Kind kind = 3;
-   */
   kind?: Setting_Kind;
   /**
    * Choices are a choice setting's values, in the order players see them.
-   *
-   * @generated from field: repeated modlock.wasm.SettingChoice choices = 4;
    */
   choices?: SettingChoice[];
   /**
    * Min, max and step bound a number setting.
-   *
-   * @generated from field: double min = 5;
    */
   min?: number;
-  /**
-   * @generated from field: double max = 6;
-   */
   max?: number;
-  /**
-   * @generated from field: double step = 7;
-   */
   step?: number;
   /**
    * Default is the value a player starts with. Empty means the first choice,
    * off, or min.
-   *
-   * @generated from field: string default_value = 8 [json_name = "default"];
    */
   defaultValue?: string;
+}
 
-};
+export const Setting: MessageType<Setting> = /* @__PURE__ */ createMessageType<Setting>("modlock.wasm.Setting", () => [
+  [1, "key", 9],
+  [2, "label", 9],
+  [3, "kind", 14, 0, Setting_Kind_Enum],
+  [4, "choices", 11, 1, SettingChoice.codec],
+  [5, "min", 1],
+  [6, "max", 1],
+  [7, "step", 1],
+  [8, "default_value", 9, 0, 0, 0, 0, "default"],
+]);
 
-export const Setting: MessageType<Setting> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Setting",
-    fields: [
-        { no: 1, name: "key", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "label", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "kind", kind: "enum", T: Setting_Kind_Enum },
-        { no: 4, name: "choices", kind: "message", T: () => SettingChoice, repeated: true },
-        { no: 5, name: "min", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 6, name: "max", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 7, name: "step", kind: "scalar", T: ScalarType.DOUBLE },
-        { no: 8, name: "default_value", jsonName: "default", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * Kind is the kind of value a setting holds.
+ *
+ * @generated from enum modlock.wasm.Setting.Kind
+ */
+export enum Setting_Kind {
+  /**
+   * KIND_UNKNOWN is an unset or unsupported kind.
+   */
+  UNKNOWN = 0,
+
+  /**
+   * KIND_CHOICE is one of the setting's choices.
+   */
+  CHOICE = 1,
+
+  /**
+   * KIND_SWITCH is on or off.
+   */
+  SWITCH = 2,
+
+  /**
+   * KIND_NUMBER is a number from min to max, on a step from min when step
+   * is above zero.
+   */
+  NUMBER = 3,
+}
+
+export const Setting_Kind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Setting.Kind", [[0, "KIND_UNKNOWN"], [1, "KIND_CHOICE"], [2, "KIND_SWITCH"], [3, "KIND_NUMBER"]]);
+
+/**
+ * SettingChoice is one value of a choice setting.
+ *
+ * @generated from message modlock.wasm.SettingChoice
+ */
+export interface SettingChoice {
+  /**
+   * Value is the value the mod reads: letters, digits, dots, underscores
+   * and hyphens.
+   */
+  value?: string;
+  /**
+   * Label names the choice to players; empty shows the value.
+   */
+  label?: string;
+}
+
+export const SettingChoice: MessageType<SettingChoice> = /* @__PURE__ */ createMessageType<SettingChoice>("modlock.wasm.SettingChoice", () => [
+  [1, "value", 9],
+  [2, "label", 9],
+]);
 
 /**
  * Metric is one measure a mod keeps for each player, such as how often the
@@ -5923,132 +3921,50 @@ export interface Metric {
   /**
    * Name names the metric in the mod's code: up to 64 letters, digits,
    * underscores and dots, starting with a letter or an underscore.
-   *
-   * @generated from field: string name = 1;
    */
   name?: string;
-  /**
-   * @generated from field: modlock.wasm.Metric.Kind kind = 2;
-   */
   kind?: Metric_Kind;
   /**
    * Labels are the values a call may label the metric with: letters,
    * digits, dots, underscores and hyphens. Empty takes no label.
-   *
-   * @generated from field: repeated string labels = 3;
    */
   labels?: string[];
+}
 
-};
-
-export const Metric: MessageType<Metric> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Metric",
-    fields: [
-        { no: 1, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "kind", kind: "enum", T: Metric_Kind_Enum },
-        { no: 3, name: "labels", kind: "scalar", T: ScalarType.STRING, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const Metric: MessageType<Metric> = /* @__PURE__ */ createMessageType<Metric>("modlock.wasm.Metric", () => [
+  [1, "name", 9],
+  [2, "kind", 14, 0, Metric_Kind_Enum],
+  [3, "labels", 9, 1],
+]);
 
 /**
- * Manifest describes a mod in its mod.json. A source project's manifest names
- * its language; modlock build writes a built mod's manifest beside the entry,
- * naming its runtime and entry instead.
+ * Kind is how a metric combines the values added to it.
  *
- * @generated from message modlock.wasm.Manifest
+ * @generated from enum modlock.wasm.Metric.Kind
  */
-export interface Manifest {
+export enum Metric_Kind {
   /**
-   * Slug identifies the mod: lowercase letters, digits and hyphens.
-   *
-   * @generated from field: string slug = 1;
+   * KIND_UNKNOWN is an unset or unsupported kind.
    */
-  slug?: string;
-  /**
-   * Name is the mod's display name.
-   *
-   * @generated from field: string name = 2;
-   */
-  name?: string;
-  /**
-   * Version is the mod's semantic version.
-   *
-   * @generated from field: string version = 3;
-   */
-  version?: string;
-  /**
-   * Language is the source language, set in a source project.
-   *
-   * @generated from field: modlock.wasm.Manifest.Language language = 4;
-   */
-  language?: Manifest_Language;
-  /**
-   * Runtime is the module that runs the built mod.
-   *
-   * @generated from field: modlock.wasm.Manifest.Runtime runtime = 5;
-   */
-  runtime?: Manifest_Runtime;
-  /**
-   * Entry is the built mod's entry file, relative to mod.json.
-   *
-   * @generated from field: string entry = 6;
-   */
-  entry?: string;
-  /**
-   * Map is the map the mod plays on; empty plays the default map.
-   *
-   * @generated from field: string map = 7;
-   */
-  map?: string;
-  /**
-   * Movement replaces how heroes move on the server and in each player's
-   * game.
-   *
-   * @generated from field: modlock.wasm.Movement movement = 8;
-   */
-  movement?: Movement;
-  /**
-   * Abilities change abilities' data on the server and in each player's
-   * game.
-   *
-   * @generated from field: repeated modlock.wasm.AbilityTuning abilities = 9;
-   */
-  abilities?: AbilityTuning[];
-  /**
-   * Settings are the choices each player makes about the mod, which the mod
-   * reads with PlayerSetting.
-   *
-   * @generated from field: repeated modlock.wasm.Setting settings = 10;
-   */
-  settings?: Setting[];
-  /**
-   * Metrics are the measures the mod keeps for each player, which the mod
-   * adds to with AddMetric.
-   *
-   * @generated from field: repeated modlock.wasm.Metric metrics = 11;
-   */
-  metrics?: Metric[];
+  UNKNOWN = 0,
 
-};
+  /**
+   * KIND_COUNT counts the calls.
+   */
+  COUNT = 1,
 
-export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.Manifest",
-    fields: [
-        { no: 1, name: "slug", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "version", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "language", kind: "enum", T: Manifest_Language_Enum },
-        { no: 5, name: "runtime", kind: "enum", T: Manifest_Runtime_Enum },
-        { no: 6, name: "entry", kind: "scalar", T: ScalarType.STRING },
-        { no: 7, name: "map", kind: "scalar", T: ScalarType.STRING },
-        { no: 8, name: "movement", kind: "message", T: () => Movement },
-        { no: 9, name: "abilities", kind: "message", T: () => AbilityTuning, repeated: true },
-        { no: 10, name: "settings", kind: "message", T: () => Setting, repeated: true },
-        { no: 11, name: "metrics", kind: "message", T: () => Metric, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+  /**
+   * KIND_SUM adds the values.
+   */
+  SUM = 2,
+
+  /**
+   * KIND_MAX keeps the largest value.
+   */
+  MAX = 3,
+}
+
+export const Metric_Kind_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Metric.Kind", [[0, "KIND_UNKNOWN"], [1, "KIND_COUNT"], [2, "KIND_SUM"], [3, "KIND_MAX"]]);
 
 /**
  * MetricTotal is one player's total of one metric and label.
@@ -6056,30 +3972,16 @@ export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType
  * @generated from message modlock.wasm.MetricTotal
  */
 export interface MetricTotal {
-  /**
-   * @generated from field: string name = 1;
-   */
   name?: string;
-  /**
-   * @generated from field: string label = 2;
-   */
   label?: string;
-  /**
-   * @generated from field: double value = 3;
-   */
   value?: number;
+}
 
-};
-
-export const MetricTotal: MessageType<MetricTotal> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MetricTotal",
-    fields: [
-        { no: 1, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "label", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "value", kind: "scalar", T: ScalarType.DOUBLE },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MetricTotal: MessageType<MetricTotal> = /* @__PURE__ */ createMessageType<MetricTotal>("modlock.wasm.MetricTotal", () => [
+  [1, "name", 9],
+  [2, "label", 9],
+  [3, "value", 1],
+]);
 
 /**
  * MetricTotals are one player's totals for one mod's session.
@@ -6087,56 +3989,12 @@ export const MetricTotal: MessageType<MetricTotal> = /* @__PURE__ */ createMessa
  * @generated from message modlock.wasm.MetricTotals
  */
 export interface MetricTotals {
-  /**
-   * @generated from field: repeated modlock.wasm.MetricTotal totals = 1;
-   */
   totals?: MetricTotal[];
+}
 
-};
-
-export const MetricTotals: MessageType<MetricTotals> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.MetricTotals",
-    fields: [
-        { no: 1, name: "totals", kind: "message", T: () => MetricTotal, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * StoredSetting is one player's value of one mod's setting.
- *
- * @generated from message modlock.wasm.StoredSetting
- */
-export interface StoredSetting {
-  /**
-   * @generated from field: string mod = 1;
-   */
-  mod?: string;
-  /**
-   * @generated from field: uint64 steam_id = 2;
-   */
-  steamId?: bigint;
-  /**
-   * @generated from field: string key = 3;
-   */
-  key?: string;
-  /**
-   * @generated from field: string value = 4;
-   */
-  value?: string;
-
-};
-
-export const StoredSetting: MessageType<StoredSetting> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StoredSetting",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "steam_id", kind: "scalar", T: ScalarType.UINT64 },
-        { no: 3, name: "key", kind: "scalar", T: ScalarType.STRING },
-        { no: 4, name: "value", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const MetricTotals: MessageType<MetricTotals> = /* @__PURE__ */ createMessageType<MetricTotals>("modlock.wasm.MetricTotals", () => [
+  [1, "totals", 11, 1, MetricTotal.codec],
+]);
 
 /**
  * StoredSettings is the file a host without a settings service keeps
@@ -6145,18 +4003,110 @@ export const StoredSetting: MessageType<StoredSetting> = /* @__PURE__ */ createM
  * @generated from message modlock.wasm.StoredSettings
  */
 export interface StoredSettings {
-  /**
-   * @generated from field: repeated modlock.wasm.StoredSetting values = 1;
-   */
   values?: StoredSetting[];
+}
 
-};
+export const StoredSettings: MessageType<StoredSettings> = /* @__PURE__ */ createMessageType<StoredSettings>("modlock.wasm.StoredSettings", () => [
+  [1, "values", 11, 1, StoredSetting.codec],
+]);
 
-export const StoredSettings: MessageType<StoredSettings> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.wasm.StoredSettings",
-    fields: [
-        { no: 1, name: "values", kind: "message", T: () => StoredSetting, repeated: true },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * StoredSetting is one player's value of one mod's setting.
+ *
+ * @generated from message modlock.wasm.StoredSetting
+ */
+export interface StoredSetting {
+  mod?: string;
+  steamId?: bigint;
+  key?: string;
+  value?: string;
+}
+
+export const StoredSetting: MessageType<StoredSetting> = /* @__PURE__ */ createMessageType<StoredSetting>("modlock.wasm.StoredSetting", () => [
+  [1, "mod", 9],
+  [2, "steam_id", 4],
+  [3, "key", 9],
+  [4, "value", 9],
+]);
+
+/**
+ * Movement selects the movement model heroes walk and jump with.
+ *
+ * @generated from message modlock.wasm.Movement
+ */
+export interface Movement {
+  model?: Movement_Model;
+  /**
+   * Scale is game units per Quake unit; zero means 1.
+   */
+  scale?: number;
+  /**
+   * Unpredicted_buttons are left out of the commands the client predicts.
+   * They name inputs the mod remaps or blocks on the server, so the client
+   * predicts no cast or shot the server will not make.
+   */
+  unpredictedButtons?: bigint;
+}
+
+export const Movement: MessageType<Movement> = /* @__PURE__ */ createMessageType<Movement>("modlock.wasm.Movement", () => [
+  [1, "model", 14, 0, Movement_Model_Enum],
+  [2, "scale", 2],
+  [3, "unpredicted_buttons", 4],
+]);
+
+/**
+ * Model is a movement model the host runs every tick.
+ *
+ * @generated from enum modlock.wasm.Movement.Model
+ */
+export enum Movement_Model {
+  /**
+   * MODEL_NATIVE is the game's own movement.
+   */
+  NATIVE = 0,
+
+  /**
+   * MODEL_QUAKEWORLD is QuakeWorld's player movement against the map's
+   * Quake collision, maps/<map>.bsp, a version 29 BSP. Heroes are solid
+   * boxes to each other, and a landing raises a Landed event.
+   */
+  QUAKEWORLD = 1,
+}
+
+export const Movement_Model_Enum = /* @__PURE__ */ createEnumType("modlock.wasm.Movement.Model", [[0, "MODEL_NATIVE"], [1, "MODEL_QUAKEWORLD"]]);
+
+/**
+ * AbilityTuning changes one ability's data where the game keeps it parsed.
+ *
+ * @generated from message modlock.wasm.AbilityTuning
+ */
+export interface AbilityTuning {
+  /**
+   * Ability is the ability's name, such as gunslinger_rocket_launcher.
+   */
+  ability?: string;
+  /**
+   * Properties replaces the values of the ability's named properties, such
+   * as AbilityCooldown.
+   */
+  properties?: { [key: string]: number };
+  /**
+   * Fields writes float schema fields, named as a path of class.field steps
+   * from the ability's data, such as
+   * CitadelAbilityVData.m_projectileInfo/ProjectileInfo_t.m_flSpeed.
+   */
+  fields?: { [key: string]: number };
+  /**
+   * CopyFields copies the field at each value's path over the field at its
+   * key's path; both must be the same size.
+   */
+  copyFields?: { [key: string]: string };
+}
+
+export const AbilityTuning: MessageType<AbilityTuning> = /* @__PURE__ */ createMessageType<AbilityTuning>("modlock.wasm.AbilityTuning", () => [
+  [1, "ability", 9],
+  [2, "properties", 2, 584],
+  [3, "fields", 2, 584],
+  [4, "copy_fields", 9, 584],
+]);
 

@@ -5,11 +5,8 @@
 import { createEnumType } from "@aptre/protobuf-es-lite/enum";
 import type { MessageType } from "@aptre/protobuf-es-lite/message";
 import { createMessageType } from "@aptre/protobuf-es-lite/message";
-import { ScalarType } from "@aptre/protobuf-es-lite/scalar";
-import type { PartialFieldInfo } from "@aptre/protobuf-es-lite/field";
 import { Change } from "../ui.pb.js";
 
-export const protobufPackage = "modlock.control";
 
 /**
  * MessageKind is where a message shows on the player's screen.
@@ -19,30 +16,40 @@ export const protobufPackage = "modlock.control";
 export enum MessageKind {
   /**
    * MESSAGE_KIND_CHAT is a line in chat.
-   *
-   * @generated from enum value: MESSAGE_KIND_CHAT = 0;
    */
   CHAT = 0,
 
   /**
    * MESSAGE_KIND_CENTER is the text in the center of the screen.
-   *
-   * @generated from enum value: MESSAGE_KIND_CENTER = 1;
    */
   CENTER = 1,
 
   /**
    * MESSAGE_KIND_ANNOUNCEMENT is a game announcement with a title.
-   *
-   * @generated from enum value: MESSAGE_KIND_ANNOUNCEMENT = 2;
    */
   ANNOUNCEMENT = 2,
 }
 
-export const MessageKind_Enum = /* @__PURE__ */ createEnumType("modlock.control.MessageKind", [
-  [0, "MESSAGE_KIND_CHAT"],
-  [1, "MESSAGE_KIND_CENTER"],
-  [2, "MESSAGE_KIND_ANNOUNCEMENT"],
+export const MessageKind_Enum = /* @__PURE__ */ createEnumType("modlock.control.MessageKind", [[0, "MESSAGE_KIND_CHAT"], [1, "MESSAGE_KIND_CENTER"], [2, "MESSAGE_KIND_ANNOUNCEMENT"]]);
+
+/**
+ * ControlRequest is one request from the controller.
+ *
+ * @generated from message modlock.control.ControlRequest
+ */
+export interface ControlRequest {
+  /**
+   * Body selects the request.
+   *
+   * @generated from oneof modlock.control.ControlRequest.body
+   */
+  body?:
+    | { value?: undefined; case: undefined }
+    | { value: ReloadRequest; case: "reload" };
+}
+
+export const ControlRequest: MessageType<ControlRequest> = /* @__PURE__ */ createMessageType<ControlRequest>("modlock.control.ControlRequest", () => [
+  [1, "reload", 11, 0, ReloadRequest.codec, "body"],
 ]);
 
 /**
@@ -55,55 +62,47 @@ export interface ReloadRequest {
   /**
    * Path is the built mod to load: a directory with mod.json or a .wasm file,
    * as the host sees it.
-   *
-   * @generated from field: string path = 1;
    */
   path?: string;
+}
 
-};
-
-export const ReloadRequest: MessageType<ReloadRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ReloadRequest",
-    fields: [
-        { no: 1, name: "path", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ReloadRequest: MessageType<ReloadRequest> = /* @__PURE__ */ createMessageType<ReloadRequest>("modlock.control.ReloadRequest", () => [
+  [1, "path", 9],
+]);
 
 /**
- * ControlRequest is one request from the controller.
+ * HostEvent is one thing that happened in the host.
  *
- * @generated from message modlock.control.ControlRequest
+ * @generated from message modlock.control.HostEvent
  */
-export interface ControlRequest {
-
+export interface HostEvent {
   /**
-   * Body selects the request.
+   * Body selects the event.
    *
-   * @generated from oneof modlock.control.ControlRequest.body
+   * @generated from oneof modlock.control.HostEvent.body
    */
-  body?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * Reload replaces a running mod with a new build.
-     *
-     * @generated from field: modlock.control.ReloadRequest reload = 1;
-     */
-    value: ReloadRequest;
-    case: "reload";
-  };
+  body?:
+    | { value?: undefined; case: undefined }
+    | { value: ModStarted; case: "started" }
+    | { value: ModLog; case: "log" }
+    | { value: ModFailed; case: "failed" }
+    | { value: PlayerJoined; case: "joined" }
+    | { value: ServerReady; case: "ready" }
+    | { value: UiChanged; case: "ui" }
+    | { value: PlayerLeft; case: "left" }
+    | { value: PlayerMessage; case: "message" };
+}
 
-};
-
-export const ControlRequest: MessageType<ControlRequest> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ControlRequest",
-    fields: [
-        { no: 1, name: "reload", kind: "message", T: () => ReloadRequest, oneof: "body" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const HostEvent: MessageType<HostEvent> = /* @__PURE__ */ createMessageType<HostEvent>("modlock.control.HostEvent", () => [
+  [1, "started", 11, 0, ModStarted.codec, "body"],
+  [2, "log", 11, 0, ModLog.codec, "body"],
+  [3, "failed", 11, 0, ModFailed.codec, "body"],
+  [4, "joined", 11, 0, PlayerJoined.codec, "body"],
+  [5, "ready", 11, 0, ServerReady.codec, "body"],
+  [6, "ui", 11, 0, UiChanged.codec, "body"],
+  [7, "left", 11, 0, PlayerLeft.codec, "body"],
+  [8, "message", 11, 0, PlayerMessage.codec, "body"],
+]);
 
 /**
  * ModStarted identifies a mod that started.
@@ -113,27 +112,18 @@ export const ControlRequest: MessageType<ControlRequest> = /* @__PURE__ */ creat
 export interface ModStarted {
   /**
    * Mod is the mod's name.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Reloaded is true when a reload replaced an earlier instance.
-   *
-   * @generated from field: bool reloaded = 2;
    */
   reloaded?: boolean;
+}
 
-};
-
-export const ModStarted: MessageType<ModStarted> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ModStarted",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "reloaded", kind: "scalar", T: ScalarType.BOOL },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ModStarted: MessageType<ModStarted> = /* @__PURE__ */ createMessageType<ModStarted>("modlock.control.ModStarted", () => [
+  [1, "mod", 9],
+  [2, "reloaded", 8],
+]);
 
 /**
  * ModLog carries one log line.
@@ -143,27 +133,18 @@ export const ModStarted: MessageType<ModStarted> = /* @__PURE__ */ createMessage
 export interface ModLog {
   /**
    * Mod is the name of the mod that logged.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Text is the line, without a trailing newline.
-   *
-   * @generated from field: string text = 2;
    */
   text?: string;
+}
 
-};
-
-export const ModLog: MessageType<ModLog> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ModLog",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ModLog: MessageType<ModLog> = /* @__PURE__ */ createMessageType<ModLog>("modlock.control.ModLog", () => [
+  [1, "mod", 9],
+  [2, "text", 9],
+]);
 
 /**
  * ModFailed explains why a mod stopped or a reload failed. A failed reload
@@ -174,27 +155,18 @@ export const ModLog: MessageType<ModLog> = /* @__PURE__ */ createMessageType({
 export interface ModFailed {
   /**
    * Mod is the mod's name.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Error describes the failure.
-   *
-   * @generated from field: string error = 2;
    */
   error?: string;
+}
 
-};
-
-export const ModFailed: MessageType<ModFailed> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ModFailed",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "error", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const ModFailed: MessageType<ModFailed> = /* @__PURE__ */ createMessageType<ModFailed>("modlock.control.ModFailed", () => [
+  [1, "mod", 9],
+  [2, "error", 9],
+]);
 
 /**
  * PlayerJoined identifies a player who joined.
@@ -204,94 +176,23 @@ export const ModFailed: MessageType<ModFailed> = /* @__PURE__ */ createMessageTy
 export interface PlayerJoined {
   /**
    * Slot is the player's slot.
-   *
-   * @generated from field: int32 slot = 1;
    */
   slot?: number;
   /**
    * Name is the player's name.
-   *
-   * @generated from field: string name = 2;
    */
   name?: string;
   /**
    * SteamId is the player's Steam ID, zero for a bot.
-   *
-   * @generated from field: fixed64 steam_id = 3;
    */
   steamId?: bigint;
+}
 
-};
-
-export const PlayerJoined: MessageType<PlayerJoined> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.PlayerJoined",
-    fields: [
-        { no: 1, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-        { no: 2, name: "name", kind: "scalar", T: ScalarType.STRING },
-        { no: 3, name: "steam_id", kind: "scalar", T: ScalarType.FIXED64 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * ServerReady reports the loaded map.
- *
- * @generated from message modlock.control.ServerReady
- */
-export interface ServerReady {
-  /**
-   * Map is the map the server loaded.
-   *
-   * @generated from field: string map = 1;
-   */
-  map?: string;
-
-};
-
-export const ServerReady: MessageType<ServerReady> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.ServerReady",
-    fields: [
-        { no: 1, name: "map", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
-
-/**
- * UiChanged carries a change to the interface a mod shows a player.
- *
- * @generated from message modlock.control.UiChanged
- */
-export interface UiChanged {
-  /**
-   * Mod is the mod's name.
-   *
-   * @generated from field: string mod = 1;
-   */
-  mod?: string;
-  /**
-   * Slot identifies the player.
-   *
-   * @generated from field: int32 slot = 2;
-   */
-  slot?: number;
-  /**
-   * Change updates the player's tree for the mod.
-   *
-   * @generated from field: modlock.ui.Change change = 3;
-   */
-  change?: Change;
-
-};
-
-export const UiChanged: MessageType<UiChanged> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.UiChanged",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "change", kind: "message", T: () => Change },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerJoined: MessageType<PlayerJoined> = /* @__PURE__ */ createMessageType<PlayerJoined>("modlock.control.PlayerJoined", () => [
+  [1, "slot", 5],
+  [2, "name", 9],
+  [3, "steam_id", 6],
+]);
 
 /**
  * PlayerLeft identifies a player who left. Bots leave too; a controller drops
@@ -302,20 +203,13 @@ export const UiChanged: MessageType<UiChanged> = /* @__PURE__ */ createMessageTy
 export interface PlayerLeft {
   /**
    * Slot is the player's former slot.
-   *
-   * @generated from field: int32 slot = 1;
    */
   slot?: number;
+}
 
-};
-
-export const PlayerLeft: MessageType<PlayerLeft> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.PlayerLeft",
-    fields: [
-        { no: 1, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerLeft: MessageType<PlayerLeft> = /* @__PURE__ */ createMessageType<PlayerLeft>("modlock.control.PlayerLeft", () => [
+  [1, "slot", 5],
+]);
 
 /**
  * PlayerMessage is a message a mod showed one player.
@@ -325,146 +219,73 @@ export const PlayerLeft: MessageType<PlayerLeft> = /* @__PURE__ */ createMessage
 export interface PlayerMessage {
   /**
    * Mod is the name of the mod that showed it.
-   *
-   * @generated from field: string mod = 1;
    */
   mod?: string;
   /**
    * Slot identifies the player.
-   *
-   * @generated from field: int32 slot = 2;
    */
   slot?: number;
   /**
    * Kind is where the message shows.
-   *
-   * @generated from field: modlock.control.MessageKind kind = 3;
    */
   kind?: MessageKind;
   /**
    * Title heads an announcement.
-   *
-   * @generated from field: string title = 4;
    */
   title?: string;
   /**
    * Text is the message; empty center text clears it.
-   *
-   * @generated from field: string text = 5;
    */
   text?: string;
+}
 
-};
-
-export const PlayerMessage: MessageType<PlayerMessage> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.PlayerMessage",
-    fields: [
-        { no: 1, name: "mod", kind: "scalar", T: ScalarType.STRING },
-        { no: 2, name: "slot", kind: "scalar", T: ScalarType.INT32 },
-        { no: 3, name: "kind", kind: "enum", T: MessageKind_Enum },
-        { no: 4, name: "title", kind: "scalar", T: ScalarType.STRING },
-        { no: 5, name: "text", kind: "scalar", T: ScalarType.STRING },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+export const PlayerMessage: MessageType<PlayerMessage> = /* @__PURE__ */ createMessageType<PlayerMessage>("modlock.control.PlayerMessage", () => [
+  [1, "mod", 9],
+  [2, "slot", 5],
+  [3, "kind", 14, 0, MessageKind_Enum],
+  [4, "title", 9],
+  [5, "text", 9],
+]);
 
 /**
- * HostEvent is one thing that happened in the host.
+ * ServerReady reports the loaded map.
  *
- * @generated from message modlock.control.HostEvent
+ * @generated from message modlock.control.ServerReady
  */
-export interface HostEvent {
-
+export interface ServerReady {
   /**
-   * Body selects the event.
-   *
-   * @generated from oneof modlock.control.HostEvent.body
+   * Map is the map the server loaded.
    */
-  body?: {
-    value?: undefined,
-    case: undefined
-  } | {
-    /**
-     * Started reports a mod that started or restarted after a reload.
-     *
-     * @generated from field: modlock.control.ModStarted started = 1;
-     */
-    value: ModStarted;
-    case: "started";
-  } | {
-    /**
-     * Log carries one line a mod logged.
-     *
-     * @generated from field: modlock.control.ModLog log = 2;
-     */
-    value: ModLog;
-    case: "log";
-  } | {
-    /**
-     * Failed reports a mod that stopped or a reload that did not load.
-     *
-     * @generated from field: modlock.control.ModFailed failed = 3;
-     */
-    value: ModFailed;
-    case: "failed";
-  } | {
-    /**
-     * Joined reports a player who finished joining the server.
-     *
-     * @generated from field: modlock.control.PlayerJoined joined = 4;
-     */
-    value: PlayerJoined;
-    case: "joined";
-  } | {
-    /**
-     * Ready reports that players can join the server.
-     *
-     * @generated from field: modlock.control.ServerReady ready = 5;
-     */
-    value: ServerReady;
-    case: "ready";
-  } | {
-    /**
-     * Ui carries a change to the interface a mod shows a player. The host
-     * sends every tree as a reset change when the call opens.
-     *
-     * @generated from field: modlock.control.UiChanged ui = 6;
-     */
-    value: UiChanged;
-    case: "ui";
-  } | {
-    /**
-     * Left reports a player who left the server.
-     *
-     * @generated from field: modlock.control.PlayerLeft left = 7;
-     */
-    value: PlayerLeft;
-    case: "left";
-  } | {
-    /**
-     * Message carries a message a mod showed a player: a chat line, center
-     * text or an announcement.
-     *
-     * @generated from field: modlock.control.PlayerMessage message = 8;
-     */
-    value: PlayerMessage;
-    case: "message";
-  };
+  map?: string;
+}
 
-};
+export const ServerReady: MessageType<ServerReady> = /* @__PURE__ */ createMessageType<ServerReady>("modlock.control.ServerReady", () => [
+  [1, "map", 9],
+]);
 
-export const HostEvent: MessageType<HostEvent> = /* @__PURE__ */ createMessageType({
-    typeName: "modlock.control.HostEvent",
-    fields: [
-        { no: 1, name: "started", kind: "message", T: () => ModStarted, oneof: "body" },
-        { no: 2, name: "log", kind: "message", T: () => ModLog, oneof: "body" },
-        { no: 3, name: "failed", kind: "message", T: () => ModFailed, oneof: "body" },
-        { no: 4, name: "joined", kind: "message", T: () => PlayerJoined, oneof: "body" },
-        { no: 5, name: "ready", kind: "message", T: () => ServerReady, oneof: "body" },
-        { no: 6, name: "ui", kind: "message", T: () => UiChanged, oneof: "body" },
-        { no: 7, name: "left", kind: "message", T: () => PlayerLeft, oneof: "body" },
-        { no: 8, name: "message", kind: "message", T: () => PlayerMessage, oneof: "body" },
-    ] satisfies readonly PartialFieldInfo[],
-    packedByDefault: true,
-});
+/**
+ * UiChanged carries a change to the interface a mod shows a player.
+ *
+ * @generated from message modlock.control.UiChanged
+ */
+export interface UiChanged {
+  /**
+   * Mod is the mod's name.
+   */
+  mod?: string;
+  /**
+   * Slot identifies the player.
+   */
+  slot?: number;
+  /**
+   * Change updates the player's tree for the mod.
+   */
+  change?: Change;
+}
+
+export const UiChanged: MessageType<UiChanged> = /* @__PURE__ */ createMessageType<UiChanged>("modlock.control.UiChanged", () => [
+  [1, "mod", 9],
+  [2, "slot", 5],
+  [3, "change", 11, 0, Change.codec],
+]);
 
