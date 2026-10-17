@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -46,7 +47,7 @@ func Unzip(archive, name, target string) error {
 		return err
 	}
 	defer source.Close()
-	return executable(target, source)
+	return write(target, source, 0o755)
 }
 
 // Untar writes the gzipped tar archive's file name to target as an
@@ -59,7 +60,7 @@ func Untar(archive, name, target string) error {
 			return nil
 		}
 		found = true
-		if err := executable(target, body); err != nil {
+		if err := write(target, body, 0o755); err != nil {
 			return err
 		}
 		return fs.SkipAll
@@ -68,6 +69,19 @@ func Untar(archive, name, target string) error {
 		return errors.Errorf("%s holds no %s", filepath.Base(archive), name)
 	}
 	return err
+}
+
+// UntarTree writes the regular files under the directory prefix in the
+// gzipped tar archive into dir, keeping their paths below prefix and their
+// modes. An empty prefix writes every file.
+func UntarTree(archive, prefix, dir string) error {
+	return WalkTar(archive, func(name string, mode fs.FileMode, body io.Reader) error {
+		name, ok := strings.CutPrefix(name, prefix)
+		if !ok || !filepath.IsLocal(name) {
+			return nil
+		}
+		return write(filepath.Join(dir, filepath.FromSlash(name)), body, mode|0o644)
+	})
 }
 
 // WalkTar calls visit with the cleaned slash-separated name, permission bits
@@ -109,13 +123,13 @@ func WalkTar(archive string, visit func(name string, mode fs.FileMode, body io.R
 	}
 }
 
-// executable copies source into a new executable file at target.
-func executable(target string, source io.Reader) error {
+// write copies source into a new file at target with mode.
+func write(target string, source io.Reader, mode fs.FileMode) error {
 	// Create the file with its directory, then copy the contents in.
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return err
 	}
-	file, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
+	file, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}

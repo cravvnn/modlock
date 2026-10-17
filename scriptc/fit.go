@@ -1,5 +1,6 @@
-// Package scriptc fits a module that scriptc compiled as a WASI reactor to
-// the mod boundary, so the host runs it as it runs any other mod.
+// Package scriptc downloads the scriptc compiler and fits a module it
+// compiled as a WASI reactor to the mod boundary, so the host runs it as it
+// runs any other mod.
 //
 // scriptc imports its host callbacks and its panic sink from the scriptc
 // module, starts with _initialize and a separate init export, and returns an

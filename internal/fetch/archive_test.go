@@ -107,3 +107,24 @@ func TestUntar(t *testing.T) {
 		t.Fatal("Untar found a file the archive lacks")
 	}
 }
+
+// TestUntarTree checks that UntarTree writes the files under its prefix with
+// their modes and skips the rest.
+func TestUntarTree(t *testing.T) {
+	// The prefix's files land below dir with the prefix removed.
+	archive := writeTarGz(t)
+	dir := t.TempDir()
+	if err := UntarTree(archive, "bin/", dir); err != nil {
+		t.Fatal(err)
+	}
+	info, err := os.Stat(filepath.Join(dir, "tool"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o755 {
+		t.Errorf("tool has mode %v", info.Mode().Perm())
+	}
+	if _, err := os.Stat(filepath.Join(dir, "readme")); !os.IsNotExist(err) {
+		t.Errorf("readme outside the prefix was written: %v", err)
+	}
+}

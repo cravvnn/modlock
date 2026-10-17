@@ -12,7 +12,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/paralin/modlock/internal/npm"
 	"github.com/paralin/modlock/js"
 	"github.com/paralin/modlock/scriptc"
 	"github.com/pkg/errors"
@@ -106,7 +105,7 @@ func (p *Project) writeScriptcConfig(dir, library string) error {
 // configuration maps it to source.
 func (p *Project) compileScriptc(ctx context.Context, library, tsgo string, output io.Writer) ([]byte, error) {
 	// Install the compiler.
-	compiler, runtimePack, err := npm.Scriptc(ctx)
+	compiler, runtimePack, err := scriptc.Compiler(ctx)
 	if err != nil {
 		return nil, err
 	}
