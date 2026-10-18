@@ -72,7 +72,7 @@ const ScriptcProtobuf = "protobuf-es-lite"
 const modulePath = "github.com/paralin/modlock"
 
 // protobufVersion is the protobuf runtime the library bundles.
-const protobufVersion = "0.6.1"
+const protobufVersion = "1.2.1"
 
 // banner is the legal comment that every bundle keeps for the protobuf
 // runtime it includes.
