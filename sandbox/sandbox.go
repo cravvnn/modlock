@@ -331,8 +331,9 @@ func (s *Sandbox) deliver(ctx context.Context, mod *running, method string, requ
 
 // answer answers a host call from the mod manifest describes. It reports
 // what the player would see or what the server log would show, names the
-// stand-in player, keeps the player's settings, and answers the rest empty,
-// as for a player without a hero.
+// stand-in player, keeps the player's settings, refuses service calls as a
+// host without extensions does, and answers the rest empty, as for a player
+// without a hero.
 func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
 	// Decode the requests the sandbox reports.
 	mod := manifest.GetSlug()
@@ -390,6 +391,10 @@ func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.addMetric(manifest, request)
 		}
+	case "CallService":
+		request := &wasm.ServiceCall{}
+		_ = request.UnmarshalVT(call.GetRequest())
+		return &wasm.Reply{Error: "this host provides no service " + request.GetService()}
 	}
 
 	return &wasm.Reply{}
