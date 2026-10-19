@@ -1544,6 +1544,14 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityUpgrades(
   return {};
 }
 
+void* PawnObserver::AbilityInstance(int32_t slot, uint32_t handle) {
+  const auto owned = CurrentAbilitiesForSlot(slot);
+  if (!owned || std::none_of(owned->begin(), owned->end(),
+                             [&](const auto& ability) { return ability.handle == handle; }))
+    return nullptr;
+  return InstanceOf(IdentityOfHandle(EntityListOf(frame_entity_system_), handle));
+}
+
 std::expected<void, std::string> PawnObserver::ApplyAbilityTimers(
     int32_t slot, std::span<const Ability> targets) {
   auto owned = CurrentAbilitiesForSlot(slot);

@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "modlock/engine_host.h"
+#include "modlock/gameinterop/ability_charge_limit.h"
 #include "modlock/gameinterop/ability_input_hook.h"
 #include "modlock/gameinterop/ability_modifier.h"
 #include "modlock/gameinterop/ability_slots.h"
@@ -476,6 +477,9 @@ class Game : public HostService {
   // time without the ticks the game spent paused.
   std::expected<float, std::string> LatchTime();
 
+  // LimitCharges makes maximum the most charges the player's ability holds.
+  std::expected<void, std::string> LimitCharges(int32_t slot, uint32_t handle, int32_t maximum);
+
   // OwnedAbility returns the ability named name of slot's live hero.
   std::expected<gameinterop::PawnObserver::Ability, std::string> OwnedAbility(
       int32_t slot, std::string_view name);
@@ -598,6 +602,11 @@ class Game : public HostService {
   // "<ability>/<modifier>" key; modifiers_ resolves each held key.
   std::set<std::pair<int32_t, std::string>> held_modifiers_;
   std::map<std::string, gameinterop::AbilityModifier, std::less<>> modifiers_;
+
+  // charge_limit_ holds the most charges the mod gave abilities, created the
+  // first time one is limited; it puts the game's own maximums back when the
+  // game ends.
+  std::unique_ptr<gameinterop::AbilityChargeLimit> charge_limit_;
   // blocked_ withholds buttons from every player and slot_blocked_ from one
   // player; presses_ adds buttons to one player's next input.
   uint64_t blocked_ = 0;

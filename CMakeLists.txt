@@ -101,6 +101,7 @@ add_library(modlock_sdk SHARED
   src/camera/camera_path.cc
   src/engine_host.cc
   src/plugin_library.cc
+  src/gameinterop/ability_charge_limit.cc
   src/gameinterop/ability_definitions.cc
   src/gameinterop/ability_input_hook.cc
   src/gameinterop/ability_modifier.cc
@@ -462,6 +463,9 @@ if(BUILD_TESTING)
   add_executable(camera_path_test tests/camera_path_test.cc)
   target_link_libraries(camera_path_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME camera_path_test COMMAND camera_path_test)
+  add_executable(ability_charge_limit_test tests/ability_charge_limit_test.cc)
+  target_link_libraries(ability_charge_limit_test PRIVATE modlock::sdk gtest_main)
+  add_test(NAME ability_charge_limit_test COMMAND ability_charge_limit_test)
   add_executable(ability_definitions_test tests/ability_definitions_test.cc)
   target_link_libraries(ability_definitions_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME ability_definitions_test COMMAND ability_definitions_test)

@@ -486,6 +486,11 @@ class MODLOCK_API PawnObserver {
   std::expected<void, std::string> ApplyAbilityTimers(int32_t slot,
                                                       std::span<const Ability> targets);
 
+  // AbilityInstance returns the live entity of an ability the player's hero
+  // owns, by the handle CurrentAbilitiesForSlot reported, or null when the
+  // hero no longer owns it.
+  void* AbilityInstance(int32_t slot, uint32_t handle);
+
   // SetPracticeStamina sets the pawn's native stamina resource to stamina,
   // clamped to the current native maximum, or to that maximum when stamina is
   // absent, and latches the value at the caller's simulation time. It mirrors

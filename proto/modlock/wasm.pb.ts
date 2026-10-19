@@ -2242,6 +2242,13 @@ export interface AbilityOptions {
    * RechargeEnd replaces the game time its next charge returns.
    */
   rechargeEnd?: number;
+  /**
+   * MaxCharges replaces the most charges the ability can hold, from 1 to 100;
+   * 0 returns it to the game's own. The server applies it, so the hero's
+   * screen can still show the game's maximum. Charges above the new maximum
+   * are not removed; set them with charges.
+   */
+  maxCharges?: number;
 }
 
 export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ createMessageType<AbilityOptions>("modlock.wasm.AbilityOptions", () => [
@@ -2251,6 +2258,7 @@ export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ creat
   [4, "charges", 5, 4],
   [5, "cooldown_end", 2, 4],
   [6, "recharge_end", 2, 4],
+  [7, "max_charges", 5, 4],
 ], {
   decode: (r: BinaryReader, end: number, m: AbilityOptions): AbilityOptions => {
     while (r.pos < end) {
@@ -2263,6 +2271,7 @@ export const AbilityOptions: MessageType<AbilityOptions> = /* @__PURE__ */ creat
         case 4: m.charges = r.int32(); break;
         case 5: m.cooldownEnd = r.float(); break;
         case 6: m.rechargeEnd = r.float(); break;
+        case 7: m.maxCharges = r.int32(); break;
         default: r.skip(t);
       }
     }

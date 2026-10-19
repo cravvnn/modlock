@@ -874,6 +874,13 @@ export interface AbilityOptions {
   cooldownEnd?: number
   /** rechargeEnd replaces the game time its next charge returns. */
   rechargeEnd?: number
+  /**
+   * maxCharges replaces the most charges the ability can hold, from 1 to 100;
+   * 0 returns it to the game's own. The server applies it, so the hero's
+   * screen can still show the game's maximum. charges above the new maximum
+   * are not removed; set them with charges.
+   */
+  maxCharges?: number
 }
 
 /** toAbilityOptions encodes an AbilityOptions. */
@@ -884,6 +891,7 @@ function toAbilityOptions(value: AbilityOptions): pb.AbilityOptions {
     charges: value.charges,
     cooldownEnd: value.cooldownEnd,
     rechargeEnd: value.rechargeEnd,
+    maxCharges: value.maxCharges,
   }
 }
 

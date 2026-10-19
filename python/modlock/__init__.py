@@ -633,6 +633,11 @@ class AbilityOptions:
     cooldown_end: float | None = None
     # recharge_end replaces the game time its next charge returns.
     recharge_end: float | None = None
+    # max_charges replaces the most charges the ability can hold, from 1 to 100;
+    # 0 returns it to the game's own. The server applies it, so the hero's
+    # screen can still show the game's maximum. charges above the new maximum
+    # are not removed; set them with charges.
+    max_charges: int | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -1877,6 +1882,7 @@ _SCHEMA: wire.Schema = {
             wire.Field(4, "charges", "int32", optional=True),
             wire.Field(5, "cooldown_end", "float", optional=True),
             wire.Field(6, "recharge_end", "float", optional=True),
+            wire.Field(7, "max_charges", "int32", optional=True),
         ],
     ),
     "GiveItemRequest": (

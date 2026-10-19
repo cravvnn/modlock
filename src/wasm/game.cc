@@ -1684,6 +1684,12 @@ std::expected<void, std::string> Game::SetAbility(const AbilityOptions& request)
       return applied;
     }
   }
+  if (request.has_max_charges()) {
+    if (auto limited = LimitCharges(request.player(), ability->handle, request.max_charges());
+        !limited) {
+      return limited;
+    }
+  }
   if (!request.has_charges() && !request.has_cooldown_end() && !request.has_recharge_end())
     return {};
 
@@ -1694,6 +1700,22 @@ std::expected<void, std::string> Game::SetAbility(const AbilityOptions& request)
   if (request.has_cooldown_end()) ability->cooldown_end = request.cooldown_end();
   if (request.has_recharge_end()) ability->charge_recharge_end = request.recharge_end();
   return observer_.ApplyAbilityTimers(request.player(), std::span(&*ability, 1));
+}
+
+std::expected<void, std::string> Game::LimitCharges(int32_t slot, uint32_t handle,
+                                                    int32_t maximum) {
+  if (!charge_limit_) {
+    auto image = services_.Image();
+    if (!image) return std::unexpected(image.error());
+    auto slots = gameinterop::ResolveAbilityChargeSlots(**image);
+    if (!slots) return std::unexpected(slots.error());
+    auto created = gameinterop::AbilityChargeLimit::Create(slots->max_charges);
+    if (!created) return std::unexpected(created.error());
+    charge_limit_ = std::move(*created);
+  }
+  auto* ability = observer_.AbilityInstance(slot, handle);
+  if (ability == nullptr) return std::unexpected("the ability is not live");
+  return charge_limit_->Set(ability, handle, maximum);
 }
 
 std::expected<void, std::string> Game::GiveItem(const GiveItemRequest& request) {

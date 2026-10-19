@@ -20919,6 +20919,7 @@ class MODLOCK_API AbilityOptions final : public ::google::protobuf::Message
     kChargesFieldNumber = 4,
     kCooldownEndFieldNumber = 5,
     kRechargeEndFieldNumber = 6,
+    kMaxChargesFieldNumber = 7,
   };
   // string ability = 2;
   void clear_ability() ;
@@ -20989,11 +20990,22 @@ class MODLOCK_API AbilityOptions final : public ::google::protobuf::Message
   void _internal_set_recharge_end(float value);
 
   public:
+  // optional int32 max_charges = 7;
+  bool has_max_charges() const;
+  void clear_max_charges() ;
+  ::int32_t max_charges() const;
+  void set_max_charges(::int32_t value);
+
+  private:
+  ::int32_t _internal_max_charges() const;
+  void _internal_set_max_charges(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:modlock.wasm.AbilityOptions)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 6,
+  static const ::google::protobuf::internal::TcParseTable<3, 7,
                                    0, 43,
                                    2>
       _table_;
@@ -21021,6 +21033,7 @@ class MODLOCK_API AbilityOptions final : public ::google::protobuf::Message
     ::int32_t charges_;
     float cooldown_end_;
     float recharge_end_;
+    ::int32_t max_charges_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -42396,6 +42409,35 @@ inline float AbilityOptions::_internal_recharge_end() const {
 inline void AbilityOptions::_internal_set_recharge_end(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.recharge_end_ = value;
+}
+
+// optional int32 max_charges = 7;
+inline bool AbilityOptions::has_max_charges() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
+  return value;
+}
+inline void AbilityOptions::clear_max_charges() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_charges_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000040U);
+}
+inline ::int32_t AbilityOptions::max_charges() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.AbilityOptions.max_charges)
+  return _internal_max_charges();
+}
+inline void AbilityOptions::set_max_charges(::int32_t value) {
+  _internal_set_max_charges(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.AbilityOptions.max_charges)
+}
+inline ::int32_t AbilityOptions::_internal_max_charges() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.max_charges_;
+}
+inline void AbilityOptions::_internal_set_max_charges(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.max_charges_ = value;
 }
 
 // -------------------------------------------------------------------

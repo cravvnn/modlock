@@ -2604,6 +2604,11 @@ type AbilityOptions struct {
 	CooldownEnd *float32 `protobuf:"fixed32,5,opt,name=cooldown_end,json=cooldownEnd,proto3,oneof" json:"cooldownEnd,omitempty"`
 	// RechargeEnd replaces the game time its next charge returns.
 	RechargeEnd *float32 `protobuf:"fixed32,6,opt,name=recharge_end,json=rechargeEnd,proto3,oneof" json:"rechargeEnd,omitempty"`
+	// MaxCharges replaces the most charges the ability can hold, from 1 to 100;
+	// 0 returns it to the game's own. The server applies it, so the hero's
+	// screen can still show the game's maximum. Charges above the new maximum
+	// are not removed; set them with charges.
+	MaxCharges *int32 `protobuf:"varint,7,opt,name=max_charges,json=maxCharges,proto3,oneof" json:"maxCharges,omitempty"`
 }
 
 func (x *AbilityOptions) Reset() {
@@ -2650,6 +2655,13 @@ func (x *AbilityOptions) GetCooldownEnd() float32 {
 func (x *AbilityOptions) GetRechargeEnd() float32 {
 	if x != nil && x.RechargeEnd != nil {
 		return *x.RechargeEnd
+	}
+	return 0
+}
+
+func (x *AbilityOptions) GetMaxCharges() int32 {
+	if x != nil && x.MaxCharges != nil {
+		return *x.MaxCharges
 	}
 	return 0
 }
@@ -7616,6 +7628,7 @@ func (m *AbilityOptions) CloneVT() *AbilityOptions {
 	r.Charges = protobuf_go_lite.ClonePtr(m.Charges)
 	r.CooldownEnd = protobuf_go_lite.ClonePtr(m.CooldownEnd)
 	r.RechargeEnd = protobuf_go_lite.ClonePtr(m.RechargeEnd)
+	r.MaxCharges = protobuf_go_lite.ClonePtr(m.MaxCharges)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -10936,6 +10949,9 @@ func (this *AbilityOptions) EqualVT(that *AbilityOptions) bool {
 		return false
 	}
 	if !protobuf_go_lite.EqualPtr(this.RechargeEnd, that.RechargeEnd) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MaxCharges, that.MaxCharges) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -17107,6 +17123,11 @@ func (x *AbilityOptions) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("rechargeEnd")
 		s.WriteFloat32(*x.RechargeEnd)
 	}
+	if x.MaxCharges != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("maxCharges")
+		s.WriteInt32(*x.MaxCharges)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -17162,6 +17183,14 @@ func (x *AbilityOptions) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			t := s.ReadFloat32()
 			x.RechargeEnd = &t
+		case "max_charges", "maxCharges":
+			s.AddField("max_charges")
+			if s.ReadNil() {
+				x.MaxCharges = nil
+				return
+			}
+			t := s.ReadInt32()
+			x.MaxCharges = &t
 		}
 	})
 }
@@ -26809,6 +26838,11 @@ func (m *AbilityOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.MaxCharges != nil {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(*m.MaxCharges))
+		i--
+		dAtA[i] = 0x38
+	}
 	if m.RechargeEnd != nil {
 		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.RechargeEnd))))
 		i--
@@ -32882,6 +32916,7 @@ func (m *AbilityOptions) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeVarintPtr(1, m.Charges)
 	n += protobuf_go_lite.SizeFixed32Ptr(1, m.CooldownEnd)
 	n += protobuf_go_lite.SizeFixed32Ptr(1, m.RechargeEnd)
+	n += protobuf_go_lite.SizeVarintPtr(1, m.MaxCharges)
 	n += len(m.unknownFields)
 	return n
 }
@@ -35763,6 +35798,10 @@ func (x *AbilityOptions) MarshalProtoText() string {
 	if x.RechargeEnd != nil {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "recharge_end")
 		protobuf_go_lite.TextWriteFloat32(&sb, *x.RechargeEnd)
+	}
+	if x.MaxCharges != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "max_charges")
+		protobuf_go_lite.TextWriteInt(&sb, *x.MaxCharges)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -42042,6 +42081,16 @@ func (m *AbilityOptions) UnmarshalVT(dAtA []byte) error {
 			v = uint32(_v32)
 			v2 := float32(math.Float32frombits(v))
 			m.RechargeEnd = &v2
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxCharges", wireType)
+			}
+			var v int32
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.MaxCharges = &v
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

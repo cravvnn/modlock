@@ -534,6 +534,11 @@ export type AbilityOptions = {
 	cooldownEnd: number?,
 	-- rechargeEnd replaces the game time its next charge returns.
 	rechargeEnd: number?,
+	-- maxCharges replaces the most charges the ability can hold, from 1 to 100;
+	-- 0 returns it to the game's own. The server applies it, so the hero's
+	-- screen can still show the game's maximum. charges above the new maximum
+	-- are not removed; set them with charges.
+	maxCharges: number?,
 }
 
 -- Steering is one recorded movement command and the pose its step ends on.
@@ -1783,6 +1788,7 @@ schema.AbilityOptions = {
 	{ number = 4, name = "charges", kind = "int32", optional = true },
 	{ number = 5, name = "cooldownEnd", kind = "float", optional = true },
 	{ number = 6, name = "rechargeEnd", kind = "float", optional = true },
+	{ number = 7, name = "maxCharges", kind = "int32", optional = true },
 }
 schema.GiveItemRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
