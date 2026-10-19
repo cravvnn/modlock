@@ -1803,6 +1803,18 @@ export class Player {
   }
 
   /**
+   * withholdMessage stops or resumes sending one server user message to the
+   * player, by its network ID. The client still runs everything else; it only
+   * never hears that message, so whatever the message would trigger on that
+   * client does not happen. Deadlock's PlayerRespawned (353) starts the
+   * respawn music and also closes the death recap. Stopping the mod or the
+   * player leaving resumes every message.
+   */
+  withholdMessage(message: number, withhold: boolean): boolean {
+    return call('WithholdMessage', pb.WithholdMessageRequest.toBinary({ player: this.slot, message, withhold })) !== undefined
+  }
+
+  /**
    * blockInput withholds buttons from the player's hero until called
    * again, on top of the block on everyone. Zero releases the player.
    */

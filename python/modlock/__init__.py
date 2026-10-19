@@ -1317,6 +1317,16 @@ class Player:
         """
         return _call("LeashBot", "LeashBotRequest", {"player": self, "center": center, "radius": radius, "retreat": retreat}) is not None
 
+    def withhold_message(self, message: int, withhold: bool) -> bool:
+        """withhold_message stops or resumes sending one server user message to the
+        player, by its network ID. The client still runs everything else; it only
+        never hears that message, so whatever the message would trigger on that
+        client does not happen. Deadlock's PlayerRespawned (353) starts the
+        respawn music and also closes the death recap. Stopping the mod or the
+        player leaving resumes every message.
+        """
+        return _call("WithholdMessage", "WithholdMessageRequest", {"player": self, "message": message, "withhold": withhold}) is not None
+
     def block_input(self, buttons: int) -> bool:
         """block_input withholds buttons from the player's hero until called
         again, on top of the block on everyone. Zero releases the player.
@@ -2313,6 +2323,14 @@ _SCHEMA: wire.Schema = {
         None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
+        ],
+    ),
+    "WithholdMessageRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "message", "int32"),
+            wire.Field(3, "withhold", "bool"),
         ],
     ),
     "LeashBotRequest": (

@@ -4736,6 +4736,43 @@ func (x *BotResponse) GetPlayer() int32 {
 	return 0
 }
 
+// WithholdMessageRequest names one user message for one player.
+type WithholdMessageRequest struct {
+	unknownFields []byte
+	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	// Message is the user message's network ID.
+	Message int32 `protobuf:"varint,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Withhold stops the message when true and resumes it when false.
+	Withhold bool `protobuf:"varint,3,opt,name=withhold,proto3" json:"withhold,omitempty"`
+}
+
+func (x *WithholdMessageRequest) Reset() {
+	*x = WithholdMessageRequest{}
+}
+
+func (*WithholdMessageRequest) ProtoMessage() {}
+
+func (x *WithholdMessageRequest) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *WithholdMessageRequest) GetMessage() int32 {
+	if x != nil {
+		return x.Message
+	}
+	return 0
+}
+
+func (x *WithholdMessageRequest) GetWithhold() bool {
+	if x != nil {
+		return x.Withhold
+	}
+	return false
+}
+
 // LeashBotRequest sets how one bot retreats.
 type LeashBotRequest struct {
 	unknownFields []byte
@@ -8720,6 +8757,24 @@ func (m *BotResponse) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *WithholdMessageRequest) CloneVT() *WithholdMessageRequest {
+	if m == nil {
+		return (*WithholdMessageRequest)(nil)
+	}
+	r := new(WithholdMessageRequest)
+	r.Player = m.Player
+	r.Message = m.Message
+	r.Withhold = m.Withhold
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *WithholdMessageRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *LeashBotRequest) CloneVT() *LeashBotRequest {
 	if m == nil {
 		return (*LeashBotRequest)(nil)
@@ -12459,6 +12514,31 @@ func (this *BotResponse) EqualVT(that *BotResponse) bool {
 
 func (this *BotResponse) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*BotResponse)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *WithholdMessageRequest) EqualVT(that *WithholdMessageRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if this.Message != that.Message {
+		return false
+	}
+	if this.Withhold != that.Withhold {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *WithholdMessageRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*WithholdMessageRequest)
 	if !ok {
 		return false
 	}
@@ -20778,6 +20858,64 @@ func (x *BotResponse) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the BotResponse from JSON.
 func (x *BotResponse) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the WithholdMessageRequest message to JSON.
+func (x *WithholdMessageRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Message != 0 || s.HasField("message") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("message")
+		s.WriteInt32(x.Message)
+	}
+	if x.Withhold || s.HasField("withhold") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("withhold")
+		s.WriteBool(x.Withhold)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the WithholdMessageRequest to JSON.
+func (x *WithholdMessageRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the WithholdMessageRequest message from JSON.
+func (x *WithholdMessageRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "message":
+			s.AddField("message")
+			x.Message = s.ReadInt32()
+		case "withhold":
+			s.AddField("withhold")
+			x.Withhold = s.ReadBool()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the WithholdMessageRequest from JSON.
+func (x *WithholdMessageRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -29817,6 +29955,53 @@ func (m *BotResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *WithholdMessageRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *WithholdMessageRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *WithholdMessageRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Withhold {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Withhold)
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Message != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Message))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *LeashBotRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -33997,6 +34182,19 @@ func (m *BotResponse) SizeVT() (n int) {
 	return n
 }
 
+func (m *WithholdMessageRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Message)
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.Withhold)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *LeashBotRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -37182,6 +37380,27 @@ func (x *BotResponse) MarshalProtoText() string {
 }
 
 func (x *BotResponse) String() string {
+	return x.MarshalProtoText()
+}
+func (x *WithholdMessageRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "WithholdMessageRequest")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Message != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "message")
+		protobuf_go_lite.TextWriteInt(&sb, x.Message)
+	}
+	if x.Withhold != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "withhold")
+		protobuf_go_lite.TextWriteBool(&sb, x.Withhold)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *WithholdMessageRequest) String() string {
 	return x.MarshalProtoText()
 }
 func (x *LeashBotRequest) MarshalProtoText() string {
@@ -46400,6 +46619,76 @@ func (m *BotResponse) UnmarshalVT(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *WithholdMessageRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WithholdMessageRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WithholdMessageRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Message", wireType)
+			}
+			m.Message = 0
+			m.Message, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Withhold", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Withhold = bool(v)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

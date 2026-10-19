@@ -817,6 +817,16 @@ func (p Player) LeashBot(center *Vector, radius float32, retreat *bool) error {
 	return invoke("LeashBot", &wasm.LeashBotRequest{Player: p.Slot, Center: center, Radius: radius, Retreat: retreat}, nil)
 }
 
+// WithholdMessage stops or resumes sending one server user message to the
+// player, by its network ID. The client still runs everything else; it only
+// never hears that message, so whatever the message would trigger on that
+// client does not happen. Deadlock's PlayerRespawned (353) starts the
+// respawn music and also closes the death recap. Stopping the mod or the
+// player leaving resumes every message.
+func (p Player) WithholdMessage(message int32, withhold bool) error {
+	return invoke("WithholdMessage", &wasm.WithholdMessageRequest{Player: p.Slot, Message: message, Withhold: withhold}, nil)
+}
+
 // BlockInput withholds buttons from every player's hero until called
 // again. Stopping the mod releases them.
 func BlockInput(buttons uint64) error {

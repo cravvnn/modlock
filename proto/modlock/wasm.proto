@@ -317,6 +317,14 @@ service Host {
   // stopping the mod.
   rpc LeashBot(LeashBotRequest) returns (Empty);
 
+  // WithholdMessage stops or resumes sending one server user message to the
+  // player, by its network ID. The client still runs everything else; it only
+  // never hears that message, so whatever the message would trigger on that
+  // client does not happen. Deadlock's PlayerRespawned (353) starts the
+  // respawn music and also closes the death recap. Stopping the mod or the
+  // player leaving resumes every message.
+  rpc WithholdMessage(WithholdMessageRequest) returns (Empty);
+
   // BlockInput withholds buttons from every player's hero until called
   // again. Stopping the mod releases them.
   rpc BlockInput(InputRequest) returns (Empty);
@@ -1878,6 +1886,17 @@ message BotOptions {
 // BotResponse holds the bot AddBot added.
 message BotResponse {
   int32 player = 1;
+}
+
+// WithholdMessageRequest names one user message for one player.
+message WithholdMessageRequest {
+  int32 player = 1;
+
+  // Message is the user message's network ID.
+  int32 message = 2;
+
+  // Withhold stops the message when true and resumes it when false.
+  bool withhold = 3;
 }
 
 // LeashBotRequest sets how one bot retreats.

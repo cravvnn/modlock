@@ -814,6 +814,24 @@ std::expected<void, std::string> GameServices::Leash() {
   return {};
 }
 
+std::expected<void, std::string> GameServices::Withholding() {
+  if (filter_) return {};
+  auto hook =
+      gameinterop::UserMessageFilter::Install([this](int32_t message) { return Withheld(message); });
+  if (!hook) return std::unexpected(hook.error());
+  filter_ = std::move(*hook);
+  return {};
+}
+
+uint64_t GameServices::Withheld(int32_t message) {
+  uint64_t slots = 0;
+  for (auto* game : games_) {
+    auto found = game->withheld_.find(message);
+    if (found != game->withheld_.end()) slots |= found->second;
+  }
+  return slots;
+}
+
 gameinterop::BotLeash::Retreat GameServices::Retreat(uint32_t pawn) {
   for (auto* game : games_) {
     auto found = game->leash_answers_.find(pawn);
@@ -1052,6 +1070,10 @@ void Game::WorldEnding() {
 void Game::Leave(int32_t slot) {
   ffa_failed_.erase(slot);
   leashes_.erase(slot);
+  std::erase_if(withheld_, [slot](auto& entry) {
+    entry.second &= ~(uint64_t{1} << slot);
+    return entry.second == 0;
+  });
   frozen_.erase(slot);
   movers_.erase(slot);
   steers_.erase(slot);
@@ -1090,6 +1112,7 @@ void Game::Clear() {
   ffa_failed_.clear();
   leashes_.clear();
   leash_answers_.clear();
+  withheld_.clear();
   ReleaseModifiers();
   blocked_ = 0;
   slot_blocked_.clear();
@@ -1998,6 +2021,21 @@ std::expected<void, std::string> Game::LeashBot(const LeashBotRequest& request) 
   leash.retreat = retreat;
   leash.center = Floats(request.center());
   leash.radius = std::max(request.radius(), 0.0f);
+  return {};
+}
+
+std::expected<void, std::string> Game::WithholdMessage(const WithholdMessageRequest& request) {
+  const auto slot = request.player();
+  if (slot < 0 || slot >= 64) return std::unexpected("player slot out of range");
+  if (request.message() <= 0) return std::unexpected("user message ID must be positive");
+  const uint64_t bit = uint64_t{1} << slot;
+  if (!request.withhold()) {
+    auto found = withheld_.find(request.message());
+    if (found != withheld_.end() && (found->second &= ~bit) == 0) withheld_.erase(found);
+    return {};
+  }
+  if (auto installed = services_.Withholding(); !installed) return std::unexpected(installed.error());
+  withheld_[request.message()] |= bit;
   return {};
 }
 

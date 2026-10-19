@@ -448,6 +448,17 @@ class HostService {
     return std::unexpected("this host does not support LeashBot");
   }
 
+  // WithholdMessage stops or resumes sending one server user message to the
+  // player, by its network ID. The client still runs everything else; it only
+  // never hears that message, so whatever the message would trigger on that
+  // client does not happen. Deadlock's PlayerRespawned (353) starts the
+  // respawn music and also closes the death recap. Stopping the mod or the
+  // player leaving resumes every message.
+  virtual std::expected<void, std::string> WithholdMessage(
+      const WithholdMessageRequest& /*request*/) {
+    return std::unexpected("this host does not support WithholdMessage");
+  }
+
   // BlockInput withholds buttons from every player's hero until called
   // again. Stopping the mod releases them.
   virtual std::expected<void, std::string> BlockInput(const InputRequest& /*request*/) {
@@ -1151,6 +1162,14 @@ class HostService {
              return detail::Fail("the LeashBot request is malformed");
            }
            return detail::Answer(host.LeashBot(request));
+         }},
+        {"WithholdMessage",
+         [](HostService& host, const std::string& bytes) {
+           WithholdMessageRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the WithholdMessage request is malformed");
+           }
+           return detail::Answer(host.WithholdMessage(request));
          }},
         {"BlockInput",
          [](HostService& host, const std::string& bytes) {

@@ -4307,6 +4307,43 @@ export const BotResponse: MessageType<BotResponse> = /* @__PURE__ */ createMessa
 });
 
 /**
+ * WithholdMessageRequest names one user message for one player.
+ *
+ * @generated from message modlock.wasm.WithholdMessageRequest
+ */
+export interface WithholdMessageRequest {
+  player?: number;
+  /**
+   * Message is the user message's network ID.
+   */
+  message?: number;
+  /**
+   * Withhold stops the message when true and resumes it when false.
+   */
+  withhold?: boolean;
+}
+
+export const WithholdMessageRequest: MessageType<WithholdMessageRequest> = /* @__PURE__ */ createMessageType<WithholdMessageRequest>("modlock.wasm.WithholdMessageRequest", () => [
+  [1, "player", 5],
+  [2, "message", 5],
+  [3, "withhold", 8],
+], {
+  decode: (r: BinaryReader, end: number, m: WithholdMessageRequest): WithholdMessageRequest => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.player = r.int32(); break;
+        case 2: m.message = r.int32(); break;
+        case 3: m.withhold = r.bool(); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
  * LeashBotRequest sets how one bot retreats.
  *
  * @generated from message modlock.wasm.LeashBotRequest

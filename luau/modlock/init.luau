@@ -1042,6 +1042,13 @@ export type Player = {
 	-- it. A request with neither releases the bot, as does removing it or
 	-- stopping the mod.
 	leashBot: (self: Player, center: Vector, radius: number, retreat: boolean?) -> boolean,
+	-- withholdMessage stops or resumes sending one server user message to the
+	-- player, by its network ID. The client still runs everything else; it only
+	-- never hears that message, so whatever the message would trigger on that
+	-- client does not happen. Deadlock's PlayerRespawned (353) starts the
+	-- respawn music and also closes the death recap. Stopping the mod or the
+	-- player leaving resumes every message.
+	withholdMessage: (self: Player, message: number, withhold: boolean) -> boolean,
 	-- blockInput withholds buttons from the player's hero until called
 	-- again, on top of the block on everyone. Zero releases the player.
 	blockInput: (self: Player, buttons: number) -> boolean,
@@ -1313,6 +1320,16 @@ end
 -- stopping the mod.
 function Player.leashBot(self: Player, center: Vector, radius: number, retreat: boolean?): boolean
 	return call("LeashBot", "LeashBotRequest", { player = self, center = center, radius = radius, retreat = retreat }) ~= nil
+end
+
+-- withholdMessage stops or resumes sending one server user message to the
+-- player, by its network ID. The client still runs everything else; it only
+-- never hears that message, so whatever the message would trigger on that
+-- client does not happen. Deadlock's PlayerRespawned (353) starts the
+-- respawn music and also closes the death recap. Stopping the mod or the
+-- player leaving resumes every message.
+function Player.withholdMessage(self: Player, message: number, withhold: boolean): boolean
+	return call("WithholdMessage", "WithholdMessageRequest", { player = self, message = message, withhold = withhold }) ~= nil
 end
 
 -- blockInput withholds buttons from the player's hero until called
@@ -2067,6 +2084,11 @@ schema.BotOptions = {
 }
 schema.BotResponse = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+}
+schema.WithholdMessageRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "message", kind = "int32" },
+	{ number = 3, name = "withhold", kind = "bool" },
 }
 schema.LeashBotRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },

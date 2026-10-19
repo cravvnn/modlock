@@ -34,6 +34,7 @@
 #include "modlock/gameinterop/pawn_observer.h"
 #include "modlock/gameinterop/projectile_impact_hook.h"
 #include "modlock/gameinterop/transmit_hook.h"
+#include "modlock/gameinterop/user_message_filter.h"
 #include "modlock/gameinterop/world_entities.h"
 #include "modlock/render/world_effect_game_factory.h"
 #include "modlock/render/world_text_game_factory.h"
@@ -153,6 +154,12 @@ class GameServices {
   // Retreat answers a bot's retreat check from the first mod that leashes it.
   gameinterop::BotLeash::Retreat Retreat(uint32_t pawn);
 
+  // Withholding installs the shared user message filter on first use.
+  std::expected<void, std::string> Withholding();
+
+  // Withheld is every player slot a mod keeps the message with this ID from.
+  uint64_t Withheld(int32_t message);
+
   // Withhold keeps from one player every object a mod hid from them.
   void Withhold(gameinterop::TransmitSet& set);
 
@@ -205,6 +212,8 @@ class GameServices {
   std::optional<gameinterop::TransmitHook> transmit_;
   // leash_ answers the bots' retreat checks once a mod leashes a bot.
   std::optional<gameinterop::BotLeash> leash_;
+  // filter_ drops user messages for the players a mod withholds them from.
+  std::optional<gameinterop::UserMessageFilter> filter_;
   // steps_ is the server movement hook, held while step_ runs or a mod
   // watches or steers a hero. commands_ folds each pawn's commands since its
   // last sample, and ground_ is the last entity any hero stood on.
@@ -392,6 +401,7 @@ class Game : public HostService {
   std::expected<BotResponse, std::string> AddBot(const BotOptions& request) override;
   std::expected<void, std::string> RemoveBot(const PlayerRequest& request) override;
   std::expected<void, std::string> LeashBot(const LeashBotRequest& request) override;
+  std::expected<void, std::string> WithholdMessage(const WithholdMessageRequest& request) override;
   std::expected<void, std::string> BlockInput(const InputRequest& request) override;
   std::expected<void, std::string> BlockPlayerInput(const PlayerInputRequest& request) override;
   std::expected<void, std::string> Press(const PlayerInputRequest& request) override;
@@ -589,6 +599,8 @@ class Game : public HostService {
   // answer ApplyLeashes chose for each bot's hero pawn handle.
   std::map<int32_t, Leash> leashes_;
   std::map<uint32_t, gameinterop::BotLeash::Retreat> leash_answers_;
+  // withheld_ maps each user message ID to the player slots it is kept from.
+  std::map<int32_t, uint64_t> withheld_;
   std::set<int32_t> frozen_;
   // movers_ is the players whose movement the mod watches.
   std::set<int32_t> movers_;

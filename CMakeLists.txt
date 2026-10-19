@@ -118,6 +118,7 @@ add_library(modlock_sdk SHARED
   src/gameinterop/entity_abi.cc
   src/gameinterop/frame_hook.cc
   src/gameinterop/transmit_hook.cc
+  src/gameinterop/user_message_filter.cc
   src/gameinterop/frame_timing.cc
   src/gameinterop/game_rules.cc
   src/gameinterop/game_signatures.cc
