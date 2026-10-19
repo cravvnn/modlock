@@ -2321,7 +2321,9 @@ message Manifest {
   // Language is the source language, set in a source project.
   Language language = 4;
 
-  // Runtime is the module that runs the built mod.
+  // Runtime is the module that runs the built mod. A script mod's source
+  // project sets RUNTIME_WASM to publish a module compiled with scriptc
+  // instead of a bundle for QuickJS.
   Runtime runtime = 5;
 
   // Entry is the built mod's entry file, relative to mod.json.

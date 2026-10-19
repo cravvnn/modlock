@@ -2268,7 +2268,6 @@ type SelectHeroRequest struct {
 	// Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
-	//
 	//	*SelectHeroRequest_HeroName
 	//	*SelectHeroRequest_HeroId
 	Hero isSelectHeroRequest_Hero `protobuf_oneof:"hero"`
@@ -3741,7 +3740,6 @@ func (x *FieldResponse) GetValue() *FieldValue {
 type FieldValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
-	//
 	//	*FieldValue_Boolean
 	//	*FieldValue_Number
 	//	*FieldValue_Integer
@@ -4608,7 +4606,6 @@ type BotOptions struct {
 	// as Pawn.hero reports it.
 	//
 	// Types that are assignable to Hero:
-	//
 	//	*BotOptions_HeroName
 	//	*BotOptions_HeroId
 	Hero isBotOptions_Hero `protobuf_oneof:"hero"`
@@ -4939,7 +4936,6 @@ func (x *KeyValue) GetValue() *EntityValue {
 type EntityValue struct {
 	unknownFields []byte
 	// Types that are assignable to Value:
-	//
 	//	*EntityValue_Boolean
 	//	*EntityValue_Integer
 	//	*EntityValue_Number
@@ -6079,7 +6075,9 @@ type Manifest struct {
 	Version string `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
 	// Language is the source language, set in a source project.
 	Language Manifest_Language `protobuf:"varint,4,opt,name=language,proto3" json:"language,omitempty"`
-	// Runtime is the module that runs the built mod.
+	// Runtime is the module that runs the built mod. A script mod's source
+	// project sets RUNTIME_WASM to publish a module compiled with scriptc
+	// instead of a bundle for QuickJS.
 	Runtime Manifest_Runtime `protobuf:"varint,5,opt,name=runtime,proto3" json:"runtime,omitempty"`
 	// Entry is the built mod's entry file, relative to mod.json.
 	Entry string `protobuf:"bytes,6,opt,name=entry,proto3" json:"entry,omitempty"`

@@ -44,8 +44,9 @@ func scriptMain(language wasm.Manifest_Language) string {
 }
 
 // buildScript type checks a TypeScript or JavaScript project. A release build
-// compiles it with scriptc; a dev build, or a mod scriptc cannot compile,
-// bundles it with the library into one script for QuickJS.
+// of a mod that asks for RUNTIME_WASM compiles it with scriptc; any other
+// build, or a mod scriptc cannot compile, bundles it with the library into
+// one script for QuickJS.
 func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) error {
 	// Install the library's declarations and the type checker.
 	library, err := js.Library(ctx)
@@ -73,8 +74,8 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 		}
 	}
 
-	// Compile a release build with scriptc when it can.
-	if mode == Release {
+	// Compile a release build with scriptc when the mod asks and scriptc can.
+	if mode == Release && p.Manifest.GetRuntime() == wasm.Manifest_RUNTIME_WASM {
 		module, err := p.compileScriptc(ctx, library, tsgo, output)
 		if err == nil {
 			return p.writeBuild(module, wasm.Manifest_RUNTIME_WASM, Entry, ScriptEntry)

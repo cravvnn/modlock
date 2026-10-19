@@ -382,7 +382,6 @@ type Length struct {
 	// Value selects the unit.
 	//
 	// Types that are assignable to Value:
-	//
 	//	*Length_Pixels
 	//	*Length_Percent
 	//	*Length_FitChildren

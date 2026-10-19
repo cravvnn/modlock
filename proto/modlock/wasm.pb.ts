@@ -3693,7 +3693,9 @@ export interface Manifest {
    */
   language?: Manifest_Language;
   /**
-   * Runtime is the module that runs the built mod.
+   * Runtime is the module that runs the built mod. A script mod's source
+   * project sets RUNTIME_WASM to publish a module compiled with scriptc
+   * instead of a bundle for QuickJS.
    */
   runtime?: Manifest_Runtime;
   /**

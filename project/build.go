@@ -27,10 +27,12 @@ const MapsDir = "maps"
 type Mode int
 
 const (
-	// Release compiles a script mod to WebAssembly with scriptc, which runs
-	// it fastest, and bundles it for QuickJS when scriptc cannot compile it.
-	// Publishing builds this way; scriptc takes seconds to minutes and
-	// gigabytes of memory, so local builds choose it only on request.
+	// Release is the build publishing makes. A script mod whose mod.json
+	// asks for RUNTIME_WASM compiles to WebAssembly with scriptc, which runs
+	// it faster, and bundles for QuickJS when scriptc cannot compile it;
+	// every other script mod bundles for QuickJS. scriptc takes about a
+	// minute and gigabytes of memory, so a mod asks for it only when its
+	// frames run too long on QuickJS.
 	Release Mode = iota
 	// Dev bundles a script mod for QuickJS, which builds in a moment.
 	Dev
