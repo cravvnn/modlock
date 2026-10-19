@@ -362,6 +362,19 @@ void Remap(const RemapInputRequest& remap, gameinterop::AbilityInputHook::Input&
   if (held && remap.repeat()) input.buttons[1] |= remap.to();
 }
 
+// kMoveKeys are IN_FORWARD, IN_BACK, IN_MOVELEFT and IN_MOVERIGHT, which the
+// game holds beside the movement axes.
+constexpr uint64_t kMoveKeys = (1u << 3) | (1u << 4) | (1u << 9) | (1u << 10);
+
+uint64_t MoveKeys(float forward, float left) {
+  uint64_t keys = 0;
+  if (forward > 0) keys |= 1u << 3;
+  if (forward < 0) keys |= 1u << 4;
+  if (left > 0) keys |= 1u << 9;
+  if (left < 0) keys |= 1u << 10;
+  return keys;
+}
+
 }  // namespace
 
 std::expected<const gameinterop::EngineServer*, std::string> GameServices::Server() {
@@ -877,7 +890,8 @@ std::expected<void, std::string> GameServices::StepWith(gameinterop::MovementHoo
 
 std::expected<void, std::string> GameServices::Steps() {
   const bool needed = step_ || std::ranges::any_of(games_, [](const Game* game) {
-                        return game->Moving() || !game->steers_.empty();
+                        return game->Moving() || !game->steers_.empty() ||
+                               !game->drives_.empty();
                       });
   if (!needed) {
     steps_.reset();
@@ -951,6 +965,18 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
         static_cast<void>(gameinterop::NotifyEntityStateChanged(call.pawn));
       }
       return true;
+    }
+  }
+  // A driven bot's axes reach movement here: the game rebuilds them, and the
+  // movement keys, from its own state after ProcessUsercmds, which keeps the
+  // buttons and view the drive wrote there. The step stays native.
+  for (auto* game : games_) {
+    for (auto& [slot, drive] : game->drives_) {
+      if (game->observer_.PawnForSlot(slot) != call.pawn) continue;
+      call.forward = drive.forward;
+      call.left = drive.left;
+      call.buttons[0] = (call.buttons[0] & ~kMoveKeys) | MoveKeys(drive.forward, drive.left);
+      return false;
     }
   }
   return step_ && step_(call);
@@ -1897,12 +1923,13 @@ std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
   const auto slot = request.player();
   if (!request.has_command()) {
     drives_.erase(slot);
-    return {};
+    return services_.Steps();
   }
   if (!gameinterop::ConnectionTracker::StateForSlot(slot).is_bot)
     return std::unexpected("no bot plays in that slot");
   if (auto installed = services_.Drive(); !installed) return std::unexpected(installed.error());
   const auto& command = request.command();
+  const bool fresh = !drives_.contains(slot);
   auto& drive = drives_[slot];
   // A press waits for the next command even when the mod drives again first.
   const auto pressed = drive.pressed | command.pressed();
@@ -1911,7 +1938,10 @@ std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
            .left = std::clamp(command.left(), -1.0f, 1.0f),
            .held = command.held(),
            .pressed = pressed};
-  return {};
+  if (!fresh) return {};
+  auto steps = services_.Steps();
+  if (!steps) drives_.erase(slot);
+  return steps;
 }
 
 std::expected<ObjectResponse, std::string> Game::CreateModel(const ModelOptions& request) {
