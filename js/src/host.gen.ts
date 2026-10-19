@@ -645,6 +645,20 @@ function fromSettingChangedEvent(message: pb.SettingChangedEvent): SettingChange
   }
 }
 
+/**
+ * PlayersChangedEvent holds every occupied player slot, as Players lists them.
+ */
+export interface PlayersChangedEvent {
+  readonly players: Connection[]
+}
+
+/** fromPlayersChangedEvent decodes a PlayersChangedEvent. */
+function fromPlayersChangedEvent(message: pb.PlayersChangedEvent): PlayersChangedEvent {
+  return {
+    players: (message.players ?? []).map((v) => fromConnection(v)),
+  }
+}
+
 /** PrecacheOptions names what the next world loads ahead of use. */
 export interface PrecacheOptions {
   /** heroes are hero names, such as hero_wraith. */
@@ -1969,14 +1983,6 @@ export function precache(options: PrecacheOptions): boolean {
   return call('Precache', pb.PrecacheOptions.toBinary(toPrecacheOptions(options))) !== undefined
 }
 
-/** players lists the occupied player slots in slot order. */
-export function players(): Connection[] {
-  const reply = call('Players', new Uint8Array())
-  if (reply === undefined) return []
-  const response = pb.PlayersResponse.fromBinary(reply)
-  return (response.players ?? []).map((v) => fromConnection(v))
-}
-
 /**
  * holdReload keeps the running build through a reload while held is true,
  * such as while a player is partway through something a new build would
@@ -2395,6 +2401,12 @@ export interface ModHandlers {
    * nothing.
    */
   settingChanged(event: SettingChangedEvent): void
+  /**
+   * playersChanged reports the occupied player slots before the first event
+   * after Start, and again before the next event whenever a player joins,
+   * finishes joining or leaves, so a mod lists players without a call.
+   */
+  playersChanged(event: PlayersChangedEvent): void
 }
 
 /**
@@ -2446,6 +2458,9 @@ export function serveMod(handlers: ModHandlers, bytes: Uint8Array): Uint8Array {
         return reply()
       case 'SettingChanged':
         handlers.settingChanged(fromSettingChangedEvent(pb.SettingChangedEvent.fromBinary(input)))
+        return reply()
+      case 'PlayersChanged':
+        handlers.playersChanged(fromPlayersChangedEvent(pb.PlayersChangedEvent.fromBinary(input)))
         return reply()
     }
   } catch (error) {

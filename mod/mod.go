@@ -24,7 +24,10 @@ package mod
 
 import (
 	"errors"
+	"slices"
 	"strings"
+
+	"github.com/paralin/modlock/proto/modlock/wasm"
 )
 
 // Service answers calls to one service the mod serves: the method's name and
@@ -53,6 +56,9 @@ type handlers struct {
 	impacts       []func(*ImpactEvent)
 	landeds       []func(*LandedEvent)
 	settings      []func(p Player, key, value string)
+
+	// roster is the player list the host last reported, or nil before one.
+	roster []*Connection
 
 	// result holds the last encoded Reply until the host has copied it.
 	result []byte
@@ -294,6 +300,28 @@ func (h *handlers) SettingChanged(event *SettingChangedEvent) error {
 		handler(Player{Slot: event.GetPlayer()}, event.GetKey(), event.GetValue())
 	}
 	return nil
+}
+
+// PlayersChanged keeps the reported player list for Players.
+func (h *handlers) PlayersChanged(event *PlayersChangedEvent) error {
+	h.roster = event.GetPlayers()
+	if h.roster == nil {
+		h.roster = []*Connection{}
+	}
+	return nil
+}
+
+// Players lists the occupied player slots in slot order. It answers from the
+// roster the host last reported, and asks the host until a report arrives.
+func Players() ([]*Connection, error) {
+	if registered.roster != nil {
+		return slices.Clone(registered.roster), nil
+	}
+	response := &wasm.PlayersResponse{}
+	if err := invoke("Players", &wasm.Empty{}, response); err != nil {
+		return nil, err
+	}
+	return response.GetPlayers(), nil
 }
 
 // errorOf returns message as an error, or nil when it is empty.

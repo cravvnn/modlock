@@ -85,6 +85,21 @@ _impacts: list[Callable[[ImpactEvent], object]] = []
 _landeds: list[Callable[[LandedEvent], object]] = []
 _setting_changes: list[Callable[[Player, str, str], object]] = []
 
+# _roster is the player list the host last reported, or None before one.
+_roster: list[Connection] | None = None
+
+
+def players() -> list[Connection]:
+    """players lists the occupied player slots in slot order. It answers from
+    the roster the host last reported, and asks the host until a report
+    arrives."""
+    if _roster is not None:
+        return list(_roster)
+    response = _call("Players", "Empty", {}, "PlayersResponse")
+    if response is None:
+        return []
+    return response["players"]
+
 
 def serve(service: str) -> Callable[[Service], Service]:
     """serve answers the host's calls to service with the decorated handler,
@@ -402,6 +417,11 @@ def _setting_changed(event: SettingChangedEvent) -> None:
         handler(event.player, event.key, event.value)
 
 
+def _players_changed(event: PlayersChangedEvent) -> None:
+    global _roster
+    _roster = event.players
+
+
 # _HANDLERS delivers each event to the handlers the mod registered.
 _HANDLERS: dict[str, Callable[[Any], Any]] = {
     "start": _start,
@@ -419,6 +439,7 @@ _HANDLERS: dict[str, Callable[[Any], Any]] = {
     "impact": _impact,
     "landed": _landed,
     "setting_changed": _setting_changed,
+    "players_changed": _players_changed,
 }
 
 _modlock.handle(lambda data: _serve_mod(_HANDLERS, data))

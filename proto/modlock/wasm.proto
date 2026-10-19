@@ -75,7 +75,8 @@ service Host {
   // start, before the first world loads.
   rpc Precache(PrecacheOptions) returns (Empty);
 
-  // Players lists the occupied player slots in slot order.
+  // Players lists the occupied player slots in slot order. The libraries
+  // answer from the last PlayersChanged instead, once one arrived.
   rpc Players(Empty) returns (PlayersResponse);
 
   // Pawn returns the player's hero this frame, or nothing without one.
@@ -510,6 +511,11 @@ service Mod {
   // such as on the player's profile. A mod's own SetPlayerSetting reports
   // nothing.
   rpc SettingChanged(SettingChangedEvent) returns (Empty);
+
+  // PlayersChanged reports the occupied player slots before the first event
+  // after Start, and again before the next event whenever a player joins,
+  // finishes joining or leaves, so a mod lists players without a call.
+  rpc PlayersChanged(PlayersChangedEvent) returns (Empty);
 }
 
 // StartEvent describes the server the mod starts in.
@@ -861,6 +867,11 @@ message SettingChangedEvent {
 
   // Value is the new value.
   string value = 3;
+}
+
+// PlayersChangedEvent holds every occupied player slot, as Players lists them.
+message PlayersChangedEvent {
+  repeated Connection players = 1;
 }
 
 // LogRequest carries one log line.

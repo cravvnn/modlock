@@ -1579,6 +1579,25 @@ func (x *SettingChangedEvent) GetValue() string {
 	return ""
 }
 
+// PlayersChangedEvent holds every occupied player slot, as Players lists them.
+type PlayersChangedEvent struct {
+	unknownFields []byte
+	Players       []*Connection `protobuf:"bytes,1,rep,name=players,proto3" json:"players,omitempty"`
+}
+
+func (x *PlayersChangedEvent) Reset() {
+	*x = PlayersChangedEvent{}
+}
+
+func (*PlayersChangedEvent) ProtoMessage() {}
+
+func (x *PlayersChangedEvent) GetPlayers() []*Connection {
+	if x != nil {
+		return x.Players
+	}
+	return nil
+}
+
 // LogRequest carries one log line.
 type LogRequest struct {
 	unknownFields []byte
@@ -7070,6 +7089,22 @@ func (m *SettingChangedEvent) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *PlayersChangedEvent) CloneVT() *PlayersChangedEvent {
+	if m == nil {
+		return (*PlayersChangedEvent)(nil)
+	}
+	r := new(PlayersChangedEvent)
+	r.Players = protobuf_go_lite.CloneVTSlice(m.Players)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *PlayersChangedEvent) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *LogRequest) CloneVT() *LogRequest {
 	if m == nil {
 		return (*LogRequest)(nil)
@@ -10147,6 +10182,25 @@ func (this *SettingChangedEvent) EqualVT(that *SettingChangedEvent) bool {
 
 func (this *SettingChangedEvent) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*SettingChangedEvent)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *PlayersChangedEvent) EqualVT(that *PlayersChangedEvent) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Players, that.Players, func() *Connection { return &Connection{} }) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *PlayersChangedEvent) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*PlayersChangedEvent)
 	if !ok {
 		return false
 	}
@@ -15328,6 +15382,69 @@ func (x *SettingChangedEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the SettingChangedEvent from JSON.
 func (x *SettingChangedEvent) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the PlayersChangedEvent message to JSON.
+func (x *PlayersChangedEvent) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if len(x.Players) > 0 || s.HasField("players") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("players")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Players {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("players"))
+		}
+		s.WriteArrayEnd()
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the PlayersChangedEvent to JSON.
+func (x *PlayersChangedEvent) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the PlayersChangedEvent message from JSON.
+func (x *PlayersChangedEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "players":
+			s.AddField("players")
+			if s.ReadNil() {
+				x.Players = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Players = append(x.Players, nil)
+					return
+				}
+				v := &Connection{}
+				v.UnmarshalProtoJSON(s.WithField("players", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Players = append(x.Players, v)
+			})
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the PlayersChangedEvent from JSON.
+func (x *PlayersChangedEvent) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -25258,6 +25375,50 @@ func (m *SettingChangedEvent) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *PlayersChangedEvent) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PlayersChangedEvent) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *PlayersChangedEvent) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Players) > 0 {
+		for iNdEx := len(m.Players) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Players[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *LogRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -32164,6 +32325,20 @@ func (m *SettingChangedEvent) SizeVT() (n int) {
 	return n
 }
 
+func (m *PlayersChangedEvent) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	for _, e := range m.Players {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *LogRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -34808,6 +34983,27 @@ func (x *SettingChangedEvent) MarshalProtoText() string {
 }
 
 func (x *SettingChangedEvent) String() string {
+	return x.MarshalProtoText()
+}
+func (x *PlayersChangedEvent) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "PlayersChangedEvent")
+	if len(x.Players) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "players")
+		for i, v := range x.Players {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &Connection{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *PlayersChangedEvent) String() string {
 	return x.MarshalProtoText()
 }
 func (x *LogRequest) MarshalProtoText() string {
@@ -39679,6 +39875,61 @@ func (m *SettingChangedEvent) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Value = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PlayersChangedEvent) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PlayersChangedEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PlayersChangedEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Players", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Players = append(m.Players, &Connection{})
+			if err := m.Players[len(m.Players)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

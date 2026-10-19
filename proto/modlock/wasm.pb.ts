@@ -864,6 +864,19 @@ export const SettingChangedEvent: MessageType<SettingChangedEvent> = /* @__PURE_
 ]);
 
 /**
+ * PlayersChangedEvent holds every occupied player slot, as Players lists them.
+ *
+ * @generated from message modlock.wasm.PlayersChangedEvent
+ */
+export interface PlayersChangedEvent {
+  players?: Connection[];
+}
+
+export const PlayersChangedEvent: MessageType<PlayersChangedEvent> = /* @__PURE__ */ createMessageType<PlayersChangedEvent>("modlock.wasm.PlayersChangedEvent", () => [
+  [1, "players", 11, 1, Connection.codec],
+]);
+
+/**
  * LogRequest carries one log line.
  *
  * @generated from message modlock.wasm.LogRequest

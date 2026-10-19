@@ -30,12 +30,14 @@ import {
   serveMod,
 } from './host.gen.js'
 import { serveEvents } from './host.js'
+import { keepPlayers } from './players.js'
 import { advance, after } from './timer.js'
 import { press, tick } from './ui.js'
 
 export { Buttons, Layers } from './bits.js'
 export { after, every, sequence, type Timer } from './timer.js'
 export * from './host.gen.js'
+export { players } from './players.js'
 export { type CatalogEntry, Dropper, dropperButtons } from './dropper.js'
 export {
   decodeSpot,
@@ -373,6 +375,10 @@ const handlers: ModHandlers = {
     for (const handler of settingChanges) {
       handler(event.player, event.key, event.value)
     }
+  },
+
+  playersChanged(event) {
+    keepPlayers(event.players)
   },
 }
 

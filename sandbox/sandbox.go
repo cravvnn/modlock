@@ -243,9 +243,14 @@ func (s *Sandbox) start(ctx context.Context, name string, build *Build) (*Mod, *
 		return nil, nil, err
 	}
 
-	// Start it, then give it the world.
+	// Start it, report its one player as a game server does before the next
+	// event, then give it the world. A build from before the report answers
+	// that it has no such method and keeps asking for its players.
 	wants := &wasm.StartResult{}
 	err = mod.Deliver(ctx, "Start", &wasm.StartEvent{Args: s.config.Args, Source: source}, wants)
+	if err == nil {
+		_ = mod.Deliver(ctx, "PlayersChanged", &wasm.PlayersChangedEvent{Players: []*wasm.Connection{player}}, nil)
+	}
 	if err == nil && s.config.Map != "" {
 		err = mod.Deliver(ctx, "World", &wasm.WorldEvent{Map: s.config.Map}, nil)
 	}

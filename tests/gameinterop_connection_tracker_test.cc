@@ -285,6 +285,23 @@ TEST(ConnectionTracker, FullSignonBelongsToTheCurrentConnectionGeneration) {
   ConnectionTracker::ApplyDisconnect(20);
 }
 
+TEST(ConnectionTracker, RevisionChangesWithEachJoinSignonAndLeave) {
+  const auto start = ConnectionTracker::Revision();
+  ConnectionTracker::ApplyPutInServer(21, 210, false, "human");
+  const auto joined = ConnectionTracker::Revision();
+  EXPECT_NE(joined, start);
+  ConnectionTracker::DispatchFullyConnect(21, nullptr);
+  const auto ready = ConnectionTracker::Revision();
+  EXPECT_NE(ready, joined);
+  EXPECT_EQ(ConnectionTracker::Revision(), ready);
+  ConnectionTracker::ApplyDisconnect(21);
+  EXPECT_NE(ConnectionTracker::Revision(), ready);
+  // An event for no slot changes nothing a reader sees.
+  const auto left = ConnectionTracker::Revision();
+  ConnectionTracker::ApplyPutInServer(64, 1, false, nullptr);
+  EXPECT_EQ(ConnectionTracker::Revision(), left);
+}
+
 }  // namespace
 
 TEST(ConnectionTracker, TraceReceiptsCoverTheFullRosterAndReconnects) {

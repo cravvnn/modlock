@@ -492,6 +492,13 @@ class SettingChangedEvent:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
+class PlayersChangedEvent:
+    """PlayersChangedEvent holds every occupied player slot, as Players lists them."""
+
+    players: list[Connection] = dataclasses.field(default_factory=lambda: list[Connection]())
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
 class PrecacheOptions:
     """PrecacheOptions names what the next world loads ahead of use."""
 
@@ -1663,6 +1670,12 @@ _SCHEMA: wire.Schema = {
             wire.Field(3, "value", "string"),
         ],
     ),
+    "PlayersChangedEvent": (
+        PlayersChangedEvent,
+        [
+            wire.Field(1, "players", "message", repeated=True, message="Connection"),
+        ],
+    ),
     "LogRequest": (
         None,
         [
@@ -1744,12 +1757,6 @@ _SCHEMA: wire.Schema = {
         [
             wire.Field(1, "heroes", "string", repeated=True),
             wire.Field(2, "resources", "string", repeated=True),
-        ],
-    ),
-    "PlayersResponse": (
-        None,
-        [
-            wire.Field(1, "players", "message", repeated=True, message="Connection"),
         ],
     ),
     "Connection": (
@@ -2590,14 +2597,6 @@ def precache(options: PrecacheOptions) -> bool:
     return _call("Precache", "PrecacheOptions", options) is not None
 
 
-def players() -> list[Connection]:
-    """players lists the occupied player slots in slot order."""
-    response = _call("Players", "Empty", {}, "PlayersResponse")
-    if response is None:
-        return []
-    return response["players"]
-
-
 def hold_reload(held: bool) -> bool:
     """hold_reload keeps the running build through a reload while held is true,
     such as while a player is partway through something a new build would
@@ -2945,6 +2944,7 @@ _EVENTS: dict[str, tuple[str, str, str]] = {
     "Impact": ("ImpactEvent", "Empty", "impact"),
     "Landed": ("LandedEvent", "Empty", "landed"),
     "SettingChanged": ("SettingChangedEvent", "Empty", "setting_changed"),
+    "PlayersChanged": ("PlayersChangedEvent", "Empty", "players_changed"),
 }
 
 
@@ -3050,6 +3050,21 @@ _launches: list[Callable[[LaunchEvent], object]] = []
 _impacts: list[Callable[[ImpactEvent], object]] = []
 _landeds: list[Callable[[LandedEvent], object]] = []
 _setting_changes: list[Callable[[Player, str, str], object]] = []
+
+# _roster is the player list the host last reported, or None before one.
+_roster: list[Connection] | None = None
+
+
+def players() -> list[Connection]:
+    """players lists the occupied player slots in slot order. It answers from
+    the roster the host last reported, and asks the host until a report
+    arrives."""
+    if _roster is not None:
+        return list(_roster)
+    response = _call("Players", "Empty", {}, "PlayersResponse")
+    if response is None:
+        return []
+    return response["players"]
 
 
 def serve(service: str) -> Callable[[Service], Service]:
@@ -3368,6 +3383,11 @@ def _setting_changed(event: SettingChangedEvent) -> None:
         handler(event.player, event.key, event.value)
 
 
+def _players_changed(event: PlayersChangedEvent) -> None:
+    global _roster
+    _roster = event.players
+
+
 # _HANDLERS delivers each event to the handlers the mod registered.
 _HANDLERS: dict[str, Callable[[Any], Any]] = {
     "start": _start,
@@ -3385,6 +3405,7 @@ _HANDLERS: dict[str, Callable[[Any], Any]] = {
     "impact": _impact,
     "landed": _landed,
     "setting_changed": _setting_changed,
+    "players_changed": _players_changed,
 }
 
 _modlock.handle(lambda data: _serve_mod(_HANDLERS, data))

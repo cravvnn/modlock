@@ -78,6 +78,10 @@ class MODLOCK_API ConnectionTracker {
   // slot; an empty tracker reports every slot unoccupied with xuid 0.
   static SlotState StateForSlot(int32_t slot);
 
+  // Revision changes after each join, finished join and leave, so a reader
+  // knows when StateForSlot answers differently for some slot.
+  static uint64_t Revision();
+
   // ApplyPutInServer records one engine ClientPutInServer callback. It is the
   // recording half of PutInServerThunk; tests pin it against recorded
   // lifecycles without a live interface.

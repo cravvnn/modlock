@@ -351,8 +351,9 @@ func classOf(f *field) *class {
 }
 
 // skipped are Host methods the libraries call by hand instead of through a
-// generated function: Ui takes the interface tree each library builds.
-var skipped = map[string]bool{"Ui": true}
+// generated function: Ui takes the interface tree each library builds, and
+// Players answers from the roster PlayersChanged keeps.
+var skipped = map[string]bool{"Ui": true, "Players": true}
 
 // call is one Host method as the libraries present it.
 type call struct {

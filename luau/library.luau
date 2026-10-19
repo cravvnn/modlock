@@ -88,6 +88,22 @@ local impacts: { (impact: ImpactEvent) -> () } = {}
 local landeds: { (landing: LandedEvent) -> () } = {}
 local settingChanges: { (player: Player, key: string, value: string) -> () } = {}
 
+-- roster is the player list the host last reported, or nil before one.
+local roster: { Connection }? = nil
+
+-- players lists the occupied player slots in slot order. It answers from the
+-- roster the host last reported, and asks the host until a report arrives.
+function modlock.players(): { Connection }
+	if roster ~= nil then
+		return table.clone(roster)
+	end
+	local response = call("Players", "Empty", {}, "PlayersResponse")
+	if response == nil then
+		return {}
+	end
+	return response.players
+end
+
 -- serve answers the host's calls to service with handler, replacing its
 -- earlier handler.
 function modlock.serve(service: string, handler: Service)
@@ -415,6 +431,10 @@ local handlers: ModHandlers = {
 		for _, handler in settingChanges do
 			handler(event.player, event.key, event.value)
 		end
+	end,
+
+	playersChanged = function(event)
+		roster = event.players
 	end,
 }
 

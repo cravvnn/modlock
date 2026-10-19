@@ -407,6 +407,11 @@ export type SettingChangedEvent = {
 	value: string,
 }
 
+-- PlayersChangedEvent holds every occupied player slot, as Players lists them.
+export type PlayersChangedEvent = {
+	players: { Connection },
+}
+
 -- PrecacheOptions names what the next world loads ahead of use.
 export type PrecacheOptions = {
 	-- heroes are hero names, such as hero_wraith.
@@ -1645,6 +1650,9 @@ schema.SettingChangedEvent = {
 	{ number = 2, name = "key", kind = "string" },
 	{ number = 3, name = "value", kind = "string" },
 }
+schema.PlayersChangedEvent = {
+	{ number = 1, name = "players", kind = "message", repeated = true, message = "Connection" },
+}
 schema.LogRequest = {
 	{ number = 1, name = "message", kind = "string" },
 }
@@ -1691,9 +1699,6 @@ schema.AnnounceRequest = {
 schema.PrecacheOptions = {
 	{ number = 1, name = "heroes", kind = "string", repeated = true },
 	{ number = 2, name = "resources", kind = "string", repeated = true },
-}
-schema.PlayersResponse = {
-	{ number = 1, name = "players", kind = "message", repeated = true, message = "Connection" },
 }
 schema.Connection = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
@@ -2232,15 +2237,6 @@ function modlock.precache(options: PrecacheOptions): boolean
 	return call("Precache", "PrecacheOptions", options) ~= nil
 end
 
--- players lists the occupied player slots in slot order.
-function modlock.players(): { Connection }
-	local response = call("Players", "Empty", {}, "PlayersResponse")
-	if response == nil then
-		return {}
-	end
-	return response.players
-end
-
 -- holdReload keeps the running build through a reload while held is true,
 -- such as while a player is partway through something a new build would
 -- lose. A reload that arrives meanwhile waits, and the newest one applies
@@ -2601,6 +2597,10 @@ export type ModHandlers = {
 	-- such as on the player's profile. A mod's own SetPlayerSetting reports
 	-- nothing.
 	settingChanged: (event: SettingChangedEvent) -> (),
+	-- playersChanged reports the occupied player slots before the first event
+	-- after Start, and again before the next event whenever a player joins,
+	-- finishes joining or leaves, so a mod lists players without a call.
+	playersChanged: (event: PlayersChangedEvent) -> (),
 }
 
 -- events holds each Mod method's request, response and handler.
@@ -2620,6 +2620,7 @@ local events: { [string]: { request: string, response: string, handler: string }
 	Impact = { request = "ImpactEvent", response = "Empty", handler = "impact" },
 	Landed = { request = "LandedEvent", response = "Empty", handler = "landed" },
 	SettingChanged = { request = "SettingChangedEvent", response = "Empty", handler = "settingChanged" },
+	PlayersChanged = { request = "PlayersChangedEvent", response = "Empty", handler = "playersChanged" },
 }
 
 -- serveMod runs the encoded Call in bytes on handlers and returns the encoded
@@ -2732,6 +2733,22 @@ local launches: { (projectile: LaunchEvent) -> () } = {}
 local impacts: { (impact: ImpactEvent) -> () } = {}
 local landeds: { (landing: LandedEvent) -> () } = {}
 local settingChanges: { (player: Player, key: string, value: string) -> () } = {}
+
+-- roster is the player list the host last reported, or nil before one.
+local roster: { Connection }? = nil
+
+-- players lists the occupied player slots in slot order. It answers from the
+-- roster the host last reported, and asks the host until a report arrives.
+function modlock.players(): { Connection }
+	if roster ~= nil then
+		return table.clone(roster)
+	end
+	local response = call("Players", "Empty", {}, "PlayersResponse")
+	if response == nil then
+		return {}
+	end
+	return response.players
+end
 
 -- serve answers the host's calls to service with handler, replacing its
 -- earlier handler.
@@ -3060,6 +3077,10 @@ local handlers: ModHandlers = {
 		for _, handler in settingChanges do
 			handler(event.player, event.key, event.value)
 		end
+	end,
+
+	playersChanged = function(event)
+		roster = event.players
 	end,
 }
 

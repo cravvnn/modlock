@@ -30,6 +30,8 @@ std::array<std::atomic<bool>, kMaxSlots> g_fully_connected{};
 // its slot's next lifecycle event; readers on other threads may observe a
 // torn or stale name, which every consumer treats as diagnostic-only.
 std::array<std::string, kMaxSlots> g_name{};
+// g_revision counts the lifecycle events that changed a slot's state.
+std::atomic<uint64_t> g_revision{0};
 
 std::atomic<void*> g_put_in_server_original{nullptr};
 std::atomic<void*> g_fully_connect_original{nullptr};
@@ -154,6 +156,7 @@ void ConnectionTracker::DispatchFullyConnect(int32_t slot, const EngineCallback&
   const auto after = StateForSlot(slot);
   if (!before.occupied || !after.occupied || before.generation != after.generation) return;
   g_fully_connected[slot].store(true, std::memory_order_release);
+  g_revision.fetch_add(1, std::memory_order_release);
   if (InteropTraceEnabled()) {
     std::fprintf(stderr, "[modlock] interop trace: ClientFullyConnect slot %d\n", slot);
     std::fflush(stderr);
@@ -217,6 +220,7 @@ void ConnectionTracker::ApplyPutInServer(int32_t slot, uint64_t xuid, bool is_bo
   // reset before occupied=true so a new disconnect cannot miss the generation.
   g_disconnect_claimed[slot].store(false, std::memory_order_release);
   g_occupied[slot].store(true, std::memory_order_release);
+  g_revision.fetch_add(1, std::memory_order_release);
 }
 
 void ConnectionTracker::ApplyDisconnect(int32_t slot) {
@@ -224,7 +228,10 @@ void ConnectionTracker::ApplyDisconnect(int32_t slot) {
     return;
   }
   g_occupied[slot].store(false, std::memory_order_release);
+  g_revision.fetch_add(1, std::memory_order_release);
 }
+
+uint64_t ConnectionTracker::Revision() { return g_revision.load(std::memory_order_acquire); }
 
 ConnectionTracker::SlotState ConnectionTracker::StateForSlot(int32_t slot) {
   if (!ValidSlot(slot) || !g_occupied[slot].load(std::memory_order_acquire)) {

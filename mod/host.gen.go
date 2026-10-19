@@ -164,6 +164,9 @@ type LandedEvent = wasm.LandedEvent
 // SettingChangedEvent is one player's new value of one setting.
 type SettingChangedEvent = wasm.SettingChangedEvent
 
+// PlayersChangedEvent holds every occupied player slot, as Players lists them.
+type PlayersChangedEvent = wasm.PlayersChangedEvent
+
 // PrecacheOptions names what the next world loads ahead of use.
 type PrecacheOptions = wasm.PrecacheOptions
 
@@ -374,15 +377,6 @@ func (p Player) Announce(title, text string) error {
 // start, before the first world loads.
 func Precache(options *PrecacheOptions) error {
 	return invoke("Precache", options, nil)
-}
-
-// Players lists the occupied player slots in slot order.
-func Players() ([]*Connection, error) {
-	response := &wasm.PlayersResponse{}
-	if err := invoke("Players", &wasm.Empty{}, response); err != nil {
-		return nil, err
-	}
-	return response.GetPlayers(), nil
 }
 
 // Pawn returns the player's hero this frame, or nothing without one.
@@ -1155,6 +1149,10 @@ type modHandlers interface {
 	// such as on the player's profile. A mod's own SetPlayerSetting reports
 	// nothing.
 	SettingChanged(event *SettingChangedEvent) error
+	// PlayersChanged reports the occupied player slots before the first event
+	// after Start, and again before the next event whenever a player joins,
+	// finishes joining or leaves, so a mod lists players without a call.
+	PlayersChanged(event *PlayersChangedEvent) error
 }
 
 // serveMod runs call on handlers and returns its reply.
@@ -1250,6 +1248,12 @@ func serveMod(handlers modHandlers, call *wasm.Call) *wasm.Reply {
 			return &wasm.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.SettingChanged(event))
+	case "PlayersChanged":
+		event := &PlayersChangedEvent{}
+		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
+			return &wasm.Reply{Error: err.Error()}
+		}
+		return answer(nil, handlers.PlayersChanged(event))
 	}
 	return &wasm.Reply{Error: "the mod has no method " + call.GetMethod()}
 }

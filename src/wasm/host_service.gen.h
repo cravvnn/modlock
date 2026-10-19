@@ -85,7 +85,8 @@ class HostService {
     return std::unexpected("this host does not support Precache");
   }
 
-  // Players lists the occupied player slots in slot order.
+  // Players lists the occupied player slots in slot order. The libraries
+  // answer from the last PlayersChanged instead, once one arrived.
   virtual std::expected<PlayersResponse, std::string> Players() {
     return std::unexpected("this host does not support Players");
   }
@@ -1497,6 +1498,13 @@ class ModClient {
   // nothing.
   std::expected<void, std::string> SettingChanged(const SettingChangedEvent& event) {
     return Send<void>("SettingChanged", event);
+  }
+
+  // PlayersChanged reports the occupied player slots before the first event
+  // after Start, and again before the next event whenever a player joins,
+  // finishes joining or leaves, so a mod lists players without a call.
+  std::expected<void, std::string> PlayersChanged(const PlayersChangedEvent& event) {
+    return Send<void>("PlayersChanged", event);
   }
 
  private:

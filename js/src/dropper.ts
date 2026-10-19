@@ -19,11 +19,11 @@ import {
   createModel,
   type MovementSample,
   type Player,
-  players,
   trace,
   type Vector,
   type WorldObject,
 } from './host.gen.js'
+import { players } from './players.js'
 import {
   type LoadedSpot,
   type Placed,

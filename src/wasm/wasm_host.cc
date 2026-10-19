@@ -380,6 +380,9 @@ class WasmPlugin final : public Plugin {
   // Send is the transport of mod_: it delivers one event and stops a mod
   // whose instance failed.
   std::expected<wasm::Reply, std::string> Send(const wasm::Call& call);
+  // ReportPlayers delivers PlayersChanged when the player slots changed
+  // since the instance last heard of them.
+  void ReportPlayers();
   void ListenToPlayers();
   void ListenToCombat();
   bool Hit(const gameinterop::DamageContactEvent& contact);
@@ -449,8 +452,12 @@ class WasmPlugin final : public Plugin {
   std::optional<quake::PlayerMovement> movement_;
   std::map<uint32_t, int32_t> hero_slots_;
   bool floor_known_ = false;
-  // mod_ delivers events to the running instance.
+  // mod_ delivers events to the running instance. sending_ is true while
+  // one is delivered, and reported_ is the connection revision the running
+  // instance last heard, or nullopt before it heard one.
   wasm::ModClient mod_;
+  bool sending_ = false;
+  std::optional<uint64_t> reported_;
   // wants_ is the running instance's start answer: the events it consumes.
   wasm::StartResult wants_;
   // game_ answers the running instance's calls and holds what it placed in
@@ -632,6 +639,7 @@ std::expected<void, std::string> WasmPlugin::Begin(bool reloaded) {
   for (const auto& arg : args_) event.add_args(arg);
   event.set_check_only(check_only_);
   event.set_source(source_.data(), source_.size());
+  reported_.reset();
   auto started = mod_.Start(event);
   if (!started) return std::unexpected(started.error());
   wants_ = std::move(*started);
@@ -1064,8 +1072,13 @@ void WasmPlugin::Unsubscribe() {
 }
 
 std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call) {
+  // Every event after Start sees the current players, which the report
+  // before it carries; a nested event is refused, so it reports nothing.
+  if (!sending_ && call.method() != "Start" && call.method() != "PlayersChanged") ReportPlayers();
   if (!instance_) return std::unexpected(name_ + " is not running");
+  const bool nested = std::exchange(sending_, true);
   auto reply = instance_->Deliver(call);
+  sending_ = nested;
   if (!reply) {
     // A failed mod stops alone; a refused nested event leaves it running.
     if (instance_->Failure()) {
@@ -1077,10 +1090,29 @@ std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call)
     return reply;
   }
 
-  // A handler's error goes to the service's caller, or else to the log.
-  if (!reply->error().empty() && call.method() != "Serve") Log(reply->error());
+  // A handler's error goes to the service's caller, or else to the log. A
+  // build from before PlayersChanged answers that it has no such method,
+  // which it says at every report, so the report's error is not logged.
+  if (!reply->error().empty() && call.method() != "Serve" && call.method() != "PlayersChanged") {
+    Log(reply->error());
+  }
   if (instance_->Slow()) Slowed(instance_->Report());
   return reply;
+}
+
+void WasmPlugin::ReportPlayers() {
+  if (check_only_ || !instance_) return;
+  const auto revision = gameinterop::ConnectionTracker::Revision();
+  if (reported_ == revision) return;
+  // Mark it heard first, so a build that refuses the report gets it once
+  // per change rather than before every event.
+  reported_ = revision;
+  // The report lists the players as the mod's Players call does.
+  auto players = static_cast<wasm::HostService&>(game_).Players();
+  if (!players) return;
+  wasm::PlayersChangedEvent event;
+  *event.mutable_players() = std::move(*players->mutable_players());
+  static_cast<void>(mod_.PlayersChanged(event));
 }
 
 bool WasmPlugin::Command(int32_t slot, std::string_view line) {
