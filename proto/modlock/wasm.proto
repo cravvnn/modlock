@@ -191,6 +191,14 @@ service Host {
   // it, its presses counting once; a Steer without one releases the hero.
   rpc Steer(SteerRequest) returns (Empty);
 
+  // Drive gives a bot the controls a player has, where it looks, the
+  // movement axes and the buttons, as its input on every tick until the next
+  // Drive replaces it. The game runs that input as a player's own, so the
+  // hero accelerates, turns, jumps, dashes, slides and casts with its own
+  // movement and animation; the bot's own brain no longer moves it. Presses
+  // count once. A Drive without a command returns the bot to its brain.
+  rpc Drive(DriveRequest) returns (Empty);
+
   // AdjustSouls gives the player delta souls, or takes them when delta is
   // negative. A spend larger than the player's souls fails and spends
   // nothing. Silent skips the pickup's sound and number.
@@ -1301,6 +1309,30 @@ message Steering {
 
   // Facing is where the command looks, which aims the hero and its animation.
   modlock.EulerAngles facing = 5;
+}
+
+// DriveRequest drives one bot, or releases it without a command.
+message DriveRequest {
+  int32 player = 1;
+  optional DriveCommand command = 2;
+}
+
+// DriveCommand is a player's controls for one tick and the ticks after it.
+message DriveCommand {
+  // Facing is where the hero looks and aims; its yaw turns the body, as the
+  // camera turns a player's hero.
+  modlock.EulerAngles facing = 1;
+
+  // Forward and Left are the movement axes, from -1 to 1, relative to the
+  // facing's yaw.
+  float forward = 2;
+  float left = 3;
+
+  // Held holds down these buttons on every tick.
+  uint64 held = 4;
+
+  // Pressed presses these buttons on the next tick only, as a tap.
+  uint64 pressed = 5;
 }
 
 // AdjustSoulsRequest changes one player's souls.

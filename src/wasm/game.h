@@ -21,6 +21,7 @@
 #include "modlock/gameinterop/ability_modifier.h"
 #include "modlock/gameinterop/ability_slots.h"
 #include "modlock/gameinterop/bot_creation.h"
+#include "modlock/gameinterop/bot_drive.h"
 #include "modlock/gameinterop/engine_server.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/game_rules.h"
@@ -147,6 +148,13 @@ class GameServices {
   // Transmit installs the shared transmit hook on first use.
   std::expected<void, std::string> Transmit();
 
+  // Drive installs the shared bot command hook on first use.
+  std::expected<void, std::string> Drive();
+
+  // Driven returns the command the first mod that drives slot gives it, and
+  // spends that command's presses.
+  std::optional<gameinterop::BotDrive::Command> Driven(int32_t slot);
+
   // Withhold keeps from one player every object a mod hid from them.
   void Withhold(gameinterop::TransmitSet& set);
 
@@ -197,6 +205,8 @@ class GameServices {
   // transmit_ filters what each player's client receives once a mod hides
   // an object from someone.
   std::optional<gameinterop::TransmitHook> transmit_;
+  // drive_ rewrites the bots' commands once a mod drives a bot.
+  std::optional<gameinterop::BotDrive> drive_;
   // steps_ is the server movement hook, held while step_ runs or a mod
   // watches or steers a hero. commands_ folds each pawn's commands since its
   // last sample, and ground_ is the last entity any hero stood on.
@@ -356,6 +366,7 @@ class Game : public HostService {
   std::expected<void, std::string> Teleport(const TeleportRequest& request) override;
   std::expected<void, std::string> MovePlayer(const MovePlayerRequest& request) override;
   std::expected<void, std::string> Steer(const SteerRequest& request) override;
+  std::expected<void, std::string> Drive(const DriveRequest& request) override;
   std::expected<void, std::string> AdjustSouls(const AdjustSoulsRequest& request) override;
   std::expected<void, std::string> StartingSouls(const StartingSoulsRequest& request) override;
   std::expected<void, std::string> ResetHero(const ResetHeroRequest& request) override;
@@ -589,6 +600,8 @@ class Game : public HostService {
   };
   // steers_ maps each steered player to the command its hero replays.
   std::map<int32_t, Steered> steers_;
+  // drives_ maps each driven bot's slot to the command its hero runs.
+  std::map<int32_t, gameinterop::BotDrive::Command> drives_;
   // held_ is the modifier states the mod holds, by entity handle and name;
   // ApplyHolds sets them again.
   std::set<std::pair<uint32_t, std::string>> held_;

@@ -105,6 +105,16 @@ signatures {
   shape: "CCitadelPlayerPawn* CreateHeroPawn(CCitadelPlayerController*, int team)"
 }
 
+# Every hero's input reaches movement here: the network's commands for a
+# player, and the one command a bot's brain or scripted path builds each tick
+# in CCitadelPlayerBot::PhysicsSimulate. Each CUserCmd is 0xa8 bytes.
+signatures {
+  id: "controller.process-usercmds"
+  modules: GAME_MODULE_SERVER
+  pattern: "48 8B C4 44 88 48 ?? 44 89 40 ?? 48 89 50 ?? 53"
+  shape: "int CBasePlayerController::ProcessUsercmds(CBasePlayerController*, CUserCmd* cmds, int count, bool paused, float margin)"
+}
+
 signatures {
   id: "controller.set-pawn"
   modules: GAME_MODULE_SERVER
