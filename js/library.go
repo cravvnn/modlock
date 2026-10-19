@@ -78,10 +78,6 @@ const protobufVersion = "1.2.1"
 // runtime it includes.
 const banner = "/*! Includes protobuf-es-lite under the Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0 */"
 
-// revision changes whenever Build changes its output, so a cached build from
-// the same sources is rebuilt.
-const revision = "6"
-
 // sources are the paths under the Modlock source that Build reads.
 var sources = []string{"js/src", "js/tsconfig.json", "proto/modlock", "panorama/src"}
 
@@ -208,13 +204,23 @@ func moduleCache() string {
 	return filepath.Join(gopath, "pkg", "mod")
 }
 
+// builder is this file under the Modlock source. It holds Build, so its text
+// keys the cache and a change to the build rebuilds every cached library.
+const builder = "js/library.go"
+
 // buildCached returns the library built from source, keyed by the sources
-// and this build's revision, building it the first time.
+// and the builder, building it the first time.
 func buildCached(ctx context.Context, source string) (string, error) {
-	// Name the cache directory by the sources and the build's inputs.
+	// Name the cache directory by the builder, the sources and the build's
+	// other inputs.
+	code, err := os.ReadFile(filepath.Join(source, filepath.FromSlash(builder)))
+	if err != nil {
+		return "", err
+	}
 	sum := sha256.New()
-	_, _ = io.WriteString(sum, revision+"\x00"+protobufVersion+"\x00"+npm.TsgoVersion+"\x00")
-	err := walkSources(source, func(name string, data []byte) error {
+	_, _ = sum.Write(code)
+	_, _ = io.WriteString(sum, "\x00"+protobufVersion+"\x00"+npm.TsgoVersion+"\x00")
+	err = walkSources(source, func(name string, data []byte) error {
 		_, _ = io.WriteString(sum, name+"\x00")
 		_, _ = sum.Write(data)
 		return nil
