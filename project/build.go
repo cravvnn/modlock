@@ -29,6 +29,8 @@ type Mode int
 const (
 	// Release compiles a script mod to WebAssembly with scriptc, which runs
 	// it fastest, and bundles it for QuickJS when scriptc cannot compile it.
+	// Publishing builds this way; scriptc takes seconds to minutes and
+	// gigabytes of memory, so local builds choose it only on request.
 	Release Mode = iota
 	// Dev bundles a script mod for QuickJS, which builds in a moment.
 	Dev

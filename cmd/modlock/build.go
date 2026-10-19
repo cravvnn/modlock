@@ -11,13 +11,22 @@ func buildCommand(out *printer) *cli.Command {
 		Name:      "build",
 		Usage:     "check the mod and write the built mod to its build directory",
 		ArgsUsage: "[DIRECTORY]",
+		Description: "A script mod builds for QuickJS, which takes a moment. publish compiles it\n" +
+			"with scriptc instead; --release builds that way here, to check the published build.",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{Name: "release", Usage: "compile a script mod with scriptc, as publish does"},
+		},
 		Action: func(c *cli.Context) error {
 			// Open and build the project.
 			opened, err := openProject(c)
 			if err != nil {
 				return err
 			}
-			if err := out.build(c.Context, opened, project.Release); err != nil {
+			mode := project.Dev
+			if c.Bool("release") {
+				mode = project.Release
+			}
+			if err := out.build(c.Context, opened, mode); err != nil {
 				return err
 			}
 
