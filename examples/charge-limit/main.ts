@@ -43,6 +43,9 @@ let done = false
 let probing = false
 let unlocked = false
 let logged = -1
+let revived = -1
+let armedAt = 0
+let unlockedAt = 0
 
 onStart((args) => {
   probing = args.includes('probe')
@@ -85,11 +88,25 @@ onFrame((frame) => {
     return
   }
 
+  // Wait until every bot's hero is alive, reviving the dead once a second.
+  const dead = bots.filter((bot) => (bot.player.pawn()?.health ?? 0) <= 0)
+  if (dead.length > 0) {
+    if (Math.floor(elapsed) !== revived) {
+      revived = Math.floor(elapsed)
+      for (const bot of dead) {
+        bot.player.respawn()
+      }
+      log(`reviving ${dead.map((bot) => bot.label).join(' ')}`)
+    }
+    return
+  }
+
   // Unlock the ability keys, which hold no charges while locked, then pick the
   // first that holds several charges and empty it.
   if (native === 0) {
     if (!unlocked) {
       unlocked = true
+      unlockedAt = frame.timeSeconds
       for (const bot of bots) {
         for (const ability of bot.player.abilities()) {
           if (ability.slot < 3) {
@@ -99,7 +116,7 @@ onFrame((frame) => {
       }
       return
     }
-    if (elapsed < 2) {
+    if (frame.timeSeconds - unlockedAt < 2) {
       return
     }
     const charged = abilities[0].find((item) => item.name === target)
@@ -108,6 +125,7 @@ onFrame((frame) => {
       return
     }
     native = baseCharges
+    armedAt = frame.timeSeconds
     for (const bot of bots) {
       bot.ability = charged.name
       bot.player.setAbility({
@@ -145,7 +163,7 @@ onFrame((frame) => {
     logged = Math.floor(elapsed)
     log(`t=${elapsed.toFixed(1)} control=${held[0]} raised=${held[1]}`)
   }
-  if (elapsed > 15) {
+  if (frame.timeSeconds - armedAt > 15) {
     const ok = held[0] === native && held[1] === native + extra
     finish(
       ok ? undefined : `control held ${held[0]}, raised held ${held[1]}`,
