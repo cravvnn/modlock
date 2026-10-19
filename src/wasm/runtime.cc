@@ -9,11 +9,16 @@ namespace modlock::wasm {
 namespace {
 
 // EpochEngine returns an engine whose stores can carry an epoch deadline and
-// whose modules may throw, as the Luau runtime does.
+// whose modules may throw, as the Luau runtime does. Its compiled modules
+// stay in Wasmtime's cache directory, keyed by the module, the engine's
+// settings and Wasmtime's version, so a restarted server loads each
+// interpreter and mod without compiling it again. Without a usable cache
+// directory every start compiles, as before.
 wasmtime::Engine EpochEngine() {
   wasmtime::Config config;
   config.epoch_interruption(true);
   config.wasm_exceptions(true);
+  static_cast<void>(config.cache_load_default());
   return wasmtime::Engine(std::move(config));
 }
 

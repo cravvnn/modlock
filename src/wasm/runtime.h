@@ -29,7 +29,8 @@ class Runtime {
 
   // Compile returns the compiled module for bytes. Modules are shared by
   // content: while any instance holds the module for identical bytes, those
-  // bytes are not compiled again.
+  // bytes are not compiled again, and across processes Wasmtime's on-disk
+  // cache answers bytes it compiled before.
   [[nodiscard]] std::expected<std::shared_ptr<const wasmtime::Module>, std::string> Compile(
       std::span<const uint8_t> bytes);
 
