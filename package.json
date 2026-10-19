@@ -1,6 +1,9 @@
 {
   "name": "modlock",
   "private": true,
+  "aptre": {
+    "tsTypedDecode": true
+  },
   "scripts": {
     "gen": "./scripts/gen-proto.sh --language ts",
     "prepare": "sh scripts/install-hooks.sh",
