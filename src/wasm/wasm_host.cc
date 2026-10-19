@@ -288,8 +288,9 @@ class WasmPlugin final : public Plugin {
     Withdraw();
   }
 
-  // Reload replaces the running instance with build and starts it, or keeps
-  // build for the first frame after a held instance releases its hold.
+  // Reload replaces the running instance with build and starts it once the
+  // old instance's bots have left, or keeps build for the first frame after
+  // a held instance releases its hold.
   std::expected<void, std::string> Reload(Build build);
 
   // Hold keeps the running instance through reloads while held is true.
@@ -373,6 +374,13 @@ class WasmPlugin final : public Plugin {
   // Restart starts the running build again in a new instance, in place of a
   // stopped or a running one.
   void Restart();
+  // Succeed halts the running instance and starts instance, with build when
+  // a reload brought one, once the bots the halted instance kicked have left.
+  std::expected<void, std::string> Succeed(std::unique_ptr<wasm::Instance> instance,
+                                           std::optional<Build> build);
+  // Arrive starts the instance that Succeed holds back, when its
+  // predecessor's bots have left or kDepartWait passed.
+  std::expected<void, std::string> Arrive();
   void World();
   // SteamId returns the account of the player in slot, or zero for a bot or
   // an empty slot.
@@ -436,6 +444,15 @@ class WasmPlugin final : public Plugin {
   // and waiting_ holds the newest build a reload brought meanwhile.
   bool held_ = false;
   std::optional<Build> waiting_;
+  // Successor is an instance that waits until starting_until_ for the bots
+  // its predecessor kicked to leave, since a bot it adds under a leaving
+  // bot's name takes that bot's queued kick.
+  struct Successor {
+    std::unique_ptr<wasm::Instance> instance;
+    std::optional<Build> build;
+  };
+  std::optional<Successor> successor_;
+  std::chrono::steady_clock::time_point starting_until_;
   // stopped_ is true while a failed instance waits for a player to restart
   // it, and restart_ once one asked. offer_until_ ends the restart offer a
   // slow event opens, and warned_at_ is the players' last warning.
@@ -512,6 +529,10 @@ constexpr auto kFrameAllowance = std::chrono::milliseconds(8);
 constexpr std::string_view kRestartCommand = "restartmod";
 constexpr auto kWarnPeriod = std::chrono::minutes(1);
 constexpr auto kOfferWindow = std::chrono::minutes(5);
+
+// kDepartWait bounds how long a new instance waits for the bots its
+// predecessor kicked to leave.
+constexpr auto kDepartWait = std::chrono::seconds(5);
 
 // kMaxDamaged bounds the applied hits and the movement facts queued between
 // frames.
@@ -609,9 +630,32 @@ std::expected<void, std::string> WasmPlugin::Reload(Build build) {
   auto instance = Instantiate(build.module);
   if (!instance) return std::unexpected(instance.error());
 
-  // Stop the old build and start the new one in its place.
-  Halt();
-  Attach(std::move(*instance), std::move(build));
+  return Succeed(std::move(*instance), std::move(build));
+}
+
+std::expected<void, std::string> WasmPlugin::Succeed(std::unique_ptr<wasm::Instance> instance,
+                                                     std::optional<Build> build) {
+  if (instance_) {
+    Halt();
+    instance_.reset();
+  }
+  successor_ = Successor{std::move(instance), std::move(build)};
+  starting_until_ = std::chrono::steady_clock::now() + kDepartWait;
+  return Arrive();
+}
+
+std::expected<void, std::string> WasmPlugin::Arrive() {
+  if (game_.Departing()) {
+    if (std::chrono::steady_clock::now() < starting_until_) return {};
+    Log("starts while a bot it removed has not left yet");
+  }
+  auto successor = std::move(*successor_);
+  successor_.reset();
+  if (successor.build) {
+    Attach(std::move(successor.instance), std::move(*successor.build));
+  } else {
+    instance_ = std::move(successor.instance);
+  }
   return Begin(true);
 }
 
@@ -737,24 +781,27 @@ void WasmPlugin::Withdraw() {
 }
 
 void WasmPlugin::Restart() {
-  // Clear what a running instance placed and shows, as a reload does.
+  // A successor already on its way is the restart.
   Withdraw();
-  if (instance_) {
-    Halt();
-    instance_.reset();
-  }
+  if (successor_) return;
 
-  // A build that no longer instantiates stays stopped, still offered.
+  // A build that no longer instantiates stays stopped, still offered, and
+  // clears what a running instance placed and shows, as a reload does.
   auto instance = Instantiate(module_);
   if (!instance) {
+    if (instance_) {
+      Halt();
+      instance_.reset();
+    }
     Failed("did not restart: " + instance.error());
     Stopped();
     return;
   }
 
   // Start it in the running world; Send stops it again if it fails.
-  instance_ = std::move(*instance);
-  if (auto started = Begin(true); !started) Log("did not restart: " + started.error());
+  if (auto started = Succeed(std::move(*instance), std::nullopt); !started) {
+    Log("did not restart: " + started.error());
+  }
 }
 
 void WasmPlugin::World() {
@@ -774,6 +821,9 @@ void WasmPlugin::Tick() {
     if (auto reloaded = Reload(std::move(build)); !reloaded) {
       Log("the waiting build did not load: " + reloaded.error());
     }
+  }
+  if (successor_) {
+    if (auto started = Arrive(); !started) Log("did not start: " + started.error());
   }
   if (restart_) {
     Restart();
@@ -841,6 +891,7 @@ void WasmPlugin::Tick() {
 
 void WasmPlugin::Stop() {
   waiting_.reset();
+  successor_.reset();
   Withdraw();
   restart_command_.Reset();
   restartable_ = false;

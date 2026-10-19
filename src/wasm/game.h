@@ -270,6 +270,12 @@ class Game : public HostService {
   // paused and stops watching projectiles.
   void Clear();
 
+  // Departing reports whether a bot the mod removed still holds its slot.
+  // The engine runs a kick from its command buffer after the call returns,
+  // so a bot added before then under the same name can take the kick meant
+  // for the one leaving.
+  bool Departing();
+
   // Hero is one live hero this frame. Velocity is absent when the game's
   // motion field cannot be read.
   struct Hero {
@@ -543,6 +549,9 @@ class Game : public HostService {
   // RemoveWorld removes the objects and units and kicks the bots.
   void RemoveWorld();
 
+  // Depart records that the bot in slot was kicked.
+  void Depart(int32_t slot);
+
   // services_ outlives the game.
   GameServices& services_;
   // engine_ outlives the game; the host owns it.
@@ -563,6 +572,9 @@ class Game : public HostService {
   bool spawned_ = false;
   // bots_ maps each bot's slot to its name, which the console kicks by.
   std::map<int32_t, std::string> bots_;
+  // departing_ maps each kicked bot's slot to its connection generation
+  // until the slot empties or another connection takes it.
+  std::map<int32_t, uint32_t> departing_;
   std::set<int32_t> frozen_;
   // movers_ is the players whose movement the mod watches.
   std::set<int32_t> movers_;

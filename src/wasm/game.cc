@@ -1098,10 +1098,22 @@ void Game::RemoveWorld() {
   // Only the engine's kick removes a bot's connection.
   if (auto server = services_.Server()) {
     for (const auto& [slot, name] : bots_) {
-      static_cast<void>((*server)->ServerCommand(("kick \"" + name + "\"\n").c_str()));
+      if ((*server)->ServerCommand(("kick \"" + name + "\"\n").c_str())) Depart(slot);
     }
   }
   bots_.clear();
+}
+
+void Game::Depart(int32_t slot) {
+  departing_[slot] = gameinterop::ConnectionTracker::StateForSlot(slot).generation;
+}
+
+bool Game::Departing() {
+  std::erase_if(departing_, [](const auto& entry) {
+    const auto state = gameinterop::ConnectionTracker::StateForSlot(entry.first);
+    return !state.occupied || state.generation != entry.second;
+  });
+  return !departing_.empty();
 }
 
 std::expected<void, std::string> Game::ServerCommand(const ServerCommandRequest& request) {
@@ -1954,6 +1966,7 @@ std::expected<void, std::string> Game::RemoveBot(const PlayerRequest& request) {
   if (!(*server)->ServerCommand(("kick \"" + found->second + "\"\n").c_str())) {
     return std::unexpected("the server console is unavailable");
   }
+  Depart(found->first);
   bots_.erase(found);
   return {};
 }
