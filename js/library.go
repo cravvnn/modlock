@@ -51,7 +51,7 @@ const Renderer = "ui.js"
 
 // Declarations are the built library's declarations, which modlock build
 // installs into each script project.
-var Declarations = []string{"index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "timer.d.ts", "jsx-runtime.d.ts"}
+var Declarations = []string{"index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "players.d.ts", "timer.d.ts", "jsx-runtime.d.ts"}
 
 // jsxRuntime and jsxTypes are the library's JSX runtime, which the compiler
 // and the bundler import as modlock/jsx-runtime.
@@ -309,7 +309,10 @@ func Build(ctx context.Context, source, out string) error {
 		"jsx-runtime.js":   []byte(jsxRuntime),
 		"jsx-runtime.d.ts": []byte(jsxTypes),
 	}
-	for _, name := range []string{"host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "timer.d.ts"} {
+	for _, name := range Declarations {
+		if _, written := files[name]; written {
+			continue
+		}
 		if files[name], err = os.ReadFile(filepath.Join(declared, name)); err != nil {
 			return err
 		}
