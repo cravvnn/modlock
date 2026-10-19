@@ -37,7 +37,7 @@ type Sandbox struct {
 	// config describes the session.
 	config Config
 	// cache keeps compiled modules, so a reload and the interpreters compile
-	// once.
+	// once, and once across sessions when the config names a directory.
 	cache wazero.CompilationCache
 	// actions carries work for the session's goroutine, which owns the mods.
 	actions chan func(context.Context)
@@ -74,7 +74,7 @@ func Start(ctx context.Context, config Config) *Sandbox {
 	ctx, stop := context.WithCancel(ctx)
 	s := &Sandbox{
 		config:  config,
-		cache:   wazero.NewCompilationCache(),
+		cache:   compilationCache(config.Compiled),
 		actions: make(chan func(context.Context)),
 		stop:    stop,
 		done:    make(chan struct{}),
@@ -82,6 +82,18 @@ func Start(ctx context.Context, config Config) *Sandbox {
 	}
 	go s.run(ctx)
 	return s
+}
+
+// compilationCache returns a cache that keeps compiled modules in dir, or in
+// memory when dir is empty or cannot hold them; a missing cache only costs
+// compile time.
+func compilationCache(dir string) wazero.CompilationCache {
+	if dir != "" {
+		if cache, err := wazero.NewCompilationCacheWithDir(dir); err == nil {
+			return cache
+		}
+	}
+	return wazero.NewCompilationCache()
 }
 
 // Reload replaces the running mod with the build at path, or reports why it

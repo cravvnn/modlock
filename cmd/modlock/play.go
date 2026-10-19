@@ -120,13 +120,18 @@ func startSession(c *cli.Context, out *printer, mods []string, logPath string) (
 	}
 
 	// Run the mods in the sandbox, with the interpreters from the host's
-	// package.
+	// package and the modules compiled in earlier sessions.
 	out.sandbox(reason)
+	compiled := ""
+	if cache, err := os.UserCacheDir(); err == nil {
+		compiled = filepath.Join(cache, "modlock", "compiled")
+	}
 	return sandbox.Start(c.Context, sandbox.Config{
 		Mods:     mods,
 		Map:      mapName,
 		Args:     c.StringSlice("arg"),
 		Settings: settingsFile(),
+		Compiled: compiled,
 		Interpreters: func(ctx context.Context) (string, error) {
 			host, err := session.FindHost(ctx, Version)
 			return filepath.Dir(host), err
