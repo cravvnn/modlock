@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <span>
@@ -802,6 +803,25 @@ std::expected<void, std::string> GameServices::Transmit() {
   return {};
 }
 
+std::expected<void, std::string> GameServices::Leash() {
+  if (leash_) return {};
+  auto image = Image();
+  if (!image) return std::unexpected(image.error());
+  auto hook =
+      gameinterop::BotLeash::Install(**image, [this](uint32_t pawn) { return Retreat(pawn); });
+  if (!hook) return std::unexpected(hook.error());
+  leash_ = std::move(*hook);
+  return {};
+}
+
+gameinterop::BotLeash::Retreat GameServices::Retreat(uint32_t pawn) {
+  for (auto* game : games_) {
+    auto found = game->leash_answers_.find(pawn);
+    if (found != game->leash_answers_.end()) return found->second;
+  }
+  return {};
+}
+
 void GameServices::Withhold(gameinterop::TransmitSet& set) {
   // A text object's entity changes with its words, so each update reads the
   // current handles.
@@ -960,6 +980,7 @@ Game::~Game() {
 
 void Game::Frame() {
   ApplyFreeForAll();
+  ApplyLeashes();
   ApplyHolds();
   HoldClock();
   TickRestores();
@@ -1017,6 +1038,8 @@ void Game::WorldEnding() {
   steers_.clear();
   held_.clear();
   ffa_held_.clear();
+  leashes_.clear();
+  leash_answers_.clear();
   ReleaseModifiers();
   presses_.clear();
   restores_.clear();
@@ -1028,6 +1051,7 @@ void Game::WorldEnding() {
 
 void Game::Leave(int32_t slot) {
   ffa_failed_.erase(slot);
+  leashes_.erase(slot);
   frozen_.erase(slot);
   movers_.erase(slot);
   steers_.erase(slot);
@@ -1064,6 +1088,8 @@ void Game::Clear() {
   free_for_all_ = false;
   ffa_held_.clear();
   ffa_failed_.clear();
+  leashes_.clear();
+  leash_answers_.clear();
   ReleaseModifiers();
   blocked_ = 0;
   slot_blocked_.clear();
@@ -1956,6 +1982,47 @@ std::expected<void, std::string> Game::RemoveBot(const PlayerRequest& request) {
   }
   bots_.erase(found);
   return {};
+}
+
+std::expected<void, std::string> Game::LeashBot(const LeashBotRequest& request) {
+  const auto slot = request.player();
+  if (!gameinterop::ConnectionTracker::StateForSlot(slot).is_bot)
+    return std::unexpected("no bot plays in that slot");
+  const bool retreat = !request.has_retreat() || request.retreat();
+  if (retreat && request.radius() <= 0) {
+    leashes_.erase(slot);
+    return {};
+  }
+  if (auto installed = services_.Leash(); !installed) return std::unexpected(installed.error());
+  auto& leash = leashes_[slot];
+  leash.retreat = retreat;
+  leash.center = Floats(request.center());
+  leash.radius = std::max(request.radius(), 0.0f);
+  return {};
+}
+
+void Game::ApplyLeashes() {
+  leash_answers_.clear();
+  using Kind = gameinterop::BotLeash::Retreat::Kind;
+  for (auto& [slot, leash] : leashes_) {
+    const auto sample = observer_.Observe(slot);
+    if (!sample || sample->health <= 0) {
+      leash.returning = false;
+      continue;
+    }
+    if (leash.radius > 0) {
+      const auto dx = float(sample->x) - leash.center[0];
+      const auto dy = float(sample->y) - leash.center[1];
+      const auto distance = std::sqrt(dx * dx + dy * dy);
+      if (distance > leash.radius) leash.returning = true;
+      if (distance < leash.radius / 2) leash.returning = false;
+    }
+    if (leash.returning) {
+      leash_answers_[sample->pawn_handle] = {.kind = Kind::kWalkTo, .goal = leash.center};
+    } else if (!leash.retreat) {
+      leash_answers_[sample->pawn_handle] = {.kind = Kind::kNever};
+    }
+  }
 }
 
 std::expected<void, std::string> Game::Precache(const PrecacheOptions& request) {

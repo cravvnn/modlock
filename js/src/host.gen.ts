@@ -1791,6 +1791,18 @@ export class Player {
   }
 
   /**
+   * leashBot changes when a bot the game drives turns away from a fight. With
+   * retreat false the bot stops walking home to heal when hurt. With a radius
+   * the bot walks back toward center, ahead of any fight, once it strays
+   * farther than radius across the ground, and fights again within half of
+   * it. A request with neither releases the bot, as does removing it or
+   * stopping the mod.
+   */
+  leashBot(center: Vector, radius: number, retreat?: boolean): boolean {
+    return call('LeashBot', pb.LeashBotRequest.toBinary({ player: this.slot, center, radius, retreat })) !== undefined
+  }
+
+  /**
    * blockInput withholds buttons from the player's hero until called
    * again, on top of the block on everyone. Zero releases the player.
    */

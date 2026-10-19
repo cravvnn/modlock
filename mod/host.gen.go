@@ -807,6 +807,16 @@ func (p Player) RemoveBot() error {
 	return invoke("RemoveBot", &wasm.PlayerRequest{Player: p.Slot}, nil)
 }
 
+// LeashBot changes when a bot the game drives turns away from a fight. With
+// retreat false the bot stops walking home to heal when hurt. With a radius
+// the bot walks back toward center, ahead of any fight, once it strays
+// farther than radius across the ground, and fights again within half of
+// it. A request with neither releases the bot, as does removing it or
+// stopping the mod.
+func (p Player) LeashBot(center *Vector, radius float32, retreat *bool) error {
+	return invoke("LeashBot", &wasm.LeashBotRequest{Player: p.Slot, Center: center, Radius: radius, Retreat: retreat}, nil)
+}
+
 // BlockInput withholds buttons from every player's hero until called
 // again. Stopping the mod releases them.
 func BlockInput(buttons uint64) error {

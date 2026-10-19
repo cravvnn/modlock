@@ -4307,6 +4307,51 @@ export const BotResponse: MessageType<BotResponse> = /* @__PURE__ */ createMessa
 });
 
 /**
+ * LeashBotRequest sets how one bot retreats.
+ *
+ * @generated from message modlock.wasm.LeashBotRequest
+ */
+export interface LeashBotRequest {
+  player?: number;
+  /**
+   * Center is the point the bot stays near.
+   */
+  center?: Vec3;
+  /**
+   * Radius is how far across the ground the bot may stray from center; zero
+   * leaves it unleashed.
+   */
+  radius?: number;
+  /**
+   * Retreat lets the bot walk home to heal when hurt, as the game decides,
+   * when true or omitted.
+   */
+  retreat?: boolean;
+}
+
+export const LeashBotRequest: MessageType<LeashBotRequest> = /* @__PURE__ */ createMessageType<LeashBotRequest>("modlock.wasm.LeashBotRequest", () => [
+  [1, "player", 5],
+  [2, "center", 11, 0, Vec3.codec],
+  [3, "radius", 2],
+  [4, "retreat", 8, 4],
+], {
+  decode: (r: BinaryReader, end: number, m: LeashBotRequest): LeashBotRequest => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.player = r.int32(); break;
+        case 2: m.center = Vec3.decode(r, r.delimited(), m.center ?? {}); break;
+        case 3: m.radius = r.float(); break;
+        case 4: m.retreat = r.bool(); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
  * InputRequest names buttons for every player. Buttons are the game's input
  * bits; bit 42 is parry.
  *

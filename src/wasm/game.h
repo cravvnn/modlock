@@ -20,6 +20,7 @@
 #include "modlock/gameinterop/ability_modifier.h"
 #include "modlock/gameinterop/ability_slots.h"
 #include "modlock/gameinterop/bot_creation.h"
+#include "modlock/gameinterop/bot_leash.h"
 #include "modlock/gameinterop/engine_server.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/game_rules.h"
@@ -146,6 +147,12 @@ class GameServices {
   // Transmit installs the shared transmit hook on first use.
   std::expected<void, std::string> Transmit();
 
+  // Leash installs the shared bot retreat hook on first use.
+  std::expected<void, std::string> Leash();
+
+  // Retreat answers a bot's retreat check from the first mod that leashes it.
+  gameinterop::BotLeash::Retreat Retreat(uint32_t pawn);
+
   // Withhold keeps from one player every object a mod hid from them.
   void Withhold(gameinterop::TransmitSet& set);
 
@@ -196,6 +203,8 @@ class GameServices {
   // transmit_ filters what each player's client receives once a mod hides
   // an object from someone.
   std::optional<gameinterop::TransmitHook> transmit_;
+  // leash_ answers the bots' retreat checks once a mod leashes a bot.
+  std::optional<gameinterop::BotLeash> leash_;
   // steps_ is the server movement hook, held while step_ runs or a mod
   // watches or steers a hero. commands_ folds each pawn's commands since its
   // last sample, and ground_ is the last entity any hero stood on.
@@ -382,6 +391,7 @@ class Game : public HostService {
   std::expected<EntityResponse, std::string> ObjectEntity(const ObjectRequest& request) override;
   std::expected<BotResponse, std::string> AddBot(const BotOptions& request) override;
   std::expected<void, std::string> RemoveBot(const PlayerRequest& request) override;
+  std::expected<void, std::string> LeashBot(const LeashBotRequest& request) override;
   std::expected<void, std::string> BlockInput(const InputRequest& request) override;
   std::expected<void, std::string> BlockPlayerInput(const PlayerInputRequest& request) override;
   std::expected<void, std::string> Press(const PlayerInputRequest& request) override;
@@ -493,6 +503,10 @@ class Game : public HostService {
   // them.
   void ApplyHolds();
 
+  // ApplyLeashes decides each leashed bot's retreat answer from where its
+  // hero stands this frame.
+  void ApplyLeashes();
+
   // ApplyFreeForAll seats each player who has no team on the smaller side, in
   // the hero picker, and holds friendly fire on every living hero. A host that
   // cannot seat a player leaves the game's own team screen to them.
@@ -563,6 +577,18 @@ class Game : public HostService {
   bool spawned_ = false;
   // bots_ maps each bot's slot to its name, which the console kicks by.
   std::map<int32_t, std::string> bots_;
+  // Leash is one bot's retreat rule; returning is true while it walks back
+  // from past radius and has not yet come within half of it.
+  struct Leash {
+    bool retreat = true;
+    std::array<float, 3> center{};
+    float radius = 0;
+    bool returning = false;
+  };
+  // leashes_ holds each leashed bot's rule by slot, and leash_answers_ the
+  // answer ApplyLeashes chose for each bot's hero pawn handle.
+  std::map<int32_t, Leash> leashes_;
+  std::map<uint32_t, gameinterop::BotLeash::Retreat> leash_answers_;
   std::set<int32_t> frozen_;
   // movers_ is the players whose movement the mod watches.
   std::set<int32_t> movers_;

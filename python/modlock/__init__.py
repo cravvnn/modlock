@@ -1307,6 +1307,16 @@ class Player:
         """remove_bot removes a bot the mod added."""
         return _call("RemoveBot", "PlayerRequest", {"player": self}) is not None
 
+    def leash_bot(self, center: Vector, radius: float, retreat: bool | None = None) -> bool:
+        """leash_bot changes when a bot the game drives turns away from a fight. With
+        retreat false the bot stops walking home to heal when hurt. With a radius
+        the bot walks back toward center, ahead of any fight, once it strays
+        farther than radius across the ground, and fights again within half of
+        it. A request with neither releases the bot, as does removing it or
+        stopping the mod.
+        """
+        return _call("LeashBot", "LeashBotRequest", {"player": self, "center": center, "radius": radius, "retreat": retreat}) is not None
+
     def block_input(self, buttons: int) -> bool:
         """block_input withholds buttons from the player's hero until called
         again, on top of the block on everyone. Zero releases the player.
@@ -2303,6 +2313,15 @@ _SCHEMA: wire.Schema = {
         None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
+        ],
+    ),
+    "LeashBotRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "center", "message", message="Vec3"),
+            wire.Field(3, "radius", "float"),
+            wire.Field(4, "retreat", "bool", optional=True),
         ],
     ),
     "InputRequest": (
