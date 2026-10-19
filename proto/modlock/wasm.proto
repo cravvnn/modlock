@@ -262,6 +262,13 @@ service Host {
   // releases the hold. The hold ends with the entity.
   rpc HoldModifierState(HoldModifierStateRequest) returns (Empty);
 
+  // SetFreeForAll turns free-for-all on or off for the running mod, over the
+  // Manifest's free_for_all default. While on, the host seats each new player
+  // on the smaller team and opens the hero picker with no team screen, holds
+  // friendly fire on every hero, and ignores changeteam commands. Turning it
+  // off releases the friendly fire holds; players keep their teams.
+  rpc SetFreeForAll(SetFreeForAllRequest) returns (Empty);
+
   // CreateModel places a model in the world, solid when the options ask.
   // The world removes it when the world ends; stopping the mod removes it
   // too.
@@ -1665,6 +1672,12 @@ message HoldModifierStateRequest {
   optional bool active = 3;
 }
 
+// SetFreeForAllRequest turns free-for-all on or off.
+message SetFreeForAllRequest {
+  // Enabled turns free-for-all on when true and off when false.
+  bool enabled = 1;
+}
+
 // ModelOptions describes a model placed in the world.
 message ModelOptions {
   // Resource is the model's path, which the mod precached.
@@ -2358,6 +2371,12 @@ message Manifest {
   // Metrics are the measures the mod keeps for each player, which the mod
   // adds to with AddMetric.
   repeated Metric metrics = 11;
+
+  // FreeForAll starts the mod in free-for-all: the game shows no team screen,
+  // the host seats each new player on the smaller team and opens the hero
+  // picker, and every hero can damage every other. The mod can change it
+  // while it runs with SetFreeForAll. Meant for dedicated servers.
+  bool free_for_all = 12;
 }
 
 // Setting is one choice a player makes about a mod, such as a HUD layout.

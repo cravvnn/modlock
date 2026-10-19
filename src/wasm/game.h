@@ -283,6 +283,14 @@ class Game : public HostService {
   // Heroes returns every live hero this frame.
   std::vector<Hero> Heroes();
 
+  // StartFreeForAll sets whether free-for-all is on as a mod starts, from its
+  // manifest. SetFreeForAll changes it while the mod runs.
+  void StartFreeForAll(bool enabled) { free_for_all_ = enabled; }
+
+  // FreeForAllCommand reports whether free-for-all consumes a player's console
+  // line. Seating is the host's, so it drops the team commands.
+  bool FreeForAllCommand(std::string_view line) const;
+
   // Moving reports whether the mod watches any player's movement.
   bool Moving() const { return !movers_.empty(); }
 
@@ -361,6 +369,7 @@ class Game : public HostService {
       const ModifierStateRequest& request) override;
   std::expected<void, std::string> HoldModifierState(
       const HoldModifierStateRequest& request) override;
+  std::expected<void, std::string> SetFreeForAll(const SetFreeForAllRequest& request) override;
   std::expected<ObjectResponse, std::string> CreateModel(const ModelOptions& request) override;
   std::expected<ObjectResponse, std::string> CreateText(const TextOptions& request) override;
   std::expected<ObjectResponse, std::string> CreateParticle(
@@ -484,6 +493,13 @@ class Game : public HostService {
   // them.
   void ApplyHolds();
 
+  // ApplyFreeForAll seats each player who has no team on the smaller side, in
+  // the hero picker, and holds friendly fire on every living hero. A host that
+  // cannot seat a player leaves the game's own team screen to them.
+  void ApplyFreeForAll();
+  // ReleaseFreeForAll gives back the friendly fire holds free-for-all took.
+  void ReleaseFreeForAll();
+
   // RenewModifier gives slot's living hero the held modifier when it lacks
   // it. A dead or absent hero waits for its return.
   std::expected<void, std::string> RenewModifier(int32_t slot, const std::string& key);
@@ -560,6 +576,12 @@ class Game : public HostService {
   // held_ is the modifier states the mod holds, by entity handle and name;
   // ApplyHolds sets them again.
   std::set<std::pair<uint32_t, std::string>> held_;
+  // free_for_all_ is true while the host seats players and holds friendly fire;
+  // ffa_held_ is the hero pawns it holds friendly fire on, and ffa_failed_ the
+  // players it could not seat, so each failure is logged once.
+  bool free_for_all_ = false;
+  std::set<uint32_t> ffa_held_;
+  std::set<int32_t> ffa_failed_;
   // held_modifiers_ is the modifiers the mod holds, by player slot and
   // "<ability>/<modifier>" key; modifiers_ resolves each held key.
   std::set<std::pair<int32_t, std::string>> held_modifiers_;

@@ -89,6 +89,7 @@ constexpr size_t kHeroField = 0x50;
 constexpr size_t kTeamField = 0x54;
 constexpr size_t kHealthField = 0x58;
 constexpr size_t kHeroHandleField = 0x48;
+constexpr size_t kPlayStateField = 0x60;
 // Fake controller-side scoreboard: PlayerDataGlobal_t inline in the
 // controller, then its int32 counters in ScoreTotals order. Independent of
 // any production constant on purpose.
@@ -1459,6 +1460,88 @@ TEST(PawnObserver, SpectatorSelectionReleasesTheHeroBeforeTheTeamChanges) {
   std::memcpy(&released, fixture.controller.data() + kHeroHandleField, sizeof(released));
   EXPECT_EQ(released, 0xffffffffu);
   EXPECT_EQ(steps, (std::vector<std::string>{"notify", "unbind", "team", "observer"}));
+  active = nullptr;
+}
+
+PawnObserver::Seams SeatingSeamsFor(Fixture& fixture, bool play_state = true) {
+  auto seams = HeroSeamsFor(fixture);
+  seams.layout = [play_state]() -> std::expected<EntityLayout, std::string> {
+    auto layout = FixtureLayout();
+    layout.hero_pawn_handle = kHeroHandleField;
+    if (play_state) layout.play_state = kPlayStateField;
+    return layout;
+  };
+  return seams;
+}
+
+TEST(PawnObserver, SeatingJoinsATeamlessPlayerAndLeavesThemChoosingAHero) {
+  static Fixture* active = nullptr;
+  static std::vector<std::string> steps;
+  Fixture fixture;
+  active = &fixture;
+  steps.clear();
+  fixture.occupied = true;
+  fixture.generation = 3;
+  std::array<void*, 106> table{};
+  table[28] = reinterpret_cast<void*>(+[](void*, const void*) {
+    int32_t state = 0;
+    std::memcpy(&state, active->controller.data() + kPlayStateField, sizeof(state));
+    steps.push_back("notify:" + std::to_string(state));
+  });
+  table[105] = reinterpret_cast<void*>(+[](void* controller, int team) {
+    static_cast<unsigned char*>(controller)[kTeamField] = static_cast<unsigned char>(team);
+    steps.push_back("team:" + std::to_string(team));
+  });
+  auto* table_ptr = table.data();
+  std::memcpy(fixture.controller.data(), &table_ptr, sizeof(table_ptr));
+  fixture.image.SetIdentity(1, fixture.controller.data(), 1, 0);
+  const uint32_t none = 0xffffffff;
+  std::memcpy(fixture.controller.data() + kHeroHandleField, &none, sizeof(none));
+  modlock::gameinterop::PlayerSelectionCalls calls;
+  calls.create_pawn = +[](void*, int team) -> void* {
+    steps.push_back("pawn:" + std::to_string(team));
+    return nullptr;
+  };
+
+  PawnObserver observer{SeatingSeamsFor(fixture)};
+  EXPECT_EQ(observer.ControllerTeam(0), 0);
+  const auto seated = observer.SeatForChoice(0, fixture.xuid, 3, 3, calls);
+  ASSERT_TRUE(seated) << seated.error();
+  EXPECT_TRUE(*seated);
+  // The game's own join: the team, the hero pawn, then the play state, which
+  // is EPlayerChoosingHero when it replicates.
+  EXPECT_EQ(steps, (std::vector<std::string>{"team:3", "pawn:3", "notify:2"}));
+  EXPECT_EQ(observer.ControllerTeam(0), 3);
+
+  // A player who has a team is left alone.
+  steps.clear();
+  const auto again = observer.SeatForChoice(0, fixture.xuid, 3, 2, calls);
+  ASSERT_TRUE(again) << again.error();
+  EXPECT_FALSE(*again);
+  EXPECT_TRUE(steps.empty());
+  active = nullptr;
+}
+
+TEST(PawnObserver, SeatingRefusesWithoutThePlayStateAndLeavesTheTeamScreen) {
+  static Fixture* active = nullptr;
+  Fixture fixture;
+  active = &fixture;
+  fixture.occupied = true;
+  fixture.generation = 3;
+  std::array<void*, 106> table{};
+  table[105] = reinterpret_cast<void*>(+[](void*, int) { ADD_FAILURE() << "team changed"; });
+  auto* table_ptr = table.data();
+  std::memcpy(fixture.controller.data(), &table_ptr, sizeof(table_ptr));
+  fixture.image.SetIdentity(1, fixture.controller.data(), 1, 0);
+  modlock::gameinterop::PlayerSelectionCalls calls;
+  calls.create_pawn = +[](void*, int) -> void* { return nullptr; };
+
+  PawnObserver observer{SeatingSeamsFor(fixture, false)};
+  const auto refused = observer.SeatForChoice(0, fixture.xuid, 3, 2, calls);
+  ASSERT_FALSE(refused);
+  EXPECT_NE(refused.error().find("play state"), std::string::npos);
+  EXPECT_EQ(observer.ControllerTeam(0), 0);
+  EXPECT_FALSE(observer.SeatForChoice(0, fixture.xuid, 3, 1, calls));
   active = nullptr;
 }
 

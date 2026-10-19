@@ -640,6 +640,7 @@ std::expected<void, std::string> WasmPlugin::Begin(bool reloaded) {
   event.set_check_only(check_only_);
   event.set_source(source_.data(), source_.size());
   reported_.reset();
+  game_.StartFreeForAll(manifest_.free_for_all());
   auto started = mod_.Start(event);
   if (!started) return std::unexpected(started.error());
   wants_ = std::move(*started);
@@ -1125,6 +1126,7 @@ bool WasmPlugin::Command(int32_t slot, std::string_view line) {
     return true;
   }
 
+  if (game_.FreeForAllCommand(line)) return true;
   wasm::CommandEvent event;
   event.set_player(slot);
   event.set_line(std::string(line));

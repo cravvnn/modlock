@@ -2169,6 +2169,12 @@ _SCHEMA: wire.Schema = {
             wire.Field(3, "active", "bool", optional=True),
         ],
     ),
+    "SetFreeForAllRequest": (
+        None,
+        [
+            wire.Field(1, "enabled", "bool"),
+        ],
+    ),
     "ModelOptions": (
         ModelOptions,
         [
@@ -2675,6 +2681,16 @@ def hold_modifier_state(entity: int, state: str, active: bool | None = None) -> 
     releases the hold. The hold ends with the entity.
     """
     return _call("HoldModifierState", "HoldModifierStateRequest", {"entity": entity, "state": state, "active": active}) is not None
+
+
+def set_free_for_all(enabled: bool) -> bool:
+    """set_free_for_all turns free-for-all on or off for the running mod, over the
+    Manifest's free_for_all default. While on, the host seats each new player
+    on the smaller team and opens the hero picker with no team screen, holds
+    friendly fire on every hero, and ignores changeteam commands. Turning it
+    off releases the friendly fire holds; players keep their teams.
+    """
+    return _call("SetFreeForAll", "SetFreeForAllRequest", {"enabled": enabled}) is not None
 
 
 def create_model(options: ModelOptions) -> WorldObject | None:

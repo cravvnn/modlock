@@ -711,6 +711,15 @@ func HoldModifierState(entity uint32, state string, active *bool) error {
 	return invoke("HoldModifierState", &wasm.HoldModifierStateRequest{Entity: entity, State: state, Active: active}, nil)
 }
 
+// SetFreeForAll turns free-for-all on or off for the running mod, over the
+// Manifest's free_for_all default. While on, the host seats each new player
+// on the smaller team and opens the hero picker with no team screen, holds
+// friendly fire on every hero, and ignores changeteam commands. Turning it
+// off releases the friendly fire holds; players keep their teams.
+func SetFreeForAll(enabled bool) error {
+	return invoke("SetFreeForAll", &wasm.SetFreeForAllRequest{Enabled: enabled}, nil)
+}
+
 // CreateModel places a model in the world, solid when the options ask.
 // The world removes it when the world ends; stopping the mod removes it
 // too.

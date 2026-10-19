@@ -1966,6 +1966,9 @@ schema.HoldModifierStateRequest = {
 	{ number = 2, name = "state", kind = "string" },
 	{ number = 3, name = "active", kind = "bool", optional = true },
 }
+schema.SetFreeForAllRequest = {
+	{ number = 1, name = "enabled", kind = "bool" },
+}
 schema.ModelOptions = {
 	{ number = 1, name = "resource", kind = "string" },
 	{ number = 2, name = "position", kind = "message", message = "Vec3" },
@@ -2311,6 +2314,15 @@ end
 -- releases the hold. The hold ends with the entity.
 function modlock.holdModifierState(entity: number, state: string, active: boolean?): boolean
 	return call("HoldModifierState", "HoldModifierStateRequest", { entity = entity, state = state, active = active }) ~= nil
+end
+
+-- setFreeForAll turns free-for-all on or off for the running mod, over the
+-- Manifest's free_for_all default. While on, the host seats each new player
+-- on the smaller team and opens the hero picker with no team screen, holds
+-- friendly fire on every hero, and ignores changeteam commands. Turning it
+-- off releases the friendly fire holds; players keep their teams.
+function modlock.setFreeForAll(enabled: boolean): boolean
+	return call("SetFreeForAll", "SetFreeForAllRequest", { enabled = enabled }) ~= nil
 end
 
 -- createModel places a model in the world, solid when the options ask.

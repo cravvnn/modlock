@@ -3644,6 +3644,34 @@ export const HoldModifierStateRequest: MessageType<HoldModifierStateRequest> = /
 });
 
 /**
+ * SetFreeForAllRequest turns free-for-all on or off.
+ *
+ * @generated from message modlock.wasm.SetFreeForAllRequest
+ */
+export interface SetFreeForAllRequest {
+  /**
+   * Enabled turns free-for-all on when true and off when false.
+   */
+  enabled?: boolean;
+}
+
+export const SetFreeForAllRequest: MessageType<SetFreeForAllRequest> = /* @__PURE__ */ createMessageType<SetFreeForAllRequest>("modlock.wasm.SetFreeForAllRequest", () => [
+  [1, "enabled", 8],
+], {
+  decode: (r: BinaryReader, end: number, m: SetFreeForAllRequest): SetFreeForAllRequest => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.enabled = r.bool(); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
  * ModelOptions describes a model placed in the world.
  *
  * @generated from message modlock.wasm.ModelOptions
@@ -5696,6 +5724,13 @@ export interface Manifest {
    * adds to with AddMetric.
    */
   metrics?: Metric[];
+  /**
+   * FreeForAll starts the mod in free-for-all: the game shows no team screen,
+   * the host seats each new player on the smaller team and opens the hero
+   * picker, and every hero can damage every other. The mod can change it
+   * while it runs with SetFreeForAll. Meant for dedicated servers.
+   */
+  freeForAll?: boolean;
 }
 
 export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType<Manifest>("modlock.wasm.Manifest", () => [
@@ -5710,6 +5745,7 @@ export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType
   [9, "abilities", 11, 1, AbilityTuning.codec],
   [10, "settings", 11, 1, Setting.codec],
   [11, "metrics", 11, 1, Metric.codec],
+  [12, "free_for_all", 8],
 ], {
   decode: (r: BinaryReader, end: number, m: Manifest): Manifest => {
     while (r.pos < end) {
@@ -5727,6 +5763,7 @@ export const Manifest: MessageType<Manifest> = /* @__PURE__ */ createMessageType
         case 9: (m.abilities ??= []).push(AbilityTuning.decode(r, r.delimited(), {})); break;
         case 10: (m.settings ??= []).push(Setting.decode(r, r.delimited(), {})); break;
         case 11: (m.metrics ??= []).push(Metric.decode(r, r.delimited(), {})); break;
+        case 12: m.freeForAll = r.bool(); break;
         default: r.skip(t);
       }
     }

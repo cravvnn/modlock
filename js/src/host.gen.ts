@@ -2072,6 +2072,17 @@ export function holdModifierState(entity: number, state: string, active?: boolea
 }
 
 /**
+ * setFreeForAll turns free-for-all on or off for the running mod, over the
+ * Manifest's free_for_all default. While on, the host seats each new player
+ * on the smaller team and opens the hero picker with no team screen, holds
+ * friendly fire on every hero, and ignores changeteam commands. Turning it
+ * off releases the friendly fire holds; players keep their teams.
+ */
+export function setFreeForAll(enabled: boolean): boolean {
+  return call('SetFreeForAll', pb.SetFreeForAllRequest.toBinary({ enabled })) !== undefined
+}
+
+/**
  * createModel places a model in the world, solid when the options ask.
  * The world removes it when the world ends; stopping the mod removes it
  * too.

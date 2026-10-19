@@ -364,6 +364,15 @@ class HostService {
     return std::unexpected("this host does not support HoldModifierState");
   }
 
+  // SetFreeForAll turns free-for-all on or off for the running mod, over the
+  // Manifest's free_for_all default. While on, the host seats each new player
+  // on the smaller team and opens the hero picker with no team screen, holds
+  // friendly fire on every hero, and ignores changeteam commands. Turning it
+  // off releases the friendly fire holds; players keep their teams.
+  virtual std::expected<void, std::string> SetFreeForAll(const SetFreeForAllRequest& /*request*/) {
+    return std::unexpected("this host does not support SetFreeForAll");
+  }
+
   // CreateModel places a model in the world, solid when the options ask.
   // The world removes it when the world ends; stopping the mod removes it
   // too.
@@ -1028,6 +1037,14 @@ class HostService {
              return detail::Fail("the HoldModifierState request is malformed");
            }
            return detail::Answer(host.HoldModifierState(request));
+         }},
+        {"SetFreeForAll",
+         [](HostService& host, const std::string& bytes) {
+           SetFreeForAllRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the SetFreeForAll request is malformed");
+           }
+           return detail::Answer(host.SetFreeForAll(request));
          }},
         {"CreateModel",
          [](HostService& host, const std::string& bytes) {

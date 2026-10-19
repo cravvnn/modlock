@@ -147,6 +147,9 @@ struct EntityLayout {
   size_t camera_angles = 0;
   // Optional CNetworkViewOffsetVector field on CBaseModelEntity.
   std::optional<size_t> view_offset;
+  // Optional controller-relative m_ePlayState, which the stock join leaves at
+  // EPlayerChoosingHero so the player sees the hero picker.
+  std::optional<size_t> play_state;
   // Optional inline EGold/EAbilityPoints/EAbilityUnlocks currency prefix.
   std::optional<size_t> currencies;
   // Optional controller-relative PlayerDataGlobal_t scoreboard counters.
@@ -392,6 +395,19 @@ class MODLOCK_API PawnObserver {
   std::expected<void, std::string> SelectPlayer(int32_t slot, uint64_t steam_id,
                                                 uint32_t generation, int32_t team, void* definition,
                                                 const PlayerSelectionCalls& calls);
+
+  // ControllerTeam returns the team number a player's controller replicates:
+  // 0 until the player joins a team, 1 for spectators, 2 and 3 for the sides.
+  // It is empty when the slot has no controller.
+  std::optional<uint8_t> ControllerTeam(int32_t slot);
+
+  // SeatForChoice joins a player who has no team to team 2 or 3 as the game's
+  // own changeteam does: it changes the team, creates the hero pawn and leaves
+  // the player choosing a hero, so the game's picker opens with no team screen.
+  // It returns false and does nothing when the player already has a team.
+  std::expected<bool, std::string> SeatForChoice(int32_t slot, uint64_t steam_id,
+                                                 uint32_t generation, int32_t team,
+                                                 const PlayerSelectionCalls& calls);
 
   // RespawnPlayer requests native respawn only for this connection's dead hero pawn.
   // Subsequent observation establishes readiness; the native call may replace the pawn.

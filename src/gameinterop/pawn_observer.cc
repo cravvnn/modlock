@@ -255,6 +255,10 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
   if (auto field = SchemaFieldOf(schema_system.value(), "server.dll", "CCitadelPlayerController",
                                  "m_hHeroPawn"))
     layout.hero_pawn_handle = field->offset;
+  if (auto field = SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerController",
+                                 "m_ePlayState");
+      field && field->size >= sizeof(int32_t))
+    layout.play_state = field->offset;
   if (auto field =
           SchemaFieldOf(*schema_system, "server.dll", "CBaseModelEntity", "m_vecViewOffset");
       field && field->size >= 0x24)
@@ -711,6 +715,66 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
   current = borrow();
   if (!current) return std::unexpected(current.error());
   return {};
+}
+
+std::optional<uint8_t> PawnObserver::ControllerTeam(int32_t slot) {
+  const auto current = ControllerOfSlot(slot);
+  if (!current) return std::nullopt;
+  return current->first[layout_.team];
+}
+
+std::expected<bool, std::string> PawnObserver::SeatForChoice(int32_t slot, uint64_t steam_id,
+                                                             uint32_t generation, int32_t team,
+                                                             const PlayerSelectionCalls& calls) {
+  if (slot < 0 || slot >= 64 || !steam_id || team < 2 || team > 3 || !calls.create_pawn ||
+      !seams_.slot_state || !seams_.entity_system)
+    return std::unexpected("player seating unavailable");
+  if (auto resolved = ResolveLayout(); !resolved) return std::unexpected(resolved.error());
+  if (!layout_.hero_pawn_handle) return std::unexpected("native hero pawn handle unavailable");
+  if (!layout_.play_state) return std::unexpected("native play state unavailable");
+  const auto change_team = ResolveVirtualSlot("player-controller.change-team");
+  if (!change_team) return std::unexpected(change_team.error());
+  void* expected_controller = nullptr;
+  auto borrow = [&]() -> std::expected<unsigned char*, std::string> {
+    const auto state = seams_.slot_state(slot);
+    if (!state.occupied || state.is_bot || state.xuid != steam_id || state.generation != generation)
+      return std::unexpected("player connection changed during seating");
+    auto system = seams_.entity_system();
+    if (!system) return std::unexpected(system.error());
+    auto* identity = IdentityOfIndex(EntityListOf(*system), slot + 1);
+    void* controller = identity ? InstanceOf(identity) : nullptr;
+    if (!controller) return std::unexpected("player controller unavailable");
+    if (expected_controller && controller != expected_controller)
+      return std::unexpected("player controller changed during seating");
+    expected_controller = controller;
+    return static_cast<unsigned char*>(controller);
+  };
+  auto controller = borrow();
+  if (!controller) return std::unexpected(controller.error());
+  if ((*controller)[layout_.team] != 0) return false;
+  auto* table = *reinterpret_cast<void***>(*controller);
+  if (!table || !table[*change_team]) return std::unexpected("native team selection unavailable");
+
+  // The game's own join runs these three steps in order: ChangeTeam, the hero
+  // pawn, then the play state. The state replicates to the client, which opens
+  // the hero picker in place of the team screen.
+  reinterpret_cast<void (*)(void*, int)>(table[*change_team])(*controller, team);
+  controller = borrow();
+  if (!controller) return std::unexpected(controller.error());
+  uint32_t hero = 0;
+  std::memcpy(&hero, *controller + *layout_.hero_pawn_handle, sizeof(hero));
+  auto system = seams_.entity_system();
+  if (!system) return std::unexpected(system.error());
+  if (!IdentityOfHandle(EntityListOf(*system), hero)) {
+    calls.create_pawn(*controller, team);
+    controller = borrow();
+    if (!controller) return std::unexpected(controller.error());
+  }
+  constexpr int32_t kChoosingHero = 2;  // EPlayerPlayState::EPlayerChoosingHero
+  std::memcpy(*controller + *layout_.play_state, &kChoosingHero, sizeof(kChoosingHero));
+  if (!NotifyEntityStateChanged(*controller))
+    return std::unexpected("player play state did not replicate");
+  return true;
 }
 
 std::expected<void, std::string> PawnObserver::RespawnPlayer(int32_t slot, uint32_t generation,

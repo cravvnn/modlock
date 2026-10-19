@@ -959,6 +959,7 @@ Game::~Game() {
 }
 
 void Game::Frame() {
+  ApplyFreeForAll();
   ApplyHolds();
   HoldClock();
   TickRestores();
@@ -1015,6 +1016,7 @@ void Game::WorldEnding() {
   frozen_.clear();
   steers_.clear();
   held_.clear();
+  ffa_held_.clear();
   ReleaseModifiers();
   presses_.clear();
   restores_.clear();
@@ -1025,6 +1027,7 @@ void Game::WorldEnding() {
 }
 
 void Game::Leave(int32_t slot) {
+  ffa_failed_.erase(slot);
   frozen_.erase(slot);
   movers_.erase(slot);
   steers_.erase(slot);
@@ -1058,6 +1061,9 @@ void Game::Clear() {
     static_cast<void>(SetModifierState(entity, state, false));
   }
   held_.clear();
+  free_for_all_ = false;
+  ffa_held_.clear();
+  ffa_failed_.clear();
   ReleaseModifiers();
   blocked_ = 0;
   slot_blocked_.clear();
@@ -1366,6 +1372,76 @@ std::expected<void, std::string> Game::HoldModifierState(const HoldModifierState
   if (auto set = SetModifierState(request.entity(), request.state(), true); !set) return set;
   held_.insert(std::move(hold));
   return {};
+}
+
+std::expected<void, std::string> Game::SetFreeForAll(const SetFreeForAllRequest& request) {
+  if (free_for_all_ == request.enabled()) return {};
+  free_for_all_ = request.enabled();
+  if (!free_for_all_) ReleaseFreeForAll();
+  return {};
+}
+
+bool Game::FreeForAllCommand(std::string_view line) const {
+  if (!free_for_all_) return false;
+  const auto name = line.substr(0, line.find_first_of(" \t"));
+  return name == "changeteam";
+}
+
+void Game::ApplyFreeForAll() {
+  if (!free_for_all_) return;
+  static constexpr const char* kFriendlyFire = "MODIFIER_STATE_FRIENDLY_FIRE_ENABLED";
+  auto selection = services_.Selection();
+  if (selection) {
+    // Seat each player with no team on the side with fewer players.
+    std::array<int, 4> sides{};
+    std::vector<int32_t> unseated;
+    for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+      const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
+      if (!state.occupied) continue;
+      const auto team = observer_.ControllerTeam(slot);
+      if (!team) continue;
+      if (*team == 0 && !state.is_bot && state.xuid != 0) {
+        unseated.push_back(slot);
+      } else if (*team < sides.size()) {
+        ++sides[*team];
+      }
+    }
+    for (const auto slot : unseated) {
+      const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
+      const int team = sides[3] < sides[2] ? 3 : 2;
+      auto seated = observer_.SeatForChoice(slot, state.xuid, state.generation, team, **selection);
+      if (seated && *seated) {
+        ++sides[team];
+        ffa_failed_.erase(slot);
+      } else if (!seated && ffa_failed_.insert(slot).second) {
+        std::cerr << "free-for-all: " << seated.error() << '\n';
+      }
+    }
+  } else if (ffa_failed_.insert(-1).second) {
+    std::cerr << "free-for-all: " << selection.error() << '\n';
+  }
+
+  // Hold friendly fire on each living hero, and let a gone hero's hold go.
+  std::set<uint32_t> living;
+  for (const auto& hero : Heroes()) {
+    living.insert(hero.handle);
+    if (ffa_held_.insert(hero.handle).second) held_.insert({hero.handle, kFriendlyFire});
+  }
+  std::erase_if(ffa_held_, [&](uint32_t handle) {
+    if (living.contains(handle)) return false;
+    held_.erase({handle, kFriendlyFire});
+    return true;
+  });
+}
+
+void Game::ReleaseFreeForAll() {
+  static constexpr const char* kFriendlyFire = "MODIFIER_STATE_FRIENDLY_FIRE_ENABLED";
+  for (const auto handle : ffa_held_) {
+    if (held_.erase({handle, kFriendlyFire}) != 0)
+      static_cast<void>(SetModifierState(handle, kFriendlyFire, false));
+  }
+  ffa_held_.clear();
+  ffa_failed_.clear();
 }
 
 std::expected<std::optional<Game::ModifierWord>, std::string> Game::FindModifierWord(

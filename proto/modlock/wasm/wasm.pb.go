@@ -4069,6 +4069,26 @@ func (x *HoldModifierStateRequest) GetActive() bool {
 	return false
 }
 
+// SetFreeForAllRequest turns free-for-all on or off.
+type SetFreeForAllRequest struct {
+	unknownFields []byte
+	// Enabled turns free-for-all on when true and off when false.
+	Enabled bool `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+}
+
+func (x *SetFreeForAllRequest) Reset() {
+	*x = SetFreeForAllRequest{}
+}
+
+func (*SetFreeForAllRequest) ProtoMessage() {}
+
+func (x *SetFreeForAllRequest) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
 // ModelOptions describes a model placed in the world.
 type ModelOptions struct {
 	unknownFields []byte
@@ -6115,6 +6135,11 @@ type Manifest struct {
 	// Metrics are the measures the mod keeps for each player, which the mod
 	// adds to with AddMetric.
 	Metrics []*Metric `protobuf:"bytes,11,rep,name=metrics,proto3" json:"metrics,omitempty"`
+	// FreeForAll starts the mod in free-for-all: the game shows no team screen,
+	// the host seats each new player on the smaller team and opens the hero
+	// picker, and every hero can damage every other. The mod can change it
+	// while it runs with SetFreeForAll. Meant for dedicated servers.
+	FreeForAll bool `protobuf:"varint,12,opt,name=free_for_all,json=freeForAll,proto3" json:"freeForAll,omitempty"`
 }
 
 func (x *Manifest) Reset() {
@@ -6198,6 +6223,13 @@ func (x *Manifest) GetMetrics() []*Metric {
 		return x.Metrics
 	}
 	return nil
+}
+
+func (x *Manifest) GetFreeForAll() bool {
+	if x != nil {
+		return x.FreeForAll
+	}
+	return false
 }
 
 // Setting is one choice a player makes about a mod, such as a HUD layout.
@@ -8307,6 +8339,22 @@ func (m *HoldModifierStateRequest) CloneMessageVT() protobuf_go_lite.CloneMessag
 	return m.CloneVT()
 }
 
+func (m *SetFreeForAllRequest) CloneVT() *SetFreeForAllRequest {
+	if m == nil {
+		return (*SetFreeForAllRequest)(nil)
+	}
+	r := new(SetFreeForAllRequest)
+	r.Enabled = m.Enabled
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *SetFreeForAllRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *ModelOptions) CloneVT() *ModelOptions {
 	if m == nil {
 		return (*ModelOptions)(nil)
@@ -9353,6 +9401,7 @@ func (m *Manifest) CloneVT() *Manifest {
 	r.Runtime = m.Runtime
 	r.Entry = m.Entry
 	r.Map = m.Map
+	r.FreeForAll = m.FreeForAll
 	r.Movement = protobuf_go_lite.CloneVTValue(m.Movement)
 	r.Abilities = protobuf_go_lite.CloneVTSlice(m.Abilities)
 	r.Settings = protobuf_go_lite.CloneVTSlice(m.Settings)
@@ -11885,6 +11934,25 @@ func (this *HoldModifierStateRequest) EqualMessageVT(thatMsg any) bool {
 	}
 	return this.EqualVT(that)
 }
+func (this *SetFreeForAllRequest) EqualVT(that *SetFreeForAllRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Enabled != that.Enabled {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *SetFreeForAllRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*SetFreeForAllRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
 func (this *ModelOptions) EqualVT(that *ModelOptions) bool {
 	if this == that {
 		return true
@@ -13344,6 +13412,9 @@ func (this *Manifest) EqualVT(that *Manifest) bool {
 		return false
 	}
 	if !protobuf_go_lite.EqualVTSliceImplicit(this.Metrics, that.Metrics, func() *Metric { return &Metric{} }) {
+		return false
+	}
+	if this.FreeForAll != that.FreeForAll {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -19504,6 +19575,48 @@ func (x *HoldModifierStateRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the SetFreeForAllRequest message to JSON.
+func (x *SetFreeForAllRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Enabled || s.HasField("enabled") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("enabled")
+		s.WriteBool(x.Enabled)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the SetFreeForAllRequest to JSON.
+func (x *SetFreeForAllRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the SetFreeForAllRequest message from JSON.
+func (x *SetFreeForAllRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "enabled":
+			s.AddField("enabled")
+			x.Enabled = s.ReadBool()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the SetFreeForAllRequest from JSON.
+func (x *SetFreeForAllRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 // MarshalProtoJSON marshals the ModelOptions message to JSON.
 func (x *ModelOptions) MarshalProtoJSON(s *json.MarshalState) {
 	if x == nil {
@@ -23055,6 +23168,11 @@ func (x *Manifest) MarshalProtoJSON(s *json.MarshalState) {
 		}
 		s.WriteArrayEnd()
 	}
+	if x.FreeForAll || s.HasField("freeForAll") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("freeForAll")
+		s.WriteBool(x.FreeForAll)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -23154,6 +23272,9 @@ func (x *Manifest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 				}
 				x.Metrics = append(x.Metrics, v)
 			})
+		case "free_for_all", "freeForAll":
+			s.AddField("free_for_all")
+			x.FreeForAll = s.ReadBool()
 		}
 	})
 }
@@ -28624,6 +28745,43 @@ func (m *HoldModifierStateRequest) MarshalToSizedBufferVT(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *SetFreeForAllRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SetFreeForAllRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *SetFreeForAllRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Enabled {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Enabled)
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *ModelOptions) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -31395,6 +31553,11 @@ func (m *Manifest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.FreeForAll {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.FreeForAll)
+		i--
+		dAtA[i] = 0x60
+	}
 	if len(m.Metrics) > 0 {
 		for iNdEx := len(m.Metrics) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Metrics[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -33319,6 +33482,17 @@ func (m *HoldModifierStateRequest) SizeVT() (n int) {
 	return n
 }
 
+func (m *SetFreeForAllRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.Enabled)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *ModelOptions) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -34230,6 +34404,7 @@ func (m *Manifest) SizeVT() (n int) {
 		l = e.SizeVT()
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.FreeForAll)
 	n += len(m.unknownFields)
 	return n
 }
@@ -36408,6 +36583,19 @@ func (x *HoldModifierStateRequest) MarshalProtoText() string {
 func (x *HoldModifierStateRequest) String() string {
 	return x.MarshalProtoText()
 }
+func (x *SetFreeForAllRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "SetFreeForAllRequest")
+	if x.Enabled != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "enabled")
+		protobuf_go_lite.TextWriteBool(&sb, x.Enabled)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *SetFreeForAllRequest) String() string {
+	return x.MarshalProtoText()
+}
 func (x *ModelOptions) MarshalProtoText() string {
 	var sb protobuf_go_lite.TextBuilder
 	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ModelOptions")
@@ -37600,6 +37788,10 @@ func (x *Manifest) MarshalProtoText() string {
 			}
 		}
 		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if x.FreeForAll != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "free_for_all")
+		protobuf_go_lite.TextWriteBool(&sb, x.FreeForAll)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -44647,6 +44839,58 @@ func (m *HoldModifierStateRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *SetFreeForAllRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SetFreeForAllRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SetFreeForAllRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Enabled", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Enabled = bool(v)
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ModelOptions) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -48773,6 +49017,16 @@ func (m *Manifest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FreeForAll", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.FreeForAll = bool(v)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
