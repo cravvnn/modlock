@@ -4431,6 +4431,85 @@ export const Steering: MessageType<Steering> =
   )
 
 /**
+ * DriveRequest drives one bot, or releases it without a command.
+ *
+ * @generated from message modlock.wasm.DriveRequest
+ */
+export interface DriveRequest {
+  player?: number;
+  command?: DriveCommand;
+}
+
+export const DriveRequest: MessageType<DriveRequest> = /* @__PURE__ */ createMessageType<DriveRequest>("modlock.wasm.DriveRequest", () => [
+  [1, "player", 5],
+  [2, "command", 11, 0, DriveCommand.codec],
+], {
+  decode: (r: BinaryReader, end: number, m: DriveRequest): DriveRequest => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.player = r.int32(); break;
+        case 2: m.command = DriveCommand.decode(r, r.delimited(), m.command ?? {}); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
+ * DriveCommand is a player's controls for one tick and the ticks after it.
+ *
+ * @generated from message modlock.wasm.DriveCommand
+ */
+export interface DriveCommand {
+  /**
+   * Facing is where the hero looks and aims; its yaw turns the body, as the
+   * camera turns a player's hero.
+   */
+  facing?: EulerAngles;
+  /**
+   * Forward and Left are the movement axes, from -1 to 1, relative to the
+   * facing's yaw.
+   */
+  forward?: number;
+  left?: number;
+  /**
+   * Held holds down these buttons on every tick.
+   */
+  held?: bigint;
+  /**
+   * Pressed presses these buttons on the next tick only, as a tap.
+   */
+  pressed?: bigint;
+}
+
+export const DriveCommand: MessageType<DriveCommand> = /* @__PURE__ */ createMessageType<DriveCommand>("modlock.wasm.DriveCommand", () => [
+  [1, "facing", 11, 0, EulerAngles.codec],
+  [2, "forward", 2],
+  [3, "left", 2],
+  [4, "held", 4],
+  [5, "pressed", 4],
+], {
+  decode: (r: BinaryReader, end: number, m: DriveCommand): DriveCommand => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.facing = EulerAngles.decode(r, r.delimited(), m.facing ?? {}); break;
+        case 2: m.forward = r.float(); break;
+        case 3: m.left = r.float(); break;
+        case 4: m.held = r.uint64(); break;
+        case 5: m.pressed = r.uint64(); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
  * AdjustSoulsRequest changes one player's souls.
  *
  * @generated from message modlock.wasm.AdjustSoulsRequest

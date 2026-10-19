@@ -908,6 +908,25 @@ export interface Steering {
   facing: Angles
 }
 
+/** DriveCommand is a player's controls for one tick and the ticks after it. */
+export interface DriveCommand {
+  /**
+   * facing is where the hero looks and aims; its yaw turns the body, as the
+   * camera turns a player's hero.
+   */
+  facing: Angles
+  /**
+   * forward and left are the movement axes, from -1 to 1, relative to the
+   * facing's yaw.
+   */
+  forward: number
+  left: number
+  /** held holds down these buttons on every tick. */
+  held: bigint
+  /** pressed presses these buttons on the next tick only, as a tap. */
+  pressed: bigint
+}
+
 /** ProjectileOptions selects the projectiles a mod watches. */
 export interface ProjectileOptions {
   /** names lists designer names, such as rocket_launcher_rocket_projectile. */
@@ -1732,6 +1751,18 @@ export class Player {
    */
   steer(steering?: Steering): boolean {
     return call('Steer', pb.SteerRequest.toBinary({ player: this.slot, steering })) !== undefined
+  }
+
+  /**
+   * drive gives a bot the controls a player has, where it looks, the
+   * movement axes and the buttons, as its input on every tick until the next
+   * Drive replaces it. The game runs that input as a player's own, so the
+   * hero accelerates, turns, jumps, dashes, slides and casts with its own
+   * movement and animation; the bot's own brain no longer moves it. Presses
+   * count once. A Drive without a command returns the bot to its brain.
+   */
+  drive(command?: DriveCommand): boolean {
+    return call('Drive', pb.DriveRequest.toBinary({ player: this.slot, command })) !== undefined
   }
 
   /**

@@ -257,6 +257,16 @@ class HostService {
     return std::unexpected("this host does not support Steer");
   }
 
+  // Drive gives a bot the controls a player has, where it looks, the
+  // movement axes and the buttons, as its input on every tick until the next
+  // Drive replaces it. The game runs that input as a player's own, so the
+  // hero accelerates, turns, jumps, dashes, slides and casts with its own
+  // movement and animation; the bot's own brain no longer moves it. Presses
+  // count once. A Drive without a command returns the bot to its brain.
+  virtual std::expected<void, std::string> Drive(const DriveRequest& /*request*/) {
+    return std::unexpected("this host does not support Drive");
+  }
+
   // AdjustSouls gives the player delta souls, or takes them when delta is
   // negative. A spend larger than the player's souls fails and spends
   // nothing. Silent skips the pickup's sound and number.
@@ -937,6 +947,14 @@ class HostService {
              return detail::Fail("the Steer request is malformed");
            }
            return detail::Answer(host.Steer(request));
+         }},
+        {"Drive",
+         [](HostService& host, const std::string& bytes) {
+           DriveRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the Drive request is malformed");
+           }
+           return detail::Answer(host.Drive(request));
          }},
         {"AdjustSouls",
          [](HostService& host, const std::string& bytes) {

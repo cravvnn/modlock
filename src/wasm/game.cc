@@ -1023,6 +1023,36 @@ std::expected<void, std::string> GameServices::Transmit() {
   return {};
 }
 
+std::expected<void, std::string> GameServices::Drive() {
+  if (drive_) {
+    return {};
+  }
+  auto image = Image();
+  if (!image) {
+    return std::unexpected(image.error());
+  }
+  auto hook =
+      gameinterop::BotDrive::Install(**image, [this](int32_t slot) { return Driven(slot); });
+  if (!hook) {
+    return std::unexpected(hook.error());
+  }
+  drive_ = std::move(*hook);
+  return {};
+}
+
+std::optional<gameinterop::BotDrive::Command> GameServices::Driven(int32_t slot) {
+  for (auto* game : games_) {
+    auto found = game->drives_.find(slot);
+    if (found == game->drives_.end()) {
+      continue;
+    }
+    const auto command = found->second;
+    found->second.pressed = 0;
+    return command;
+  }
+  return std::nullopt;
+}
+
 void GameServices::Withhold(gameinterop::TransmitSet& set) {
   // A text object's entity changes with its words, so each update reads the
   // current handles.
@@ -1337,6 +1367,7 @@ void Game::WorldEnding() {
   // Drop the per-world player state.
   frozen_.clear();
   steers_.clear();
+  drives_.clear();
   held_.clear();
   ffa_held_.clear();
 
@@ -1358,6 +1389,7 @@ void Game::Leave(int32_t slot) {
   frozen_.erase(slot);
   movers_.erase(slot);
   steers_.erase(slot);
+  drives_.erase(slot);
   restores_.erase(slot);
   slot_blocked_.erase(slot);
   presses_.erase(slot);
@@ -1402,6 +1434,7 @@ void Game::Clear() {
   frozen_.clear();
   movers_.clear();
   steers_.clear();
+  drives_.clear();
 
   // Releasing the movement hook cannot fail.
   static_cast<void>(services_.Steps());
@@ -2599,6 +2632,30 @@ std::expected<void, std::string> Game::Steer(const SteerRequest& request) {
     steers_.erase(slot);
   }
   return steps;
+}
+
+std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
+  const auto slot = request.player();
+  if (!request.has_command()) {
+    drives_.erase(slot);
+    return {};
+  }
+  if (!gameinterop::ConnectionTracker::StateForSlot(slot).is_bot) {
+    return std::unexpected("no bot plays in that slot");
+  }
+  if (auto installed = services_.Drive(); !installed) {
+    return std::unexpected(installed.error());
+  }
+  const auto& command = request.command();
+  auto& drive = drives_[slot];
+  // A press waits for the next command even when the mod drives again first.
+  const auto pressed = drive.pressed | command.pressed();
+  drive = {.angles = Floats(command.facing()),
+           .forward = std::clamp(command.forward(), -1.0f, 1.0f),
+           .left = std::clamp(command.left(), -1.0f, 1.0f),
+           .held = command.held(),
+           .pressed = pressed};
+  return {};
 }
 
 std::expected<ObjectResponse, std::string> Game::CreateModel(const ModelOptions& request) {

@@ -189,6 +189,9 @@ type AbilityOptions = wasm.AbilityOptions
 // Steering is one recorded movement command and the pose its step ends on.
 type Steering = wasm.Steering
 
+// DriveCommand is a player's controls for one tick and the ticks after it.
+type DriveCommand = wasm.DriveCommand
+
 // ProjectileOptions selects the projectiles a mod watches.
 type ProjectileOptions = wasm.ProjectileOptions
 
@@ -570,6 +573,16 @@ func (p Player) Move(position *Vector, facing *Angles, velocity *Vector) error {
 // it, its presses counting once; a Steer without one releases the hero.
 func (p Player) Steer(steering *Steering) error {
 	return invoke("Steer", &wasm.SteerRequest{Player: p.Slot, Steering: steering}, nil)
+}
+
+// Drive gives a bot the controls a player has, where it looks, the
+// movement axes and the buttons, as its input on every tick until the next
+// Drive replaces it. The game runs that input as a player's own, so the
+// hero accelerates, turns, jumps, dashes, slides and casts with its own
+// movement and animation; the bot's own brain no longer moves it. Presses
+// count once. A Drive without a command returns the bot to its brain.
+func (p Player) Drive(command *DriveCommand) error {
+	return invoke("Drive", &wasm.DriveRequest{Player: p.Slot, Command: command}, nil)
 }
 
 // AdjustSouls gives the player delta souls, or takes them when delta is

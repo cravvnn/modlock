@@ -552,6 +552,21 @@ export type Steering = {
 	facing: Angles,
 }
 
+-- DriveCommand is a player's controls for one tick and the ticks after it.
+export type DriveCommand = {
+	-- facing is where the hero looks and aims; its yaw turns the body, as the
+	-- camera turns a player's hero.
+	facing: Angles,
+	-- forward and left are the movement axes, from -1 to 1, relative to the
+	-- facing's yaw.
+	forward: number,
+	left: number,
+	-- held holds down these buttons on every tick.
+	held: number,
+	-- pressed presses these buttons on the next tick only, as a tap.
+	pressed: number,
+}
+
 -- ProjectileOptions selects the projectiles a mod watches.
 export type ProjectileOptions = {
 	-- names lists designer names, such as rocket_launcher_rocket_projectile.
@@ -1013,6 +1028,13 @@ export type Player = {
 	-- on the recorded pose. The steering stays until the next Steer replaces
 	-- it, its presses counting once; a Steer without one releases the hero.
 	steer: (self: Player, steering: Steering?) -> boolean,
+	-- drive gives a bot the controls a player has, where it looks, the
+	-- movement axes and the buttons, as its input on every tick until the next
+	-- Drive replaces it. The game runs that input as a player's own, so the
+	-- hero accelerates, turns, jumps, dashes, slides and casts with its own
+	-- movement and animation; the bot's own brain no longer moves it. Presses
+	-- count once. A Drive without a command returns the bot to its brain.
+	drive: (self: Player, command: DriveCommand?) -> boolean,
 	-- adjustSouls gives the player delta souls, or takes them when delta is
 	-- negative. A spend larger than the player's souls fails and spends
 	-- nothing. Silent skips the pickup's sound and number.
@@ -1247,6 +1269,16 @@ end
 -- it, its presses counting once; a Steer without one releases the hero.
 function Player.steer(self: Player, steering: Steering?): boolean
 	return call("Steer", "SteerRequest", { player = self, steering = steering }) ~= nil
+end
+
+-- drive gives a bot the controls a player has, where it looks, the
+-- movement axes and the buttons, as its input on every tick until the next
+-- Drive replaces it. The game runs that input as a player's own, so the
+-- hero accelerates, turns, jumps, dashes, slides and casts with its own
+-- movement and animation; the bot's own brain no longer moves it. Presses
+-- count once. A Drive without a command returns the bot to its brain.
+function Player.drive(self: Player, command: DriveCommand?): boolean
+	return call("Drive", "DriveRequest", { player = self, command = command }) ~= nil
 end
 
 -- adjustSouls gives the player delta souls, or takes them when delta is
@@ -1832,6 +1864,17 @@ schema.Steering = {
 	{ number = 3, name = "velocity", kind = "message", message = "Vec3" },
 	{ number = 4, name = "grounded", kind = "bool" },
 	{ number = 5, name = "facing", kind = "message", message = "EulerAngles" },
+}
+schema.DriveRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "command", kind = "message", optional = true, message = "DriveCommand" },
+}
+schema.DriveCommand = {
+	{ number = 1, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 2, name = "forward", kind = "float" },
+	{ number = 3, name = "left", kind = "float" },
+	{ number = 4, name = "held", kind = "uint64" },
+	{ number = 5, name = "pressed", kind = "uint64" },
 }
 schema.AdjustSoulsRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },

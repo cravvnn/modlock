@@ -2981,6 +2981,90 @@ func (x *Steering) GetFacing() *modlock.EulerAngles {
 	return nil
 }
 
+// DriveRequest drives one bot, or releases it without a command.
+type DriveRequest struct {
+	unknownFields []byte
+	Player        int32         `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	Command       *DriveCommand `protobuf:"bytes,2,opt,name=command,proto3,oneof" json:"command,omitempty"`
+}
+
+func (x *DriveRequest) Reset() {
+	*x = DriveRequest{}
+}
+
+func (*DriveRequest) ProtoMessage() {}
+
+func (x *DriveRequest) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *DriveRequest) GetCommand() *DriveCommand {
+	if x != nil {
+		return x.Command
+	}
+	return nil
+}
+
+// DriveCommand is a player's controls for one tick and the ticks after it.
+type DriveCommand struct {
+	unknownFields []byte
+	// Facing is where the hero looks and aims; its yaw turns the body, as the
+	// camera turns a player's hero.
+	Facing *modlock.EulerAngles `protobuf:"bytes,1,opt,name=facing,proto3" json:"facing,omitempty"`
+	// Forward and Left are the movement axes, from -1 to 1, relative to the
+	// facing's yaw.
+	Forward float32 `protobuf:"fixed32,2,opt,name=forward,proto3" json:"forward,omitempty"`
+	Left    float32 `protobuf:"fixed32,3,opt,name=left,proto3" json:"left,omitempty"`
+	// Held holds down these buttons on every tick.
+	Held uint64 `protobuf:"varint,4,opt,name=held,proto3" json:"held,omitempty"`
+	// Pressed presses these buttons on the next tick only, as a tap.
+	Pressed uint64 `protobuf:"varint,5,opt,name=pressed,proto3" json:"pressed,omitempty"`
+}
+
+func (x *DriveCommand) Reset() {
+	*x = DriveCommand{}
+}
+
+func (*DriveCommand) ProtoMessage() {}
+
+func (x *DriveCommand) GetFacing() *modlock.EulerAngles {
+	if x != nil {
+		return x.Facing
+	}
+	return nil
+}
+
+func (x *DriveCommand) GetForward() float32 {
+	if x != nil {
+		return x.Forward
+	}
+	return 0
+}
+
+func (x *DriveCommand) GetLeft() float32 {
+	if x != nil {
+		return x.Left
+	}
+	return 0
+}
+
+func (x *DriveCommand) GetHeld() uint64 {
+	if x != nil {
+		return x.Held
+	}
+	return 0
+}
+
+func (x *DriveCommand) GetPressed() uint64 {
+	if x != nil {
+		return x.Pressed
+	}
+	return 0
+}
+
 // AdjustSoulsRequest changes one player's souls.
 type AdjustSoulsRequest struct {
 	unknownFields []byte
@@ -7815,6 +7899,43 @@ func (m *Steering) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *DriveRequest) CloneVT() *DriveRequest {
+	if m == nil {
+		return (*DriveRequest)(nil)
+	}
+	r := new(DriveRequest)
+	r.Player = m.Player
+	r.Command = protobuf_go_lite.CloneVTValue(m.Command)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *DriveRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *DriveCommand) CloneVT() *DriveCommand {
+	if m == nil {
+		return (*DriveCommand)(nil)
+	}
+	r := new(DriveCommand)
+	r.Forward = m.Forward
+	r.Left = m.Left
+	r.Held = m.Held
+	r.Pressed = m.Pressed
+	r.Facing = protobuf_go_lite.CloneVTValue(m.Facing)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *DriveCommand) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *AdjustSoulsRequest) CloneVT() *AdjustSoulsRequest {
 	if m == nil {
 		return (*AdjustSoulsRequest)(nil)
@@ -11212,6 +11333,59 @@ func (this *Steering) EqualVT(that *Steering) bool {
 
 func (this *Steering) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*Steering)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *DriveRequest) EqualVT(that *DriveRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Command, that.Command) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *DriveRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*DriveRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+func (this *DriveCommand) EqualVT(that *DriveCommand) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Facing, that.Facing) {
+		return false
+	}
+	if this.Forward != that.Forward {
+		return false
+	}
+	if this.Left != that.Left {
+		return false
+	}
+	if this.Held != that.Held {
+		return false
+	}
+	if this.Pressed != that.Pressed {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *DriveCommand) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*DriveCommand)
 	if !ok {
 		return false
 	}
@@ -17795,6 +17969,138 @@ func (x *Steering) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the Steering from JSON.
 func (x *Steering) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the DriveRequest message to JSON.
+func (x *DriveRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Command != nil || s.HasField("command") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("command")
+		x.Command.MarshalProtoJSON(s.WithField("command"))
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the DriveRequest to JSON.
+func (x *DriveRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the DriveRequest message from JSON.
+func (x *DriveRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "command":
+			if s.ReadNil() {
+				x.Command = nil
+				return
+			}
+			x.Command = &DriveCommand{}
+			x.Command.UnmarshalProtoJSON(s.WithField("command", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the DriveRequest from JSON.
+func (x *DriveRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the DriveCommand message to JSON.
+func (x *DriveCommand) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Facing != nil || s.HasField("facing") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("facing")
+		x.Facing.MarshalProtoJSON(s.WithField("facing"))
+	}
+	if x.Forward != 0 || s.HasField("forward") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("forward")
+		s.WriteFloat32(x.Forward)
+	}
+	if x.Left != 0 || s.HasField("left") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("left")
+		s.WriteFloat32(x.Left)
+	}
+	if x.Held != 0 || s.HasField("held") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("held")
+		s.WriteUint64(x.Held)
+	}
+	if x.Pressed != 0 || s.HasField("pressed") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("pressed")
+		s.WriteUint64(x.Pressed)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the DriveCommand to JSON.
+func (x *DriveCommand) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the DriveCommand message from JSON.
+func (x *DriveCommand) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "facing":
+			if s.ReadNil() {
+				x.Facing = nil
+				return
+			}
+			x.Facing = &modlock.EulerAngles{}
+			x.Facing.UnmarshalProtoJSON(s.WithField("facing", true))
+		case "forward":
+			s.AddField("forward")
+			x.Forward = s.ReadFloat32()
+		case "left":
+			s.AddField("left")
+			x.Left = s.ReadFloat32()
+		case "held":
+			s.AddField("held")
+			x.Held = s.ReadUint64()
+		case "pressed":
+			s.AddField("pressed")
+			x.Pressed = s.ReadUint64()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the DriveCommand from JSON.
+func (x *DriveCommand) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -27440,6 +27746,115 @@ func (m *Steering) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *DriveRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DriveRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *DriveRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Command != nil {
+		size, err := m.Command.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DriveCommand) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DriveCommand) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *DriveCommand) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Pressed != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Pressed))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.Held != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Held))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.Left != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Left))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.Forward != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Forward))))
+		i--
+		dAtA[i] = 0x15
+	}
+	if m.Facing != nil {
+		size, err := m.Facing.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *AdjustSoulsRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -33225,6 +33640,39 @@ func (m *Steering) SizeVT() (n int) {
 	return n
 }
 
+func (m *DriveRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	if m.Command != nil {
+		l = m.Command.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *DriveCommand) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Facing != nil {
+		l = m.Facing.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Forward)
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Left)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Held)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Pressed)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *AdjustSoulsRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -36160,6 +36608,52 @@ func (x *Steering) MarshalProtoText() string {
 }
 
 func (x *Steering) String() string {
+	return x.MarshalProtoText()
+}
+func (x *DriveRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "DriveRequest")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Command != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "command")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Command)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *DriveRequest) String() string {
+	return x.MarshalProtoText()
+}
+func (x *DriveCommand) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "DriveCommand")
+	if x.Facing != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "facing")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Facing)
+	}
+	if x.Forward != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "forward")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Forward)
+	}
+	if x.Left != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "left")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Left)
+	}
+	if x.Held != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "held")
+		protobuf_go_lite.TextWriteUint(&sb, x.Held)
+	}
+	if x.Pressed != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "pressed")
+		protobuf_go_lite.TextWriteUint(&sb, x.Pressed)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *DriveCommand) String() string {
 	return x.MarshalProtoText()
 }
 func (x *AdjustSoulsRequest) MarshalProtoText() string {
@@ -42935,6 +43429,171 @@ func (m *Steering) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DriveRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DriveRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DriveRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Command", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Command == nil {
+				m.Command = &DriveCommand{}
+			}
+			if err := m.Command.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DriveCommand) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DriveCommand: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DriveCommand: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Facing", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Facing == nil {
+				m.Facing = &modlock.EulerAngles{}
+			}
+			if err := m.Facing.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Forward", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Forward = float32(math.Float32frombits(v))
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Left", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Left = float32(math.Float32frombits(v))
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Held", wireType)
+			}
+			m.Held = 0
+			m.Held, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pressed", wireType)
+			}
+			m.Pressed = 0
+			m.Pressed, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

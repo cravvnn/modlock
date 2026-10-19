@@ -654,6 +654,23 @@ class Steering:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
+class DriveCommand:
+    """DriveCommand is a player's controls for one tick and the ticks after it."""
+
+    # facing is where the hero looks and aims; its yaw turns the body, as the
+    # camera turns a player's hero.
+    facing: Angles
+    # forward and left are the movement axes, from -1 to 1, relative to the
+    # facing's yaw.
+    forward: float = 0.0
+    left: float = 0.0
+    # held holds down these buttons on every tick.
+    held: int = 0
+    # pressed presses these buttons on the next tick only, as a tap.
+    pressed: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
 class ProjectileOptions:
     """ProjectileOptions selects the projectiles a mod watches."""
 
@@ -1260,6 +1277,16 @@ class Player:
         it, its presses counting once; a Steer without one releases the hero.
         """
         return _call("Steer", "SteerRequest", {"player": self, "steering": steering}) is not None
+
+    def drive(self, command: DriveCommand | None = None) -> bool:
+        """drive gives a bot the controls a player has, where it looks, the
+        movement axes and the buttons, as its input on every tick until the next
+        Drive replaces it. The game runs that input as a player's own, so the
+        hero accelerates, turns, jumps, dashes, slides and casts with its own
+        movement and animation; the bot's own brain no longer moves it. Presses
+        count once. A Drive without a command returns the bot to its brain.
+        """
+        return _call("Drive", "DriveRequest", {"player": self, "command": command}) is not None
 
     def adjust_souls(self, delta: int, silent: bool | None = None) -> bool:
         """adjust_souls gives the player delta souls, or takes them when delta is
@@ -1950,6 +1977,23 @@ _SCHEMA: wire.Schema = {
             wire.Field(3, "velocity", "message", message="Vec3"),
             wire.Field(4, "grounded", "bool"),
             wire.Field(5, "facing", "message", message="EulerAngles"),
+        ],
+    ),
+    "DriveRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "command", "message", optional=True, message="DriveCommand"),
+        ],
+    ),
+    "DriveCommand": (
+        DriveCommand,
+        [
+            wire.Field(1, "facing", "message", message="EulerAngles"),
+            wire.Field(2, "forward", "float"),
+            wire.Field(3, "left", "float"),
+            wire.Field(4, "held", "uint64"),
+            wire.Field(5, "pressed", "uint64"),
         ],
     ),
     "AdjustSoulsRequest": (
