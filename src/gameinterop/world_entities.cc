@@ -465,6 +465,17 @@ std::expected<uint32_t, std::string> WorldEntities::CreateEntity(
     for (float value : vector)
       if (!std::isfinite(value)) return std::unexpected("entity placement is nonfinite");
 
+  // A networked string past the encoder's limit stops the server at the next
+  // network pack, so a long text value is refused before the entity exists.
+  for (const auto& pair : key_values) {
+    const auto* text = std::get_if<std::string_view>(&pair.value);
+    if (text && text->size() > kMaxKeyValueText) {
+      return std::unexpected("key value " + std::string(pair.key) + " is " +
+                             std::to_string(text->size()) + " characters; at most " +
+                             std::to_string(kMaxKeyValueText) + " can be networked");
+    }
+  }
+
   // Some entities crash the server when created alone; they are refused
   // before they exist.
   if (const auto need = UnmadeNeed(target.designer_name); !need.empty()) {

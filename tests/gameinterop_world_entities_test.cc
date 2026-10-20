@@ -215,6 +215,21 @@ TEST_F(NativeWorld, AnAbilityIsRefusedBeforeItExists) {
   EXPECT_EQ(created, 0);
 }
 
+TEST_F(NativeWorld, ATextValueTooLongToNetworkIsRefusedBeforeItExists) {
+  auto world = World();
+  const std::string limit(WorldEntities::kMaxKeyValueText, 'a');
+  const std::string over(WorldEntities::kMaxKeyValueText + 1, 'a');
+  const EntityKeyValue too_long[] = {{"panel_id", std::string_view(over)}};
+  const auto dialog = world.CreateEntity({.designer_name = "point_clientui_dialog"}, too_long);
+  ASSERT_FALSE(dialog);
+  EXPECT_EQ(dialog.error(), "key value panel_id is 65501 characters; at most 65500 can be networked");
+  EXPECT_EQ(created, 0);
+
+  const EntityKeyValue at_limit[] = {{"panel_id", std::string_view(limit)}};
+  ASSERT_TRUE(world.CreateEntity({.designer_name = "point_clientui_dialog"}, at_limit));
+  EXPECT_EQ(created, 1);
+}
+
 TEST_F(NativeWorld, AnEntityThatCrashesAloneIsRefusedBeforeItExists) {
   auto world = World();
   const auto sentry = world.CreateEntity({.designer_name = "npc_shielded_sentry"}, {});

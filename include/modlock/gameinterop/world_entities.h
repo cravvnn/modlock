@@ -96,7 +96,10 @@ class MODLOCK_API WorldEntities {
   // geometry for each key it does not set. The target's subclass, team and
   // placement apply as for Spawn; its health and velocity are ignored.
   // Prepare runs as for Spawn. It refuses an ability, item or weapon, which
-  // only a hero holds.
+  // only a hero holds. It refuses a text value longer than kMaxKeyValueText:
+  // the engine fails to encode a networked string of 100000 characters and
+  // stops the server at the next network pack, while 65500 encodes.
+  static constexpr size_t kMaxKeyValueText = 65500;
   std::expected<uint32_t, std::string> CreateEntity(const Target& target,
                                                     std::span<const EntityKeyValue> key_values,
                                                     const Prepare& prepare = {});
