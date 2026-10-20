@@ -8,7 +8,11 @@
     "jsx": "react-jsx",
     "jsxImportSource": "modlock",
     "strict": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "modlock": ["../../js/src/index.ts"],
+      "modlock/jsx-runtime": ["../../js/src/index.ts"]
+    }
   },
   "exclude": ["build", "node_modules"]
 }
