@@ -3064,12 +3064,12 @@ class Layers(enum.IntFlag):
     TRIGGER = 1 << 2
     # PLAYER_CLIP is walls that only stop heroes.
     PLAYER_CLIP = 1 << 4
-    # WORLD_GEOMETRY is the map's static geometry.
-    WORLD_GEOMETRY = 1 << 14
     # PLAYER is player-controlled heroes.
     PLAYER = 1 << 18
     # NPC is units that are not players.
     NPC = 1 << 19
+    # STATIC_LEVEL is the map's built geometry, foliage included.
+    STATIC_LEVEL = 1 << 30
     # HERO, TROOPER and BUILDING are those units' bodies.
     HERO = 1 << 37
     TROOPER = 1 << 38

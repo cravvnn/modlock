@@ -28,12 +28,12 @@ export const Layers = {
   trigger: 1n << 2n,
   /** playerClip is walls that only stop heroes. */
   playerClip: 1n << 4n,
-  /** worldGeometry is the map's static geometry. */
-  worldGeometry: 1n << 14n,
   /** player is player-controlled heroes. */
   player: 1n << 18n,
   /** npc is units that are not players. */
   npc: 1n << 19n,
+  /** staticLevel is the map's built geometry, foliage included. */
+  staticLevel: 1n << 30n,
   /** hero, trooper and building are those units' bodies. */
   hero: 1n << 37n,
   trooper: 1n << 38n,

@@ -29,12 +29,12 @@ const (
 	LayerTrigger uint64 = 1 << 2
 	// LayerPlayerClip is walls that only stop heroes.
 	LayerPlayerClip uint64 = 1 << 4
-	// LayerWorldGeometry is the map's static geometry.
-	LayerWorldGeometry uint64 = 1 << 14
 	// LayerPlayer is player-controlled heroes.
 	LayerPlayer uint64 = 1 << 18
 	// LayerNpc is units that are not players.
 	LayerNpc uint64 = 1 << 19
+	// LayerStaticLevel is the map's built geometry, foliage included.
+	LayerStaticLevel uint64 = 1 << 30
 	// LayerHero, LayerTrooper and LayerBuilding are those units' bodies.
 	LayerHero     uint64 = 1 << 37
 	LayerTrooper  uint64 = 1 << 38

@@ -2731,12 +2731,12 @@ modlock.Layers = {
 	trigger = 2 ^ 2,
 	-- playerClip is walls that only stop heroes.
 	playerClip = 2 ^ 4,
-	-- worldGeometry is the map's static geometry.
-	worldGeometry = 2 ^ 14,
 	-- player is player-controlled heroes.
 	player = 2 ^ 18,
 	-- npc is units that are not players.
 	npc = 2 ^ 19,
+	-- staticLevel is the map's built geometry, foliage included.
+	staticLevel = 2 ^ 30,
 	-- hero, trooper and building are those units' bodies.
 	hero = 2 ^ 37,
 	trooper = 2 ^ 38,
