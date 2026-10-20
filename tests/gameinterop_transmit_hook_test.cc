@@ -54,6 +54,34 @@ TEST(TransmitSet, IgnoresAnIndexPastTheSet) {
   for (uint32_t word : info.bits) EXPECT_EQ(word, ~uint32_t{0});
 }
 
+TEST(TransmitSet, SendsAListedEntityOnlyToItsPlayers) {
+  const uint64_t slots = (uint64_t{1} << 3) | (uint64_t{1} << 9);
+  FakeInfo listed(3);
+  TransmitSet listed_set(listed.bytes.data());
+  listed_set.WithholdUnlessIn(300, slots);
+  EXPECT_TRUE(listed.Sends(300));
+
+  FakeInfo other(4);
+  TransmitSet other_set(other.bytes.data());
+  other_set.WithholdUnlessIn(300, slots);
+  EXPECT_FALSE(other.Sends(300));
+  EXPECT_TRUE(other.Sends(301));
+}
+
+TEST(TransmitSet, WithholdsFromEveryoneWhenNoPlayerIsListed) {
+  FakeInfo info(0);
+  TransmitSet set(info.bytes.data());
+  set.WithholdUnlessIn(300, 0);
+  EXPECT_FALSE(info.Sends(300));
+}
+
+TEST(TransmitSet, WithholdsFromASlotPastTheMask) {
+  FakeInfo info(64);
+  TransmitSet set(info.bytes.data());
+  set.WithholdUnlessIn(300, ~uint64_t{0});
+  EXPECT_FALSE(info.Sends(300));
+}
+
 TEST(TransmitHook, InstallFailsClosedWithoutMappedServerModule) {
   // No game modules are mapped in this process, so the only correct outcome
   // is a named error and no hook.

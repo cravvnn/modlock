@@ -2091,6 +2091,10 @@ schema.EntityValue = {
 	{ number = 5, name = "vector", kind = "message", optional = true, message = "Vec3" },
 	{ number = 6, name = "color", kind = "fixed32", optional = true },
 }
+schema.ShowEntityOnlyToRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "players", kind = "int32", repeated = true },
+}
 schema.FireInputRequest = {
 	{ number = 1, name = "entity", kind = "uint32" },
 	{ number = 2, name = "input", kind = "string" },
@@ -2446,6 +2450,25 @@ function modlock.removeEntity(entity: number): boolean
 		return false
 	end
 	return response.alive
+end
+
+-- showEntityOnlyTo sends an entity the mod created only to the players with
+-- the listed server slots; every other client drops it, or never receives
+-- it when the call follows its creation in the same frame. With no players
+-- no client receives it. The list replaces any earlier one. A player who
+-- leaves is taken off every list, so whoever joins in their slot does not
+-- receive the entity. The rule holds for an entity created with
+-- TransmitAlways too, but not for entities parented to it, which need their
+-- own call. Removing the entity, the world ending or the mod stopping drops
+-- the rule.
+function modlock.showEntityOnlyTo(entity: number, players: { number }?): boolean
+	return call("ShowEntityOnlyTo", "ShowEntityOnlyToRequest", { entity = entity, players = players }) ~= nil
+end
+
+-- showEntityToAll sends an entity the mod created to every player the game
+-- would send it to again, undoing ShowEntityOnlyTo.
+function modlock.showEntityToAll(entity: number): boolean
+	return call("ShowEntityToAll", "EntityRequest", { entity = entity }) ~= nil
 end
 
 -- spawnNpc adds a unit that is not a player, such as a trooper, as

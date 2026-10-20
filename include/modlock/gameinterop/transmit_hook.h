@@ -7,7 +7,6 @@
 #include <string>
 
 #include "modlock/export.h"
-#include "modlock/gameinterop/thunk_owner.h"
 #include "modlock/gameinterop/vtable_slot_hook.h"
 
 namespace modlock::gameinterop {
@@ -35,6 +34,10 @@ class MODLOCK_API TransmitSet {
   // index lies past the set is ignored.
   void Withhold(uint32_t handle);
 
+  // WithholdUnlessIn keeps the entity from this player unless the bit of
+  // their slot is set in slots, so the entity reaches only those players.
+  void WithholdUnlessIn(uint32_t handle, uint64_t slots);
+
  private:
   void* info_;
 };
@@ -42,29 +45,39 @@ class MODLOCK_API TransmitSet {
 // TransmitHook lets the server withhold entities from single players. It
 // patches ISource2GameEntities::CheckTransmit in server.dll to run the
 // engine's own pass first, which fills every player's set, then hands each
-// player's set to the handler on the same thread. One hook may exist at a
-// time; the move and destruction ordering is ThunkOwner's contract.
+// player's set to every installed handler on the same thread, oldest first.
+// Several hooks may exist at once, such as a mod host's and a native
+// plugin's: the first patches the slot and the last one destroyed restores
+// it. Install, the handlers and destruction belong to the engine thread.
 class MODLOCK_API TransmitHook {
  public:
   // Server.dll's ISource2GameEntities interface version string.
   static constexpr char kInterfaceVersion[] = "Source2GameEntities001";
 
-  // Handler adjusts one player's set after the engine filled it.
+  // Handler adjusts one player's set after the engine filled it. It must not
+  // install or destroy a TransmitHook.
   using Handler = std::function<void(TransmitSet&)>;
 
   // Install resolves the mapped server.dll interface and hooks its
   // CheckTransmit slot. Failure names the missing piece.
   static std::expected<TransmitHook, std::string> Install(Handler handler);
 
-  TransmitHook(TransmitHook&& other) noexcept = default;
-  TransmitHook& operator=(TransmitHook&& other) noexcept = default;
-  ~TransmitHook() = default;
+  TransmitHook(TransmitHook&& other) noexcept;
+  TransmitHook& operator=(TransmitHook&& other) noexcept;
+  ~TransmitHook();
+  TransmitHook(const TransmitHook&) = delete;
+  TransmitHook& operator=(const TransmitHook&) = delete;
 
  private:
-  // Private by construction: only Install builds one, around a live slot hook.
-  explicit TransmitHook(ThunkOwner owner);
+  // Private by construction: only Install builds one, around a registered
+  // handler.
+  explicit TransmitHook(uint64_t id);
 
-  ThunkOwner owner_;
+  // Reset removes the handler, and restores the slot after the last one.
+  void Reset();
+
+  // id_ names the handler in the shared list; zero once moved from.
+  uint64_t id_ = 0;
 };
 
 }  // namespace modlock::gameinterop

@@ -896,6 +896,25 @@ func RemoveEntity(entity uint32) (bool, error) {
 	return response.GetAlive(), nil
 }
 
+// ShowEntityOnlyTo sends an entity the mod created only to the players with
+// the listed server slots; every other client drops it, or never receives
+// it when the call follows its creation in the same frame. With no players
+// no client receives it. The list replaces any earlier one. A player who
+// leaves is taken off every list, so whoever joins in their slot does not
+// receive the entity. The rule holds for an entity created with
+// TransmitAlways too, but not for entities parented to it, which need their
+// own call. Removing the entity, the world ending or the mod stopping drops
+// the rule.
+func ShowEntityOnlyTo(entity uint32, players []int32) error {
+	return invoke("ShowEntityOnlyTo", &wasm.ShowEntityOnlyToRequest{Entity: entity, Players: players}, nil)
+}
+
+// ShowEntityToAll sends an entity the mod created to every player the game
+// would send it to again, undoing ShowEntityOnlyTo.
+func ShowEntityToAll(entity uint32) error {
+	return invoke("ShowEntityToAll", &wasm.EntityRequest{Entity: entity}, nil)
+}
+
 // SpawnNpc adds a unit that is not a player, such as a trooper, as
 // CreateEntity does, then sets its health and lane. It thinks from the next
 // frame. The world removes it when the world ends; stopping

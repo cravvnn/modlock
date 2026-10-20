@@ -4605,6 +4605,40 @@ export const EntityValue: MessageType<EntityValue> = /* @__PURE__ */ createMessa
 });
 
 /**
+ * ShowEntityOnlyToRequest names the only players who receive an entity.
+ *
+ * @generated from message modlock.wasm.ShowEntityOnlyToRequest
+ */
+export interface ShowEntityOnlyToRequest {
+  /**
+   * Entity is the handle of an entity the mod created.
+   */
+  entity?: number;
+  /**
+   * Players are the server slots of the players who receive it.
+   */
+  players?: number[];
+}
+
+export const ShowEntityOnlyToRequest: MessageType<ShowEntityOnlyToRequest> = /* @__PURE__ */ createMessageType<ShowEntityOnlyToRequest>("modlock.wasm.ShowEntityOnlyToRequest", () => [
+  [1, "entity", 13],
+  [2, "players", 5, 3],
+], {
+  decode: (r: BinaryReader, end: number, m: ShowEntityOnlyToRequest): ShowEntityOnlyToRequest => {
+    while (r.pos < end) {
+      const t = r.tag();
+      if ((t & 7) === 4) return m;
+      switch (t >>> 3) {
+        case 1: m.entity = r.uint32(); break;
+        case 2: for (const e = r.run(t), a = (m.players ??= []); r.pos < e;) a.push(r.int32()); break;
+        default: r.skip(t);
+      }
+    }
+    return m;
+  },
+});
+
+/**
  * FireInputRequest sends one input to an entity.
  *
  * @generated from message modlock.wasm.FireInputRequest

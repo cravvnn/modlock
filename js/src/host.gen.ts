@@ -2221,6 +2221,29 @@ export function removeEntity(entity: number): boolean {
 }
 
 /**
+ * showEntityOnlyTo sends an entity the mod created only to the players with
+ * the listed server slots; every other client drops it, or never receives
+ * it when the call follows its creation in the same frame. With no players
+ * no client receives it. The list replaces any earlier one. A player who
+ * leaves is taken off every list, so whoever joins in their slot does not
+ * receive the entity. The rule holds for an entity created with
+ * TransmitAlways too, but not for entities parented to it, which need their
+ * own call. Removing the entity, the world ending or the mod stopping drops
+ * the rule.
+ */
+export function showEntityOnlyTo(entity: number, players?: readonly number[]): boolean {
+  return call('ShowEntityOnlyTo', pb.ShowEntityOnlyToRequest.toBinary({ entity, players: players?.slice() })) !== undefined
+}
+
+/**
+ * showEntityToAll sends an entity the mod created to every player the game
+ * would send it to again, undoing ShowEntityOnlyTo.
+ */
+export function showEntityToAll(entity: number): boolean {
+  return call('ShowEntityToAll', pb.EntityRequest.toBinary({ entity })) !== undefined
+}
+
+/**
  * spawnNpc adds a unit that is not a player, such as a trooper, as
  * CreateEntity does, then sets its health and lane. It thinks from the next
  * frame. The world removes it when the world ends; stopping

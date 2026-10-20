@@ -147,7 +147,8 @@ class GameServices {
   // Transmit installs the shared transmit hook on first use.
   std::expected<void, std::string> Transmit();
 
-  // Withhold keeps from one player every object a mod hid from them.
+  // Withhold keeps from one player every object a mod hid from them and
+  // every entity a mod shows only to others.
   void Withhold(gameinterop::TransmitSet& set);
 
   // Steps installs or removes the server movement hook to match what the
@@ -397,6 +398,9 @@ class Game : public HostService {
   std::expected<EntityResponse, std::string> CreateEntity(const EntityOptions& request) override;
   std::expected<AliveResponse, std::string> FireInput(const FireInputRequest& request) override;
   std::expected<AliveResponse, std::string> RemoveEntity(const EntityRequest& request) override;
+  std::expected<void, std::string> ShowEntityOnlyTo(
+      const ShowEntityOnlyToRequest& request) override;
+  std::expected<void, std::string> ShowEntityToAll(const EntityRequest& request) override;
   std::expected<NpcResponse, std::string> SpawnNpc(const NpcOptions& request) override;
   std::expected<NpcStateResponse, std::string> ReadNpc(const NpcRequest& request) override;
   std::expected<AliveResponse, std::string> MoveNpc(const MoveNpcRequest& request) override;
@@ -463,6 +467,10 @@ class Game : public HostService {
   // TickRestores advances every hero restore and the unit restore by one
   // frame and queues the ones that ended.
   void TickRestores();
+
+  // PruneAudiences drops the audience of each entity that is gone, so a new
+  // entity that takes its index reaches every player.
+  void PruneAudiences();
 
   // HoldClock sets the held match clock again, since the game advances it
   // each frame.
@@ -573,6 +581,9 @@ class Game : public HostService {
   // the units' placement finishes.
   std::optional<gameinterop::WorldEntities> world_;
   std::set<uint32_t> created_;
+  // audiences_ maps each created entity a mod shows only to some players to
+  // the bits of their slots.
+  std::map<uint32_t, uint64_t> audiences_;
   bool spawned_ = false;
   // bots_ maps each bot's slot to its name, which the console kicks by.
   std::map<int32_t, std::string> bots_;

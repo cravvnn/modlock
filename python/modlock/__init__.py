@@ -2363,6 +2363,13 @@ _SCHEMA: wire.Schema = {
             wire.Field(6, "color", "fixed32", optional=True),
         ],
     ),
+    "ShowEntityOnlyToRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "players", "int32", repeated=True),
+        ],
+    ),
     "FireInputRequest": (
         None,
         [
@@ -2816,6 +2823,27 @@ def remove_entity(entity: int) -> bool:
     if response is None:
         return False
     return response["alive"]
+
+
+def show_entity_only_to(entity: int, players: list[int] | None = None) -> bool:
+    """show_entity_only_to sends an entity the mod created only to the players with
+    the listed server slots; every other client drops it, or never receives
+    it when the call follows its creation in the same frame. With no players
+    no client receives it. The list replaces any earlier one. A player who
+    leaves is taken off every list, so whoever joins in their slot does not
+    receive the entity. The rule holds for an entity created with
+    TransmitAlways too, but not for entities parented to it, which need their
+    own call. Removing the entity, the world ending or the mod stopping drops
+    the rule.
+    """
+    return _call("ShowEntityOnlyTo", "ShowEntityOnlyToRequest", {"entity": entity, "players": players}) is not None
+
+
+def show_entity_to_all(entity: int) -> bool:
+    """show_entity_to_all sends an entity the mod created to every player the game
+    would send it to again, undoing ShowEntityOnlyTo.
+    """
+    return _call("ShowEntityToAll", "EntityRequest", {"entity": entity}) is not None
 
 
 def spawn_npc(options: NpcOptions) -> Npc | None:

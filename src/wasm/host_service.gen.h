@@ -508,6 +508,26 @@ class HostService {
     return std::unexpected("this host does not support RemoveEntity");
   }
 
+  // ShowEntityOnlyTo sends an entity the mod created only to the players with
+  // the listed server slots; every other client drops it, or never receives
+  // it when the call follows its creation in the same frame. With no players
+  // no client receives it. The list replaces any earlier one. A player who
+  // leaves is taken off every list, so whoever joins in their slot does not
+  // receive the entity. The rule holds for an entity created with
+  // TransmitAlways too, but not for entities parented to it, which need their
+  // own call. Removing the entity, the world ending or the mod stopping drops
+  // the rule.
+  virtual std::expected<void, std::string> ShowEntityOnlyTo(
+      const ShowEntityOnlyToRequest& /*request*/) {
+    return std::unexpected("this host does not support ShowEntityOnlyTo");
+  }
+
+  // ShowEntityToAll sends an entity the mod created to every player the game
+  // would send it to again, undoing ShowEntityOnlyTo.
+  virtual std::expected<void, std::string> ShowEntityToAll(const EntityRequest& /*request*/) {
+    return std::unexpected("this host does not support ShowEntityToAll");
+  }
+
   // SpawnNpc adds a unit that is not a player, such as a trooper, as
   // CreateEntity does, then sets its health and lane. It thinks from the next
   // frame. The world removes it when the world ends; stopping
@@ -1213,6 +1233,22 @@ class HostService {
              return detail::Fail("the RemoveEntity request is malformed");
            }
            return detail::Answer(host.RemoveEntity(request));
+         }},
+        {"ShowEntityOnlyTo",
+         [](HostService& host, const std::string& bytes) {
+           ShowEntityOnlyToRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ShowEntityOnlyTo request is malformed");
+           }
+           return detail::Answer(host.ShowEntityOnlyTo(request));
+         }},
+        {"ShowEntityToAll",
+         [](HostService& host, const std::string& bytes) {
+           EntityRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ShowEntityToAll request is malformed");
+           }
+           return detail::Answer(host.ShowEntityToAll(request));
          }},
         {"SpawnNpc",
          [](HostService& host, const std::string& bytes) {

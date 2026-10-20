@@ -358,6 +358,21 @@ service Host {
   // rewards. It reports false when the entity was already gone.
   rpc RemoveEntity(EntityRequest) returns (AliveResponse);
 
+  // ShowEntityOnlyTo sends an entity the mod created only to the players with
+  // the listed server slots; every other client drops it, or never receives
+  // it when the call follows its creation in the same frame. With no players
+  // no client receives it. The list replaces any earlier one. A player who
+  // leaves is taken off every list, so whoever joins in their slot does not
+  // receive the entity. The rule holds for an entity created with
+  // TransmitAlways too, but not for entities parented to it, which need their
+  // own call. Removing the entity, the world ending or the mod stopping drops
+  // the rule.
+  rpc ShowEntityOnlyTo(ShowEntityOnlyToRequest) returns (Empty);
+
+  // ShowEntityToAll sends an entity the mod created to every player the game
+  // would send it to again, undoing ShowEntityOnlyTo.
+  rpc ShowEntityToAll(EntityRequest) returns (Empty);
+
   // SpawnNpc adds a unit that is not a player, such as a trooper, as
   // CreateEntity does, then sets its health and lane. It thinks from the next
   // frame. The world removes it when the world ends; stopping
@@ -1968,6 +1983,15 @@ message EntityValue {
     modlock.Vec3 vector = 5;
     fixed32 color = 6;
   }
+}
+
+// ShowEntityOnlyToRequest names the only players who receive an entity.
+message ShowEntityOnlyToRequest {
+  // Entity is the handle of an entity the mod created.
+  uint32 entity = 1;
+
+  // Players are the server slots of the players who receive it.
+  repeated int32 players = 2;
 }
 
 // FireInputRequest sends one input to an entity.

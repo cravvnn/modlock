@@ -815,6 +815,12 @@ void GameServices::Withhold(gameinterop::TransmitSet& set) {
       if (handle) set.Withhold(*handle);
     }
   }
+
+  // The engine's pass already set the bits of entities sent to every client,
+  // TransmitAlways ones included, so clearing them here still withholds them.
+  for (auto* game : games_) {
+    for (const auto& [entity, slots] : game->audiences_) set.WithholdUnlessIn(entity, slots);
+  }
 }
 
 void GameServices::Impact(void* entity, const gameinterop::TraceResult& contact,
@@ -964,6 +970,7 @@ void Game::Frame() {
   HoldClock();
   TickRestores();
   TrackProjectiles();
+  PruneAudiences();
   if (!spawned_ || !world_) return;
   world_->FinishSpawns();
   spawned_ = false;
@@ -1035,6 +1042,10 @@ void Game::Leave(int32_t slot) {
   slot_blocked_.erase(slot);
   presses_.erase(slot);
   hidden_.erase(slot);
+  // Whoever takes the slot next is a different player, who was never listed.
+  if (slot >= 0 && slot < 64) {
+    for (auto& [entity, slots] : audiences_) slots &= ~(uint64_t{1} << slot);
+  }
   std::vector<std::string> keys;
   for (const auto& [held, key] : held_modifiers_) {
     if (held == slot) keys.push_back(key);
@@ -1094,6 +1105,7 @@ void Game::RemoveWorld() {
     for (const auto entity : created_) static_cast<void>(world_->RemoveEntity(entity));
   }
   created_.clear();
+  audiences_.clear();
 
   // Only the engine's kick removes a bot's connection.
   if (auto server = services_.Server()) {
@@ -2097,7 +2109,43 @@ std::expected<AliveResponse, std::string> Game::RemoveEntity(const EntityRequest
   // cannot take a player or the map's entities out of the world.
   if (!created_.erase(request.entity()))
     return std::unexpected("the mod did not create the entity");
+  audiences_.erase(request.entity());
   return Alive((*world)->RemoveEntity(request.entity()));
+}
+
+std::expected<void, std::string> Game::ShowEntityOnlyTo(const ShowEntityOnlyToRequest& request) {
+  // Only the mod's own entities take an audience, so a mod cannot keep a
+  // player's hero or the map's entities from a client.
+  if (!created_.contains(request.entity()))
+    return std::unexpected("the mod did not create the entity");
+  uint64_t slots = 0;
+  for (const auto slot : request.players()) {
+    if (slot < 0 || slot >= 64) return std::unexpected("player slot out of range");
+    slots |= uint64_t{1} << slot;
+  }
+
+  // The engine sends only what its transmit pass allows, so an audience
+  // needs the shared transmit hook.
+  if (auto transmit = services_.Transmit(); !transmit) return transmit;
+  audiences_[request.entity()] = slots;
+  return {};
+}
+
+std::expected<void, std::string> Game::ShowEntityToAll(const EntityRequest& request) {
+  if (!created_.contains(request.entity()))
+    return std::unexpected("the mod did not create the entity");
+  audiences_.erase(request.entity());
+  return {};
+}
+
+void Game::PruneAudiences() {
+  if (audiences_.empty() || !world_) return;
+  // The transmit pass withholds by entity index alone, so a gone entity's
+  // audience would otherwise apply to the next entity at its index.
+  std::erase_if(audiences_, [this](const auto& entry) {
+    auto live = world_->Exists(entry.first);
+    return live && !*live;
+  });
 }
 
 std::expected<NpcResponse, std::string> Game::SpawnNpc(const NpcOptions& request) {

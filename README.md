@@ -663,6 +663,23 @@ checker rejects it. [docs/ENTITY_SCHEMA.md](docs/ENTITY_SCHEMA.md) explores
 the whole entity system: the dump, the survey, the generated classes in each
 language and what the host checks.
 
+`showEntityOnlyTo` sends an entity the mod created only to the listed player
+slots, and `showEntityToAll` undoes it. Called right after the entity is
+created, no other client ever receives it, which keeps a per-player
+`point_clientui_dialog` from every other player:
+
+```ts
+import { showEntityOnlyTo } from 'modlock'
+import { create } from 'modlock/entities'
+
+const dialog = create('point_clientui_dialog', { transmitAlways: true, keys })
+if (dialog) showEntityOnlyTo(dialog.handle, [player.slot])
+```
+
+A player who leaves is dropped from every list, so the next player in their
+slot does not receive the entity; removing the entity drops its list.
+Entities parented to it need their own call.
+
 ### Console
 
 `modlock/console` sets console variables, each typed as the game declares it,
