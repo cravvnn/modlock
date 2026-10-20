@@ -1,5 +1,5 @@
 {
- "build": "6795",
+ "build": "6801",
  "variables": [
   {
    "name": "adsp_alley_min",
@@ -4581,6 +4581,18 @@
    "name": "citadel_deadpack_instant_shot",
    "type": "CONSOLE_VARIABLE_TYPE_BOOL",
    "default_value": "false",
+   "flags": [
+    "gamedll",
+    "replicated",
+    "cheat",
+    "release"
+   ]
+  },
+  {
+   "name": "citadel_deadpack_ult_charge_navpath",
+   "type": "CONSOLE_VARIABLE_TYPE_BOOL",
+   "default_value": "true",
+   "help": "Experimental: the ultimate charge follows a server-side NavSpace path to its target, and the client stops predicting it",
    "flags": [
     "gamedll",
     "replicated",
@@ -15621,6 +15633,18 @@
    "type": "CONSOLE_VARIABLE_TYPE_INT32",
    "default_value": "0",
    "help": "SceneSystem/LightBinner/Debug Visualize Lights",
+   "flags": [
+    "developmentonly",
+    "cheat",
+    "menubar_item",
+    "gameinfo_cannot_override"
+   ]
+  },
+  {
+   "name": "lb_debug_visualize_precomputed_shadow_atlas_lights",
+   "type": "CONSOLE_VARIABLE_TYPE_BOOL",
+   "default_value": "false",
+   "help": "SceneSystem/LightBinner/Debug Visualize Precomputed Shadow Atlas Lights",
    "flags": [
     "developmentonly",
     "cheat",

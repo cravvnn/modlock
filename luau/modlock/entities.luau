@@ -1224,6 +1224,13 @@ describe("CNPC_NecroSkele", "CAI_CitadelNPC", {
 	m_flSpawnDuration = "float32",
 })
 
+export type CNPC_NurseLeech = CAI_CitadelNPC & {
+	m_hNurse: CBaseEntity?,
+}
+describe("CNPC_NurseLeech", "CAI_CitadelNPC", {
+	m_hNurse = "CBaseEntity",
+})
+
 export type CNPC_Trooper = CAI_CitadelNPC & {
 	m_iLane: number?,
 	m_hSpawnWaveController: CInfoTrooperBossSpawn?,
@@ -6970,9 +6977,11 @@ export type CCitadelBaseAbility = CBaseEntity & {
 	m_bToggleState: boolean?,
 	m_flCooldownStart: number?,
 	m_flCooldownEnd: number?,
+	m_flStoppedCooldownRemaining: number?,
 	m_flCastCompletedTime: number?,
 	m_flChannelStartTime: number?,
 	m_flCastDelayStartTime: number?,
+	m_flCastDelaySpeedScale: number?,
 	m_eAbilitySlot: number?,
 	m_flPostCastDelayEndTime: number?,
 	m_iRemainingCharges: number?,
@@ -6999,9 +7008,11 @@ describe("CCitadelBaseAbility", "CBaseEntity", {
 	m_bToggleState = "bool",
 	m_flCooldownStart = "float32",
 	m_flCooldownEnd = "float32",
+	m_flStoppedCooldownRemaining = "float32",
 	m_flCastCompletedTime = "float32",
 	m_flChannelStartTime = "float32",
 	m_flCastDelayStartTime = "float32",
+	m_flCastDelaySpeedScale = "float32",
 	m_eAbilitySlot = "uint16",
 	m_flPostCastDelayEndTime = "float32",
 	m_iRemainingCharges = "int32",
@@ -9481,6 +9492,54 @@ describe("CCitadel_Ability_Necro_ZombieWall", "CCitadelBaseAbility", {
 export type CCitadel_Ability_Nikuman = CCitadelBaseAbility
 describe("CCitadel_Ability_Nikuman", "CCitadelBaseAbility", {})
 
+export type CCitadel_Ability_Nurse_AdrenalineRush = CCitadelBaseAbility
+describe("CCitadel_Ability_Nurse_AdrenalineRush", "CCitadelBaseAbility", {})
+
+export type CCitadel_Ability_Nurse_Fear = CCitadelBaseAbility & {
+	m_vecBuildupTargets: { number }?,
+	m_vecFearedTargets: { number }?,
+	m_flNextFakeBulletTime: number?,
+	m_flNextTickTime: number?,
+	m_flNextBuildupTickTime: number?,
+	m_nCastDelayParticleIdx: number?,
+	m_nChannelParticleIdx: number?,
+	m_playerAngles: modlock.Angles?,
+	m_nLeechStacksAtCast: number?,
+	m_vecRecoilDirection: modlock.Vector?,
+}
+describe("CCitadel_Ability_Nurse_Fear", "CCitadelBaseAbility", {
+	m_vecBuildupTargets = "list:handle",
+	m_vecFearedTargets = "list:handle",
+	m_flNextFakeBulletTime = "float32",
+	m_flNextTickTime = "float32",
+	m_flNextBuildupTickTime = "float32",
+	m_nCastDelayParticleIdx = "int32",
+	m_nChannelParticleIdx = "int32",
+	m_playerAngles = "angles",
+	m_nLeechStacksAtCast = "int32",
+	m_vecRecoilDirection = "vector",
+})
+
+export type CCitadel_Ability_Nurse_HealingNeedles = CCitadelBaseAbility & {
+	m_flChargeProgress: number?,
+	m_bNeedlesOut: boolean?,
+	m_tSwapInFinishTime: number?,
+	m_hOriginalGun: CCitadelBaseAbility?,
+}
+describe("CCitadel_Ability_Nurse_HealingNeedles", "CCitadelBaseAbility", {
+	m_flChargeProgress = "float32",
+	m_bNeedlesOut = "bool",
+	m_tSwapInFinishTime = "float32",
+	m_hOriginalGun = "CCitadelBaseAbility",
+})
+
+export type CCitadel_Ability_Nurse_LeechTherapy = CCitadelBaseAbility & {
+	m_iLeechCount: number?,
+}
+describe("CCitadel_Ability_Nurse_LeechTherapy", "CCitadelBaseAbility", {
+	m_iLeechCount = "int32",
+})
+
 export type CCitadel_Ability_Opera_Ability01 = CCitadelBaseAbility
 describe("CCitadel_Ability_Opera_Ability01", "CCitadelBaseAbility", {})
 
@@ -9790,6 +9849,9 @@ describe("CCitadel_Ability_Necro_PrimaryWeapon", "CCitadel_Ability_PrimaryWeapon
 	m_tTetherBreakTime = "float32",
 	m_bHasTetherTarget = "bool",
 })
+
+export type CCitadel_Ability_Nurse_HealingNeedleWeapon = CCitadel_Ability_PrimaryWeapon
+describe("CCitadel_Ability_Nurse_HealingNeedleWeapon", "CCitadel_Ability_PrimaryWeapon", {})
 
 export type CCitadel_Ability_Priest_CrossbowWeapon = CCitadel_Ability_PrimaryWeapon
 describe("CCitadel_Ability_Priest_CrossbowWeapon", "CCitadel_Ability_PrimaryWeapon", {})
@@ -11311,6 +11373,7 @@ export type CCitadel_UtilityUpgrade_RocketBooster = CCitadel_UtilityUpgrade_Rock
 	m_bCrashingDown: boolean?,
 	m_bImpulseApplied: boolean?,
 	m_bCanCrash: boolean?,
+	m_bPlayLandingSound: boolean?,
 	m_vecCrashPosition: modlock.Vector?,
 	m_vecCrashDirection: modlock.Vector?,
 }
@@ -11320,6 +11383,7 @@ describe("CCitadel_UtilityUpgrade_RocketBooster", "CCitadel_UtilityUpgrade_Rocke
 	m_bCrashingDown = "bool",
 	m_bImpulseApplied = "bool",
 	m_bCanCrash = "bool",
+	m_bPlayLandingSound = "bool",
 	m_vecCrashPosition = "vector",
 	m_vecCrashDirection = "vector",
 })
@@ -20178,6 +20242,7 @@ type ClassName0 =
 	| "CNPC_FamiliarHelper"
 	| "CNPC_MidBoss"
 	| "CNPC_NecroSkele"
+	| "CNPC_NurseLeech"
 	| "CNPC_Trooper"
 	| "CNPC_TrooperBoss"
 	| "CNPC_TrooperNeutral"
@@ -20550,9 +20615,9 @@ type ClassName0 =
 	| "CCitadelPlayerController"
 	| "CBaseTrackedStatsEntity"
 	| "CMatchTrackedStatsEntity"
-	| "CPlayerTrackedStatsEntity"
 
 type ClassName1 =
+	| "CPlayerTrackedStatsEntity"
 	| "CTeamTrackedStatsEntity"
 	| "CCitadelAudioProcessingVolumeBase"
 	| "CCitadelAudioProcessingVolumeOBB"
@@ -20819,6 +20884,10 @@ type ClassName1 =
 	| "CCitadel_Ability_Necro_NukeMap"
 	| "CCitadel_Ability_Necro_ZombieWall"
 	| "CCitadel_Ability_Nikuman"
+	| "CCitadel_Ability_Nurse_AdrenalineRush"
+	| "CCitadel_Ability_Nurse_Fear"
+	| "CCitadel_Ability_Nurse_HealingNeedles"
+	| "CCitadel_Ability_Nurse_LeechTherapy"
 	| "CCitadel_Ability_Opera_Ability01"
 	| "CCitadel_Ability_Opera_Ability02"
 	| "CCitadel_Ability_Opera_Ability03"
@@ -20853,6 +20922,7 @@ type ClassName1 =
 	| "CCitadel_Ability_Frank_PrimaryWeapon"
 	| "CCitadel_Ability_Nano_PrimaryWeapon"
 	| "CCitadel_Ability_Necro_PrimaryWeapon"
+	| "CCitadel_Ability_Nurse_HealingNeedleWeapon"
 	| "CCitadel_Ability_Priest_CrossbowWeapon"
 	| "CCitadel_Ability_PrimaryWeapon_Bebop"
 	| "CCitadel_Ability_PrimaryWeapon_Cadence"
@@ -20947,14 +21017,14 @@ type ClassName1 =
 	| "CCitadel_Ability_Trapper_WebWall"
 	| "CCitadel_Ability_Trappers_Bolo"
 	| "CCitadel_Ability_TriggerTower"
+
+type ClassName2 =
 	| "CCitadel_Ability_TurretClone"
 	| "CCitadel_Ability_UltCombo"
 	| "CCitadel_Ability_Unicorn_DazzlingOrb"
 	| "CCitadel_Ability_Unicorn_LuminousStrike"
 	| "CCitadel_Ability_Unicorn_PrismaticGuard"
 	| "CCitadel_Ability_Unicorn_RadiantBlast"
-
-type ClassName2 =
 	| "CCitadel_Ability_VampireBat_BatBlink"
 	| "CCitadel_Ability_VampireBat_BatCloud"
 	| "CCitadel_Ability_VampireBat_BatSwarm"
@@ -21349,14 +21419,14 @@ type ClassName2 =
 	| "CPhysMotor"
 	| "CPhysicsEntitySolver"
 	| "CPhysicsNPCSolver"
+
+type ClassName3 =
 	| "CPointTemplate"
 	| "CSceneListManager"
 	| "CSoundStackSave"
 	| "CTestPulseIO"
 	| "CTimerEntity"
 	| "CServerOnlyPointEntity"
-
-type ClassName3 =
 	| "CCitadelBotTestNode"
 	| "CInfoCitadelHelperLocation"
 	| "CInfoMidBossSpawn"

@@ -1,5 +1,5 @@
 {
- "build": "6795",
+ "build": "6801",
  "classes": [
   {
    "designer_name": "abiilty_boho_channeltether",
@@ -910,6 +910,36 @@
   {
    "designer_name": "ability_npc_shield",
    "class_name": "CCitadel_NPCAbility_Shield",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_nurse_adrenaline_rush",
+   "class_name": "CCitadel_Ability_Nurse_AdrenalineRush",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_nurse_fear",
+   "class_name": "CCitadel_Ability_Nurse_Fear",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_nurse_healing_needles",
+   "class_name": "CCitadel_Ability_Nurse_HealingNeedles",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_nurse_healing_needles_weapon",
+   "class_name": "CCitadel_Ability_Nurse_HealingNeedleWeapon",
+   "data_map": "CCitadelBaseAbility",
+   "base": "citadel_base_ability"
+  },
+  {
+   "designer_name": "ability_nurse_leech_therapy",
+   "class_name": "CCitadel_Ability_Nurse_LeechTherapy",
    "data_map": "CCitadelBaseAbility",
    "base": "citadel_base_ability"
   },
@@ -5060,6 +5090,12 @@
    "base": "npc_neutral_sinners_sacrifice"
   },
   {
+   "designer_name": "npc_nurse_leech",
+   "class_name": "CNPC_NurseLeech",
+   "data_map": "CAI_CitadelNPC",
+   "base": "citadel_npc"
+  },
+  {
    "designer_name": "npc_player_bot_brain",
    "class_name": "CCitadelPlayerBotNPCBrain",
    "data_map": "CAI_CitadelNPC",
@@ -8382,6 +8418,42 @@
      "name": "precomputedobbextent5",
      "field": "m_vPrecomputedOBBExtent5",
      "type": "KEY_TYPE_VECTOR",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_0",
+     "field": "m_vPrecomputedShadowmapAtlasRect0",
+     "type": "KEY_TYPE_VECTOR4D",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_1",
+     "field": "m_vPrecomputedShadowmapAtlasRect1",
+     "type": "KEY_TYPE_VECTOR4D",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_2",
+     "field": "m_vPrecomputedShadowmapAtlasRect2",
+     "type": "KEY_TYPE_VECTOR4D",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_3",
+     "field": "m_vPrecomputedShadowmapAtlasRect3",
+     "type": "KEY_TYPE_VECTOR4D",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_4",
+     "field": "m_vPrecomputedShadowmapAtlasRect4",
+     "type": "KEY_TYPE_VECTOR4D",
+     "count": 1
+    },
+    {
+     "name": "precomputed_shadowmap_atlas_rect_5",
+     "field": "m_vPrecomputedShadowmapAtlasRect5",
+     "type": "KEY_TYPE_VECTOR4D",
      "count": 1
     },
     {

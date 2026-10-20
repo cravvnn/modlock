@@ -52,6 +52,10 @@ func (e CCitadelBaseAbility) FlCooldownEnd() Number[float32] {
 	return Number[float32]{e.field("m_flCooldownEnd")}
 }
 
+func (e CCitadelBaseAbility) FlStoppedCooldownRemaining() Number[float32] {
+	return Number[float32]{e.field("m_flStoppedCooldownRemaining")}
+}
+
 func (e CCitadelBaseAbility) FlCastCompletedTime() Number[float32] {
 	return Number[float32]{e.field("m_flCastCompletedTime")}
 }
@@ -62,6 +66,10 @@ func (e CCitadelBaseAbility) FlChannelStartTime() Number[float32] {
 
 func (e CCitadelBaseAbility) FlCastDelayStartTime() Number[float32] {
 	return Number[float32]{e.field("m_flCastDelayStartTime")}
+}
+
+func (e CCitadelBaseAbility) FlCastDelaySpeedScale() Number[float32] {
+	return Number[float32]{e.field("m_flCastDelaySpeedScale")}
 }
 
 func (e CCitadelBaseAbility) EAbilitySlot() Number[uint16] {
@@ -3996,6 +4004,86 @@ func (e CCitadel_Ability_Necro_ZombieWall) VecHitUnits() List[uint32] {
 
 type CCitadel_Ability_Nikuman CEntityInstance
 
+type CCitadel_Ability_Nurse_AdrenalineRush CEntityInstance
+
+type CCitadel_Ability_Nurse_Fear CEntityInstance
+
+func (e CCitadel_Ability_Nurse_Fear) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Nurse_Fear", name}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) VecBuildupTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecBuildupTargets")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) VecFearedTargets() List[uint32] {
+	return List[uint32]{e.field("m_vecFearedTargets")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) FlNextFakeBulletTime() Number[float32] {
+	return Number[float32]{e.field("m_flNextFakeBulletTime")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) FlNextTickTime() Number[float32] {
+	return Number[float32]{e.field("m_flNextTickTime")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) FlNextBuildupTickTime() Number[float32] {
+	return Number[float32]{e.field("m_flNextBuildupTickTime")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) NCastDelayParticleIdx() Number[int32] {
+	return Number[int32]{e.field("m_nCastDelayParticleIdx")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) NChannelParticleIdx() Number[int32] {
+	return Number[int32]{e.field("m_nChannelParticleIdx")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) PlayerAngles() Angles {
+	return Angles{e.field("m_playerAngles")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) NLeechStacksAtCast() Number[int32] {
+	return Number[int32]{e.field("m_nLeechStacksAtCast")}
+}
+
+func (e CCitadel_Ability_Nurse_Fear) VecRecoilDirection() Vector {
+	return Vector{e.field("m_vecRecoilDirection")}
+}
+
+type CCitadel_Ability_Nurse_HealingNeedles CEntityInstance
+
+func (e CCitadel_Ability_Nurse_HealingNeedles) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Nurse_HealingNeedles", name}
+}
+
+func (e CCitadel_Ability_Nurse_HealingNeedles) FlChargeProgress() Number[float32] {
+	return Number[float32]{e.field("m_flChargeProgress")}
+}
+
+func (e CCitadel_Ability_Nurse_HealingNeedles) BNeedlesOut() Bool {
+	return Bool{e.field("m_bNeedlesOut")}
+}
+
+func (e CCitadel_Ability_Nurse_HealingNeedles) TSwapInFinishTime() Number[float32] {
+	return Number[float32]{e.field("m_tSwapInFinishTime")}
+}
+
+func (e CCitadel_Ability_Nurse_HealingNeedles) HOriginalGun() Handle[CCitadelBaseAbility] {
+	return Handle[CCitadelBaseAbility]{e.field("m_hOriginalGun")}
+}
+
+type CCitadel_Ability_Nurse_LeechTherapy CEntityInstance
+
+func (e CCitadel_Ability_Nurse_LeechTherapy) field(name string) Field {
+	return Field{e.Handle, "CCitadel_Ability_Nurse_LeechTherapy", name}
+}
+
+func (e CCitadel_Ability_Nurse_LeechTherapy) ILeechCount() Number[int32] {
+	return Number[int32]{e.field("m_iLeechCount")}
+}
+
 type CCitadel_Ability_Opera_Ability01 CEntityInstance
 
 type CCitadel_Ability_Opera_Ability02 CEntityInstance
@@ -4479,6 +4567,8 @@ func (e CCitadel_Ability_Necro_PrimaryWeapon) TTetherBreakTime() Number[float32]
 func (e CCitadel_Ability_Necro_PrimaryWeapon) BHasTetherTarget() Bool {
 	return Bool{e.field("m_bHasTetherTarget")}
 }
+
+type CCitadel_Ability_Nurse_HealingNeedleWeapon CEntityInstance
 
 type CCitadel_Ability_Priest_CrossbowWeapon CEntityInstance
 
@@ -6596,6 +6686,10 @@ func (e CCitadel_UtilityUpgrade_RocketBooster) BImpulseApplied() Bool {
 
 func (e CCitadel_UtilityUpgrade_RocketBooster) BCanCrash() Bool {
 	return Bool{e.field("m_bCanCrash")}
+}
+
+func (e CCitadel_UtilityUpgrade_RocketBooster) BPlayLandingSound() Bool {
+	return Bool{e.field("m_bPlayLandingSound")}
 }
 
 func (e CCitadel_UtilityUpgrade_RocketBooster) VecCrashPosition() Vector {
