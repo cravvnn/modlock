@@ -24,6 +24,15 @@ std::expected<size_t, std::string> UniqueOffset(const ModuleImage& image,
   return hits.front();
 }
 
+// IsRipRelativeLoad reports whether the seven bytes at site are a REX.W LEA
+// or MOV whose ModRM selects [rip + rel32].
+bool IsRipRelativeLoad(std::span<const uint8_t> bytes, size_t site) {
+  const uint8_t rex = bytes[site];
+  const uint8_t opcode = bytes[site + 1];
+  const uint8_t modrm = bytes[site + 2];
+  return (rex & 0xF8) == 0x48 && (opcode == 0x8D || opcode == 0x8B) && (modrm & 0xC7) == 0x05;
+}
+
 }  // namespace
 
 std::string_view GameModuleFile(GameModule module) {
@@ -65,11 +74,20 @@ std::expected<void*, std::string> ResolveSignature(const ModuleImage& image,
     return std::unexpected("signature '" + std::string(signature.id) +
                            "' does not reach a relative call");
   }
+  if (signature.target == SignatureTarget::kRipRelative && !IsRipRelativeLoad(bytes, site)) {
+    return std::unexpected("signature '" + std::string(signature.id) +
+                           "' does not reach a RIP-relative LEA or MOV");
+  }
   std::int32_t rel32 = 0;
   std::memcpy(&rel32, bytes.data() + site + length - sizeof(rel32), sizeof(rel32));
-  const std::uintptr_t target = image.base() + static_cast<std::uintptr_t>(site) + length +
-                                static_cast<std::uintptr_t>(static_cast<std::int64_t>(rel32));
-  return reinterpret_cast<void*>(target);
+  // A stale delta can still decode as some instruction; a target outside the
+  // image is never the recorded function or global.
+  const std::int64_t target = static_cast<std::int64_t>(site + length) + rel32;
+  if (target < 0 || static_cast<std::uint64_t>(target) >= bytes.size()) {
+    return std::unexpected("signature '" + std::string(signature.id) +
+                           "' resolves outside the module image");
+  }
+  return reinterpret_cast<void*>(image.base() + static_cast<std::uintptr_t>(target));
 }
 
 std::expected<void*, std::string> ResolveSignature(const ModuleImage& image, std::string_view id) {

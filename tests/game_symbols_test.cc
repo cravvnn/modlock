@@ -95,7 +95,7 @@ TEST(GameSymbols, EveryTargetRequiresOneMatch) {
 }
 
 TEST(GameSymbols, RelativeInstructionsPreserveSignedDisplacements) {
-  for (const int32_t displacement : {-16, 16}) {
+  for (const int32_t displacement : {-8, 16}) {
     Image image;
     image.bytes[4] = 0xcc;
     image.bytes[5] = 0xe8;
@@ -125,6 +125,27 @@ TEST(GameSymbols, RelativeInstructionsRejectTruncationAndWrappingOffsets) {
   EXPECT_FALSE(ResolveSignature(image, Relative("E8", SignatureTarget::kCall, 0)));
   EXPECT_FALSE(ResolveSignature(image, Relative("E8", SignatureTarget::kRipRelative, 0)));
   EXPECT_FALSE(ResolveSignature(image, Relative("CC", SignatureTarget::kCall, 0)));
+}
+
+TEST(GameSymbols, RelativeInstructionsRejectOtherOpcodesAndOutsideTargets) {
+  Image image;
+  image.bytes[4] = 0xcc;
+  image.bytes[5] = 0x41;
+  image.bytes[6] = 0x8b;
+  image.bytes[7] = 0xc5;
+  EXPECT_FALSE(ResolveSignature(image, Relative("CC 41 8B C5", SignatureTarget::kRipRelative, 1)));
+
+  image.bytes[5] = 0x4c;
+  image.bytes[6] = 0x8d;
+  image.bytes[7] = 0x0d;
+  for (const int32_t displacement : {-13, 20}) {
+    std::memcpy(image.bytes.data() + 8, &displacement, sizeof(displacement));
+    EXPECT_FALSE(
+        ResolveSignature(image, Relative("CC 4C 8D 0D", SignatureTarget::kRipRelative, 1)));
+  }
+  const int32_t inside = 19;
+  std::memcpy(image.bytes.data() + 8, &inside, sizeof(inside));
+  EXPECT_TRUE(ResolveSignature(image, Relative("CC 4C 8D 0D", SignatureTarget::kRipRelative, 1)));
 }
 
 // The load tests replace the recorded signatures, so they end by loading the
