@@ -66,7 +66,11 @@ endif()
 message(STATUS "abseil: ${MODLOCK_ABSEIL_DIR}")
 message(STATUS "protobuf fork: ${MODLOCK_PROTOBUF_DIR}")
 
-if(WIN32)
+# Abseil is one shared library on Windows and Linux. Linked statically, each
+# of libprotobuf and the SDK would carry its own copy, and two copies in one
+# process disagree on global state such as the hash seed, so a map filled by
+# one cannot be read by the other.
+if(NOT APPLE)
   set(BUILD_SHARED_LIBS ON)
   set(ABSL_BUILD_MONOLITHIC_SHARED_LIBS ON)
 endif()
