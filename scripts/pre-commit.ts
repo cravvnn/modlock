@@ -4,7 +4,10 @@
 // unstaged edits. tsstyle then checks the staged TypeScript for code
 // paragraphs, and oxlint lints the staged code as it stands in the working
 // tree, since its type-aware rules need the project around each file.
-// scripts/install-hooks.sh installs it, and bun install runs that script.
+// scripts/install-hooks.sh installs it, and bun install runs that script. A
+// checkout with no node_modules, such as a new git worktree, installs them
+// first, since oxfmt and oxlint come from there.
+import { existsSync } from 'node:fs'
 import { checkSource } from './tsstyle.js'
 
 /** formatPattern matches the file names oxfmt formats. */
@@ -109,8 +112,27 @@ function lint(files: string[]): boolean {
   return false
 }
 
+/** ensureDependencies installs the packages when the checkout has none. */
+function ensureDependencies(): void {
+  if (existsSync('node_modules')) {
+    return
+  }
+
+  // Install from the lockfile so the tools match the pinned versions.
+  console.error('pre-commit: node_modules is missing, running bun install')
+  const result = run(['bun', 'install', '--frozen-lockfile'])
+  if (result.code !== 0) {
+    console.error((result.stdout + result.stderr).trim())
+    console.error('pre-commit: bun install failed, so the checks cannot run')
+    process.exit(1)
+  }
+}
+
 /** main checks the staged files and exits with status 1 on any finding. */
 function main(): void {
+  // Install the packages the checks need.
+  ensureDependencies()
+
   // Select the staged handwritten files.
   const staged = listFiles([
     'git',
