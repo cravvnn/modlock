@@ -81,7 +81,7 @@ Script mods need nothing else installed; a Go mod needs
 ```sh
 modlock new my-mod
 cd my-mod
-modlock dev
+modlock dev --watch
 ```
 
 `modlock new` writes a TypeScript project:
@@ -98,8 +98,9 @@ TypeScript, [`bounty`](examples/bounty) in Luau and [`race`](examples/race) in
 Go, all in the [`examples`](examples) directory.
 
 `modlock dev` builds the mod, starts a local server, and launches Deadlock
-through Steam to join. Each time you save, it rebuilds the mod and swaps it in.
-A failed build prints its errors and keeps the last good build running. The
+through Steam to join. With `--watch`, each time you save, it rebuilds the mod
+and swaps it in; a failed build prints its errors and keeps the last good build
+running. The watch skips `build/`, `node_modules`, hidden files and `*.log`. The
 terminal shows the mod's log, reloads and player joins; the server console goes
 to `build/server.log`.
 
@@ -114,13 +115,13 @@ sandbox even where the game is installed.
 
 ### Commands
 
-| Command                 | Effect                                                              |
-| ----------------------- | ------------------------------------------------------------------- |
-| `modlock new DIR`       | Create a mod project in `DIR`.                                      |
-| `modlock build`         | Check the mod and write the built mod to `build/`.                  |
-| `modlock dev`           | Run the mod in a local server, join it, and reload it on each save. |
-| `modlock play [MOD...]` | Run built mods in a local server and join it.                       |
-| `modlock publish`       | Build and check the mod, then [publish it](#publishing).            |
+| Command                 | Effect                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `modlock new DIR`       | Create a mod project in `DIR`.                                                           |
+| `modlock build`         | Check the mod and write the built mod to `build/`.                                       |
+| `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save. |
+| `modlock play [MOD...]` | Run built mods in a local server and join it.                                            |
+| `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                 |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:
 

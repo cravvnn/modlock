@@ -18,7 +18,7 @@ const settle = 150 * time.Millisecond
 
 // Watch calls changed after the project's sources change, once per burst of
 // changes, until ctx ends. It skips the build directory, the installed
-// library and hidden directories.
+// library, hidden directories and log files.
 func (p *Project) Watch(ctx context.Context, changed func()) error {
 	// Watch every source directory; fsnotify watches one level each.
 	watcher, err := fsnotify.NewWatcher()
@@ -65,11 +65,15 @@ func (p *Project) Watch(ctx context.Context, changed func()) error {
 }
 
 // skip reports whether path is outside the sources: the build directory, the
-// installed packages, or within a hidden file or directory.
+// installed packages, a log file, or within a hidden file or directory. A log
+// written into the project would otherwise rebuild the mod on every line.
 func (p *Project) skip(path string) bool {
 	relative, err := filepath.Rel(p.Dir, path)
 	if err != nil || relative == "." {
 		return false
+	}
+	if filepath.Ext(path) == ".log" {
+		return true
 	}
 	parts := strings.Split(relative, string(filepath.Separator))
 	return parts[0] == BuildDir || parts[0] == "node_modules" || slices.ContainsFunc(parts, func(part string) bool {

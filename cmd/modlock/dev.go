@@ -2,19 +2,24 @@ package main
 
 import (
 	"path/filepath"
+	"slices"
 
 	"github.com/aperturerobotics/cli"
 	"github.com/paralin/modlock/project"
 	"github.com/pkg/errors"
 )
 
-// devCommand runs a mod in a local server and reloads it on each save.
+// devCommand runs a mod in a local server and, with --watch, reloads it on
+// each save.
 func devCommand(out *printer) *cli.Command {
 	return &cli.Command{
 		Name:      "dev",
-		Usage:     "run the mod in a local server, or in the sandbox without the game, and reload it on each save",
+		Usage:     "build the mod and run it in a local server, or in the sandbox without the game",
 		ArgsUsage: "[DIRECTORY]",
-		Flags:     sessionFlags,
+		Flags: append(slices.Clone(sessionFlags), &cli.BoolFlag{
+			Name:  "watch",
+			Usage: "rebuild the mod and reload it on each save",
+		}),
 		Action: func(c *cli.Context) error {
 			// Open the project.
 			opened, err := openProject(c)
@@ -22,9 +27,10 @@ func devCommand(out *printer) *cli.Command {
 				return err
 			}
 
-			// Build now and after each save. The first good build starts the
-			// server and each later one reloads the mod; a failed build keeps
-			// the running one. Watch calls rebuild on one goroutine.
+			// Build now and, with --watch, after each save. The first good
+			// build starts the server and each later one reloads the mod; a
+			// failed build keeps the running one. Watch calls rebuild on one
+			// goroutine.
 			var running server
 			started := make(chan error, 1)
 			rebuild := func() {
@@ -44,9 +50,13 @@ func devCommand(out *printer) *cli.Command {
 				started <- err
 			}
 
-			// Build once, then after each save.
+			// Build once, then after each save when watching.
+			watch := c.Bool("watch")
 			go func() {
 				rebuild()
+				if !watch {
+					return
+				}
 				err := opened.Watch(c.Context, func() {
 					out.note("rebuilding", opened.Manifest.GetSlug())
 					rebuild()

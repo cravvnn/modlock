@@ -51,7 +51,7 @@ func newCommand(out *printer) *cli.Command {
 
 			// Name the next step.
 			out.note("created", created.Manifest.GetSlug(), "in", created.Dir)
-			out.note("next: cd", c.Args().First(), "&& modlock dev")
+			out.note("next: cd", c.Args().First(), "&& modlock dev --watch")
 			return nil
 		},
 	}
