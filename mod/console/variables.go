@@ -1271,6 +1271,10 @@ var CitadelCrosshairOutOfRangeDist = Variable[float32]{"citadel_crosshair_out_of
 
 var CitadelDeadpackInstantShot = Variable[bool]{"citadel_deadpack_instant_shot"}
 
+// CitadelDeadpackUltChargeNavpath: Experimental: the ultimate charge follows a
+// server-side NavSpace path to its target, and the client stops predicting it.
+var CitadelDeadpackUltChargeNavpath = Variable[bool]{"citadel_deadpack_ult_charge_navpath"}
+
 // CitadelDeathLingerTime: How logn does the player icon linger on the minimap
 // after they die.
 var CitadelDeathLingerTime = Variable[float32]{"citadel_death_linger_time"}
@@ -4311,6 +4315,10 @@ var LbDebugVisualizeFogShadowedLights = Variable[int32]{"lb_debug_visualize_fog_
 
 // LbDebugVisualizeLights: SceneSystem/LightBinner/Debug Visualize Lights.
 var LbDebugVisualizeLights = Variable[int32]{"lb_debug_visualize_lights"}
+
+// LbDebugVisualizePrecomputedShadowAtlasLights: SceneSystem/LightBinner/Debug
+// Visualize Precomputed Shadow Atlas Lights.
+var LbDebugVisualizePrecomputedShadowAtlasLights = Variable[bool]{"lb_debug_visualize_precomputed_shadow_atlas_lights"}
 
 var LbDebugVisualizeShadowedLightDetails = Variable[bool]{"lb_debug_visualize_shadowed_light_details"}
 

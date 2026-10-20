@@ -876,6 +876,13 @@ export class CNPC_NecroSkele extends CAI_CitadelNPC {}
 export interface CNPC_NecroSkele extends Fields<typeof fieldsCNPC_NecroSkele> {}
 define(CNPC_NecroSkele, 'CNPC_NecroSkele', fieldsCNPC_NecroSkele)
 
+const fieldsCNPC_NurseLeech = {
+  m_hNurse: 'CBaseEntity',
+} as const
+export class CNPC_NurseLeech extends CAI_CitadelNPC {}
+export interface CNPC_NurseLeech extends Fields<typeof fieldsCNPC_NurseLeech> {}
+define(CNPC_NurseLeech, 'CNPC_NurseLeech', fieldsCNPC_NurseLeech)
+
 const fieldsCNPC_Trooper = {
   m_iLane: 'int32',
   m_hSpawnWaveController: 'CInfoTrooperBossSpawn',
@@ -4929,9 +4936,11 @@ const fieldsCCitadelBaseAbility = {
   m_bToggleState: 'bool',
   m_flCooldownStart: 'float32',
   m_flCooldownEnd: 'float32',
+  m_flStoppedCooldownRemaining: 'float32',
   m_flCastCompletedTime: 'float32',
   m_flChannelStartTime: 'float32',
   m_flCastDelayStartTime: 'float32',
+  m_flCastDelaySpeedScale: 'float32',
   m_eAbilitySlot: 'uint16',
   m_flPostCastDelayEndTime: 'float32',
   m_iRemainingCharges: 'int32',
@@ -6881,6 +6890,42 @@ define(CCitadel_Ability_Necro_ZombieWall, 'CCitadel_Ability_Necro_ZombieWall', f
 export class CCitadel_Ability_Nikuman extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Nikuman, 'CCitadel_Ability_Nikuman', {})
 
+export class CCitadel_Ability_Nurse_AdrenalineRush extends CCitadelBaseAbility {}
+define(CCitadel_Ability_Nurse_AdrenalineRush, 'CCitadel_Ability_Nurse_AdrenalineRush', {})
+
+const fieldsCCitadel_Ability_Nurse_Fear = {
+  m_vecBuildupTargets: 'list:handle',
+  m_vecFearedTargets: 'list:handle',
+  m_flNextFakeBulletTime: 'float32',
+  m_flNextTickTime: 'float32',
+  m_flNextBuildupTickTime: 'float32',
+  m_nCastDelayParticleIdx: 'int32',
+  m_nChannelParticleIdx: 'int32',
+  m_playerAngles: 'angles',
+  m_nLeechStacksAtCast: 'int32',
+  m_vecRecoilDirection: 'vector',
+} as const
+export class CCitadel_Ability_Nurse_Fear extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Nurse_Fear extends Fields<typeof fieldsCCitadel_Ability_Nurse_Fear> {}
+define(CCitadel_Ability_Nurse_Fear, 'CCitadel_Ability_Nurse_Fear', fieldsCCitadel_Ability_Nurse_Fear)
+
+const fieldsCCitadel_Ability_Nurse_HealingNeedles = {
+  m_flChargeProgress: 'float32',
+  m_bNeedlesOut: 'bool',
+  m_tSwapInFinishTime: 'float32',
+  m_hOriginalGun: 'CCitadelBaseAbility',
+} as const
+export class CCitadel_Ability_Nurse_HealingNeedles extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Nurse_HealingNeedles extends Fields<typeof fieldsCCitadel_Ability_Nurse_HealingNeedles> {}
+define(CCitadel_Ability_Nurse_HealingNeedles, 'CCitadel_Ability_Nurse_HealingNeedles', fieldsCCitadel_Ability_Nurse_HealingNeedles)
+
+const fieldsCCitadel_Ability_Nurse_LeechTherapy = {
+  m_iLeechCount: 'int32',
+} as const
+export class CCitadel_Ability_Nurse_LeechTherapy extends CCitadelBaseAbility {}
+export interface CCitadel_Ability_Nurse_LeechTherapy extends Fields<typeof fieldsCCitadel_Ability_Nurse_LeechTherapy> {}
+define(CCitadel_Ability_Nurse_LeechTherapy, 'CCitadel_Ability_Nurse_LeechTherapy', fieldsCCitadel_Ability_Nurse_LeechTherapy)
+
 export class CCitadel_Ability_Opera_Ability01 extends CCitadelBaseAbility {}
 define(CCitadel_Ability_Opera_Ability01, 'CCitadel_Ability_Opera_Ability01', {})
 
@@ -7120,6 +7165,9 @@ const fieldsCCitadel_Ability_Necro_PrimaryWeapon = {
 export class CCitadel_Ability_Necro_PrimaryWeapon extends CCitadel_Ability_PrimaryWeapon {}
 export interface CCitadel_Ability_Necro_PrimaryWeapon extends Fields<typeof fieldsCCitadel_Ability_Necro_PrimaryWeapon> {}
 define(CCitadel_Ability_Necro_PrimaryWeapon, 'CCitadel_Ability_Necro_PrimaryWeapon', fieldsCCitadel_Ability_Necro_PrimaryWeapon)
+
+export class CCitadel_Ability_Nurse_HealingNeedleWeapon extends CCitadel_Ability_PrimaryWeapon {}
+define(CCitadel_Ability_Nurse_HealingNeedleWeapon, 'CCitadel_Ability_Nurse_HealingNeedleWeapon', {})
 
 export class CCitadel_Ability_Priest_CrossbowWeapon extends CCitadel_Ability_PrimaryWeapon {}
 define(CCitadel_Ability_Priest_CrossbowWeapon, 'CCitadel_Ability_Priest_CrossbowWeapon', {})
@@ -8419,6 +8467,7 @@ const fieldsCCitadel_UtilityUpgrade_RocketBooster = {
   m_bCrashingDown: 'bool',
   m_bImpulseApplied: 'bool',
   m_bCanCrash: 'bool',
+  m_bPlayLandingSound: 'bool',
   m_vecCrashPosition: 'vector',
   m_vecCrashDirection: 'vector',
 } as const

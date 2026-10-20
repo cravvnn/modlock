@@ -924,6 +924,11 @@ export interface Variables {
   citadel_crate_spawn_initial_delay: number
   citadel_crosshair_out_of_range_dist: number
   citadel_deadpack_instant_shot: boolean
+  /**
+   * Experimental: the ultimate charge follows a server-side NavSpace path to
+   * its target, and the client stops predicting it.
+   */
+  citadel_deadpack_ult_charge_navpath: boolean
   /** How logn does the player icon linger on the minimap after they die. */
   citadel_death_linger_time: number
   citadel_death_replay_enabled: boolean
@@ -3089,6 +3094,10 @@ export interface Variables {
   lb_debug_visualize_fog_shadowed_lights: number
   /** SceneSystem/LightBinner/Debug Visualize Lights. */
   lb_debug_visualize_lights: number
+  /**
+   * SceneSystem/LightBinner/Debug Visualize Precomputed Shadow Atlas Lights.
+   */
+  lb_debug_visualize_precomputed_shadow_atlas_lights: boolean
   lb_debug_visualize_shadowed_light_details: boolean
   /** SceneSystem/LightBinner/Debug Visualize Shadowed Lights. */
   lb_debug_visualize_shadowed_lights: number

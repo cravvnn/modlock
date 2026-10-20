@@ -950,6 +950,16 @@ func (e CNPC_NecroSkele) FlSpawnDuration() Number[float32] {
 	return Number[float32]{e.field("m_flSpawnDuration")}
 }
 
+type CNPC_NurseLeech CEntityInstance
+
+func (e CNPC_NurseLeech) field(name string) Field {
+	return Field{e.Handle, "CNPC_NurseLeech", name}
+}
+
+func (e CNPC_NurseLeech) HNurse() Handle[CBaseEntity] {
+	return Handle[CBaseEntity]{e.field("m_hNurse")}
+}
+
 type CNPC_Trooper CEntityInstance
 
 func (e CNPC_Trooper) field(name string) Field {

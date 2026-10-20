@@ -208,6 +208,7 @@ type BooleanVariable0 =
 	| "citadel_corrupted_items_force_variance"
 	| "citadel_crate_spawn_enabled"
 	| "citadel_deadpack_instant_shot"
+	| "citadel_deadpack_ult_charge_navpath"
 	| "citadel_death_replay_enabled"
 	| "citadel_debug_ability_beams"
 	| "citadel_debug_barrier_damage_order"
@@ -408,9 +409,9 @@ type BooleanVariable0 =
 	| "citadel_use_stateful_ready_on_client"
 	| "citadel_use_unit_query_system"
 	| "citadel_use_wip_models"
-	| "citadel_vanguard_enabled"
 
 type BooleanVariable1 =
+	| "citadel_vanguard_enabled"
 	| "citadel_vanguard_instant_capture"
 	| "citadel_viscous_bowling_radius_debug"
 	| "citadel_viscous_telepunch_trace_debug"
@@ -607,6 +608,7 @@ type BooleanVariable1 =
 	| "lb_debug_light_bounds"
 	| "lb_debug_shadow_atlas"
 	| "lb_debug_shadowtile_atlas"
+	| "lb_debug_visualize_precomputed_shadow_atlas_lights"
 	| "lb_debug_visualize_shadowed_light_details"
 	| "lb_dynamic_shadow_penumbra"
 	| "lb_dynamic_shadow_resolution"
@@ -809,10 +811,10 @@ type BooleanVariable1 =
 	| "navlocal_debug_navlink_isect"
 	| "navlocal_parallel_trace_path_for_obstacle"
 	| "navspace_create_water_smooth_connections"
-	| "navspace_create_water_surface_connections"
-	| "navspace_create_water_transition_connections"
 
 type BooleanVariable2 =
+	| "navspace_create_water_surface_connections"
+	| "navspace_create_water_transition_connections"
 	| "navspace_path_use_water_level_locator"
 	| "net_async_clientconnect"
 	| "net_culloptimization"
@@ -1211,10 +1213,10 @@ type BooleanVariable2 =
 	| "sv_audio_debug_pawn_surface_data"
 	| "sv_audio_log_citadel_audio_filter"
 	| "sv_audio_log_participant_start_messages"
-	| "sv_autosave"
-	| "sv_banid_enabled"
 
 type BooleanVariable3 =
+	| "sv_autosave"
+	| "sv_banid_enabled"
 	| "sv_cheats"
 	| "sv_citadel_ability_test_fail_all"
 	| "sv_citadel_bebop_beam_draw_points"
