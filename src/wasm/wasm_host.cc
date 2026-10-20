@@ -601,6 +601,7 @@ bool WasmPlugin::Start() {
                                 [this](std::string_view map) {
                                   map_ = std::string(map);
                                   host_.game.WorldReady();
+                                  game_.WorldReady();
                                   ListenForRestart();
                                   ListenToPlayers();
                                   ListenToCombat();

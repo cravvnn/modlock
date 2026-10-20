@@ -150,6 +150,7 @@ const float* AbsOriginOf(const EntityLayout& layout, void* pawn) {
 }
 
 std::expected<StaminaLayout, std::string> ResolveStaminaLayout();
+void PrepareUpgradeBonuses();
 
 uint32_t ReadUint32(const unsigned char* base, size_t offset) {
   uint32_t value = 0;
@@ -519,6 +520,10 @@ PawnObserver::Seams PawnObserver::LiveSeams(bool movement_enabled) {
     return std::unexpected("native ability charge capability requires Windows");
 #endif
   };
+  seams.prepare = [] {
+    static_cast<void>(ResolveVirtualSlot("entity.max-health"));
+    PrepareUpgradeBonuses();
+  };
   return seams;
 }
 
@@ -543,6 +548,11 @@ std::expected<void, std::string> PawnObserver::ResolveLayout() {
   layout_ = *layout;
   offsets_ok_ = true;
   return {};
+}
+
+void PawnObserver::Prepare() {
+  static_cast<void>(ResolveLayout());
+  if (seams_.prepare) seams_.prepare();
 }
 
 std::expected<std::pair<unsigned char*, unsigned char*>, std::string>
@@ -1975,7 +1985,21 @@ std::expected<UpgradeBonusLayout, std::string> LocateUpgradeBonuses() {
       .notify = reinterpret_cast<void (*)(void*)>(*notify),
   };
 }
+
+// UpgradeBonusLayoutOnce locates the layout once for the process: server.dll
+// and its schema stay loaded across worlds. Locating it walks the module's
+// type information, which costs a frame, so Prepare does it at map load.
+const std::expected<UpgradeBonusLayout, std::string>& UpgradeBonusLayoutOnce() {
+  static const auto layout = LocateUpgradeBonuses();
+  return layout;
+}
 #endif
+
+void PrepareUpgradeBonuses() {
+#if defined(_WIN32)
+  static_cast<void>(UpgradeBonusLayoutOnce());
+#endif
+}
 
 // UpgradeBonuses is the pawn's upgrade bonus modifier and the layout that
 // reads it.
@@ -1987,9 +2011,7 @@ struct UpgradeBonuses {
 std::expected<UpgradeBonuses, std::string> UpgradeBonusModifier(void* pawn) {
 #if defined(_WIN32)
   if (!pawn) return std::unexpected("upgrade bonuses: pawn unavailable");
-  // A pawn exists only once server.dll and its schema are loaded, so the
-  // first lookup settles the layout for the process.
-  static const auto layout = LocateUpgradeBonuses();
+  const auto& layout = UpgradeBonusLayoutOnce();
   if (!layout) return std::unexpected("upgrade bonuses: " + layout.error());
   unsigned char* property = nullptr;
   std::memcpy(&property, static_cast<unsigned char*>(pawn) + layout->modifier_property,

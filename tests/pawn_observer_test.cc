@@ -220,6 +220,28 @@ PawnObserver::Seams HeroSeamsFor(Fixture& fixture) {
   return seams;
 }
 
+TEST(PawnObserver, PrepareResolvesBeforeAnyPlayerArrives) {
+  Fixture fixture;
+  fixture.occupied = false;
+  auto seams = SeamsFor(fixture);
+  int layouts = 0;
+  int prepared = 0;
+  seams.layout = [&layouts]() -> std::expected<EntityLayout, std::string> {
+    ++layouts;
+    return FixtureLayout();
+  };
+  seams.prepare = [&prepared] { ++prepared; };
+  PawnObserver observer(seams);
+  observer.Prepare();
+  EXPECT_EQ(layouts, 1);
+  EXPECT_EQ(prepared, 1);
+
+  // The first observation of an occupied slot reuses the layout Prepare found.
+  fixture.occupied = true;
+  static_cast<void>(observer.Observe(fixture.slot));
+  EXPECT_EQ(layouts, 1);
+}
+
 TEST(PawnObserver, ResetsStartingEconomyBeforeGrantingHigherLowerAndZeroBudgets) {
   Fixture fixture;
   fixture.occupied = true;

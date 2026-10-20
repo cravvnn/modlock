@@ -263,6 +263,10 @@ class MODLOCK_API PawnObserver {
     std::function<std::optional<int32_t>(void*)> effective_max_health;
     // Zero means the native ability has no charges; unavailable is an error.
     std::function<std::expected<int32_t, std::string>(void*)> max_charges;
+    // Prepare resolves, ahead of any pawn, what a pawn's first sample would
+    // otherwise find in the server module: its max health slot and its
+    // upgrade bonus layout.
+    std::function<void()> prepare;
   };
 
   // LiveSeams builds the production seams against the mapped game modules;
@@ -352,6 +356,11 @@ class MODLOCK_API PawnObserver {
   // Invalidate drops the frame-scoped pawn and schema layout resolved for the
   // current world. The next observation resolves a fresh world layout.
   void Invalidate();
+
+  // Prepare resolves the world's layout and the module lookups a first
+  // sample needs, so a world's first pawn costs a frame no more than later
+  // ones. Call it at map load; a failure is left for Observe to report.
+  void Prepare();
 
   // PawnForSlot returns the observed pawn pointer during the current frame
   // window, or nullptr after Observe starts the next frame.

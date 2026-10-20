@@ -1016,6 +1016,16 @@ std::vector<Game::Restored> Game::TakeRestored() { return std::exchange(restored
 
 std::optional<std::string> Game::TakeNpcsRestored() { return std::exchange(npcs_restored_, {}); }
 
+void Game::WorldReady() {
+  // Each lookup is kept once found; one that fails here is reported by the
+  // call that needs it.
+  static_cast<void>(services_.Heroes());
+  static_cast<void>(services_.Selection());
+  static_cast<void>(services_.Modifiers());
+  static_cast<void>(services_.ModifierState("MODIFIER_STATE_HOLDING_IDOL"));
+  observer_.Prepare();
+}
+
 void Game::WorldEnding() {
   RemoveWorld();
   world_.reset();
