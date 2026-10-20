@@ -131,7 +131,9 @@ struct MODLOCK_API TraceOptions {
   std::uint8_t target_detail_layer = 0;
   // Object bits: static, keyframed, dynamic, locatable.
   std::uint8_t object_set = 0x0f;
-  std::uint8_t collision_group = 0;
+  // Group 3 is the one the game's own traces pass most. Since build 6801 a
+  // group 0 query hits every trigger volume whatever its layers.
+  std::uint8_t collision_group = 3;
   bool hit_solid = true;
   bool require_contacts = false;
   bool hit_trigger = false;
