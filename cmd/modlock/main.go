@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// Run the command.
-	if err := app.RunContext(ctx, os.Args); err != nil {
+	if err := app.RunContext(ctx, flagsFirst(app.Commands, os.Args)); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
