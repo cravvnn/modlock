@@ -26,7 +26,7 @@ func newCommand(out *printer) *cli.Command {
 		Usage:     "create a mod project in a new directory named after the mod",
 		ArgsUsage: "DIRECTORY",
 		Flags: []cli.Flag{
-			&cli.StringFlag{Name: "name", Usage: "the mod's display name (default: the directory name)"},
+			&cli.StringFlag{Name: "name", Usage: "the mod's display name (default: the directory name in title case)"},
 			&cli.StringFlag{Name: "language", Value: "typescript", Usage: "the source language: typescript, javascript, luau, python or go"},
 		},
 		Action: func(c *cli.Context) error {

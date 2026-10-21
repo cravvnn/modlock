@@ -770,17 +770,17 @@ Every project has a `mod.json` at its root:
 }
 ```
 
-| Field       | Required | Value                                                                               |
-| ----------- | -------- | ----------------------------------------------------------------------------------- |
-| `slug`      | yes      | The mod's identifier: lowercase letters, digits and hyphens.                        |
-| `name`      | yes      | The name players see.                                                               |
-| `version`   | yes      | A semantic version. Raise it for each publication.                                  |
-| `language`  | yes      | `LANGUAGE_TYPESCRIPT`, `LANGUAGE_JAVASCRIPT`, `LANGUAGE_LUAU` or `LANGUAGE_PYTHON`. |
-| `map`       |          | The [map](#map) the mod plays on.                                                   |
-| `movement`  |          | A [movement model](#movement) that replaces how heroes move.                        |
-| `abilities` |          | [Ability changes](#abilities) for the server and each player's game.                |
-| `settings`  |          | [Choices](#settings) each player makes about the mod.                               |
-| `metrics`   |          | [Totals](#metrics) the mod keeps for each player.                                   |
+| Field       | Required | Value                                                                                              |
+| ----------- | -------- | -------------------------------------------------------------------------------------------------- |
+| `slug`      | yes      | The mod's identifier: lowercase letters, digits and hyphens.                                       |
+| `name`      | yes      | The name players see.                                                                              |
+| `version`   | yes      | A semantic version. Raise it for each publication.                                                 |
+| `language`  | yes      | `LANGUAGE_TYPESCRIPT`, `LANGUAGE_JAVASCRIPT`, `LANGUAGE_LUAU`, `LANGUAGE_PYTHON` or `LANGUAGE_GO`. |
+| `map`       |          | The [map](#map) the mod plays on.                                                                  |
+| `movement`  |          | A [movement model](#movement) that replaces how heroes move.                                       |
+| `abilities` |          | [Ability changes](#abilities) for the server and each player's game.                               |
+| `settings`  |          | [Choices](#settings) each player makes about the mod.                                              |
+| `metrics`   |          | [Totals](#metrics) the mod keeps for each player.                                                  |
 
 ### Map
 

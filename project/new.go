@@ -99,7 +99,7 @@ func New(ctx context.Context, dir, name string, language wasm.Manifest_Language,
 		return nil, errors.Wrap(err, "name the directory as the mod's slug")
 	}
 	if name == "" {
-		name = slug
+		name = title(slug)
 	}
 	if entries, err := os.ReadDir(dir); err == nil && len(entries) > 0 {
 		return nil, errors.Errorf("%s is not empty", dir)
@@ -186,4 +186,13 @@ func New(ctx context.Context, dir, name string, language wasm.Manifest_Language,
 // scriptString quotes text as a single-quoted JavaScript string.
 func scriptString(text string) string {
 	return "'" + strings.NewReplacer(`\`, `\\`, `'`, `\'`, "\n", `\n`).Replace(text) + "'"
+}
+
+// title turns a slug into a display name, such as "my-mod" into "My Mod".
+func title(slug string) string {
+	words := strings.FieldsFunc(slug, func(r rune) bool { return r == '-' })
+	for i, word := range words {
+		words[i] = strings.ToUpper(word[:1]) + word[1:]
+	}
+	return strings.Join(words, " ")
 }
