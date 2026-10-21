@@ -87,9 +87,11 @@ WorldTextGameFactory::WorldTextGameFactory(WorldTextGameCalls calls) : calls_(ca
 
 WorldTextGameFactory::~WorldTextGameFactory() = default;
 
-// GameWorldTextEntity owns one live point_worldtext. SetMessage rebuilds the
-// entity through the same proven creation chain; a
-// failed rebuild keeps the previous text instead of dropping the handle.
+// GameWorldTextEntity owns one live point_worldtext. SetMessage changes the
+// text in place through the entity's own SetMessage input, so clients keep the
+// entity; only when the input is refused does it rebuild the entity through the
+// creation chain, and a failed rebuild keeps the previous text instead of
+// dropping the handle.
 class GameWorldTextEntity final : public WorldTextEntity {
  public:
   GameWorldTextEntity(WorldTextGameFactory& factory, std::string message,
@@ -104,6 +106,20 @@ class GameWorldTextEntity final : public WorldTextEntity {
   ~GameWorldTextEntity() override { Remove(); }
 
   void SetMessage(std::string_view message) override {
+    // The stock input writes the networked text, which costs a fraction of a
+    // spawn and keeps the entity's handle.
+    std::string text(message);
+    if (entity_ != nullptr && factory_.calls_.accept_input != nullptr) {
+      gameinterop::Variant value{.pointer = text.c_str(),
+                                 .type = gameinterop::VariantType::kCString};
+      if (factory_.calls_.accept_input(entity_, "SetMessage", nullptr, nullptr, &value, 0,
+                                       nullptr)) {
+        message_ = std::move(text);
+        return;
+      }
+    }
+
+    // Rebuild when the input was refused or the entity is gone.
     auto rebuilt = factory_.Create(message, origin_, angles_, style_);
     if (!rebuilt) {
       // Log-and-continue: keep the stale text rather than losing the label.
