@@ -789,7 +789,8 @@ Every project has a `mod.json` at its root:
 ```
 
 `dev` and `play` start on the first map a mod asks for in the game's
-`citadel/maps`, or the default map.
+`citadel/maps`, or `dl_midtown`, which hyperline.gg also plays for a mod
+that names no map.
 
 ### Movement
 
