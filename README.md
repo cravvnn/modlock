@@ -433,9 +433,10 @@ event within the limits. It then goes where `--to` says:
 | `github`    | Attach that zip to the GitHub release `SLUG-vVERSION`, creating the release if needed.           |
 
 The first upload to hyperline.gg opens the browser to sign in and saves the
-session. `--origin` points it at another service with the same API. The `github`
-destination uses the [`gh`](https://cli.github.com) command line and its
-sign-in.
+session. Publishing there needs access during the alpha; ask for it in the
+[Hyperline Discord](https://discord.gg/cezb3jg4vd). `--origin` points it at
+another service with the same API. The `github` destination uses the
+[`gh`](https://cli.github.com) command line and its sign-in.
 
 Hyperline publishes each version once, so raise `version` in `mod.json` before
 publishing again. `--notes` says what changed: hyperline.gg shows it on the
