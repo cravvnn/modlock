@@ -12,6 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/experimental"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -54,8 +55,10 @@ type Mod struct {
 // within the host's memory and time limits.
 func Load(ctx context.Context, module []byte, options Options) (*Mod, error) {
 	// Make a runtime with the host's limits that closes the module when an
-	// event's budget runs out.
+	// event's budget runs out. Luau unwinds its errors as WebAssembly
+	// exceptions, which the host's Wasmtime runs too.
 	config := wazero.NewRuntimeConfig().
+		WithCoreFeatures(api.CoreFeaturesV2 | experimental.CoreFeaturesExceptionHandling).
 		WithMemoryLimitPages(memoryBytes / 65536).
 		WithCloseOnContextDone(true)
 	if options.Cache != nil {
