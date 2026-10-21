@@ -104,12 +104,16 @@ void RecordExecuteQueuedCreation(void* entity_system) {
   EXPECT_EQ(entity_system, reinterpret_cast<void*>(0x2200));
 }
 
+// g_refuse_set_message makes the fake entity refuse SetMessage, as an entity
+// without the input would.
+bool g_refuse_set_message = false;
+
 bool RecordAcceptInput(void*, const char* input_name, void*, void*, void* value, int output_id,
                        void*) {
   const auto* text = *reinterpret_cast<const char* const*>(value);
   g_recorder.Note(std::string("accept-input:") + input_name + ":" + text);
   EXPECT_EQ(output_id, 0);
-  return true;
+  return !(g_refuse_set_message && std::string_view(input_name) == "SetMessage");
 }
 
 bool RecordWriteMessage(void*, const char* message) {
@@ -283,13 +287,29 @@ TEST_F(WorldTextGameFactoryTest, TraceDeduplicatesCreateFailuresAndLogsOneSucces
   EXPECT_EQ(CountOccurrences(successes, "world-text create succeeded: point_worldtext"), 1u);
 }
 
-TEST_F(WorldTextGameFactoryTest, SetMessageRebuildsWithoutDroppingTheHandle) {
+TEST_F(WorldTextGameFactoryTest, SetMessageChangesTheTextInPlace) {
+  auto created =
+      factory_.Create("before", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+  ASSERT_TRUE(created.has_value());
+  g_recorder.steps.clear();
+  created->get()->SetMessage("after");
+  ASSERT_EQ(g_recorder.steps.size(), 1);
+  EXPECT_EQ(g_recorder.steps[0], "accept-input:SetMessage:after");
+  EXPECT_EQ(g_removed_count, 0);
+}
+
+TEST_F(WorldTextGameFactoryTest, SetMessageRebuildsWhenTheInputIsRefused) {
   modlock::Vec3 origin;
   origin.set_z(5);
   auto created = factory_.Create("before", origin, modlock::EulerAngles{}, WorldTextStyle{});
   ASSERT_TRUE(created.has_value());
   g_recorder.steps.clear();
+  g_refuse_set_message = true;
   created->get()->SetMessage("after");
+  g_refuse_set_message = false;
+  ASSERT_EQ(g_recorder.steps.size(), 8);
+  EXPECT_EQ(g_recorder.steps[0], "accept-input:SetMessage:after");
+  g_recorder.steps.erase(g_recorder.steps.begin());
   ASSERT_EQ(g_recorder.steps.size(), 7);
   EXPECT_EQ(g_recorder.steps[0], "create:point_worldtext");
   EXPECT_EQ(g_removed_count, 1);  // The stale entity left before the new one queued.

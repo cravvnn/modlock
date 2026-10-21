@@ -30,7 +30,8 @@ struct MODLOCK_API WorldTextGameCalls {
   void (*queue_spawn_entity)(void* entity_system, void* identity, void* key_values) = nullptr;
   // CEntitySystem::ExecuteQueuedCreation(entity_system).
   void (*execute_queued_creation)(void* entity_system) = nullptr;
-  // CEntityInstance::AcceptInput enables point_worldtext after queued creation.
+  // CEntityInstance::AcceptInput enables point_worldtext after queued creation
+  // and changes its text with the SetMessage input.
   bool (*accept_input)(void* entity, const char* input_name, void* activator, void* caller,
                        void* value, int output_id, void* unknown) = nullptr;
   // Writes CPointWorldText::m_messageText before the new entity's first
