@@ -120,7 +120,7 @@ sandbox even where the game is installed.
 | `modlock new DIR`       | Create a mod project in `DIR`.                                                           |
 | `modlock build`         | Check the mod and write the built mod to `build/`.                                       |
 | `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save. |
-| `modlock play [MOD...]` | Run built mods in a local server and join it.                                            |
+| `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.  |
 | `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                 |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:

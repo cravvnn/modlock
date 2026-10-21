@@ -41,11 +41,12 @@ var sessionFlags = []cli.Flag{
 func playCommand(out *printer) *cli.Command {
 	return &cli.Command{
 		Name:      "play",
-		Usage:     "run built mods in a local server and join it, or in the sandbox without the game",
+		Usage:     "run built mods or mod projects in a local server and join it, or in the sandbox without the game",
 		ArgsUsage: "[MOD...]",
 		Flags:     sessionFlags,
 		Action: func(c *cli.Context) error {
-			// Take each mod as a built mod or a project's build.
+			// Take each mod as a built mod or a project's build, building a
+			// project that has none yet.
 			paths := c.Args().Slice()
 			if len(paths) == 0 {
 				paths = []string{"."}
@@ -56,11 +57,17 @@ func playCommand(out *printer) *cli.Command {
 				if err != nil {
 					return err
 				}
-				if opened, err := project.Open(dir); err == nil {
+				opened, err := project.Open(dir)
+				if err == nil {
 					dir = opened.Output()
 				}
 				if _, err := os.Stat(filepath.Join(dir, project.ManifestFile)); err != nil {
-					return errors.Errorf("%s is not a built mod; run modlock build first", path)
+					if opened == nil {
+						return errors.Errorf("%s is neither a mod project nor a built mod", path)
+					}
+					if err := out.build(c.Context, opened, project.Dev); err != nil {
+						return err
+					}
 				}
 				mods = append(mods, dir)
 			}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/aperturerobotics/cli"
 	"github.com/paralin/modlock/project"
@@ -33,9 +34,9 @@ func newCommand(out *printer) *cli.Command {
 			if c.NArg() != 1 {
 				return errors.New("name the new project's directory, such as: modlock new my-mod")
 			}
-			language, ok := languages[c.String("language")]
+			language, ok := languages[strings.ToLower(strings.TrimSpace(c.String("language")))]
 			if !ok {
-				return errors.Errorf("modlock cannot create %s mods yet", c.String("language"))
+				return errors.Errorf("modlock cannot create %s mods yet; choose typescript, javascript, luau, python or go", c.String("language"))
 			}
 
 			// Fetch this release's library, or the newest one from a
