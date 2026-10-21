@@ -66,10 +66,12 @@ class FakeModuleImage : public ModuleImage {
 
   size_t size() const { return bytes_.size(); }
 
-  // Seal fixes the base near `anchor` so patched relative calls stay inside
-  // int32 reach of real test-binary functions, then freezes the image.
+  // Seal fixes the base so `anchor` is the image's last byte, then freezes
+  // the image. A relative call patched to a real test-binary function at the
+  // anchor stays inside int32 reach and inside the image, as the resolver
+  // requires of every relative target.
   void Seal(std::uintptr_t anchor) {
-    base_ = anchor - static_cast<std::uintptr_t>(bytes_.size());
+    base_ = anchor - static_cast<std::uintptr_t>(bytes_.size() - 1);
     sealed_ = true;
   }
 
