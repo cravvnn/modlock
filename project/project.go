@@ -46,6 +46,9 @@ func Open(dir string) (*Project, error) {
 	if err := check.Slug(manifest.GetSlug()); err != nil {
 		return nil, errors.Wrap(err, "mod.json")
 	}
+	if err := check.Version(manifest.GetVersion()); err != nil {
+		return nil, err
+	}
 	if manifest.GetLanguage() == wasm.Manifest_LANGUAGE_UNKNOWN {
 		return nil, errors.New("mod.json names no language")
 	}

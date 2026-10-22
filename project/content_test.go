@@ -1,0 +1,87 @@
+package project
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/paralin/modlock/check"
+	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/source2/panorama"
+)
+
+// TestContent builds a project's content into its addon's directories with
+// the addon named in its paths, passes the publishing check, refuses a file
+// outside a kind's directory, and removes the content once the project has
+// none.
+func TestContent(t *testing.T) {
+	// Lay out a project with a layout that loads its script, and an editor's
+	// hidden file that must stay out.
+	dir := t.TempDir()
+	write := func(name, content string) {
+		t.Helper()
+		file := filepath.Join(dir, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	write("content/layout/panel.xml", `<root><scripts><include src="file://{resources}/scripts/{addon}/panel.js" /></scripts><Panel /></root>`)
+	write("content/scripts/panel.js", "$.Msg('{addon} stays as written outside a path');")
+	write("content/layout/.panel.xml.swp", "swap")
+	manifest := &wasm.Manifest{Slug: "parry", Version: "1.2.0", Language: wasm.Manifest_LANGUAGE_TYPESCRIPT}
+	p := &Project{Dir: dir, Manifest: manifest}
+	addon := check.Addon(manifest)
+
+	// Build the content and read it back.
+	if err := p.buildContent(); err != nil {
+		t.Fatal(err)
+	}
+	built := filepath.Join(p.Output(), check.ContentDir)
+	layout, err := os.ReadFile(filepath.Join(built, "layout", addon, "panel.vxml_c"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if source, err := panorama.Decompile(layout); err != nil || !strings.Contains(source, "panorama/scripts/parry-1.2.0/panel.vjs_c") {
+		t.Errorf("layout %q, %v; want the script under the addon's name", source, err)
+	}
+	if _, err := os.Stat(filepath.Join(built, "scripts", addon, "panel.vjs_c")); err != nil {
+		t.Error(err)
+	}
+	if _, err := os.Stat(filepath.Join(built, "layout", addon, ".panel.xml.swp")); err == nil {
+		t.Error("a hidden file shipped")
+	}
+
+	// The built content passes the publishing check, and a file outside the
+	// addon's directories does not.
+	if err := check.Content(os.DirFS(p.Output()), addon); err != nil {
+		t.Error(err)
+	}
+	if err := check.Content(os.DirFS(p.Output()), "parry-1.1.0"); err == nil {
+		t.Error("content under another release's name passed")
+	}
+
+	// A file outside a kind's directory fails the build and keeps the last
+	// content.
+	write("content/notes.txt", "notes")
+	if err := p.buildContent(); err == nil || !strings.Contains(err.Error(), "content/notes.txt") {
+		t.Errorf("got %v, want an error naming content/notes.txt", err)
+	}
+	if _, err := os.Stat(filepath.Join(built, "layout", addon, "panel.vxml_c")); err != nil {
+		t.Error(err)
+	}
+
+	// Without content, the build ships none.
+	if err := os.RemoveAll(filepath.Join(dir, ContentDir)); err != nil {
+		t.Fatal(err)
+	}
+	if err := p.buildContent(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(built); !os.IsNotExist(err) {
+		t.Errorf("content remains: %v", err)
+	}
+}

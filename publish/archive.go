@@ -29,6 +29,10 @@ func Archive(ctx context.Context, mod *Mod, version, dir string) (string, error)
 	if err != nil {
 		return "", err
 	}
+	files, err := mod.Files()
+	if err != nil {
+		return "", err
+	}
 	folder := mod.Manifest.GetSlug() + "-" + mod.Manifest.GetVersion()
 	target := filepath.Join(dir, folder+".zip")
 	file, err := os.Create(target + ".tmp")
@@ -46,7 +50,7 @@ func Archive(ctx context.Context, mod *Mod, version, dir string) (string, error)
 	if err := addPath(archive, path.Join(folder, "modlock.exe"), command); err != nil {
 		return "", err
 	}
-	for _, name := range mod.Files() {
+	for _, name := range files {
 		if err := addPath(archive, path.Join(folder, "mod", name), filepath.Join(mod.Dir, filepath.FromSlash(name))); err != nil {
 			return "", err
 		}

@@ -265,10 +265,14 @@ func openURL(page string) error {
 // packTar returns mod's files as a gzip-compressed tar.
 func packTar(mod *Mod) ([]byte, error) {
 	// Write each file into the tar inside the gzip stream.
+	files, err := mod.Files()
+	if err != nil {
+		return nil, err
+	}
 	var buf bytes.Buffer
 	compressed := gzip.NewWriter(&buf)
 	archive := tar.NewWriter(compressed)
-	for _, name := range mod.Files() {
+	for _, name := range files {
 		data, err := os.ReadFile(filepath.Join(mod.Dir, filepath.FromSlash(name)))
 		if err != nil {
 			return nil, errors.Wrap(err, "pack the built mod")

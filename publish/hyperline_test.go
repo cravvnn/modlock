@@ -17,15 +17,21 @@ import (
 	"github.com/paralin/modlock/proto/modlock/wasm"
 )
 
-// TestPublish uploads a mod and its map with a saved session and reads back
+// TestPublish uploads a mod, its map and its client content with a saved session and reads back
 // the service's answer and its refusals.
 func TestPublish(t *testing.T) {
-	// Lay out a built mod with a map and a log that must stay out.
+	// Lay out a built mod with a map, client content and a log that must
+	// stay out.
 	dir := t.TempDir()
-	if err := os.Mkdir(filepath.Join(dir, "maps"), 0o755); err != nil {
-		t.Fatal(err)
+	for _, sub := range []string{"maps", "panorama/layout/hello-1.0.0"} {
+		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil {
+			t.Fatal(err)
+		}
 	}
-	for name, content := range map[string]string{"mod.json": "{}", "mod.wasm": "module", "server.log": "log", "maps/hl_court.vpk": "map"} {
+	for name, content := range map[string]string{
+		"mod.json": "{}", "mod.wasm": "module", "server.log": "log", "maps/hl_court.vpk": "map",
+		"panorama/layout/hello-1.0.0/panel.vxml_c": "layout",
+	} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -73,8 +79,8 @@ func TestPublish(t *testing.T) {
 	if release.GetReviewState() != publish.ReviewState_REVIEW_STATE_APPROVED {
 		t.Errorf("review state %v, want approved", release.GetReviewState())
 	}
-	if !slices.Equal(uploaded, []string{"mod.json", "mod.wasm", "maps/hl_court.vpk"}) {
-		t.Errorf("uploaded %v, want the manifest, entry and map only", uploaded)
+	if !slices.Equal(uploaded, []string{"mod.json", "mod.wasm", "maps/hl_court.vpk", "panorama/layout/hello-1.0.0/panel.vxml_c"}) {
+		t.Errorf("uploaded %v, want the manifest, entry, map and content only", uploaded)
 	}
 	if notes != mod.Notes {
 		t.Errorf("notes %q, want %q", notes, mod.Notes)

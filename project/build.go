@@ -42,7 +42,8 @@ const (
 // compiler errors go to output and fail the build with a *CheckError that
 // locates them; a failed build leaves the previous built mod in place.
 func (p *Project) Build(ctx context.Context, output io.Writer, mode Mode) error {
-	// Check the declarations and ship the map before compiling.
+	// Check the declarations, and ship the map and client content, before
+	// compiling.
 	if err := settings.Validate(p.Manifest); err != nil {
 		return err
 	}
@@ -50,6 +51,9 @@ func (p *Project) Build(ctx context.Context, output io.Writer, mode Mode) error 
 		return err
 	}
 	if err := p.shipMap(); err != nil {
+		return err
+	}
+	if err := p.buildContent(); err != nil {
 		return err
 	}
 

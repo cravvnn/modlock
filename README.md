@@ -473,6 +473,24 @@ Hyperline publishes each version once, so raise `version` in `mod.json` before
 publishing again. `--notes` says what changed: hyperline.gg shows it on the
 game's page, and the `github` destination uses it for a new release.
 
+### Client content
+
+Layouts, scripts, style sheets and images the mod shows in each player's game go
+in `content/`, one directory for each kind, as in the game's own `panorama/`
+directory: `content/layout/scoreboard.xml`, `content/scripts/scoreboard.js`. The
+build compiles them into the mod's own addon, named `SLUG-VERSION`, so
+`content/layout/scoreboard.xml` becomes
+`build/panorama/layout/SLUG-VERSION/scoreboard.vxml_c`. Name your own files with
+`{addon}` where the addon's name goes, and the build writes it in:
+
+```xml
+<include src="file://{resources}/scripts/{addon}/scoreboard.js" />
+```
+
+Ship style sheets and images compiled by Valve's resource compiler, as
+`.vcss_c` and `.vtex_c`. The publishing check refuses a build with client files
+outside the addon's directories.
+
 ## The TypeScript library
 
 A TypeScript or JavaScript mod imports `modlock` and registers its handlers when
@@ -807,7 +825,7 @@ Every project has a `mod.json` at its root:
 | ----------- | -------- | -------------------------------------------------------------------------------------------------- |
 | `slug`      | yes      | The mod's identifier: lowercase letters, digits and hyphens.                                       |
 | `name`      | yes      | The name players see.                                                                              |
-| `version`   | yes      | A semantic version. Raise it for each publication.                                                 |
+| `version`   | yes      | A semantic version of up to 64 letters, digits, `.`, `+` and `-`. Raise it for each publication.   |
 | `language`  | yes      | `LANGUAGE_TYPESCRIPT`, `LANGUAGE_JAVASCRIPT`, `LANGUAGE_LUAU`, `LANGUAGE_PYTHON` or `LANGUAGE_GO`. |
 | `map`       |          | The [map](#map) the mod plays on.                                                                  |
 | `movement`  |          | A [movement model](#movement) that replaces how heroes move.                                       |
