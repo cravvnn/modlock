@@ -394,11 +394,20 @@ void Remap(const RemapInputRequest& remap, gameinterop::AbilityInputHook::Input&
 constexpr uint64_t kMoveKeys = (1u << 3) | (1u << 4) | (1u << 9) | (1u << 10);
 
 uint64_t MoveKeys(float forward, float left) {
+  // Hold the key for each axis direction.
   uint64_t keys = 0;
-  if (forward > 0) keys |= 1u << 3;
-  if (forward < 0) keys |= 1u << 4;
-  if (left > 0) keys |= 1u << 9;
-  if (left < 0) keys |= 1u << 10;
+  if (forward > 0) {
+    keys |= 1u << 3;
+  }
+  if (forward < 0) {
+    keys |= 1u << 4;
+  }
+  if (left > 0) {
+    keys |= 1u << 9;
+  }
+  if (left < 0) {
+    keys |= 1u << 10;
+  }
   return keys;
 }
 
@@ -1037,6 +1046,7 @@ std::expected<void, std::string> GameServices::Transmit() {
 }
 
 std::expected<void, std::string> GameServices::Drive() {
+  // Install once, against the server image.
   if (drive_) {
     return {};
   }
@@ -1152,8 +1162,7 @@ std::expected<void, std::string> GameServices::StepWith(gameinterop::MovementHoo
 std::expected<void, std::string> GameServices::Steps() {
   // Keep the hook only while a mod or a steered bot moves heroes.
   const bool needed = step_ || std::ranges::any_of(games_, [](const Game* game) {
-                        return game->Moving() || !game->steers_.empty() ||
-                               !game->drives_.empty();
+                        return game->Moving() || !game->steers_.empty() || !game->drives_.empty();
                       });
   if (!needed) {
     steps_.reset();
@@ -1243,12 +1252,15 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
       return true;
     }
   }
+
   // A driven bot's axes reach movement here: the game rebuilds them, and the
   // movement keys, from its own state after ProcessUsercmds, which keeps the
   // buttons and view the drive wrote there. The step stays native.
   for (auto* game : games_) {
     for (auto& [slot, drive] : game->drives_) {
-      if (game->observer_.PawnForSlot(slot) != call.pawn) continue;
+      if (game->observer_.PawnForSlot(slot) != call.pawn) {
+        continue;
+      }
       call.forward = drive.forward;
       call.left = drive.left;
       call.buttons[0] = (call.buttons[0] & ~kMoveKeys) | MoveKeys(drive.forward, drive.left);
@@ -1416,6 +1428,8 @@ void Game::Leave(int32_t slot) {
   movers_.erase(slot);
   steers_.erase(slot);
   drives_.erase(slot);
+
+  // Forget its restores, blocks, presses and hidden objects.
   restores_.erase(slot);
   slot_blocked_.erase(slot);
   presses_.erase(slot);
@@ -2661,20 +2675,26 @@ std::expected<void, std::string> Game::Steer(const SteerRequest& request) {
 }
 
 std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
+  // A request without a command stops the drive.
   const auto slot = request.player();
   if (!request.has_command()) {
     drives_.erase(slot);
     return services_.Steps();
   }
+
+  // Only a bot can be driven, through the shared hook.
   if (!gameinterop::ConnectionTracker::StateForSlot(slot).is_bot) {
     return std::unexpected("no bot plays in that slot");
   }
   if (auto installed = services_.Drive(); !installed) {
     return std::unexpected(installed.error());
   }
+
+  // Find the slot's drive.
   const auto& command = request.command();
   const bool fresh = !drives_.contains(slot);
   auto& drive = drives_[slot];
+
   // A press waits for the next command even when the mod drives again first.
   const auto pressed = drive.pressed | command.pressed();
   drive = {.angles = Floats(command.facing()),
@@ -2682,9 +2702,15 @@ std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
            .left = std::clamp(command.left(), -1.0f, 1.0f),
            .held = command.held(),
            .pressed = pressed};
-  if (!fresh) return {};
+
+  // A new drive starts the movement step; a failed start drops it.
+  if (!fresh) {
+    return {};
+  }
   auto steps = services_.Steps();
-  if (!steps) drives_.erase(slot);
+  if (!steps) {
+    drives_.erase(slot);
+  }
   return steps;
 }
 

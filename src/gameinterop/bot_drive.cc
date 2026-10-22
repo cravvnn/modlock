@@ -60,22 +60,27 @@ void Store(std::byte* base, size_t offset, const T& value) {
 // base message on its first tick; a command without one keeps its own axes and
 // view this tick.
 void Write(std::byte* command, const BotDrive::Command& drive, uint64_t& last_held) {
+  // Write the held and pressed buttons.
   const uint64_t held = drive.held | drive.pressed;
   const std::array<uint64_t, 3> buttons{held, (held ^ last_held) | drive.pressed, 0};
   Store(command, kCommandButtons, buttons);
   last_held = held;
 
+  // Write the axes and view into the base message.
   auto* base = Load<std::byte*>(command, kCommandBase);
   if (!base) {
-    if (!std::exchange(g_reported_bare, true))
+    if (!std::exchange(g_reported_bare, true)) {
       std::fprintf(stderr, "[modlock] bot drive: a command arrived without movement fields\n");
+    }
     return;
   }
   Store(command, kCommandHasBits, Load<uint32_t>(command, kCommandHasBits) | 1u);
   Store(base, kBaseHasBits, Load<uint32_t>(base, kBaseHasBits) | kBaseAxesBits);
   Store(base, kBaseForward, drive.forward);
   Store(base, kBaseLeft, drive.left);
-  if (auto* angles = Load<std::byte*>(base, kBaseAngles)) Store(angles, kAnglesXyz, drive.angles);
+  if (auto* angles = Load<std::byte*>(base, kBaseAngles)) {
+    Store(angles, kAnglesXyz, drive.angles);
+  }
 }
 
 int ProcessThunk(void* controller, std::byte* commands, int count, bool paused, float margin) {
@@ -104,7 +109,10 @@ struct BotDrive::Impl {
   Decide decide;
 
   ~Impl() {
-    if (g_hook != &hook) return;
+    // Only the installed hook clears the shared state.
+    if (g_hook != &hook) {
+      return;
+    }
     hook.reset();
     g_hook = nullptr;
     g_decide = nullptr;
@@ -118,24 +126,37 @@ BotDrive::BotDrive(BotDrive&&) noexcept = default;
 BotDrive& BotDrive::operator=(BotDrive&&) noexcept = default;
 BotDrive::~BotDrive() = default;
 
-std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server,
-                                                       Decide decide) {
+std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server, Decide decide) {
 #if defined(_WIN32)
-  if (g_hook || !decide) return std::unexpected("bot drive is already installed or unbound");
+  // Install once.
+  if (g_hook || !decide) {
+    return std::unexpected("bot drive is already installed or unbound");
+  }
+
+  // Resolve the target and create the hook disabled.
   auto target = ResolveSignature(server, "controller.process-usercmds");
-  if (!target) return std::unexpected(target.error());
+  if (!target) {
+    return std::unexpected(target.error());
+  }
   auto hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&ProcessThunk),
                                         safetyhook::InlineHook::StartDisabled);
-  if (!hook) return std::unexpected("bot drive hook creation failed");
+  if (!hook) {
+    return std::unexpected("bot drive hook creation failed");
+  }
+
+  // Publish the thunk state and enable.
   auto impl = std::make_unique<Impl>();
   impl->hook = std::move(hook);
   impl->decide = std::move(decide);
   g_hook = &impl->hook;
   g_decide = &impl->decide;
-  if (auto enabled = impl->hook.enable(); !enabled)
+  if (auto enabled = impl->hook.enable(); !enabled) {
     return std::unexpected("bot drive hook activation failed");
+  }
   return BotDrive(std::move(impl));
+
 #else
+  // Other platforms have no native server.
   (void)server;
   (void)decide;
   return std::unexpected("native bot control requires the Windows host");
