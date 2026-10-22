@@ -97,6 +97,12 @@ class GameServices {
     size_t mask_size = 0;
   };
 
+  // Cache fills cache from resolve the first time a caller asks and keeps it.
+  // resolve takes the server image, and the schema system when it asks for
+  // one. A failure leaves the cache empty, so the next caller retries.
+  template <typename Value, typename Resolve>
+  std::expected<void, std::string> Cache(Value& cache, Resolve resolve);
+
   std::expected<const gameinterop::ModuleImage*, std::string> Image();
   std::expected<void*, std::string> Schema();
   std::expected<const gameinterop::HeroDefinitions*, std::string> Heroes();

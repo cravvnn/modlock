@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iostream>
 #include <span>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -504,166 +505,109 @@ std::expected<void*, std::string> GameServices::Schema() {
   return gameinterop::ResolveSchemaSystem();
 }
 
+namespace {
+
+// Keep stores a resolved value in its cache, or passes the failure on.
+template <typename Value, typename Resolved>
+std::expected<void, std::string> Keep(Value& cache, Resolved resolved) {
+  if (!resolved) {
+    return std::unexpected(resolved.error());
+  }
+  cache = std::move(*resolved);
+  return {};
+}
+
+}  // namespace
+
+template <typename Value, typename Resolve>
+std::expected<void, std::string> GameServices::Cache(Value& cache, Resolve resolve) {
+  // A filled cache needs nothing more.
+  if (cache) {
+    return {};
+  }
+
+  // Resolve from the server image, with the schema when resolve takes it.
+  auto image = Image();
+  if (!image) {
+    return std::unexpected(image.error());
+  }
+  if constexpr (std::is_invocable_v<Resolve, const gameinterop::ModuleImage&, void*>) {
+    auto schema = Schema();
+    if (!schema) {
+      return std::unexpected(schema.error());
+    }
+    return Keep(cache, resolve(**image, *schema));
+  } else {
+    return Keep(cache, resolve(**image));
+  }
+}
+
 std::expected<const gameinterop::HeroDefinitions*, std::string> GameServices::Heroes() {
-  if (!heroes_) {
-    // Resolve the hero calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto heroes = gameinterop::HeroDefinitions::Resolve(**image);
-    if (!heroes) {
-      return std::unexpected(heroes.error());
-    }
-    heroes_ = *heroes;
+  if (auto cached = Cache(heroes_, &gameinterop::HeroDefinitions::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*heroes_;
 }
 
 std::expected<const gameinterop::PlayerSelectionCalls*, std::string> GameServices::Selection() {
-  if (!selection_) {
-    // Resolve the selection calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto selection = gameinterop::PlayerSelectionCalls::Resolve(**image);
-    if (!selection) {
-      return std::unexpected(selection.error());
-    }
-    selection_ = *selection;
+  if (auto cached = Cache(selection_, &gameinterop::PlayerSelectionCalls::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*selection_;
 }
 
 std::expected<const gameinterop::AbilityDefinitions*, std::string> GameServices::Abilities() {
-  if (!abilities_) {
-    // Resolve the ability definitions once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto abilities = gameinterop::AbilityDefinitions::Resolve(**image);
-    if (!abilities) {
-      return std::unexpected(abilities.error());
-    }
-    abilities_ = *abilities;
+  if (auto cached = Cache(abilities_, &gameinterop::AbilityDefinitions::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*abilities_;
 }
 
 std::expected<const gameinterop::ItemFunctions*, std::string> GameServices::Items() {
-  if (!items_) {
-    // Resolve the item calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto items = gameinterop::ItemFunctions::Resolve(**image);
-    if (!items) {
-      return std::unexpected(items.error());
-    }
-    items_ = *items;
+  if (auto cached = Cache(items_, &gameinterop::ItemFunctions::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*items_;
 }
 
 std::expected<const gameinterop::AbilitySlots*, std::string> GameServices::Slots() {
-  if (!slots_) {
-    // Resolve the slot calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto schema = Schema();
-    if (!schema) {
-      return std::unexpected(schema.error());
-    }
-    auto slots = gameinterop::AbilitySlots::Resolve(**image, *schema);
-    if (!slots) {
-      return std::unexpected(slots.error());
-    }
-    slots_ = *slots;
+  if (auto cached = Cache(slots_, &gameinterop::AbilitySlots::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*slots_;
 }
 
 std::expected<gameinterop::CreateAbility, std::string> GameServices::CreateAbility() {
-  if (!create_ability_) {
-    // Resolve the ability creation call once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto create = gameinterop::ResolveCreateAbility(**image);
-    if (!create) {
-      return std::unexpected(create.error());
-    }
-    create_ability_ = *create;
+  if (auto cached = Cache(create_ability_, &gameinterop::ResolveCreateAbility); !cached) {
+    return std::unexpected(cached.error());
   }
   return create_ability_;
 }
 
 std::expected<gameinterop::RespawnPawn, std::string> GameServices::Respawn() {
-  if (!respawn_) {
-    // Resolve the respawn call once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto respawn = gameinterop::ResolveRespawnPawn(**image);
-    if (!respawn) {
-      return std::unexpected(respawn.error());
-    }
-    respawn_ = *respawn;
+  if (auto cached = Cache(respawn_, &gameinterop::ResolveRespawnPawn); !cached) {
+    return std::unexpected(cached.error());
   }
   return respawn_;
 }
 
 std::expected<gameinterop::ResetHeroPawn, std::string> GameServices::ResetHero() {
-  if (!reset_hero_) {
-    // Resolve the hero reset call once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto reset = gameinterop::ResolveResetHeroPawn(**image);
-    if (!reset) {
-      return std::unexpected(reset.error());
-    }
-    reset_hero_ = *reset;
+  if (auto cached = Cache(reset_hero_, &gameinterop::ResolveResetHeroPawn); !cached) {
+    return std::unexpected(cached.error());
   }
   return reset_hero_;
 }
 
 std::expected<gameinterop::TeleportClientCamera, std::string> GameServices::Teleport() {
-  if (!teleport_) {
-    // Resolve the camera teleport once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto teleport = gameinterop::ResolveTeleportClientCamera(**image);
-    if (!teleport) {
-      return std::unexpected(teleport.error());
-    }
-    teleport_ = *teleport;
+  if (auto cached = Cache(teleport_, &gameinterop::ResolveTeleportClientCamera); !cached) {
+    return std::unexpected(cached.error());
   }
   return teleport_;
 }
 
 std::expected<const gameinterop::PawnMotion*, std::string> GameServices::Motion() {
-  if (!motion_) {
-    // Resolve the motion calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto motion = gameinterop::ResolvePawnMotion(**image);
-    if (!motion) {
-      return std::unexpected(motion.error());
-    }
-    motion_ = *motion;
+  if (auto cached = Cache(motion_, &gameinterop::ResolvePawnMotion); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*motion_;
 }
@@ -694,17 +638,8 @@ std::expected<const gameinterop::BotCreation*, std::string> GameServices::Bots()
 
 std::expected<render::WorldTextGameFactory*, std::string> GameServices::Text() {
   // Build the text factory once from the server module.
-  if (!text_) {
-    // Create the text factory once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto text = render::WorldTextGameFactory::TryCreate(**image);
-    if (!text) {
-      return std::unexpected(text.error());
-    }
-    text_ = std::move(*text);
+  if (auto cached = Cache(text_, &render::WorldTextGameFactory::TryCreate); !cached) {
+    return std::unexpected(cached.error());
   }
 
   // Each world has its own entity system.
@@ -718,17 +653,8 @@ std::expected<render::WorldTextGameFactory*, std::string> GameServices::Text() {
 
 std::expected<render::WorldEffectGameFactory*, std::string> GameServices::Effects() {
   // Build the effect factory once from the server module.
-  if (!effects_) {
-    // Create the effect factory once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto effects = render::WorldEffectGameFactory::TryCreate(**image);
-    if (!effects) {
-      return std::unexpected(effects.error());
-    }
-    effects_ = std::move(*effects);
+  if (auto cached = Cache(effects_, &render::WorldEffectGameFactory::TryCreate); !cached) {
+    return std::unexpected(cached.error());
   }
 
   // Each world has its own entity system.
@@ -741,93 +667,36 @@ std::expected<render::WorldEffectGameFactory*, std::string> GameServices::Effect
 }
 
 std::expected<const gameinterop::NativeDamage*, std::string> GameServices::Damage() {
-  if (!damage_) {
-    // Resolve the damage calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto schema = Schema();
-    if (!schema) {
-      return std::unexpected(schema.error());
-    }
-    auto damage = gameinterop::NativeDamage::Resolve(**image, *schema);
-    if (!damage) {
-      return std::unexpected(damage.error());
-    }
-    damage_ = std::move(*damage);
+  if (auto cached = Cache(damage_, &gameinterop::NativeDamage::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*damage_;
 }
 
 std::expected<gameinterop::ModifyCurrency, std::string> GameServices::Currency() {
-  if (!currency_) {
-    // Resolve the currency call once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto currency = gameinterop::ResolveModifyCurrency(**image);
-    if (!currency) {
-      return std::unexpected(currency.error());
-    }
-    currency_ = *currency;
+  if (auto cached = Cache(currency_, &gameinterop::ResolveModifyCurrency); !cached) {
+    return std::unexpected(cached.error());
   }
   return currency_;
 }
 
 std::expected<const gameinterop::NativeSound*, std::string> GameServices::Sound() {
-  if (!sound_) {
-    // Create the sound player once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto sound = gameinterop::NativeSound::TryCreate(**image);
-    if (!sound) {
-      return std::unexpected(sound.error());
-    }
-    sound_ = std::move(*sound);
+  if (auto cached = Cache(sound_, &gameinterop::NativeSound::TryCreate); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*sound_;
 }
 
 std::expected<const gameinterop::GamePause*, std::string> GameServices::Pause() {
-  if (!pause_) {
-    // Resolve the pause calls once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto schema = Schema();
-    if (!schema) {
-      return std::unexpected(schema.error());
-    }
-    auto pause = gameinterop::GamePause::Resolve(**image, *schema);
-    if (!pause) {
-      return std::unexpected(pause.error());
-    }
-    pause_ = *pause;
+  if (auto cached = Cache(pause_, &gameinterop::GamePause::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*pause_;
 }
 
 std::expected<gameinterop::MatchClock*, std::string> GameServices::Clock() {
-  if (!clock_) {
-    // Resolve the match clock once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto schema = Schema();
-    if (!schema) {
-      return std::unexpected(schema.error());
-    }
-    auto clock = gameinterop::MatchClock::Resolve(**image, *schema);
-    if (!clock) {
-      return std::unexpected(clock.error());
-    }
-    clock_ = *clock;
+  if (auto cached = Cache(clock_, &gameinterop::MatchClock::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*clock_;
 }
@@ -865,21 +734,8 @@ std::expected<void*, std::string> GameServices::Rules() {
 }
 
 std::expected<gameinterop::KothRules*, std::string> GameServices::Rift() {
-  if (!rift_) {
-    // Resolve the rift rules once.
-    auto image = Image();
-    if (!image) {
-      return std::unexpected(image.error());
-    }
-    auto schema = Schema();
-    if (!schema) {
-      return std::unexpected(schema.error());
-    }
-    auto rift = gameinterop::KothRules::Resolve(**image, *schema);
-    if (!rift) {
-      return std::unexpected(rift.error());
-    }
-    rift_ = std::move(*rift);
+  if (auto cached = Cache(rift_, &gameinterop::KothRules::Resolve); !cached) {
+    return std::unexpected(cached.error());
   }
   return &*rift_;
 }
