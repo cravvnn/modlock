@@ -129,7 +129,7 @@ std::uint8_t ShouldHitEntity(Filter* filter, void* entity) {
   if (!handle) {
     return 1;
   }
-  const auto index = *handle & 0x7fff;
+  const auto index = EntityIndexOf(*handle);
   return index != filter->attributes.entities[0] && index != filter->attributes.entities[1];
 }
 
@@ -233,9 +233,10 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
   for (size_t i = 0; i < 2; ++i) {
     attributes.entities[i] = options.ignored_entities[i] == UINT32_MAX
                                  ? UINT32_MAX
-                                 : options.ignored_entities[i] & 0x7fff;
-    attributes.owners[i] =
-        options.ignored_owners[i] == UINT32_MAX ? UINT32_MAX : options.ignored_owners[i] & 0x7fff;
+                                 : EntityIndexOf(options.ignored_entities[i]);
+    attributes.owners[i] = options.ignored_owners[i] == UINT32_MAX
+                               ? UINT32_MAX
+                               : EntityIndexOf(options.ignored_owners[i]);
     attributes.hierarchies[i] = options.ignored_hierarchies[i];
   }
 

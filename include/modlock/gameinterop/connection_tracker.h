@@ -11,6 +11,14 @@
 
 namespace modlock::gameinterop {
 
+// kMaxPlayerSlots bounds the player slots a Deadlock server holds.
+inline constexpr int32_t kMaxPlayerSlots = 64;
+
+// IsPlayerSlot reports whether slot names one of the server's player slots.
+constexpr bool IsPlayerSlot(int32_t slot) {
+  return slot >= 0 && slot < kMaxPlayerSlots;
+}
+
 // ConnectionEventSink receives client lifecycle events on the engine thread.
 // OnDisconnecting runs while the slot and its world entities are still valid.
 class MODLOCK_API ConnectionEventSink {

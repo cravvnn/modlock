@@ -185,6 +185,21 @@ struct AbilityLayout {
   size_t charge_recharge_end = 0;
 };
 
+// The game numbers each hero's ability and item slots. The movement abilities
+// sit in fixed slots, active items fill four slots, and every passive item and
+// triggered ability shares one unbound slot.
+inline constexpr uint16_t kMantleSlot = 0xA;
+inline constexpr uint16_t kJumpSlot = 0xC;
+inline constexpr uint16_t kSlideSlot = 0xD;
+inline constexpr uint16_t kFirstActiveItemSlot = 4;
+inline constexpr uint16_t kLastActiveItemSlot = 7;
+inline constexpr uint16_t kUnboundSlot = 23;
+
+// IsActiveItemSlot reports whether slot holds an active item.
+constexpr bool IsActiveItemSlot(uint16_t slot) {
+  return slot >= kFirstActiveItemSlot && slot <= kLastActiveItemSlot;
+}
+
 struct AbilityUpgrade {
   uint32_t subclass_id;
   uint16_t slot;

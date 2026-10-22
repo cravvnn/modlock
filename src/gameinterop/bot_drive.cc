@@ -5,6 +5,7 @@
 #include <cstring>
 #include <utility>
 
+#include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/entity_abi.h"
 
 #if defined(_WIN32)
@@ -41,7 +42,7 @@ safetyhook::InlineHook* g_hook = nullptr;
 BotDrive::Decide* g_decide = nullptr;
 // g_held is each slot's buttons in the last command driven, so a button that
 // goes up or down reads as changed.
-std::array<uint64_t, 64> g_held{};
+std::array<uint64_t, kMaxPlayerSlots> g_held{};
 bool g_reported_bare = false;
 
 template <typename T>
@@ -85,8 +86,8 @@ void Write(std::byte* command, const BotDrive::Command& drive, uint64_t& last_he
 
 int ProcessThunk(void* controller, std::byte* commands, int count, bool paused, float margin) {
   const auto handle = controller ? ReferenceHandleOf(controller) : std::nullopt;
-  const int32_t slot = handle ? static_cast<int32_t>(*handle & 0x7fff) - 1 : -1;
-  if (slot >= 0 && slot < 64 && commands && count > 0) {
+  const int32_t slot = handle ? static_cast<int32_t>(EntityIndexOf(*handle)) - 1 : -1;
+  if (IsPlayerSlot(slot) && commands && count > 0) {
     if (auto drive = (*g_decide)(slot)) {
       for (int i = 0; i < count; ++i) {
         Write(commands + static_cast<size_t>(i) * kCommandStride, *drive, g_held[slot]);

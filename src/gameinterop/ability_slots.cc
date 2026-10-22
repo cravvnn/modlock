@@ -7,6 +7,16 @@
 #include "modlock/gameinterop/entity_abi.h"
 
 namespace modlock::gameinterop {
+namespace {
+
+// kSlotTableOffset locates the ability component's slot table, which the
+// find-slot and detach-slot calls take, as Deadworks RemoveAbilityImpl reads it.
+constexpr size_t kSlotTableOffset = 0x30;
+
+// kMaxAbilities bounds a sane ability vector; a larger count is torn memory.
+constexpr int32_t kMaxAbilities = 256;
+
+}  // namespace
 
 std::expected<AbilitySlots, std::string> AbilitySlots::Resolve(const ModuleImage& server,
                                                                void* schema) {
@@ -129,18 +139,18 @@ std::expected<void, std::string> AbilitySlots::Remove(PawnObserver& observer, in
   for (size_t i = 0; i < vector_count_; ++i) {
     auto& vector = vectors[i];
     std::memcpy(&vector, component + vectors_[i], sizeof(vector));
-    if (vector.count < 0 || vector.count > 256 || uint32_t(vector.count) > vector.capacity ||
-        (vector.count && !vector.data)) {
+    if (vector.count < 0 || vector.count > kMaxAbilities ||
+        uint32_t(vector.count) > vector.capacity || (vector.count && !vector.data)) {
       return std::unexpected("native ability vector is invalid");
     }
   }
 
   // Detach the slot table entry.
-  const int32_t entry = find_(component + 0x30, &slot);
+  const int32_t entry = find_(component + kSlotTableOffset, &slot);
   if (entry < 0) {
     return std::unexpected("native ability slot table entry unavailable");
   }
-  detach_(component + 0x30, entry);
+  detach_(component + kSlotTableOffset, entry);
 
   // Drop the handle from each vector, replicate, and remove the entity.
   for (size_t i = 0; i < vector_count_; ++i) {

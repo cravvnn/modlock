@@ -7,6 +7,7 @@
 
 #include "google/protobuf/io/coded_stream.h"
 #include "google/protobuf/io/zero_copy_stream_impl_lite.h"
+#include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
@@ -109,7 +110,7 @@ std::expected<void, std::string> NativeUserMessages::ClearScreenEffect(
 std::expected<void, std::string> NativeUserMessages::Send(
     int32_t slot, int32_t id, const google::protobuf::MessageLite& message) const {
   // Refuse a bad slot or size.
-  if (slot < 0 || slot >= 64) {
+  if (!IsPlayerSlot(slot)) {
     return std::unexpected("native user recipient slot is invalid");
   }
   const auto size = message.ByteSizeLong();

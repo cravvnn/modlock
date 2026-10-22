@@ -18,27 +18,6 @@
 namespace modlock::gameinterop {
 namespace {
 
-// Layout constants follow the Source SDK entity declarations:
-// public/entity2/entityidentity.h (CEntityIdentity "Size: 0x70", field
-// comments), public/entityhandle.h (m_Parts bitfields), public/eiface.h
-// (ISource2GameClients), public/appframework/iappsystem.h (eleven base
-// slots), and entity2/entitysystem.h plus entity2/concreteentitylist.h
-// (CGameEntitySystem member order and the chunk table).
-inline constexpr uint32_t kMaxEntitiesInList = 512;      // MAX_ENTITIES_IN_LIST
-inline constexpr uint32_t kMaxEntityLists = 64;          // MAX_ENTITY_LISTS
-inline constexpr size_t kIdentityInstanceOffset = 0x00;  // m_pInstance
-inline constexpr size_t kIdentityEHandleOffset = 0x10;   // m_EHandle
-inline constexpr size_t kIdentityFlagsOffset = 0x30;     // m_flags
-inline constexpr uint32_t kEntityIndexBits = 0x7FFF;     // m_Parts.m_EntityIndex : 15
-inline constexpr uint32_t kSerialShift = 15;             // m_Parts.m_Serial : 17
-inline constexpr uint32_t kSerialBits = 0x1FFFF;
-inline constexpr uint32_t kInvalidEHandleIndex = 0xFFFFFFFF;
-inline constexpr uint32_t kEfInvalidEHandle = 0x1;  // EF_IS_INVALID_EHANDLE
-
-// Offset of CConcreteEntityList m_EntityList inside CGameEntitySystem: the
-// vptr and IEntityResourceManifest* m_pCurrentManifest precede it.
-inline constexpr size_t kEntityListOffset = 0x10;
-
 // ScoreCounter names one PlayerDataGlobal_t scoreboard counter, its offset in
 // ScoreLayout and its value in ScoreTotals.
 struct ScoreCounter {
@@ -78,12 +57,12 @@ unsigned char* IdentityOfIndex(unsigned char* entity_list, uint32_t index) {
   if (chunk == nullptr) {
     return nullptr;
   }
-  unsigned char* identity = chunk + (index % kMaxEntitiesInList) * 0x70;
+  unsigned char* identity = chunk + (index % kMaxEntitiesInList) * kIdentitySize;
 
   // The identity must hold this index and a live instance.
   uint32_t ehandle = 0;
   std::memcpy(&ehandle, identity + kIdentityEHandleOffset, sizeof(ehandle));
-  if ((ehandle & kEntityIndexBits) != index) {
+  if (EntityIndexOf(ehandle) != index) {
     return nullptr;
   }
   void* instance = nullptr;
@@ -110,27 +89,18 @@ unsigned char* IdentityOfHandle(unsigned char* entity_list, uint32_t handle) {
   if (handle == kInvalidEHandleIndex) {
     return nullptr;
   }
-  const uint32_t index = handle & kEntityIndexBits;
+  const uint32_t index = EntityIndexOf(handle);
   auto* identity = IdentityOfIndex(entity_list, index);
   if (identity == nullptr) {
     return nullptr;
   }
 
-  // Skip an identity marked for deletion.
+  // The identity must be live and carry the handle's serial.
   uint32_t ehandle = 0;
   std::memcpy(&ehandle, identity + kIdentityEHandleOffset, sizeof(ehandle));
   uint32_t flags = 0;
   std::memcpy(&flags, identity + kIdentityFlagsOffset, sizeof(flags));
-  constexpr uint32_t kDeleteFlags = 0x10 | 0x200;
-  if ((flags & kDeleteFlags) != 0) {
-    return nullptr;
-  }
-
-  // The handle's serial must match the identity's.
-  const uint32_t ref_serial =
-      ((ehandle >> kSerialShift) - (flags & kEfInvalidEHandle)) & kSerialBits;
-  const uint32_t ref_handle = (ehandle & kEntityIndexBits) | (ref_serial << kSerialShift);
-  if (ref_handle != handle) {
+  if (LiveHandleOf(ehandle, flags) != handle) {
     return nullptr;
   }
   return identity;
@@ -698,7 +668,7 @@ void PawnObserver::Prepare() {
 std::expected<std::pair<unsigned char*, unsigned char*>, std::string>
 PawnObserver::ControllerOfSlot(int32_t slot) {
   // Check the slot and the layout.
-  if (slot < 0 || slot >= 64 || !seams_.entity_system) {
+  if (!IsPlayerSlot(slot) || !seams_.entity_system) {
     return std::unexpected("player controller unavailable");
   }
   if (auto resolved = ResolveLayout(); !resolved) {
@@ -832,7 +802,7 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
                                                             void* definition,
                                                             const PlayerSelectionCalls& calls) {
   // Check the request and the layout.
-  if (slot < 0 || slot >= 64 || !steam_id || team < 1 || team > 3 ||
+  if (!IsPlayerSlot(slot) || !steam_id || team < 1 || team > 3 ||
       (team != 1 && (!definition || !calls.create_pawn || !calls.select_hero)) ||
       (team == 1 && (!calls.spawn_observer || !calls.set_pawn)) || !seams_.slot_state ||
       !seams_.entity_system) {
@@ -980,7 +950,7 @@ std::expected<bool, std::string> PawnObserver::SeatForChoice(int32_t slot, uint6
                                                              uint32_t generation, int32_t team,
                                                              const PlayerSelectionCalls& calls) {
   // Check the request, the layout and the team change.
-  if (slot < 0 || slot >= 64 || !steam_id || team < 2 || team > 3 || !calls.create_pawn ||
+  if (!IsPlayerSlot(slot) || !steam_id || team < 2 || team > 3 || !calls.create_pawn ||
       !seams_.slot_state || !seams_.entity_system) {
     return std::unexpected("player seating unavailable");
   }
@@ -1074,7 +1044,7 @@ std::expected<bool, std::string> PawnObserver::SeatForChoice(int32_t slot, uint6
 std::expected<void, std::string> PawnObserver::RespawnPlayer(int32_t slot, uint32_t generation,
                                                              RespawnPawn respawn) {
   // Check the request and the connection.
-  if (slot < 0 || slot >= 64 || !respawn || !seams_.slot_state || !seams_.entity_system) {
+  if (!IsPlayerSlot(slot) || !respawn || !seams_.slot_state || !seams_.entity_system) {
     return std::unexpected("native player respawn unavailable");
   }
   const auto connection = seams_.slot_state(slot);
@@ -1236,7 +1206,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
     ++traced_frames;
     std::fprintf(
         stderr, "[modlock] observe trace: frame %d pawn handle = 0x%08x (index %u serial %u)\n",
-        traced_frames, pawn_handle, pawn_handle & kEntityIndexBits, pawn_handle >> kSerialShift);
+        traced_frames, pawn_handle, EntityIndexOf(pawn_handle), pawn_handle >> kSerialShift);
   }
 
   // Resolve the pawn and its origin, tracing each failure.
@@ -1365,15 +1335,15 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
       bool ambiguous = false;
       for (const auto& ability : *abilities) {
         // Mantle and slide read from their slots; the jump slot must be unique.
-        if (ability.slot == 0xA) {
+        if (ability.slot == kMantleSlot) {
           movement->mantling = ability.channeling;
           movement->mantle_ability_handle = ability.handle;
           movement->mantle_start_time = ability.mantle_start_time;
         }
-        if (ability.slot == 0xD) {
+        if (ability.slot == kSlideSlot) {
           movement->sliding = ability.sliding;
         }
-        if (ability.slot != 0xC) {
+        if (ability.slot != kJumpSlot) {
           continue;
         }
         if (jump) {
@@ -1851,17 +1821,17 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
     if (layout.channeling) {
       ability.channeling = entity[*layout.channeling] == 1;
     }
-    if (ability.slot == 0xA && layout.mantle_start_time) {
+    if (ability.slot == kMantleSlot && layout.mantle_start_time) {
       float start = 0;
       std::memcpy(&start, entity + *layout.mantle_start_time, sizeof(start));
       if (std::isfinite(start)) {
         ability.mantle_start_time = start;
       }
     }
-    if (ability.slot == 0xD && layout.sliding) {
+    if (ability.slot == kSlideSlot && layout.sliding) {
       ability.sliding = entity[*layout.sliding] == 1;
     }
-    if (ability.slot == 0xC && layout.consecutive_wall_jumps) {
+    if (ability.slot == kJumpSlot && layout.consecutive_wall_jumps) {
       int8_t count = 0;
       std::memcpy(&count, entity + *layout.consecutive_wall_jumps, sizeof(count));
       if (count >= 0) {
@@ -1883,7 +1853,7 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
       }
       return value;
     };
-    if (ability.slot == 0xC) {
+    if (ability.slot == kJumpSlot) {
       ability.current_wall_normal = vector_at(layout.current_wall_normal);
       ability.wall_contact_position = vector_at(layout.wall_contact_position);
       ability.wall_jump_normal_used = vector_at(layout.wall_jump_normal_used);
@@ -1893,7 +1863,7 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
         ability.wall_jump_facing = facing;
       }
     }
-    if (ability.slot == 0xC && layout.last_time_on_zipline) {
+    if (ability.slot == kJumpSlot && layout.last_time_on_zipline) {
       float time = 0;
       std::memcpy(&time, entity + *layout.last_time_on_zipline, sizeof(time));
       if (std::isfinite(time)) {
@@ -1934,9 +1904,9 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
   std::vector<uint16_t> slots;
   std::vector<uint32_t> subclasses;
   for (const auto& target : targets) {
-    // Slot 23 is the native unbound slot shared by triggered abilities.
-    if (target.slot > 23 || (target.slot >= 4 && target.slot <= 7) ||
-        (target.slot != 23 && std::ranges::find(slots, target.slot) != slots.end()) ||
+    // Many triggered abilities may share the unbound slot.
+    if (target.slot > kUnboundSlot || IsActiveItemSlot(target.slot) ||
+        (target.slot != kUnboundSlot && std::ranges::find(slots, target.slot) != slots.end()) ||
         std::ranges::find(subclasses, target.subclass_id) != subclasses.end()) {
       return std::unexpected("invalid or duplicate replay ability slot");
     }
@@ -1960,7 +1930,7 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
     }
 
     // Otherwise the slot must be free and the definition an enabled ability.
-    if (target.slot != 23 &&
+    if (target.slot != kUnboundSlot &&
         std::ranges::find(*owned, target.slot, &Ability::slot) != owned->end()) {
       return std::unexpected("replay ability slot contains another definition");
     }
@@ -2417,8 +2387,8 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     if (std::find(names.begin(), names.end(), definition->name) != names.end()) {
       return std::unexpected("duplicate replay item definition");
     }
-    if (target.slot && *target.slot != 23) {
-      if (*target.slot < 4 || *target.slot > 7) {
+    if (target.slot && *target.slot != kUnboundSlot) {
+      if (!IsActiveItemSlot(*target.slot)) {
         return std::unexpected("invalid replay item slot");
       }
       if (!functions.swap_slots) {
@@ -2560,7 +2530,7 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     if (found->slot == *target.slot) {
       continue;
     }
-    if (found->slot < 4 || found->slot > 7 || *target.slot == 23) {
+    if (!IsActiveItemSlot(found->slot) || *target.slot == kUnboundSlot) {
       return std::unexpected("item active/passive slot class differs from replay");
     }
     const auto handle = found->handle;

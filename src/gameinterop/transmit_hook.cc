@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 
+#include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
 #include "modlock/gameinterop/virtual_slots.h"
@@ -74,7 +75,7 @@ void TransmitSet::Withhold(uint32_t handle) {
 void TransmitSet::WithholdUnlessIn(uint32_t handle, uint64_t slots) {
   // A slot past the mask's 64 bits is never listed.
   const int32_t slot = Slot();
-  if (slot >= 0 && slot < 64 && (slots >> slot) & 1) {
+  if (IsPlayerSlot(slot) && (slots >> slot) & 1) {
     return;
   }
   Withhold(handle);

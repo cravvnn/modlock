@@ -182,21 +182,9 @@ std::optional<uint32_t> ReferenceHandleOf(void* entity) {
   // A deleted or deleting entity has no handle.
   uint32_t stored = 0;
   uint32_t flags = 0;
-  std::memcpy(&stored, identity + 0x10, sizeof(stored));
-  std::memcpy(&flags, identity + 0x30, sizeof(flags));
-  constexpr uint32_t kDeleteInProgress = 0x10;
-  constexpr uint32_t kMarkedForDelete = 0x200;
-  if (stored == 0xFFFFFFFFu || (flags & (kDeleteInProgress | kMarkedForDelete)) != 0) {
-    return std::nullopt;
-  }
-
-  // Rebuild the handle from the index and the live serial.
-  constexpr uint32_t kIndexMask = 0x7FFF;
-  constexpr uint32_t kSerialMask = 0x1FFFF;
-  constexpr uint32_t kSerialShift = 15;
-  constexpr uint32_t kInvalidHandleFlag = 0x1;
-  const uint32_t serial = ((stored >> kSerialShift) - (flags & kInvalidHandleFlag)) & kSerialMask;
-  return (stored & kIndexMask) | (serial << kSerialShift);
+  std::memcpy(&stored, identity + kIdentityEHandleOffset, sizeof(stored));
+  std::memcpy(&flags, identity + kIdentityFlagsOffset, sizeof(flags));
+  return LiveHandleOf(stored, flags);
 }
 
 std::expected<const void*, std::string> SchemaClassOfEntity(void* entity,
@@ -250,7 +238,7 @@ std::vector<void*> EntityInstances(void* entity_system) {
   // CConcreteEntityList follows the vtable and current resource manifest.
   // Each of its 64 chunks contains 512 CEntityIdentity records of 0x70 bytes.
   const auto* chunks = static_cast<const uint8_t*>(entity_system) + 0x10;
-  for (uint32_t chunk = 0; chunk < 64; ++chunk) {
+  for (uint32_t chunk = 0; chunk < kMaxEntityLists; ++chunk) {
     const auto* entries = static_cast<const uint8_t*>(ReadPointer(chunks, chunk * sizeof(void*)));
     if (!entries) {
       continue;

@@ -91,8 +91,8 @@ std::expected<void, std::string> AbilityInputHook::Process(void* pawn, const Lay
   if (input.controller_handle == UINT32_MAX || input.controller_handle == UINT32_MAX - 1) {
     return {};
   }
-  input.slot = static_cast<int32_t>(input.controller_handle & 0x7fff) - 1;
-  if (input.slot < 0 || input.slot >= 64) {
+  input.slot = static_cast<int32_t>(EntityIndexOf(input.controller_handle)) - 1;
+  if (!IsPlayerSlot(input.slot)) {
     return {};
   }
 

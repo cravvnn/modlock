@@ -107,7 +107,7 @@ void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
     Invalidate();
     return;
   }
-  if (message.entindex_target() != static_cast<int32_t>(identity_->pawn_handle & 0x7fff)) {
+  if (message.entindex_target() != static_cast<int32_t>(EntityIndexOf(identity_->pawn_handle))) {
     return;
   }
 
@@ -162,7 +162,7 @@ void StaminaEvidenceTracker::RecordDamage(std::span<const uint8_t> serialized) {
       message.entindex_attacker() == message.entindex_victim() || !message.has_hitgroup_id() ||
       message.hitgroup_id() != kHeadHitgroup || !message.has_server_tick() ||
       message.server_tick() < 0 ||
-      message.entindex_attacker() != static_cast<int32_t>(identity_->pawn_handle & 0x7fff)) {
+      message.entindex_attacker() != static_cast<int32_t>(EntityIndexOf(identity_->pawn_handle))) {
     return;
   }
 

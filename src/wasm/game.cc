@@ -1320,7 +1320,7 @@ void Game::Leave(int32_t slot) {
   hidden_.erase(slot);
 
   // Whoever takes the slot next is a different player, who was never listed.
-  if (slot >= 0 && slot < 64) {
+  if (gameinterop::IsPlayerSlot(slot)) {
     for (auto& [entity, slots] : audiences_) {
       slots &= ~(uint64_t{1} << slot);
     }
@@ -1469,7 +1469,7 @@ std::expected<void, std::string> Game::Announce(const AnnounceRequest& request) 
 
 std::expected<PlayersResponse, std::string> Game::Players() {
   PlayersResponse players;
-  for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     // List each occupied slot.
     const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
     if (!state.occupied) {
@@ -1854,7 +1854,7 @@ void Game::ApplyFreeForAll() {
     // Seat each player with no team on the side with fewer players.
     std::array<int, 4> sides{};
     std::vector<int32_t> unseated;
-    for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+    for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
       // Count each side and collect the humans without a team.
       const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
       if (!state.occupied) {
@@ -2944,7 +2944,7 @@ std::expected<void, std::string> Game::ShowEntityOnlyTo(const ShowEntityOnlyToRe
   }
   uint64_t slots = 0;
   for (const auto slot : request.players()) {
-    if (slot < 0 || slot >= 64) {
+    if (!gameinterop::IsPlayerSlot(slot)) {
       return std::unexpected("player slot out of range");
     }
     slots |= uint64_t{1} << slot;
@@ -3741,7 +3741,8 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
   const auto all = gameinterop::EntityInstances(*entities);
   const auto controller = std::ranges::find_if(all, [&](void* entity) {
     const auto handle = gameinterop::ReferenceHandleOf(entity);
-    return handle && static_cast<int32_t>(*handle & 0x7fff) == request.player() + 1;
+    return handle &&
+           static_cast<int32_t>(gameinterop::EntityIndexOf(*handle)) == request.player() + 1;
   });
   if (controller == all.end()) {
     return std::unexpected("the player is not connected");
@@ -3770,7 +3771,7 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
 }
 
 std::expected<void, std::string> Game::WatchMovement(const WatchMovementRequest& request) {
-  if (request.player() < 0 || request.player() >= kMaxPlayers) {
+  if (request.player() < 0 || request.player() >= gameinterop::kMaxPlayerSlots) {
     return std::unexpected("no player has that slot");
   }
   if (request.watch()) {
@@ -3859,7 +3860,7 @@ std::expected<void, std::string> Game::WatchProjectiles(const ProjectileOptions&
 
 std::vector<Game::Hero> Game::Heroes() {
   std::vector<Hero> heroes;
-  for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     // Collect each live hero.
     const auto sample = observer_.Observe(slot);
     if (!sample || sample->health <= 0) {
@@ -3958,7 +3959,7 @@ std::pair<uint32_t, int32_t> Game::Owner(void* entity) {
   }
 
   // Find the player whose pawn owns it.
-  for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     const auto sample = observer_.Observe(slot);
     if (sample && sample->pawn_handle == owner) {
       return {owner, slot};
@@ -4173,7 +4174,7 @@ std::expected<int32_t, std::string> Game::ScreenOwner(int32_t slot) {
   if (!sample) {
     return std::unexpected(sample.error());
   }
-  return static_cast<int32_t>(sample->pawn_handle & 0x7fff);
+  return static_cast<int32_t>(gameinterop::EntityIndexOf(sample->pawn_handle));
 }
 
 std::expected<void, std::string> Game::Sound(const SoundRequest& request) {

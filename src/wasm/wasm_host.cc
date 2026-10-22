@@ -873,7 +873,7 @@ void WasmPlugin::Warn(std::string_view what) {
   }
   const auto& title = manifest_.name().empty() ? name_ : manifest_.name();
   const auto text = std::format("{} {}", title, what);
-  for (int32_t slot = 0; slot < wasm::kMaxPlayers; ++slot) {
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     const auto player = gameinterop::ConnectionTracker::StateForSlot(slot);
     if (player.occupied && !player.is_bot) {
       static_cast<void>((*messages)->Chat(slot, text));
@@ -1519,7 +1519,7 @@ void WasmPlugin::SettingChanged(uint64_t steam_id, std::string_view key, std::st
   }
 
   // Tell the mod for each slot the player holds.
-  for (int32_t slot = 0; slot < wasm::kMaxPlayers; ++slot) {
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     // Tell the mod for each slot the player holds.
     if (SteamId(slot) != steam_id) {
       continue;

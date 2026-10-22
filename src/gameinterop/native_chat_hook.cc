@@ -134,7 +134,7 @@ std::optional<NativeChatHook::Message> NativeChatHook::Decode(int16_t message_id
   if (message_id == kChatMessageId) {
     engine::ChatMessage message;
     if (!message.ParseFromArray(payload, static_cast<int>(size)) || !message.has_text() ||
-        message.player_slot() < 0 || message.player_slot() >= 64) {
+        !IsPlayerSlot(message.player_slot())) {
       return std::nullopt;
     }
     return Message{message.player_slot(), message.text()};

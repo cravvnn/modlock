@@ -72,7 +72,8 @@ std::expected<HeroRestore, std::string> HeroRestore::Create(const Sample& pawn,
                              &gameinterop::ItemTarget::subclass_id) > 1) {
         return std::unexpected("the target repeats an item");
       }
-      if (item.slot && *item.slot != 23 && (*item.slot < 4 || *item.slot > 7)) {
+      if (item.slot && *item.slot != gameinterop::kUnboundSlot &&
+          !gameinterop::IsActiveItemSlot(*item.slot)) {
         return std::unexpected("an item slot must be 4 to 7 or 23");
       }
     }

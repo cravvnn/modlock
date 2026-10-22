@@ -38,6 +38,46 @@ inline constexpr size_t kResourceServiceEntitySystemOffset = 0x58;
 // public/interfaces/interfaces.h).
 inline constexpr char kGameResourceServiceServerVersion[] = "GameResourceServiceServerV001";
 
+// Layout constants follow the Source SDK entity declarations:
+// public/entity2/entityidentity.h (CEntityIdentity "Size: 0x70", field
+// comments), public/entityhandle.h (m_Parts bitfields), and
+// entity2/entitysystem.h plus entity2/concreteentitylist.h (CGameEntitySystem
+// member order and the chunk table).
+inline constexpr uint32_t kMaxEntitiesInList = 512;      // MAX_ENTITIES_IN_LIST
+inline constexpr uint32_t kMaxEntityLists = 64;          // MAX_ENTITY_LISTS
+inline constexpr size_t kIdentitySize = 0x70;            // sizeof(CEntityIdentity)
+inline constexpr size_t kIdentityInstanceOffset = 0x00;  // m_pInstance
+inline constexpr size_t kIdentityEHandleOffset = 0x10;   // m_EHandle
+inline constexpr size_t kIdentityFlagsOffset = 0x30;     // m_flags
+inline constexpr uint32_t kEntityIndexBits = 0x7FFF;     // m_Parts.m_EntityIndex : 15
+inline constexpr uint32_t kSerialShift = 15;             // m_Parts.m_Serial : 17
+inline constexpr uint32_t kSerialBits = 0x1FFFF;
+inline constexpr uint32_t kInvalidEHandleIndex = 0xFFFFFFFF;
+inline constexpr uint32_t kEfInvalidEHandle = 0x1;  // EF_IS_INVALID_EHANDLE
+inline constexpr uint32_t kEfDeleteFlags =
+    0x10 | 0x200;  // EF_DELETE_IN_PROGRESS | EF_MARKED_FOR_DELETE
+
+// Offset of CConcreteEntityList m_EntityList inside CGameEntitySystem: the
+// vptr and IEntityResourceManifest* m_pCurrentManifest precede it.
+inline constexpr size_t kEntityListOffset = 0x10;
+
+// EntityIndexOf returns the entity index a handle names, its low 15 bits.
+constexpr uint32_t EntityIndexOf(uint32_t handle) {
+  return handle & kEntityIndexBits;
+}
+
+// LiveHandleOf returns the handle an identity's stored handle and flags
+// prove, as CEntityIdentity::GetRefEHandle computes it: the stored index with
+// the serial corrected by EF_IS_INVALID_EHANDLE. An entity being deleted has
+// none.
+constexpr std::optional<uint32_t> LiveHandleOf(uint32_t stored, uint32_t flags) {
+  if (stored == kInvalidEHandleIndex || (flags & kEfDeleteFlags) != 0) {
+    return std::nullopt;
+  }
+  const uint32_t serial = ((stored >> kSerialShift) - (flags & kEfInvalidEHandle)) & kSerialBits;
+  return EntityIndexOf(stored) | (serial << kSerialShift);
+}
+
 // FindTypeScopeOf returns the type scope of a loaded module, such as
 // "server.dll", or an error when the module declares no schema.
 [[nodiscard]] MODLOCK_API std::expected<void*, std::string> FindTypeScopeOf(

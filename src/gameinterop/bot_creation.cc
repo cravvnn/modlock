@@ -32,14 +32,14 @@ std::expected<int32_t, std::string> BotCreation::Create(
   }
 
   // Note each slot's connection before creating the bot.
-  std::array<ConnectionTracker::SlotState, 64> before;
-  for (int32_t slot = 0; slot < 64; ++slot) {
+  std::array<ConnectionTracker::SlotState, kMaxPlayerSlots> before;
+  for (int32_t slot = 0; slot < kMaxPlayerSlots; ++slot) {
     before[slot] = ConnectionTracker::StateForSlot(slot);
   }
 
   // Create the bot and find the slot its new connection took.
   create_(name, team, hero_id, position.data());
-  for (int32_t slot = 0; slot < 64; ++slot) {
+  for (int32_t slot = 0; slot < kMaxPlayerSlots; ++slot) {
     const auto state = ConnectionTracker::StateForSlot(slot);
     if (state.occupied && state.is_bot &&
         (!before[slot].occupied || before[slot].generation != state.generation)) {
