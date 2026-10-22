@@ -113,6 +113,12 @@ mod's log and everything it sends players. Calls that need the game, such as
 reading a hero's position, return nothing in the sandbox. `--sandbox` uses the
 sandbox even where the game is installed.
 
+Open `http://127.0.0.1:4321/` to see the screens your mod shows that player,
+drawn as the game would draw them. Press their buttons and send chat commands
+from the page as that player, and choose a screenshot of the game as the
+backdrop. The page shows when the mod is building, the errors of a failed build,
+and why a mod stopped. `--preview-port` moves it, and 0 turns it off.
+
 ### Commands
 
 | Command                 | Effect                                                                                   |

@@ -167,12 +167,9 @@ func (s *Screens) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 func (s *Screens) admit(w http.ResponseWriter, request *http.Request) bool {
 	// Admit only loopback host names, which keeps DNS rebinding out, and
 	// only the relay or a same-origin page.
-	host, _, err := net.SplitHostPort(request.Host)
-	local := err == nil && (host == "127.0.0.1" || strings.EqualFold(host, "localhost"))
 	origin := request.Header.Get("Origin")
 	relay := origin != "" && origin == s.origin && strings.Contains(request.UserAgent(), RelayAgent)
-	sameOrigin := origin == "" || origin == "http://"+request.Host
-	if !local || !relay && !sameOrigin {
+	if !Loopback(request) || !relay && !SameOrigin(request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return false
 	}
@@ -225,6 +222,20 @@ func (s *Screens) stream(w http.ResponseWriter, request *http.Request) {
 			return
 		}
 	}
+}
+
+// Loopback reports whether request names a loopback host, which keeps DNS
+// rebinding from reaching a server that listens on loopback.
+func Loopback(request *http.Request) bool {
+	host, _, err := net.SplitHostPort(request.Host)
+	return err == nil && (host == "127.0.0.1" || strings.EqualFold(host, "localhost"))
+}
+
+// SameOrigin reports whether request comes from a page this server served, or
+// from no page at all.
+func SameOrigin(request *http.Request) bool {
+	origin := request.Header.Get("Origin")
+	return origin == "" || origin == "http://"+request.Host
 }
 
 var _ http.Handler = (*Screens)(nil)

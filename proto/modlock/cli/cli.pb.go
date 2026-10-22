@@ -13,6 +13,7 @@ import (
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
 	control "github.com/paralin/modlock/proto/modlock/control"
 	publish "github.com/paralin/modlock/proto/modlock/publish"
+	ui "github.com/paralin/modlock/proto/modlock/ui"
 )
 
 // Event is one thing the command line did or saw.
@@ -421,6 +422,166 @@ func (x *Published) GetLocation() string {
 	return ""
 }
 
+// Preview is what the preview page of modlock dev draws, one per message on
+// its websocket: what the build and the mods are doing, and the stand-in
+// player's screen. The page sends each of the player's inputs back as an
+// Input on the same socket.
+type Preview struct {
+	unknownFields []byte
+	// State is what the build and the mods are doing.
+	//
+	// Types that are assignable to State:
+	//	*Preview_Building
+	//	*Preview_Failed
+	//	*Preview_Running
+	//	*Preview_Stopped
+	State isPreview_State `protobuf_oneof:"state"`
+	// Screen is the stand-in player's screen as the mods last drew it, kept
+	// through a build and a stop.
+	Screen *ui.Screen `protobuf:"bytes,5,opt,name=screen,proto3" json:"screen,omitempty"`
+	// Watch is true when modlock dev rebuilds the mod on each save.
+	Watch bool `protobuf:"varint,6,opt,name=watch,proto3" json:"watch,omitempty"`
+	// Note answers this page's last input when no mod received it, such as a
+	// command no mod handled; it is empty otherwise.
+	Note string `protobuf:"bytes,7,opt,name=note,proto3" json:"note,omitempty"`
+}
+
+func (x *Preview) Reset() {
+	*x = Preview{}
+}
+
+func (*Preview) ProtoMessage() {}
+
+func (m *Preview) GetState() isPreview_State {
+	if m != nil {
+		return m.State
+	}
+	return nil
+}
+
+func (x *Preview) GetBuilding() *Building {
+	if x, ok := x.GetState().(*Preview_Building); ok {
+		return x.Building
+	}
+	return nil
+}
+
+func (x *Preview) GetFailed() *Built {
+	if x, ok := x.GetState().(*Preview_Failed); ok {
+		return x.Failed
+	}
+	return nil
+}
+
+func (x *Preview) GetRunning() *Running {
+	if x, ok := x.GetState().(*Preview_Running); ok {
+		return x.Running
+	}
+	return nil
+}
+
+func (x *Preview) GetStopped() *Stopped {
+	if x, ok := x.GetState().(*Preview_Stopped); ok {
+		return x.Stopped
+	}
+	return nil
+}
+
+func (x *Preview) GetScreen() *ui.Screen {
+	if x != nil {
+		return x.Screen
+	}
+	return nil
+}
+
+func (x *Preview) GetWatch() bool {
+	if x != nil {
+		return x.Watch
+	}
+	return false
+}
+
+func (x *Preview) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type isPreview_State interface {
+	isPreview_State()
+}
+
+type Preview_Building struct {
+	// Building reports a build in progress.
+	Building *Building `protobuf:"bytes,1,opt,name=building,proto3,oneof"`
+}
+
+type Preview_Failed struct {
+	// Failed reports a failed build; the mods from the build before it keep
+	// running.
+	Failed *Built `protobuf:"bytes,2,opt,name=failed,proto3,oneof"`
+}
+
+type Preview_Running struct {
+	// Running reports that the mods run.
+	Running *Running `protobuf:"bytes,3,opt,name=running,proto3,oneof"`
+}
+
+type Preview_Stopped struct {
+	// Stopped reports a mod that stopped or did not load, and why.
+	Stopped *Stopped `protobuf:"bytes,4,opt,name=stopped,proto3,oneof"`
+}
+
+func (*Preview_Building) isPreview_State() {}
+
+func (*Preview_Failed) isPreview_State() {}
+
+func (*Preview_Running) isPreview_State() {}
+
+func (*Preview_Stopped) isPreview_State() {}
+
+// Running reports that the mods run.
+type Running struct {
+	unknownFields []byte
+}
+
+func (x *Running) Reset() {
+	*x = Running{}
+}
+
+func (*Running) ProtoMessage() {}
+
+// Stopped reports a mod that stopped or did not load.
+type Stopped struct {
+	unknownFields []byte
+	// Failed names the mod and the error that stopped it.
+	Failed *control.ModFailed `protobuf:"bytes,1,opt,name=failed,proto3" json:"failed,omitempty"`
+	// Log holds the mod's last log lines since it started, which usually say
+	// why it stopped.
+	Log []string `protobuf:"bytes,2,rep,name=log,proto3" json:"log,omitempty"`
+}
+
+func (x *Stopped) Reset() {
+	*x = Stopped{}
+}
+
+func (*Stopped) ProtoMessage() {}
+
+func (x *Stopped) GetFailed() *control.ModFailed {
+	if x != nil {
+		return x.Failed
+	}
+	return nil
+}
+
+func (x *Stopped) GetLog() []string {
+	if x != nil {
+		return x.Log
+	}
+	return nil
+}
+
 func (m *Event) CloneVT() *Event {
 	if m == nil {
 		return (*Event)(nil)
@@ -666,6 +827,111 @@ func (m *Published) CloneVT() *Published {
 }
 
 func (m *Published) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Preview) CloneVT() *Preview {
+	if m == nil {
+		return (*Preview)(nil)
+	}
+	r := new(Preview)
+	r.Watch = m.Watch
+	r.Note = m.Note
+	if m.State != nil {
+		r.State = m.State.(interface{ CloneOneofVT() isPreview_State }).CloneOneofVT()
+	}
+	r.Screen = protobuf_go_lite.CloneVTValue(m.Screen)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Preview) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Preview_Building) CloneVT() *Preview_Building {
+	if m == nil {
+		return (*Preview_Building)(nil)
+	}
+	r := new(Preview_Building)
+	r.Building = protobuf_go_lite.CloneVTValue(m.Building)
+	return r
+}
+
+func (m *Preview_Building) CloneOneofVT() isPreview_State {
+	return m.CloneVT()
+}
+
+func (m *Preview_Failed) CloneVT() *Preview_Failed {
+	if m == nil {
+		return (*Preview_Failed)(nil)
+	}
+	r := new(Preview_Failed)
+	r.Failed = protobuf_go_lite.CloneVTValue(m.Failed)
+	return r
+}
+
+func (m *Preview_Failed) CloneOneofVT() isPreview_State {
+	return m.CloneVT()
+}
+
+func (m *Preview_Running) CloneVT() *Preview_Running {
+	if m == nil {
+		return (*Preview_Running)(nil)
+	}
+	r := new(Preview_Running)
+	r.Running = protobuf_go_lite.CloneVTValue(m.Running)
+	return r
+}
+
+func (m *Preview_Running) CloneOneofVT() isPreview_State {
+	return m.CloneVT()
+}
+
+func (m *Preview_Stopped) CloneVT() *Preview_Stopped {
+	if m == nil {
+		return (*Preview_Stopped)(nil)
+	}
+	r := new(Preview_Stopped)
+	r.Stopped = protobuf_go_lite.CloneVTValue(m.Stopped)
+	return r
+}
+
+func (m *Preview_Stopped) CloneOneofVT() isPreview_State {
+	return m.CloneVT()
+}
+
+func (m *Running) CloneVT() *Running {
+	if m == nil {
+		return (*Running)(nil)
+	}
+	r := new(Running)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Running) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Stopped) CloneVT() *Stopped {
+	if m == nil {
+		return (*Stopped)(nil)
+	}
+	r := new(Stopped)
+	r.Failed = protobuf_go_lite.CloneVTValue(m.Failed)
+	r.Log = protobuf_go_lite.CloneSlice(m.Log)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Stopped) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -1009,6 +1275,150 @@ func (this *Published) EqualVT(that *Published) bool {
 
 func (this *Published) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*Published)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Preview) EqualVT(that *Preview) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.State == nil && that.State != nil {
+		return false
+	} else if this.State != nil {
+		if that.State == nil {
+			return false
+		}
+		if !this.State.(interface{ EqualVT(isPreview_State) bool }).EqualVT(that.State) {
+			return false
+		}
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Screen, that.Screen) {
+		return false
+	}
+	if this.Watch != that.Watch {
+		return false
+	}
+	if this.Note != that.Note {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Preview) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Preview)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Preview_Building) EqualVT(thatIface isPreview_State) bool {
+	that, ok := thatIface.(*Preview_Building)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Building, that.Building, func() *Building { return &Building{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *Preview_Failed) EqualVT(thatIface isPreview_State) bool {
+	that, ok := thatIface.(*Preview_Failed)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Failed, that.Failed, func() *Built { return &Built{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *Preview_Running) EqualVT(thatIface isPreview_State) bool {
+	that, ok := thatIface.(*Preview_Running)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Running, that.Running, func() *Running { return &Running{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *Preview_Stopped) EqualVT(thatIface isPreview_State) bool {
+	that, ok := thatIface.(*Preview_Stopped)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Stopped, that.Stopped, func() *Stopped { return &Stopped{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *Running) EqualVT(that *Running) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Running) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Running)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Stopped) EqualVT(that *Stopped) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Failed, that.Failed) {
+		return false
+	}
+	if !protobuf_go_lite.EqualSlice(this.Log, that.Log) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Stopped) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Stopped)
 	if !ok {
 		return false
 	}
@@ -1560,6 +1970,212 @@ func (x *Published) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the Preview message to JSON.
+func (x *Preview) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.State != nil {
+		switch ov := x.State.(type) {
+		case *Preview_Building:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("building")
+			ov.Building.MarshalProtoJSON(s.WithField("building"))
+		case *Preview_Failed:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("failed")
+			ov.Failed.MarshalProtoJSON(s.WithField("failed"))
+		case *Preview_Running:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("running")
+			ov.Running.MarshalProtoJSON(s.WithField("running"))
+		case *Preview_Stopped:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("stopped")
+			ov.Stopped.MarshalProtoJSON(s.WithField("stopped"))
+		}
+	}
+	if x.Screen != nil || s.HasField("screen") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("screen")
+		x.Screen.MarshalProtoJSON(s.WithField("screen"))
+	}
+	if x.Watch || s.HasField("watch") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("watch")
+		s.WriteBool(x.Watch)
+	}
+	if x.Note != "" || s.HasField("note") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("note")
+		s.WriteString(x.Note)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Preview to JSON.
+func (x *Preview) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Preview message from JSON.
+func (x *Preview) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "building":
+			ov := &Preview_Building{}
+			x.State = ov
+			if s.ReadNil() {
+				ov.Building = nil
+				return
+			}
+			ov.Building = &Building{}
+			ov.Building.UnmarshalProtoJSON(s.WithField("building", true))
+		case "failed":
+			ov := &Preview_Failed{}
+			x.State = ov
+			if s.ReadNil() {
+				ov.Failed = nil
+				return
+			}
+			ov.Failed = &Built{}
+			ov.Failed.UnmarshalProtoJSON(s.WithField("failed", true))
+		case "running":
+			ov := &Preview_Running{}
+			x.State = ov
+			if s.ReadNil() {
+				ov.Running = nil
+				return
+			}
+			ov.Running = &Running{}
+			ov.Running.UnmarshalProtoJSON(s.WithField("running", true))
+		case "stopped":
+			ov := &Preview_Stopped{}
+			x.State = ov
+			if s.ReadNil() {
+				ov.Stopped = nil
+				return
+			}
+			ov.Stopped = &Stopped{}
+			ov.Stopped.UnmarshalProtoJSON(s.WithField("stopped", true))
+		case "screen":
+			if s.ReadNil() {
+				x.Screen = nil
+				return
+			}
+			x.Screen = &ui.Screen{}
+			x.Screen.UnmarshalProtoJSON(s.WithField("screen", true))
+		case "watch":
+			s.AddField("watch")
+			x.Watch = s.ReadBool()
+		case "note":
+			s.AddField("note")
+			x.Note = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Preview from JSON.
+func (x *Preview) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Running message to JSON.
+func (x *Running) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Running to JSON.
+func (x *Running) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Running message from JSON.
+func (x *Running) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		// no fields
+	})
+}
+
+// UnmarshalJSON unmarshals the Running from JSON.
+func (x *Running) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Stopped message to JSON.
+func (x *Stopped) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Failed != nil || s.HasField("failed") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("failed")
+		x.Failed.MarshalProtoJSON(s.WithField("failed"))
+	}
+	if len(x.Log) > 0 || s.HasField("log") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("log")
+		s.WriteStringArray(x.Log)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Stopped to JSON.
+func (x *Stopped) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Stopped message from JSON.
+func (x *Stopped) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "failed":
+			if s.ReadNil() {
+				x.Failed = nil
+				return
+			}
+			x.Failed = &control.ModFailed{}
+			x.Failed.UnmarshalProtoJSON(s.WithField("failed", true))
+		case "log":
+			s.AddField("log")
+			if s.ReadNil() {
+				x.Log = nil
+				return
+			}
+			x.Log = s.ReadStringArray()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Stopped from JSON.
+func (x *Stopped) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 func (m *Event) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -2106,6 +2722,244 @@ func (m *Published) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *Preview) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Preview) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Preview) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.State.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	if len(m.Note) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Note)
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.Watch {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Watch)
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Screen != nil {
+		size, err := m.Screen.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x2a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Preview_Building) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Preview_Building) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Building != nil {
+		size, err := m.Building.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Preview_Failed) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Preview_Failed) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Failed != nil {
+		size, err := m.Failed.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Preview_Running) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Preview_Running) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Running != nil {
+		size, err := m.Running.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Preview_Stopped) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Preview_Stopped) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Stopped != nil {
+		size, err := m.Stopped.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Running) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Running) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Running) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Stopped) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Stopped) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Stopped) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Log) > 0 {
+		for iNdEx := len(m.Log) - 1; iNdEx >= 0; iNdEx-- {
+			i = protobuf_go_lite.EncodeString(dAtA, i, m.Log[iNdEx])
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.Failed != nil {
+		size, err := m.Failed.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *Event) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2326,6 +3180,110 @@ func (m *Published) SizeVT() (n int) {
 	return n
 }
 
+func (m *Preview) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.State.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	if m.Screen != nil {
+		l = m.Screen.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.Watch)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Note)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Preview_Building) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Building != nil {
+		l = m.Building.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *Preview_Failed) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Failed != nil {
+		l = m.Failed.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *Preview_Running) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Running != nil {
+		l = m.Running.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *Preview_Stopped) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Stopped != nil {
+		l = m.Stopped.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *Running) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Stopped) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Failed != nil {
+		l = m.Failed.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeStringSlice(1, m.Log)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (x *Event) MarshalProtoText() string {
 	var sb protobuf_go_lite.TextBuilder
 	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Event")
@@ -2535,6 +3493,90 @@ func (x *Published) MarshalProtoText() string {
 }
 
 func (x *Published) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Preview) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Preview")
+	switch body := x.State.(type) {
+	case *Preview_Building:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "building")
+		if body.Building == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &Building{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Building)
+		}
+	case *Preview_Failed:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "failed")
+		if body.Failed == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &Built{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Failed)
+		}
+	case *Preview_Running:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "running")
+		if body.Running == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &Running{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Running)
+		}
+	case *Preview_Stopped:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "stopped")
+		if body.Stopped == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &Stopped{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Stopped)
+		}
+	}
+	if x.Screen != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "screen")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Screen)
+	}
+	if x.Watch != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "watch")
+		protobuf_go_lite.TextWriteBool(&sb, x.Watch)
+	}
+	if x.Note != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "note")
+		protobuf_go_lite.TextWriteString(&sb, x.Note)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Preview) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Running) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	protobuf_go_lite.TextStartMessage(&sb, "Running")
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Running) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Stopped) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Stopped")
+	if x.Failed != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "failed")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Failed)
+	}
+	if len(x.Log) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "log")
+		for i, v := range x.Log {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			protobuf_go_lite.TextWriteString(&sb, v)
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Stopped) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -3184,6 +4226,275 @@ func (m *Published) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Location = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Preview) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Preview: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Preview: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Building", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.State.(*Preview_Building); ok {
+				if err := oneof.Building.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Building{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.State = &Preview_Building{Building: v}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Failed", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.State.(*Preview_Failed); ok {
+				if err := oneof.Failed.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Built{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.State = &Preview_Failed{Failed: v}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Running", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.State.(*Preview_Running); ok {
+				if err := oneof.Running.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Running{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.State = &Preview_Running{Running: v}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stopped", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.State.(*Preview_Stopped); ok {
+				if err := oneof.Stopped.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Stopped{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.State = &Preview_Stopped{Stopped: v}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Screen", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Screen == nil {
+				m.Screen = &ui.Screen{}
+			}
+			if err := m.Screen.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Watch", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Watch = bool(v)
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Note", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Note = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Running) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Running: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Running: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Stopped) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Stopped: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Stopped: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Failed", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Failed == nil {
+				m.Failed = &control.ModFailed{}
+			}
+			if err := m.Failed.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Log", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Log = append(m.Log, v)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

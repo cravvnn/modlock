@@ -18,6 +18,9 @@ import (
 type printer struct {
 	// json selects the event lines.
 	json bool
+	// watch, when set, also receives every event the printer reports. Set it
+	// before the first report.
+	watch func(*cli.Event)
 	// mu keeps lines from the build and the server whole.
 	mu sync.Mutex
 }
@@ -39,18 +42,15 @@ func (p *printer) note(parts ...any) {
 
 // building reports that a build of the project in dir started.
 func (p *printer) building(dir string) {
+	event := &cli.Event{Body: &cli.Event_Building{Building: &cli.Building{Dir: dir}}}
+	p.observe(event)
 	if p.json {
-		p.emit(&cli.Event{Body: &cli.Event_Building{Building: &cli.Building{Dir: dir}}})
+		p.emit(event)
 	}
 }
 
 // built reports the build of the project in dir that ended with err.
 func (p *printer) built(dir string, err error) {
-	// A person reads the tools' own output instead.
-	if !p.json {
-		return
-	}
-
 	// Describe the result and locate each problem.
 	built := &cli.Built{Dir: dir, Ok: err == nil}
 	if err != nil {
@@ -60,7 +60,13 @@ func (p *printer) built(dir string, err error) {
 	if errors.As(err, &failed) {
 		built.Diagnostics = failed.Diagnostics
 	}
-	p.emit(&cli.Event{Body: &cli.Event_Built{Built: built}})
+	event := &cli.Event{Body: &cli.Event_Built{Built: built}}
+	p.observe(event)
+
+	// A person reads the tools' own output instead.
+	if p.json {
+		p.emit(event)
+	}
 }
 
 // published reports a release the provider recorded at location.
@@ -87,8 +93,10 @@ func (p *printer) sandbox(reason string) {
 // host reports one event from the server.
 func (p *printer) host(event *control.HostEvent) {
 	// Send every event, interface changes included, to a program.
+	wrapped := &cli.Event{Body: &cli.Event_Host{Host: event}}
+	p.observe(wrapped)
 	if p.json {
-		p.emit(&cli.Event{Body: &cli.Event_Host{Host: event}})
+		p.emit(wrapped)
 		return
 	}
 
@@ -124,6 +132,13 @@ func shown(message *control.PlayerMessage) string {
 		return "the player sees an announcement: " + message.GetTitle() + ": " + message.GetText()
 	default:
 		return "the player sees in chat: " + message.GetText()
+	}
+}
+
+// observe passes event to the watcher, if any.
+func (p *printer) observe(event *cli.Event) {
+	if p.watch != nil {
+		p.watch(event)
 	}
 }
 

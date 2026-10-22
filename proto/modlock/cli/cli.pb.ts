@@ -2,7 +2,7 @@
 // @generated from file github.com/paralin/modlock/proto/modlock/cli/cli.proto (package modlock.cli, syntax proto3)
 /* eslint-disable */
 
-import { HostEvent } from '../control/control.pb.js'
+import { HostEvent, ModFailed } from '../control/control.pb.js'
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
 import type {
@@ -10,6 +10,7 @@ import type {
   Writer,
 } from '@aptre/protobuf-es-lite/binary-encoding'
 import { Release } from '../publish/publish.pb.js'
+import { Screen } from '../ui.pb.js'
 
 /**
  * Event is one thing the command line did or saw.
@@ -601,6 +602,230 @@ export const Published: MessageType<Published> =
         {
           const v = m.location
           if (v) w.uint32(26).string(v)
+        }
+      },
+    },
+  )
+
+/**
+ * Preview is what the preview page of modlock dev draws, one per message on
+ * its websocket: what the build and the mods are doing, and the stand-in
+ * player's screen. The page sends each of the player's inputs back as an
+ * Input on the same socket.
+ *
+ * @generated from message modlock.cli.Preview
+ */
+export interface Preview {
+  /**
+   * Screen is the stand-in player's screen as the mods last drew it, kept
+   * through a build and a stop.
+   */
+  screen?: Screen
+  /**
+   * Watch is true when modlock dev rebuilds the mod on each save.
+   */
+  watch?: boolean
+  /**
+   * Note answers this page's last input when no mod received it, such as a
+   * command no mod handled; it is empty otherwise.
+   */
+  note?: string
+  /**
+   * State is what the build and the mods are doing.
+   *
+   * @generated from oneof modlock.cli.Preview.state
+   */
+  state?:
+    | { value?: undefined; case: undefined }
+    | { value: Building; case: 'building' }
+    | { value: Built; case: 'failed' }
+    | { value: Running; case: 'running' }
+    | { value: Stopped; case: 'stopped' }
+}
+
+export const Preview: MessageType<Preview> =
+  /* @__PURE__ */ createMessageType<Preview>(
+    'modlock.cli.Preview',
+    () => [
+      [1, 'building', 11, 0, Building.codec, 'state'],
+      [2, 'failed', 11, 0, Built.codec, 'state'],
+      [3, 'running', 11, 0, Running.codec, 'state'],
+      [4, 'stopped', 11, 0, Stopped.codec, 'state'],
+      [5, 'screen', 11, 0, Screen.codec],
+      [6, 'watch', 8],
+      [7, 'note', 9],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: Preview): Preview => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.state = {
+                case: 'building',
+                value: Building.decode(
+                  r,
+                  r.delimited(),
+                  m.state?.case === 'building' ? m.state.value : {},
+                ),
+              }
+              break
+            case 2:
+              m.state = {
+                case: 'failed',
+                value: Built.decode(
+                  r,
+                  r.delimited(),
+                  m.state?.case === 'failed' ? m.state.value : {},
+                ),
+              }
+              break
+            case 3:
+              m.state = {
+                case: 'running',
+                value: Running.decode(
+                  r,
+                  r.delimited(),
+                  m.state?.case === 'running' ? m.state.value : {},
+                ),
+              }
+              break
+            case 4:
+              m.state = {
+                case: 'stopped',
+                value: Stopped.decode(
+                  r,
+                  r.delimited(),
+                  m.state?.case === 'stopped' ? m.state.value : {},
+                ),
+              }
+              break
+            case 5:
+              m.screen = Screen.decode(r, r.delimited(), m.screen ?? {})
+              break
+            case 6:
+              m.watch = r.bool()
+              break
+            case 7:
+              m.note = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Preview, w: Writer): void => {
+        {
+          const o = m.state
+          if (o?.case === 'building' && o.value != null)
+            Building.writeField(w, 1, o.value)
+        }
+        {
+          const o = m.state
+          if (o?.case === 'failed' && o.value != null)
+            Built.writeField(w, 2, o.value)
+        }
+        {
+          const o = m.state
+          if (o?.case === 'running' && o.value != null)
+            Running.writeField(w, 3, o.value)
+        }
+        {
+          const o = m.state
+          if (o?.case === 'stopped' && o.value != null)
+            Stopped.writeField(w, 4, o.value)
+        }
+        {
+          const v = m.screen
+          if (v != null) Screen.writeField(w, 5, v)
+        }
+        {
+          const v = m.watch
+          if (v) w.uint32(48).bool(v)
+        }
+        {
+          const v = m.note
+          if (v) w.uint32(58).string(v)
+        }
+      },
+    },
+  )
+
+/**
+ * Running reports that the mods run.
+ *
+ * @generated from message modlock.cli.Running
+ */
+export interface Running {}
+
+export const Running: MessageType<Running> =
+  /* @__PURE__ */ createMessageType<Running>('modlock.cli.Running', () => [], {
+    decode: (r: BinaryReader, end: number, m: Running): Running => {
+      while (r.pos < end) {
+        const t = r.tag()
+        if ((t & 7) === 4) return m
+        switch (t >>> 3) {
+          default:
+            r.skip(t)
+        }
+      }
+      return m
+    },
+    encode: (m: Running, w: Writer): void => {},
+  })
+
+/**
+ * Stopped reports a mod that stopped or did not load.
+ *
+ * @generated from message modlock.cli.Stopped
+ */
+export interface Stopped {
+  /**
+   * Failed names the mod and the error that stopped it.
+   */
+  failed?: ModFailed
+  /**
+   * Log holds the mod's last log lines since it started, which usually say
+   * why it stopped.
+   */
+  log?: string[]
+}
+
+export const Stopped: MessageType<Stopped> =
+  /* @__PURE__ */ createMessageType<Stopped>(
+    'modlock.cli.Stopped',
+    () => [
+      [1, 'failed', 11, 0, ModFailed.codec],
+      [2, 'log', 9, 1],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: Stopped): Stopped => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.failed = ModFailed.decode(r, r.delimited(), m.failed ?? {})
+              break
+            case 2:
+              ;(m.log ??= []).push(r.string())
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Stopped, w: Writer): void => {
+        {
+          const v = m.failed
+          if (v != null) ModFailed.writeField(w, 1, v)
+        }
+        {
+          const a = m.log
+          if (a != null) for (const e of a) w.uint32(18).string(e)
         }
       },
     },

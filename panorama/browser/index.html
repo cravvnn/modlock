@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- The page is dark already: a browser dark mode must not recolor it,
+         or the drawing no longer matches the game. -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="darkreader-lock" />
+    <title>Modlock preview</title>
+    <link rel="stylesheet" href="preview.css" />
+    <link rel="stylesheet" href="panels.css" />
+  </head>
+  <body>
+    <div id="bar">
+      <span id="state"></span>
+      <form id="command" hidden>
+        <input
+          name="line"
+          placeholder="Chat command, such as /hello"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button>Send</button>
+      </form>
+      <span id="note"></span>
+      <select id="backdrop" aria-label="Backdrop">
+        <option value="">No backdrop</option>
+        <option value="choose">Choose an image…</option>
+      </select>
+      <input id="backdrop-file" type="file" accept="image/*" hidden />
+    </div>
+    <div id="stage"></div>
+    <div id="notice" hidden></div>
+    <script src="preview.js"></script>
+  </body>
+</html>

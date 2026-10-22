@@ -248,18 +248,28 @@ func input(ctx context.Context, out *printer, box *sandbox.Sandbox, line string)
 			return
 		}
 	}
+	if note := deliver(ctx, box, in); note != "" {
+		out.note(note)
+	}
+}
 
-	// Press the button, or send the command.
+// deliver presses the button or sends the command in to the sandbox's mods,
+// and returns a line for the creator when no mod received it, or empty.
+func deliver(ctx context.Context, box *sandbox.Sandbox, in *modcli.Input) string {
+	// Press the button.
 	if press := in.GetPress(); press != nil {
 		pressed, err := box.Press(ctx, press.GetMod(), press.GetSlot(), press.GetNode())
 		if err == nil && !pressed {
-			out.note(press.GetMod(), "is not running to receive the press")
+			return press.GetMod() + " is not running to receive the press"
 		}
-		return
+		return ""
 	}
+
+	// Send the command.
 	command := strings.TrimSpace(in.GetCommand())
 	handled, err := box.Command(ctx, command)
 	if err == nil && !handled && command != "" {
-		out.note("no mod handled", command)
+		return "no mod handled " + command
 	}
+	return ""
 }

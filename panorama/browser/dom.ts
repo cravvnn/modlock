@@ -1,4 +1,4 @@
-import type { Panel } from '../src/draw.js'
+import type { Panel, Panorama } from '../src/draw.js'
 
 /**
  * DomPanel stands in for a Panorama panel with one HTML element, so a mod's
@@ -192,6 +192,23 @@ export class DomPanel implements Panel {
     return false
   }
 }
+
+/**
+ * domPanorama is the part of Panorama a Drawing uses, on DomPanels. Debug
+ * messages go to the console; a press reaches the page through the Drawing's
+ * Press, so dispatched events go nowhere.
+ */
+export const domPanorama = {
+  CreatePanel(type: string, parent: DomPanel, id: string): DomPanel {
+    const panel = new DomPanel(type, id)
+    panel.SetParent(parent)
+    return panel
+  },
+  DispatchEvent() {},
+  Msg(...values: unknown[]) {
+    console.debug(...values)
+  },
+} satisfies Panorama
 
 // panelOf returns the stand-in panel an element belongs to, if any.
 function panelOf(element: Element | null | undefined): DomPanel | null {

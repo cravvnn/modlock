@@ -7,6 +7,9 @@
   min-height: 0;
   position: relative;
   flex-shrink: 0;
+  /* A panel that ignores hits still passes them to its children, as in
+     Panorama, so each panel sets its own instead of inheriting its parent's. */
+  pointer-events: auto;
 }
 
 .p-Label {

@@ -1,0 +1,121 @@
+/* The preview page around the stage; panels.css lays out the panels. */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #05080a;
+  color: #ffefd7;
+  font-family: 'Noto Sans', 'Avenir Next', sans-serif;
+  overflow: hidden;
+}
+
+#bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 0 12px;
+  font:
+    13px system-ui,
+    sans-serif;
+  background: #111;
+  color: #ccc;
+  z-index: 10;
+}
+
+#bar input,
+#bar select,
+#bar button {
+  font: inherit;
+}
+
+#bar #state {
+  font-weight: 600;
+  color: #eee;
+}
+
+#bar #command {
+  display: flex;
+  gap: 4px;
+}
+
+#bar #command[hidden] {
+  display: none;
+}
+
+#bar #command input {
+  width: 22em;
+}
+
+#bar #note {
+  opacity: 0.7;
+}
+
+#bar #backdrop {
+  margin-left: auto;
+}
+
+/* The stage is one Panorama screen, laid out 1080 units tall and scaled to fit. */
+#stage {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  background:
+    radial-gradient(ellipse at 70% 30%, #3a2a1c 0%, transparent 60%),
+    linear-gradient(160deg, #1c1510, #0a0d10 70%);
+  background-size: cover;
+  background-position: center;
+  transition: opacity 0.15s;
+}
+
+/* A build in progress or a stopped page dims the last drawing. */
+#stage.dim {
+  opacity: 0.4;
+}
+
+#notice {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(90ch, calc(100vw - 48px));
+  padding: 12px 16px;
+  border-radius: 6px;
+  background: rgb(12 12 12 / 92%);
+  color: #ddd;
+  font:
+    14px system-ui,
+    sans-serif;
+  z-index: 5;
+}
+
+#notice[hidden] {
+  display: none;
+}
+
+#notice p {
+  margin: 0;
+}
+
+#notice p + * {
+  margin-top: 8px;
+}
+
+#notice pre {
+  max-height: 60vh;
+  margin: 0;
+  overflow: auto;
+  font:
+    12px ui-monospace,
+    monospace;
+  white-space: pre-wrap;
+  color: #f3a8a0;
+}

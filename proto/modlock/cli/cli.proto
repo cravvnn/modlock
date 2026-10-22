@@ -6,6 +6,7 @@ option go_package = "github.com/paralin/modlock/proto/modlock/cli;cli";
 
 import "github.com/paralin/modlock/proto/modlock/control/control.proto";
 import "github.com/paralin/modlock/proto/modlock/publish/publish.proto";
+import "github.com/paralin/modlock/proto/modlock/ui.proto";
 
 // With --json, the modlock command line writes one Event per line on standard
 // output as protobuf JSON, and stops when its standard input closes. In the
@@ -124,4 +125,50 @@ message Published {
 
   // Location is the archive's path or the GitHub release tag.
   string location = 3;
+}
+
+// Preview is what the preview page of modlock dev draws, one per message on
+// its websocket: what the build and the mods are doing, and the stand-in
+// player's screen. The page sends each of the player's inputs back as an
+// Input on the same socket.
+message Preview {
+  // State is what the build and the mods are doing.
+  oneof state {
+    // Building reports a build in progress.
+    Building building = 1;
+
+    // Failed reports a failed build; the mods from the build before it keep
+    // running.
+    Built failed = 2;
+
+    // Running reports that the mods run.
+    Running running = 3;
+
+    // Stopped reports a mod that stopped or did not load, and why.
+    Stopped stopped = 4;
+  }
+
+  // Screen is the stand-in player's screen as the mods last drew it, kept
+  // through a build and a stop.
+  modlock.ui.Screen screen = 5;
+
+  // Watch is true when modlock dev rebuilds the mod on each save.
+  bool watch = 6;
+
+  // Note answers this page's last input when no mod received it, such as a
+  // command no mod handled; it is empty otherwise.
+  string note = 7;
+}
+
+// Running reports that the mods run.
+message Running {}
+
+// Stopped reports a mod that stopped or did not load.
+message Stopped {
+  // Failed names the mod and the error that stopped it.
+  modlock.control.ModFailed failed = 1;
+
+  // Log holds the mod's last log lines since it started, which usually say
+  // why it stopped.
+  repeated string log = 2;
 }
