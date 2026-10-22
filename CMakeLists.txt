@@ -166,12 +166,22 @@ add_library(modlock_sdk SHARED
   src/wasm/runtime.cc
   src/wasm/ability_tuning.cc
   src/wasm/game.cc
+  src/wasm/game_combat.cc
+  src/wasm/game_effects.cc
+  src/wasm/game_entities.cc
+  src/wasm/game_fields.cc
+  src/wasm/game_heroes.cc
+  src/wasm/game_match.cc
+  src/wasm/game_services.cc
+  src/wasm/game_watches.cc
   src/wasm/hero_restore.cc
   src/wasm/npc_restore.cc
   src/wasm/ui.cc
   src/wasm/settings.cc
   src/wasm/metrics.cc
   src/wasm/file_settings.cc
+  src/wasm/build.cc
+  src/wasm/wasm_plugin.cc
   src/wasm/wasm_host.cc
   proto/modlock/camera.pb.cc
   proto/modlock/chat.pb.cc
