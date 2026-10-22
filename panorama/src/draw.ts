@@ -9,6 +9,7 @@
 import {
   Align,
   type Edges,
+  Face,
   Flow,
   Kind,
   type Length,
@@ -317,6 +318,23 @@ const aligns: Record<Align, [string, string]> = {
   [Align.END]: ['right', 'bottom'],
 }
 
+/**
+ * faces maps each typeface to the game's font stack, as its base styles name
+ * them: Retail Demo for text, VALVEPulp for the clock and titles, Reaver for
+ * menus.
+ */
+const faces: Partial<Record<Face, string>> = {
+  [Face.BODY]: '"Retail Demo", "Noto Sans", sans-serif',
+  [Face.BLOCK]: 'VALVEPulp, "Noto Sans", sans-serif',
+  [Face.SERIF]: 'Reaver, serif',
+}
+
+/**
+ * textShadow is a soft drop under the glyphs rather than a halo that thickens
+ * them, so text reads over a bright sky.
+ */
+const textShadow = '0px 1px 3px 1 #000000d0'
+
 /** styleOf returns the style properties to write; a root fills the screen by default. */
 function styleOf(
   style: Style | undefined,
@@ -347,6 +365,16 @@ function styleOf(
       : null,
     opacity:
       style?.opacity === undefined ? null : String(clamp(style.opacity, 0, 1)),
+    fontFamily: style?.face ? (faces[style.face] ?? null) : null,
+    textTransform: style?.uppercase ? 'uppercase' : null,
+    letterSpacing: style?.letterSpacing
+      ? `${finite(style.letterSpacing)}px`
+      : null,
+    textShadow: style?.shadow ? textShadow : null,
+    border:
+      style?.borderWidth && style.borderColor
+        ? `${finite(style.borderWidth)}px solid ${color(style.borderColor)}`
+        : null,
   }
   return Object.fromEntries(
     Object.entries(css).filter(

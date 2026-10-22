@@ -28,6 +28,7 @@
 import {
   Align,
   type Change,
+  Face,
   Flow,
   Kind,
   type Edges as WireEdges,
@@ -70,6 +71,23 @@ export interface Style {
   borderRadius?: number
   /** opacity fades the element and its children, from 0 to 1. */
   opacity?: number
+  /**
+   * face is one of the game's typefaces: 'body' its text, 'block' the
+   * capitals of its clock and titles, 'serif' its menus.
+   */
+  face?: 'body' | 'block' | 'serif'
+  /** uppercase sets the text in capitals. */
+  uppercase?: boolean
+  /** letterSpacing widens the space between letters, in pixels. */
+  letterSpacing?: number
+  /** shadow draws a soft drop shadow under the text, to read over the world. */
+  shadow?: boolean
+  /**
+   * borderWidth and borderColor draw a line around the element's edge; it
+   * shows only when both are set.
+   */
+  borderWidth?: number
+  borderColor?: string
 }
 
 /** Child is anything an element may hold. Text becomes a label. */
@@ -539,6 +557,13 @@ function align(value: keyof typeof aligns | undefined): Align | undefined {
   return value === undefined ? undefined : aligns[value]
 }
 
+/** faces maps each typeface to its wire value. */
+const faces = {
+  body: Face.BODY,
+  block: Face.BLOCK,
+  serif: Face.SERIF,
+} as const
+
 /** wireStyle encodes style. */
 function wireStyle(style: Style | undefined): WireStyle | undefined {
   if (!style) {
@@ -564,6 +589,12 @@ function wireStyle(style: Style | undefined): WireStyle | undefined {
     textAlign: align(style.textAlign),
     borderRadius: style.borderRadius,
     opacity: style.opacity,
+    face: style.face === undefined ? undefined : faces[style.face],
+    uppercase: style.uppercase,
+    letterSpacing: style.letterSpacing,
+    shadow: style.shadow,
+    borderWidth: style.borderWidth,
+    borderColor: color(style.borderColor),
   }
 }
 

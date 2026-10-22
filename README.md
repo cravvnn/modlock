@@ -708,8 +708,9 @@ vector or a color has no typed setter; set it with `serverCommand`.
 
 Style `panel`, `label`, `image`, `button` and `layout` with `width`,
 `height`, `flow`, `horizontalAlign`, `verticalAlign`, `margin`, `padding`,
-`background`, `color`, `fontSize`, `bold`, `textAlign`, `borderRadius` and
-`opacity`.
+`background`, `color`, `fontSize`, `bold`, `textAlign`, `borderRadius`,
+`opacity`, `face` (the game's `body`, `block` or `serif` typeface), `uppercase`,
+`letterSpacing`, `shadow`, `borderWidth` and `borderColor`.
 
 An interface travels as the typed tree in
 [`proto/modlock/ui.proto`](proto/modlock/ui.proto). The player's game draws it

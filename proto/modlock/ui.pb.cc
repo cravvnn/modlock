@@ -96,10 +96,16 @@ inline constexpr Style::Impl_::Impl_(
         background_{0u},
         color_{0u},
         font_size_{0},
-        bold_{false},
         text_align_{static_cast< ::modlock::ui::Align >(0)},
         border_radius_{0},
-        opacity_{0} {}
+        opacity_{0},
+        face_{static_cast< ::modlock::ui::Face >(0)},
+        bold_{false},
+        uppercase_{false},
+        shadow_{false},
+        letter_spacing_{0},
+        border_width_{0},
+        border_color_{0u} {}
 
 template <typename>
 PROTOBUF_CONSTEXPR Style::Style(::_pbi::ConstantInitialized)
@@ -245,7 +251,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT MODLOCK_API
 }  // namespace ui
 }  // namespace modlock
 static const ::_pb::EnumDescriptor* PROTOBUF_NONNULL
-    file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[3];
+    file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[4];
 static constexpr const ::_pb::ServiceDescriptor* PROTOBUF_NONNULL* PROTOBUF_NULLABLE
     file_level_service_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto = nullptr;
 const ::uint32_t
@@ -272,7 +278,7 @@ const ::uint32_t
         5,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_._has_bits_),
-        17, // hasbit index offset
+        23, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.width_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.height_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.flow_),
@@ -287,6 +293,12 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.text_align_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.border_radius_),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.opacity_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.face_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.uppercase_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.letter_spacing_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.shadow_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.border_width_),
+        PROTOBUF_FIELD_OFFSET(::modlock::ui::Style, _impl_.border_color_),
         0,
         1,
         4,
@@ -297,10 +309,16 @@ const ::uint32_t
         7,
         8,
         9,
+        14,
         10,
         11,
         12,
         13,
+        15,
+        17,
+        16,
+        18,
+        19,
         0x004, // bitmap
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Length, _impl_._oneof_case_[0]),
         PROTOBUF_FIELD_OFFSET(::modlock::ui::Length, _impl_.value_),
@@ -346,11 +364,11 @@ static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, sizeof(::modlock::ui::Node)},
         {19, sizeof(::modlock::ui::Style)},
-        {50, sizeof(::modlock::ui::Length)},
-        {57, sizeof(::modlock::ui::Edges)},
-        {68, sizeof(::modlock::ui::Change)},
-        {77, sizeof(::modlock::ui::Tree)},
-        {84, sizeof(::modlock::ui::Screen)},
+        {62, sizeof(::modlock::ui::Length)},
+        {69, sizeof(::modlock::ui::Edges)},
+        {80, sizeof(::modlock::ui::Change)},
+        {89, sizeof(::modlock::ui::Tree)},
+        {96, sizeof(::modlock::ui::Screen)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::modlock::ui::_Node_default_instance_._instance,
@@ -368,7 +386,7 @@ const char descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2f
     " \001(\t\022\036\n\004kind\030\002 \001(\0162\020.modlock.ui.Kind\022\020\n\010"
     "children\030\003 \003(\t\022\014\n\004text\030\004 \001(\t\022\r\n\005image\030\005 "
     "\001(\t\022 \n\005style\030\006 \001(\0132\021.modlock.ui.Style\022\016\n"
-    "\006layout\030\007 \001(\t\022\014\n\004data\030\010 \001(\t\"\261\003\n\005Style\022!\n"
+    "\006layout\030\007 \001(\t\022\014\n\004data\030\010 \001(\t\"\270\004\n\005Style\022!\n"
     "\005width\030\001 \001(\0132\022.modlock.ui.Length\022\"\n\006heig"
     "ht\030\002 \001(\0132\022.modlock.ui.Length\022\036\n\004flow\030\003 \001"
     "(\0162\020.modlock.ui.Flow\022+\n\020horizontal_align"
@@ -379,28 +397,33 @@ const char descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2f
     "\r\n\005color\030\t \001(\007\022\021\n\tfont_size\030\n \001(\002\022\014\n\004bol"
     "d\030\013 \001(\010\022%\n\ntext_align\030\014 \001(\0162\021.modlock.ui"
     ".Align\022\025\n\rborder_radius\030\r \001(\002\022\024\n\007opacity"
-    "\030\016 \001(\002H\000\210\001\001B\n\n\010_opacity\"^\n\006Length\022\020\n\006pix"
-    "els\030\001 \001(\002H\000\022\021\n\007percent\030\002 \001(\002H\000\022\026\n\014fit_ch"
-    "ildren\030\003 \001(\010H\000\022\016\n\004fill\030\004 \001(\002H\000B\007\n\005value\""
-    "A\n\005Edges\022\013\n\003top\030\001 \001(\002\022\r\n\005right\030\002 \001(\002\022\016\n\006"
-    "bottom\030\003 \001(\002\022\014\n\004left\030\004 \001(\002\"G\n\006Change\022\r\n\005"
-    "reset\030\001 \001(\010\022\035\n\003set\030\002 \003(\0132\020.modlock.ui.No"
-    "de\022\017\n\007removed\030\003 \003(\t\"4\n\004Tree\022\013\n\003mod\030\001 \001(\t"
-    "\022\037\n\005nodes\030\002 \003(\0132\020.modlock.ui.Node\")\n\006Scr"
-    "een\022\037\n\005trees\030\001 \003(\0132\020.modlock.ui.Tree*X\n\004"
-    "Kind\022\016\n\nKIND_PANEL\020\000\022\016\n\nKIND_LABEL\020\001\022\016\n\n"
-    "KIND_IMAGE\020\002\022\017\n\013KIND_BUTTON\020\003\022\017\n\013KIND_LA"
-    "YOUT\020\004*4\n\004Flow\022\r\n\tFLOW_NONE\020\000\022\r\n\tFLOW_DO"
-    "WN\020\001\022\016\n\nFLOW_RIGHT\020\002*9\n\005Align\022\017\n\013ALIGN_S"
-    "TART\020\000\022\020\n\014ALIGN_CENTER\020\001\022\r\n\tALIGN_END\020\002B"
-    "0Z.github.com/paralin/modlock/proto/modl"
-    "ock/ui;uib\006proto3"
+    "\030\016 \001(\002H\000\210\001\001\022\036\n\004face\030\017 \001(\0162\020.modlock.ui.F"
+    "ace\022\021\n\tuppercase\030\020 \001(\010\022\026\n\016letter_spacing"
+    "\030\021 \001(\002\022\016\n\006shadow\030\022 \001(\010\022\024\n\014border_width\030\023"
+    " \001(\002\022\024\n\014border_color\030\024 \001(\007B\n\n\010_opacity\"^"
+    "\n\006Length\022\020\n\006pixels\030\001 \001(\002H\000\022\021\n\007percent\030\002 "
+    "\001(\002H\000\022\026\n\014fit_children\030\003 \001(\010H\000\022\016\n\004fill\030\004 "
+    "\001(\002H\000B\007\n\005value\"A\n\005Edges\022\013\n\003top\030\001 \001(\002\022\r\n\005"
+    "right\030\002 \001(\002\022\016\n\006bottom\030\003 \001(\002\022\014\n\004left\030\004 \001("
+    "\002\"G\n\006Change\022\r\n\005reset\030\001 \001(\010\022\035\n\003set\030\002 \003(\0132"
+    "\020.modlock.ui.Node\022\017\n\007removed\030\003 \003(\t\"4\n\004Tr"
+    "ee\022\013\n\003mod\030\001 \001(\t\022\037\n\005nodes\030\002 \003(\0132\020.modlock"
+    ".ui.Node\")\n\006Screen\022\037\n\005trees\030\001 \003(\0132\020.modl"
+    "ock.ui.Tree*X\n\004Kind\022\016\n\nKIND_PANEL\020\000\022\016\n\nK"
+    "IND_LABEL\020\001\022\016\n\nKIND_IMAGE\020\002\022\017\n\013KIND_BUTT"
+    "ON\020\003\022\017\n\013KIND_LAYOUT\020\004*G\n\004Face\022\020\n\014FACE_DE"
+    "FAULT\020\000\022\r\n\tFACE_BODY\020\001\022\016\n\nFACE_BLOCK\020\002\022\016"
+    "\n\nFACE_SERIF\020\003*4\n\004Flow\022\r\n\tFLOW_NONE\020\000\022\r\n"
+    "\tFLOW_DOWN\020\001\022\016\n\nFLOW_RIGHT\020\002*9\n\005Align\022\017\n"
+    "\013ALIGN_START\020\000\022\020\n\014ALIGN_CENTER\020\001\022\r\n\tALIG"
+    "N_END\020\002B0Z.github.com/paralin/modlock/pr"
+    "oto/modlock/ui;uib\006proto3"
 };
 static ::absl::once_flag descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto = {
     false,
     false,
-    1257,
+    1465,
     descriptor_table_protodef_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto,
     "github.com/paralin/modlock/proto/modlock/ui.proto",
     &descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto_once,
@@ -421,15 +444,21 @@ const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Kind_descriptor() {
 }
 PROTOBUF_CONSTINIT const uint32_t Kind_internal_data_[] = {
     327680u, 0u, };
-const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Flow_descriptor() {
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Face_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto);
   return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[1];
+}
+PROTOBUF_CONSTINIT const uint32_t Face_internal_data_[] = {
+    262144u, 0u, };
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Flow_descriptor() {
+  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto);
+  return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[2];
 }
 PROTOBUF_CONSTINIT const uint32_t Flow_internal_data_[] = {
     196608u, 0u, };
 const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Align_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto);
-  return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[2];
+  return file_level_enum_descriptors_github_2ecom_2fparalin_2fmodlock_2fproto_2fmodlock_2fui_2eproto[3];
 }
 PROTOBUF_CONSTINIT const uint32_t Align_internal_data_[] = {
     196608u, 0u, };
@@ -1057,9 +1086,9 @@ Style::Style(
                offsetof(Impl_, flow_),
            reinterpret_cast<const char*>(&from._impl_) +
                offsetof(Impl_, flow_),
-           offsetof(Impl_, opacity_) -
+           offsetof(Impl_, border_color_) -
                offsetof(Impl_, flow_) +
-               sizeof(Impl_::opacity_));
+               sizeof(Impl_::border_color_));
 
   // @@protoc_insertion_point(copy_constructor:modlock.ui.Style)
 }
@@ -1073,9 +1102,9 @@ inline void Style::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   ::memset(reinterpret_cast<char*>(&_impl_) +
                offsetof(Impl_, width_),
            0,
-           offsetof(Impl_, opacity_) -
+           offsetof(Impl_, border_color_) -
                offsetof(Impl_, width_) +
-               sizeof(Impl_::opacity_));
+               sizeof(Impl_::border_color_));
 }
 Style::~Style() {
   // @@protoc_insertion_point(destructor:modlock.ui.Style)
@@ -1138,16 +1167,16 @@ Style::GetClassData() const {
   return Style_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<4, 14, 4, 0, 2>
+const ::_pbi::TcParseTable<5, 20, 4, 0, 2>
 Style::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(Style, _impl_._has_bits_),
     0, // no _extensions_
-    14, 120,  // max_field_number, fast_idx_mask
+    20, 248,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294950912,  // skipmap
+    4293918720,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    14,  // num_field_entries
+    20,  // num_field_entries
     4,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     Style_class_data_.base(),
@@ -1199,21 +1228,55 @@ Style::_table_ = {
      {85, 9, 0,
       PROTOBUF_FIELD_OFFSET(Style, _impl_.font_size_)}},
     // bool bold = 11;
-    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(Style, _impl_.bold_), 10>(),
-     {88, 10, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(Style, _impl_.bold_), 14>(),
+     {88, 14, 0,
       PROTOBUF_FIELD_OFFSET(Style, _impl_.bold_)}},
     // .modlock.ui.Align text_align = 12;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Style, _impl_.text_align_), 11>(),
-     {96, 11, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Style, _impl_.text_align_), 10>(),
+     {96, 10, 0,
       PROTOBUF_FIELD_OFFSET(Style, _impl_.text_align_)}},
     // float border_radius = 13;
     {::_pbi::TcParser::FastF32S1,
-     {109, 12, 0,
+     {109, 11, 0,
       PROTOBUF_FIELD_OFFSET(Style, _impl_.border_radius_)}},
     // optional float opacity = 14;
     {::_pbi::TcParser::FastF32S1,
-     {117, 13, 0,
+     {117, 12, 0,
       PROTOBUF_FIELD_OFFSET(Style, _impl_.opacity_)}},
+    // .modlock.ui.Face face = 15;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Style, _impl_.face_), 13>(),
+     {120, 13, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.face_)}},
+    // bool uppercase = 16;
+    {::_pbi::TcParser::FastV8S2,
+     {384, 15, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.uppercase_)}},
+    // float letter_spacing = 17;
+    {::_pbi::TcParser::FastF32S2,
+     {397, 17, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.letter_spacing_)}},
+    // bool shadow = 18;
+    {::_pbi::TcParser::FastV8S2,
+     {400, 16, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.shadow_)}},
+    // float border_width = 19;
+    {::_pbi::TcParser::FastF32S2,
+     {413, 18, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.border_width_)}},
+    // fixed32 border_color = 20;
+    {::_pbi::TcParser::FastF32S2,
+     {421, 19, 0,
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.border_color_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
@@ -1239,13 +1302,25 @@ Style::_table_ = {
     // float font_size = 10;
     {PROTOBUF_FIELD_OFFSET(Style, _impl_.font_size_), _Internal::kHasBitsOffset + 9, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
     // bool bold = 11;
-    {PROTOBUF_FIELD_OFFSET(Style, _impl_.bold_), _Internal::kHasBitsOffset + 10, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.bold_), _Internal::kHasBitsOffset + 14, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
     // .modlock.ui.Align text_align = 12;
-    {PROTOBUF_FIELD_OFFSET(Style, _impl_.text_align_), _Internal::kHasBitsOffset + 11, 0, (0 | ::_fl::kFcOptional | ::_fl::kOpenEnum)},
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.text_align_), _Internal::kHasBitsOffset + 10, 0, (0 | ::_fl::kFcOptional | ::_fl::kOpenEnum)},
     // float border_radius = 13;
-    {PROTOBUF_FIELD_OFFSET(Style, _impl_.border_radius_), _Internal::kHasBitsOffset + 12, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.border_radius_), _Internal::kHasBitsOffset + 11, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
     // optional float opacity = 14;
-    {PROTOBUF_FIELD_OFFSET(Style, _impl_.opacity_), _Internal::kHasBitsOffset + 13, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.opacity_), _Internal::kHasBitsOffset + 12, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
+    // .modlock.ui.Face face = 15;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.face_), _Internal::kHasBitsOffset + 13, 0, (0 | ::_fl::kFcOptional | ::_fl::kOpenEnum)},
+    // bool uppercase = 16;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.uppercase_), _Internal::kHasBitsOffset + 15, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    // float letter_spacing = 17;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.letter_spacing_), _Internal::kHasBitsOffset + 17, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
+    // bool shadow = 18;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.shadow_), _Internal::kHasBitsOffset + 16, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    // float border_width = 19;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.border_width_), _Internal::kHasBitsOffset + 18, 0, (0 | ::_fl::kFcOptional | ::_fl::kFloat)},
+    // fixed32 border_color = 20;
+    {PROTOBUF_FIELD_OFFSET(Style, _impl_.border_color_), _Internal::kHasBitsOffset + 19, 0, (0 | ::_fl::kFcOptional | ::_fl::kFixed32)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::modlock::ui::Length>()},
@@ -1287,10 +1362,15 @@ PROTOBUF_NOINLINE void Style::Clear() {
         reinterpret_cast<char*>(&_impl_.background_) -
         reinterpret_cast<char*>(&_impl_.flow_)) + sizeof(_impl_.background_));
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x00003f00U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000ff00U)) {
     ::memset(&_impl_.color_, 0, static_cast<::size_t>(
-        reinterpret_cast<char*>(&_impl_.opacity_) -
-        reinterpret_cast<char*>(&_impl_.color_)) + sizeof(_impl_.opacity_));
+        reinterpret_cast<char*>(&_impl_.uppercase_) -
+        reinterpret_cast<char*>(&_impl_.color_)) + sizeof(_impl_.uppercase_));
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x000f0000U)) {
+    ::memset(&_impl_.shadow_, 0, static_cast<::size_t>(
+        reinterpret_cast<char*>(&_impl_.border_color_) -
+        reinterpret_cast<char*>(&_impl_.shadow_)) + sizeof(_impl_.border_color_));
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -1398,7 +1478,7 @@ PROTOBUF_NOINLINE void Style::Clear() {
   }
 
   // bool bold = 11;
-  if (CheckHasBit(cached_has_bits, 0x00000400U)) {
+  if (CheckHasBit(cached_has_bits, 0x00004000U)) {
     if (this_._internal_bold() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteBoolToArray(
@@ -1407,7 +1487,7 @@ PROTOBUF_NOINLINE void Style::Clear() {
   }
 
   // .modlock.ui.Align text_align = 12;
-  if (CheckHasBit(cached_has_bits, 0x00000800U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000400U)) {
     if (this_._internal_text_align() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteEnumToArray(
@@ -1416,7 +1496,7 @@ PROTOBUF_NOINLINE void Style::Clear() {
   }
 
   // float border_radius = 13;
-  if (CheckHasBit(cached_has_bits, 0x00001000U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000800U)) {
     if (::absl::bit_cast<::uint32_t>(this_._internal_border_radius()) != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteFloatToArray(
@@ -1425,10 +1505,64 @@ PROTOBUF_NOINLINE void Style::Clear() {
   }
 
   // optional float opacity = 14;
-  if (CheckHasBit(cached_has_bits, 0x00002000U)) {
+  if (CheckHasBit(cached_has_bits, 0x00001000U)) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteFloatToArray(
         14, this_._internal_opacity(), target);
+  }
+
+  // .modlock.ui.Face face = 15;
+  if (CheckHasBit(cached_has_bits, 0x00002000U)) {
+    if (this_._internal_face() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteEnumToArray(
+          15, this_._internal_face(), target);
+    }
+  }
+
+  // bool uppercase = 16;
+  if (CheckHasBit(cached_has_bits, 0x00008000U)) {
+    if (this_._internal_uppercase() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteBoolToArray(
+          16, this_._internal_uppercase(), target);
+    }
+  }
+
+  // float letter_spacing = 17;
+  if (CheckHasBit(cached_has_bits, 0x00020000U)) {
+    if (::absl::bit_cast<::uint32_t>(this_._internal_letter_spacing()) != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteFloatToArray(
+          17, this_._internal_letter_spacing(), target);
+    }
+  }
+
+  // bool shadow = 18;
+  if (CheckHasBit(cached_has_bits, 0x00010000U)) {
+    if (this_._internal_shadow() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteBoolToArray(
+          18, this_._internal_shadow(), target);
+    }
+  }
+
+  // float border_width = 19;
+  if (CheckHasBit(cached_has_bits, 0x00040000U)) {
+    if (::absl::bit_cast<::uint32_t>(this_._internal_border_width()) != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteFloatToArray(
+          19, this_._internal_border_width(), target);
+    }
+  }
+
+  // fixed32 border_color = 20;
+  if (CheckHasBit(cached_has_bits, 0x00080000U)) {
+    if (this_._internal_border_color() != 0) {
+      target = stream->EnsureSpace(target);
+      target = ::_pbi::WireFormatLite::WriteFixed32ToArray(
+          20, this_._internal_border_color(), target);
+    }
   }
 
   if (ABSL_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -1456,7 +1590,7 @@ PROTOBUF_NOINLINE void Style::Clear() {
 
   ::_pbi::Prefetch5LinesFrom7Lines(&this_);
   cached_has_bits = this_._impl_._has_bits_[0];
-  total_size += static_cast<bool>(0x00002000U & cached_has_bits) * 5;
+  total_size += static_cast<bool>(0x00001000U & cached_has_bits) * 5;
   if (BatchCheckHasBit(cached_has_bits, 0x000000ffU)) {
     // .modlock.ui.Length width = 1;
     if (CheckHasBit(cached_has_bits, 0x00000001U)) {
@@ -1506,7 +1640,7 @@ PROTOBUF_NOINLINE void Style::Clear() {
       }
     }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x00001f00U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000ef00U)) {
     // fixed32 color = 9;
     if (CheckHasBit(cached_has_bits, 0x00000100U)) {
       if (this_._internal_color() != 0) {
@@ -1519,23 +1653,62 @@ PROTOBUF_NOINLINE void Style::Clear() {
         total_size += 5;
       }
     }
-    // bool bold = 11;
-    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
-      if (this_._internal_bold() != 0) {
-        total_size += 2;
-      }
-    }
     // .modlock.ui.Align text_align = 12;
-    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
       if (this_._internal_text_align() != 0) {
         total_size += 1 +
                       ::_pbi::WireFormatLite::EnumSize(this_._internal_text_align());
       }
     }
     // float border_radius = 13;
-    if (CheckHasBit(cached_has_bits, 0x00001000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
       if (::absl::bit_cast<::uint32_t>(this_._internal_border_radius()) != 0) {
         total_size += 5;
+      }
+    }
+    // .modlock.ui.Face face = 15;
+    if (CheckHasBit(cached_has_bits, 0x00002000U)) {
+      if (this_._internal_face() != 0) {
+        total_size += 1 +
+                      ::_pbi::WireFormatLite::EnumSize(this_._internal_face());
+      }
+    }
+    // bool bold = 11;
+    if (CheckHasBit(cached_has_bits, 0x00004000U)) {
+      if (this_._internal_bold() != 0) {
+        total_size += 2;
+      }
+    }
+    // bool uppercase = 16;
+    if (CheckHasBit(cached_has_bits, 0x00008000U)) {
+      if (this_._internal_uppercase() != 0) {
+        total_size += 3;
+      }
+    }
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x000f0000U)) {
+    // bool shadow = 18;
+    if (CheckHasBit(cached_has_bits, 0x00010000U)) {
+      if (this_._internal_shadow() != 0) {
+        total_size += 3;
+      }
+    }
+    // float letter_spacing = 17;
+    if (CheckHasBit(cached_has_bits, 0x00020000U)) {
+      if (::absl::bit_cast<::uint32_t>(this_._internal_letter_spacing()) != 0) {
+        total_size += 6;
+      }
+    }
+    // float border_width = 19;
+    if (CheckHasBit(cached_has_bits, 0x00040000U)) {
+      if (::absl::bit_cast<::uint32_t>(this_._internal_border_width()) != 0) {
+        total_size += 6;
+      }
+    }
+    // fixed32 border_color = 20;
+    if (CheckHasBit(cached_has_bits, 0x00080000U)) {
+      if (this_._internal_border_color() != 0) {
+        total_size += 6;
       }
     }
   }
@@ -1612,7 +1785,7 @@ void Style::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x00003f00U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000ff00U)) {
     if (CheckHasBit(cached_has_bits, 0x00000100U)) {
       if (from._internal_color() != 0) {
         _this->_impl_.color_ = from._impl_.color_;
@@ -1624,22 +1797,54 @@ void Style::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000400U)) {
-      if (from._internal_bold() != 0) {
-        _this->_impl_.bold_ = from._impl_.bold_;
-      }
-    }
-    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
       if (from._internal_text_align() != 0) {
         _this->_impl_.text_align_ = from._impl_.text_align_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00001000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
       if (::absl::bit_cast<::uint32_t>(from._internal_border_radius()) != 0) {
         _this->_impl_.border_radius_ = from._impl_.border_radius_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00002000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00001000U)) {
       _this->_impl_.opacity_ = from._impl_.opacity_;
+    }
+    if (CheckHasBit(cached_has_bits, 0x00002000U)) {
+      if (from._internal_face() != 0) {
+        _this->_impl_.face_ = from._impl_.face_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00004000U)) {
+      if (from._internal_bold() != 0) {
+        _this->_impl_.bold_ = from._impl_.bold_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00008000U)) {
+      if (from._internal_uppercase() != 0) {
+        _this->_impl_.uppercase_ = from._impl_.uppercase_;
+      }
+    }
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x000f0000U)) {
+    if (CheckHasBit(cached_has_bits, 0x00010000U)) {
+      if (from._internal_shadow() != 0) {
+        _this->_impl_.shadow_ = from._impl_.shadow_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00020000U)) {
+      if (::absl::bit_cast<::uint32_t>(from._internal_letter_spacing()) != 0) {
+        _this->_impl_.letter_spacing_ = from._impl_.letter_spacing_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00040000U)) {
+      if (::absl::bit_cast<::uint32_t>(from._internal_border_width()) != 0) {
+        _this->_impl_.border_width_ = from._impl_.border_width_;
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00080000U)) {
+      if (from._internal_border_color() != 0) {
+        _this->_impl_.border_color_ = from._impl_.border_color_;
+      }
     }
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
@@ -1660,8 +1865,8 @@ void Style::InternalSwap(Style* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Style, _impl_.opacity_)
-      + sizeof(Style::_impl_.opacity_)
+      PROTOBUF_FIELD_OFFSET(Style, _impl_.border_color_)
+      + sizeof(Style::_impl_.border_color_)
       - PROTOBUF_FIELD_OFFSET(Style, _impl_.width_)>(
           reinterpret_cast<char*>(&_impl_.width_),
           reinterpret_cast<char*>(&other->_impl_.width_));

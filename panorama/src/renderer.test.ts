@@ -221,6 +221,44 @@ test('draws a tree, keeps panels that stay and reports presses', () => {
   expect(root.children).toEqual([])
 })
 
+test("draws the game's faces, capitals, shadows and borders", () => {
+  // Draw a title in the heading face and a pill with an edge line.
+  const root = new FakePanel('Panel', 'ModlockUi')
+  const drawing = new Drawing($, root, () => {})
+  drawing.draw(
+    screen(
+      { id: '', children: ['title', 'pill', 'bare'] },
+      {
+        id: 'title',
+        kind: 'KIND_LABEL',
+        text: 'Round 4',
+        style: {
+          face: 'FACE_BLOCK',
+          uppercase: true,
+          letterSpacing: 1,
+          shadow: true,
+        },
+      },
+      {
+        id: 'pill',
+        style: { borderWidth: 2, borderColor: 0xffefd71a },
+      },
+      { id: 'bare', style: { borderWidth: 2, face: 'FACE_DEFAULT' } },
+    ),
+  )
+  const [title, pill, bare] = root.children[0]!.children
+
+  // The title takes VALVEPulp in capitals over a drop shadow.
+  expect(title!.style.fontFamily).toBe('VALVEPulp, "Noto Sans", sans-serif')
+  expect(title!.style.textTransform).toBe('uppercase')
+  expect(title!.style.letterSpacing).toBe('1px')
+  expect(title!.style.textShadow).toBe('0px 1px 3px 1 #000000d0')
+
+  // A border needs both its width and its color; the default face sets none.
+  expect(pill!.style.border).toBe('2px solid rgba(255, 239, 215, 0.102)')
+  expect(bare!.style).toEqual({})
+})
+
 test('loads layouts a host allows and hands them data', () => {
   // Draw with a host that loads only arena's layouts.
   const root = new FakePanel('Panel', 'ModlockUi')

@@ -66,6 +66,51 @@ func (x Kind) String() string {
 	return strconv.Itoa(int(x))
 }
 
+// Face is one of the game's typefaces.
+type Face int32
+
+const (
+	// FACE_DEFAULT keeps the panel's typeface.
+	Face_FACE_DEFAULT Face = 0
+	// FACE_BODY is the game's text face, Retail Demo.
+	Face_FACE_BODY Face = 1
+	// FACE_BLOCK is the game's heading face, VALVEPulp, which draws the match
+	// clock and round titles.
+	Face_FACE_BLOCK Face = 2
+	// FACE_SERIF is the game's menu face, Reaver.
+	Face_FACE_SERIF Face = 3
+)
+
+// Enum value maps for Face.
+var (
+	Face_name = map[int32]string{
+		0: "FACE_DEFAULT",
+		1: "FACE_BODY",
+		2: "FACE_BLOCK",
+		3: "FACE_SERIF",
+	}
+	Face_value = map[string]int32{
+		"FACE_DEFAULT": 0,
+		"FACE_BODY":    1,
+		"FACE_BLOCK":   2,
+		"FACE_SERIF":   3,
+	}
+)
+
+func (x Face) Enum() *Face {
+	p := new(Face)
+	*p = x
+	return p
+}
+
+func (x Face) String() string {
+	name, valid := Face_name[int32(x)]
+	if valid {
+		return name
+	}
+	return strconv.Itoa(int(x))
+}
+
 // Flow arranges a node's children.
 type Flow int32
 
@@ -270,6 +315,20 @@ type Style struct {
 	BorderRadius float32 `protobuf:"fixed32,13,opt,name=border_radius,json=borderRadius,proto3" json:"borderRadius,omitempty"`
 	// Opacity fades the node and its children, from 0 to 1; unset is opaque.
 	Opacity *float32 `protobuf:"fixed32,14,opt,name=opacity,proto3,oneof" json:"opacity,omitempty"`
+	// Face is the text's typeface, one of the game's own.
+	Face Face `protobuf:"varint,15,opt,name=face,proto3" json:"face,omitempty"`
+	// Uppercase sets the text in capitals.
+	Uppercase bool `protobuf:"varint,16,opt,name=uppercase,proto3" json:"uppercase,omitempty"`
+	// LetterSpacing widens the space between letters, in pixels.
+	LetterSpacing float32 `protobuf:"fixed32,17,opt,name=letter_spacing,json=letterSpacing,proto3" json:"letterSpacing,omitempty"`
+	// Shadow draws a soft drop shadow under the text, which keeps it readable
+	// over the world.
+	Shadow bool `protobuf:"varint,18,opt,name=shadow,proto3" json:"shadow,omitempty"`
+	// BorderWidth is the width of a line around the node's edge, in pixels.
+	BorderWidth float32 `protobuf:"fixed32,19,opt,name=border_width,json=borderWidth,proto3" json:"borderWidth,omitempty"`
+	// BorderColor is the edge line's color as 0xRRGGBBAA. The line is drawn
+	// only when both its width and its color are set.
+	BorderColor uint32 `protobuf:"fixed32,20,opt,name=border_color,json=borderColor,proto3" json:"borderColor,omitempty"`
 }
 
 func (x *Style) Reset() {
@@ -372,6 +431,48 @@ func (x *Style) GetBorderRadius() float32 {
 func (x *Style) GetOpacity() float32 {
 	if x != nil && x.Opacity != nil {
 		return *x.Opacity
+	}
+	return 0
+}
+
+func (x *Style) GetFace() Face {
+	if x != nil {
+		return x.Face
+	}
+	return Face_FACE_DEFAULT
+}
+
+func (x *Style) GetUppercase() bool {
+	if x != nil {
+		return x.Uppercase
+	}
+	return false
+}
+
+func (x *Style) GetLetterSpacing() float32 {
+	if x != nil {
+		return x.LetterSpacing
+	}
+	return 0
+}
+
+func (x *Style) GetShadow() bool {
+	if x != nil {
+		return x.Shadow
+	}
+	return false
+}
+
+func (x *Style) GetBorderWidth() float32 {
+	if x != nil {
+		return x.BorderWidth
+	}
+	return 0
+}
+
+func (x *Style) GetBorderColor() uint32 {
+	if x != nil {
+		return x.BorderColor
 	}
 	return 0
 }
@@ -635,6 +736,12 @@ func (m *Style) CloneVT() *Style {
 	r.Bold = m.Bold
 	r.TextAlign = m.TextAlign
 	r.BorderRadius = m.BorderRadius
+	r.Face = m.Face
+	r.Uppercase = m.Uppercase
+	r.LetterSpacing = m.LetterSpacing
+	r.Shadow = m.Shadow
+	r.BorderWidth = m.BorderWidth
+	r.BorderColor = m.BorderColor
 	r.Width = protobuf_go_lite.CloneVTValue(m.Width)
 	r.Height = protobuf_go_lite.CloneVTValue(m.Height)
 	r.Margin = protobuf_go_lite.CloneVTValue(m.Margin)
@@ -878,6 +985,24 @@ func (this *Style) EqualVT(that *Style) bool {
 	if !protobuf_go_lite.EqualPtr(this.Opacity, that.Opacity) {
 		return false
 	}
+	if this.Face != that.Face {
+		return false
+	}
+	if this.Uppercase != that.Uppercase {
+		return false
+	}
+	if this.LetterSpacing != that.LetterSpacing {
+		return false
+	}
+	if this.Shadow != that.Shadow {
+		return false
+	}
+	if this.BorderWidth != that.BorderWidth {
+		return false
+	}
+	if this.BorderColor != that.BorderColor {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -1114,6 +1239,46 @@ func (x *Kind) UnmarshalText(b []byte) error {
 
 // UnmarshalJSON unmarshals the Kind from JSON.
 func (x *Kind) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Face to JSON.
+func (x Face) MarshalProtoJSON(s *json.MarshalState) {
+	s.WriteEnum(int32(x), Face_name)
+}
+
+// MarshalText marshals the Face to text.
+func (x Face) MarshalText() ([]byte, error) {
+	return []byte(json.GetEnumString(int32(x), Face_name)), nil
+}
+
+// MarshalJSON marshals the Face to JSON.
+func (x Face) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Face from JSON.
+func (x *Face) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	v := s.ReadEnum(Face_value)
+	if err := s.Err(); err != nil {
+		s.SetErrorf("could not read Face enum: %v", err)
+		return
+	}
+	*x = Face(v)
+}
+
+// UnmarshalText unmarshals the Face from text.
+func (x *Face) UnmarshalText(b []byte) error {
+	i, err := json.ParseEnumString(string(b), Face_value)
+	if err != nil {
+		return err
+	}
+	*x = Face(i)
+	return nil
+}
+
+// UnmarshalJSON unmarshals the Face from JSON.
+func (x *Face) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1381,6 +1546,36 @@ func (x *Style) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("opacity")
 		s.WriteFloat32(*x.Opacity)
 	}
+	if x.Face != 0 || s.HasField("face") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("face")
+		x.Face.MarshalProtoJSON(s)
+	}
+	if x.Uppercase || s.HasField("uppercase") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("uppercase")
+		s.WriteBool(x.Uppercase)
+	}
+	if x.LetterSpacing != 0 || s.HasField("letterSpacing") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("letterSpacing")
+		s.WriteFloat32(x.LetterSpacing)
+	}
+	if x.Shadow || s.HasField("shadow") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("shadow")
+		s.WriteBool(x.Shadow)
+	}
+	if x.BorderWidth != 0 || s.HasField("borderWidth") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("borderWidth")
+		s.WriteFloat32(x.BorderWidth)
+	}
+	if x.BorderColor != 0 || s.HasField("borderColor") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("borderColor")
+		s.WriteUint32(x.BorderColor)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1461,6 +1656,24 @@ func (x *Style) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			t := s.ReadFloat32()
 			x.Opacity = &t
+		case "face":
+			s.AddField("face")
+			x.Face.UnmarshalProtoJSON(s)
+		case "uppercase":
+			s.AddField("uppercase")
+			x.Uppercase = s.ReadBool()
+		case "letter_spacing", "letterSpacing":
+			s.AddField("letter_spacing")
+			x.LetterSpacing = s.ReadFloat32()
+		case "shadow":
+			s.AddField("shadow")
+			x.Shadow = s.ReadBool()
+		case "border_width", "borderWidth":
+			s.AddField("border_width")
+			x.BorderWidth = s.ReadFloat32()
+		case "border_color", "borderColor":
+			s.AddField("border_color")
+			x.BorderColor = s.ReadUint32()
 		}
 	})
 }
@@ -1935,6 +2148,46 @@ func (m *Style) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.BorderColor != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(m.BorderColor))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa5
+	}
+	if m.BorderWidth != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.BorderWidth))))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x9d
+	}
+	if m.Shadow {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Shadow)
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x90
+	}
+	if m.LetterSpacing != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.LetterSpacing))))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8d
+	}
+	if m.Uppercase {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Uppercase)
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x80
+	}
+	if m.Face != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Face))
+		i--
+		dAtA[i] = 0x78
+	}
 	if m.Opacity != nil {
 		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Opacity))))
 		i--
@@ -2371,6 +2624,12 @@ func (m *Style) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeVarintNonZero(1, m.TextAlign)
 	n += protobuf_go_lite.SizeFixed32NonZero(1, m.BorderRadius)
 	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Opacity)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Face)
+	n += protobuf_go_lite.SizeBoolNonZero(2, m.Uppercase)
+	n += protobuf_go_lite.SizeFixed32NonZero(2, m.LetterSpacing)
+	n += protobuf_go_lite.SizeBoolNonZero(2, m.Shadow)
+	n += protobuf_go_lite.SizeFixed32NonZero(2, m.BorderWidth)
+	n += protobuf_go_lite.SizeFixed32NonZero(2, m.BorderColor)
 	n += len(m.unknownFields)
 	return n
 }
@@ -2486,6 +2745,9 @@ func (m *Screen) SizeVT() (n int) {
 func (x Kind) MarshalProtoText() string {
 	return x.String()
 }
+func (x Face) MarshalProtoText() string {
+	return x.String()
+}
 func (x Flow) MarshalProtoText() string {
 	return x.String()
 }
@@ -2595,6 +2857,30 @@ func (x *Style) MarshalProtoText() string {
 	if x.Opacity != nil {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "opacity")
 		protobuf_go_lite.TextWriteFloat32(&sb, *x.Opacity)
+	}
+	if x.Face != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "face")
+		protobuf_go_lite.TextWriteStringer(&sb, Face(x.Face))
+	}
+	if x.Uppercase != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "uppercase")
+		protobuf_go_lite.TextWriteBool(&sb, x.Uppercase)
+	}
+	if x.LetterSpacing != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "letter_spacing")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.LetterSpacing)
+	}
+	if x.Shadow != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "shadow")
+		protobuf_go_lite.TextWriteBool(&sb, x.Shadow)
+	}
+	if x.BorderWidth != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "border_width")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.BorderWidth)
+	}
+	if x.BorderColor != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "border_color")
+		protobuf_go_lite.TextWriteUint(&sb, x.BorderColor)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3050,6 +3336,72 @@ func (m *Style) UnmarshalVT(dAtA []byte) error {
 			v = uint32(_v32)
 			v2 := float32(math.Float32frombits(v))
 			m.Opacity = &v2
+		case 15:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Face", wireType)
+			}
+			m.Face = 0
+			var _v uint64
+			_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			m.Face = Face(_v)
+			if err != nil {
+				return err
+			}
+		case 16:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Uppercase", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Uppercase = bool(v)
+		case 17:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LetterSpacing", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.LetterSpacing = float32(math.Float32frombits(v))
+		case 18:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shadow", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Shadow = bool(v)
+		case 19:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BorderWidth", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.BorderWidth = float32(math.Float32frombits(v))
+		case 20:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BorderColor", wireType)
+			}
+			m.BorderColor = 0
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.BorderColor = uint32(_v32)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

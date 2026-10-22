@@ -59,6 +59,8 @@ namespace modlock {
 namespace ui {
 enum Align : int;
 extern const uint32_t Align_internal_data_[];
+enum Face : int;
+extern const uint32_t Face_internal_data_[];
 enum Flow : int;
 extern const uint32_t Flow_internal_data_[];
 enum Kind : int;
@@ -98,6 +100,9 @@ namespace protobuf {
 template <>
 internal::EnumTraitsT<::modlock::ui::Align_internal_data_>
     internal::EnumTraitsImpl::value<::modlock::ui::Align>;
+template <>
+internal::EnumTraitsT<::modlock::ui::Face_internal_data_>
+    internal::EnumTraitsImpl::value<::modlock::ui::Face>;
 template <>
 internal::EnumTraitsT<::modlock::ui::Flow_internal_data_>
     internal::EnumTraitsImpl::value<::modlock::ui::Flow>;
@@ -146,6 +151,44 @@ inline const ::std::string& Kind_Name(Kind value) {
 inline bool Kind_Parse(
     ::absl::string_view name, Kind* PROTOBUF_NONNULL value) {
   return ::google::protobuf::internal::ParseNamedEnum<Kind>(Kind_descriptor(), name,
+                                           value);
+}
+enum Face : int {
+  FACE_DEFAULT = 0,
+  FACE_BODY = 1,
+  FACE_BLOCK = 2,
+  FACE_SERIF = 3,
+  Face_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::min(),
+  Face_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::max(),
+};
+
+extern const uint32_t Face_internal_data_[];
+inline constexpr Face Face_MIN =
+    static_cast<Face>(0);
+inline constexpr Face Face_MAX =
+    static_cast<Face>(3);
+inline bool Face_IsValid(int value) {
+  return 0 <= value && value <= 3;
+}
+inline constexpr int Face_ARRAYSIZE = 3 + 1;
+const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Face_descriptor();
+template <typename T>
+const ::std::string& Face_Name(T value) {
+  static_assert(::std::is_same<T, Face>::value ||
+                    ::std::is_integral<T>::value,
+                "Incorrect type passed to Face_Name().");
+  return Face_Name(static_cast<Face>(value));
+}
+template <>
+inline const ::std::string& Face_Name(Face value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<Face_descriptor, 0, 3>(
+      static_cast<int>(value));
+}
+inline bool Face_Parse(
+    ::absl::string_view name, Face* PROTOBUF_NONNULL value) {
+  return ::google::protobuf::internal::ParseNamedEnum<Face>(Face_descriptor(), name,
                                            value);
 }
 enum Flow : int {
@@ -855,10 +898,16 @@ class MODLOCK_API Style final : public ::google::protobuf::Message
     kBackgroundFieldNumber = 8,
     kColorFieldNumber = 9,
     kFontSizeFieldNumber = 10,
-    kBoldFieldNumber = 11,
     kTextAlignFieldNumber = 12,
     kBorderRadiusFieldNumber = 13,
     kOpacityFieldNumber = 14,
+    kFaceFieldNumber = 15,
+    kBoldFieldNumber = 11,
+    kUppercaseFieldNumber = 16,
+    kShadowFieldNumber = 18,
+    kLetterSpacingFieldNumber = 17,
+    kBorderWidthFieldNumber = 19,
+    kBorderColorFieldNumber = 20,
   };
   // .modlock.ui.Length width = 1;
   bool has_width() const;
@@ -980,16 +1029,6 @@ class MODLOCK_API Style final : public ::google::protobuf::Message
   void _internal_set_font_size(float value);
 
   public:
-  // bool bold = 11;
-  void clear_bold() ;
-  bool bold() const;
-  void set_bold(bool value);
-
-  private:
-  bool _internal_bold() const;
-  void _internal_set_bold(bool value);
-
-  public:
   // .modlock.ui.Align text_align = 12;
   void clear_text_align() ;
   ::modlock::ui::Align text_align() const;
@@ -1021,11 +1060,81 @@ class MODLOCK_API Style final : public ::google::protobuf::Message
   void _internal_set_opacity(float value);
 
   public:
+  // .modlock.ui.Face face = 15;
+  void clear_face() ;
+  ::modlock::ui::Face face() const;
+  void set_face(::modlock::ui::Face value);
+
+  private:
+  ::modlock::ui::Face _internal_face() const;
+  void _internal_set_face(::modlock::ui::Face value);
+
+  public:
+  // bool bold = 11;
+  void clear_bold() ;
+  bool bold() const;
+  void set_bold(bool value);
+
+  private:
+  bool _internal_bold() const;
+  void _internal_set_bold(bool value);
+
+  public:
+  // bool uppercase = 16;
+  void clear_uppercase() ;
+  bool uppercase() const;
+  void set_uppercase(bool value);
+
+  private:
+  bool _internal_uppercase() const;
+  void _internal_set_uppercase(bool value);
+
+  public:
+  // bool shadow = 18;
+  void clear_shadow() ;
+  bool shadow() const;
+  void set_shadow(bool value);
+
+  private:
+  bool _internal_shadow() const;
+  void _internal_set_shadow(bool value);
+
+  public:
+  // float letter_spacing = 17;
+  void clear_letter_spacing() ;
+  float letter_spacing() const;
+  void set_letter_spacing(float value);
+
+  private:
+  float _internal_letter_spacing() const;
+  void _internal_set_letter_spacing(float value);
+
+  public:
+  // float border_width = 19;
+  void clear_border_width() ;
+  float border_width() const;
+  void set_border_width(float value);
+
+  private:
+  float _internal_border_width() const;
+  void _internal_set_border_width(float value);
+
+  public:
+  // fixed32 border_color = 20;
+  void clear_border_color() ;
+  ::uint32_t border_color() const;
+  void set_border_color(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_border_color() const;
+  void _internal_set_border_color(::uint32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:modlock.ui.Style)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 14,
+  static const ::google::protobuf::internal::TcParseTable<5, 20,
                                    4, 0,
                                    2>
       _table_;
@@ -1057,10 +1166,16 @@ class MODLOCK_API Style final : public ::google::protobuf::Message
     ::uint32_t background_;
     ::uint32_t color_;
     float font_size_;
-    bool bold_;
     int text_align_;
     float border_radius_;
     float opacity_;
+    int face_;
+    bool bold_;
+    bool uppercase_;
+    bool shadow_;
+    float letter_spacing_;
+    float border_width_;
+    ::uint32_t border_color_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -3121,7 +3236,7 @@ inline void Style::clear_bold() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.bold_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000400U);
+                  0x00004000U);
 }
 inline bool Style::bold() const {
   // @@protoc_insertion_point(field_get:modlock.ui.Style.bold)
@@ -3129,7 +3244,7 @@ inline bool Style::bold() const {
 }
 inline void Style::set_bold(bool value) {
   _internal_set_bold(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
+  SetHasBit(_impl_._has_bits_[0], 0x00004000U);
   // @@protoc_insertion_point(field_set:modlock.ui.Style.bold)
 }
 inline bool Style::_internal_bold() const {
@@ -3146,7 +3261,7 @@ inline void Style::clear_text_align() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.text_align_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000800U);
+                  0x00000400U);
 }
 inline ::modlock::ui::Align Style::text_align() const {
   // @@protoc_insertion_point(field_get:modlock.ui.Style.text_align)
@@ -3154,7 +3269,7 @@ inline ::modlock::ui::Align Style::text_align() const {
 }
 inline void Style::set_text_align(::modlock::ui::Align value) {
   _internal_set_text_align(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
   // @@protoc_insertion_point(field_set:modlock.ui.Style.text_align)
 }
 inline ::modlock::ui::Align Style::_internal_text_align() const {
@@ -3171,7 +3286,7 @@ inline void Style::clear_border_radius() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.border_radius_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00001000U);
+                  0x00000800U);
 }
 inline float Style::border_radius() const {
   // @@protoc_insertion_point(field_get:modlock.ui.Style.border_radius)
@@ -3179,7 +3294,7 @@ inline float Style::border_radius() const {
 }
 inline void Style::set_border_radius(float value) {
   _internal_set_border_radius(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00001000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
   // @@protoc_insertion_point(field_set:modlock.ui.Style.border_radius)
 }
 inline float Style::_internal_border_radius() const {
@@ -3193,14 +3308,14 @@ inline void Style::_internal_set_border_radius(float value) {
 
 // optional float opacity = 14;
 inline bool Style::has_opacity() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00002000U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00001000U);
   return value;
 }
 inline void Style::clear_opacity() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.opacity_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00002000U);
+                  0x00001000U);
 }
 inline float Style::opacity() const {
   // @@protoc_insertion_point(field_get:modlock.ui.Style.opacity)
@@ -3208,7 +3323,7 @@ inline float Style::opacity() const {
 }
 inline void Style::set_opacity(float value) {
   _internal_set_opacity(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00002000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00001000U);
   // @@protoc_insertion_point(field_set:modlock.ui.Style.opacity)
 }
 inline float Style::_internal_opacity() const {
@@ -3218,6 +3333,156 @@ inline float Style::_internal_opacity() const {
 inline void Style::_internal_set_opacity(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.opacity_ = value;
+}
+
+// .modlock.ui.Face face = 15;
+inline void Style::clear_face() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.face_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00002000U);
+}
+inline ::modlock::ui::Face Style::face() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.face)
+  return _internal_face();
+}
+inline void Style::set_face(::modlock::ui::Face value) {
+  _internal_set_face(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00002000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.face)
+}
+inline ::modlock::ui::Face Style::_internal_face() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::modlock::ui::Face>(_impl_.face_);
+}
+inline void Style::_internal_set_face(::modlock::ui::Face value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.face_ = value;
+}
+
+// bool uppercase = 16;
+inline void Style::clear_uppercase() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.uppercase_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00008000U);
+}
+inline bool Style::uppercase() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.uppercase)
+  return _internal_uppercase();
+}
+inline void Style::set_uppercase(bool value) {
+  _internal_set_uppercase(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00008000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.uppercase)
+}
+inline bool Style::_internal_uppercase() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.uppercase_;
+}
+inline void Style::_internal_set_uppercase(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.uppercase_ = value;
+}
+
+// float letter_spacing = 17;
+inline void Style::clear_letter_spacing() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.letter_spacing_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00020000U);
+}
+inline float Style::letter_spacing() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.letter_spacing)
+  return _internal_letter_spacing();
+}
+inline void Style::set_letter_spacing(float value) {
+  _internal_set_letter_spacing(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00020000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.letter_spacing)
+}
+inline float Style::_internal_letter_spacing() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.letter_spacing_;
+}
+inline void Style::_internal_set_letter_spacing(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.letter_spacing_ = value;
+}
+
+// bool shadow = 18;
+inline void Style::clear_shadow() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.shadow_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00010000U);
+}
+inline bool Style::shadow() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.shadow)
+  return _internal_shadow();
+}
+inline void Style::set_shadow(bool value) {
+  _internal_set_shadow(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00010000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.shadow)
+}
+inline bool Style::_internal_shadow() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.shadow_;
+}
+inline void Style::_internal_set_shadow(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.shadow_ = value;
+}
+
+// float border_width = 19;
+inline void Style::clear_border_width() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.border_width_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00040000U);
+}
+inline float Style::border_width() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.border_width)
+  return _internal_border_width();
+}
+inline void Style::set_border_width(float value) {
+  _internal_set_border_width(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00040000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.border_width)
+}
+inline float Style::_internal_border_width() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.border_width_;
+}
+inline void Style::_internal_set_border_width(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.border_width_ = value;
+}
+
+// fixed32 border_color = 20;
+inline void Style::clear_border_color() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.border_color_ = 0u;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00080000U);
+}
+inline ::uint32_t Style::border_color() const {
+  // @@protoc_insertion_point(field_get:modlock.ui.Style.border_color)
+  return _internal_border_color();
+}
+inline void Style::set_border_color(::uint32_t value) {
+  _internal_set_border_color(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00080000U);
+  // @@protoc_insertion_point(field_set:modlock.ui.Style.border_color)
+}
+inline ::uint32_t Style::_internal_border_color() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.border_color_;
+}
+inline void Style::_internal_set_border_color(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.border_color_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -3828,6 +4093,12 @@ struct is_proto_enum<::modlock::ui::Kind> : std::true_type {};
 template <>
 inline const EnumDescriptor* PROTOBUF_NONNULL GetEnumDescriptor<::modlock::ui::Kind>() {
   return ::modlock::ui::Kind_descriptor();
+}
+template <>
+struct is_proto_enum<::modlock::ui::Face> : std::true_type {};
+template <>
+inline const EnumDescriptor* PROTOBUF_NONNULL GetEnumDescriptor<::modlock::ui::Face>() {
+  return ::modlock::ui::Face_descriptor();
 }
 template <>
 struct is_proto_enum<::modlock::ui::Flow> : std::true_type {};

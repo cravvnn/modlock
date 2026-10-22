@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test'
 
+import { Face } from '../../proto/modlock/ui.pb.js'
 import { Call, Reply, UiRequest } from '../../proto/modlock/wasm.pb.js'
 import { bind } from '../src/host.js'
 import { jsx, show } from '../src/index.js'
@@ -51,4 +52,34 @@ test('a redraw sends only the nodes that changed, under their first ids', () => 
   const count = sent.length
   show(player, keys('A'))
   expect(sent.length).toBe(count)
+})
+
+test("a style names the game's faces and edge lines on the wire", () => {
+  // Show a title in the heading face over a bordered plate.
+  const player = { slot: 8 } as Parameters<typeof show>[0]
+  show(
+    player,
+    jsx('panel', {
+      style: { borderWidth: 2, borderColor: '#ffefd71a' },
+      children: jsx('label', {
+        style: {
+          face: 'block',
+          uppercase: true,
+          letterSpacing: 1,
+          shadow: true,
+        },
+        children: 'Round 4',
+      }),
+    }),
+  )
+  const nodes = sent.at(-1)!.change!.set!
+  const plate = nodes.find((node) => node.style?.borderWidth)!
+  const title = nodes.find((node) => node.text === 'Round 4')!
+
+  // Each field arrives typed: the face as its enum, the color as RGBA.
+  expect(plate.style!.borderColor).toBe(0xffefd71a)
+  expect(title.style!.face).toBe(Face.BLOCK)
+  expect(title.style!.uppercase).toBe(true)
+  expect(title.style!.letterSpacing).toBe(1)
+  expect(title.style!.shadow).toBe(true)
 })

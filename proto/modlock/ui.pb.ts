@@ -55,6 +55,41 @@ export const Kind_Enum = /* @__PURE__ */ createEnumType('modlock.ui.Kind', [
 ])
 
 /**
+ * Face is one of the game's typefaces.
+ *
+ * @generated from enum modlock.ui.Face
+ */
+export enum Face {
+  /**
+   * FACE_DEFAULT keeps the panel's typeface.
+   */
+  DEFAULT = 0,
+
+  /**
+   * FACE_BODY is the game's text face, Retail Demo.
+   */
+  BODY = 1,
+
+  /**
+   * FACE_BLOCK is the game's heading face, VALVEPulp, which draws the match
+   * clock and round titles.
+   */
+  BLOCK = 2,
+
+  /**
+   * FACE_SERIF is the game's menu face, Reaver.
+   */
+  SERIF = 3,
+}
+
+export const Face_Enum = /* @__PURE__ */ createEnumType('modlock.ui.Face', [
+  [0, 'FACE_DEFAULT'],
+  [1, 'FACE_BODY'],
+  [2, 'FACE_BLOCK'],
+  [3, 'FACE_SERIF'],
+])
+
+/**
  * Flow arranges a node's children.
  *
  * @generated from enum modlock.ui.Flow
@@ -307,6 +342,32 @@ export interface Style {
    * Opacity fades the node and its children, from 0 to 1; unset is opaque.
    */
   opacity?: number
+  /**
+   * Face is the text's typeface, one of the game's own.
+   */
+  face?: Face
+  /**
+   * Uppercase sets the text in capitals.
+   */
+  uppercase?: boolean
+  /**
+   * LetterSpacing widens the space between letters, in pixels.
+   */
+  letterSpacing?: number
+  /**
+   * Shadow draws a soft drop shadow under the text, which keeps it readable
+   * over the world.
+   */
+  shadow?: boolean
+  /**
+   * BorderWidth is the width of a line around the node's edge, in pixels.
+   */
+  borderWidth?: number
+  /**
+   * BorderColor is the edge line's color as 0xRRGGBBAA. The line is drawn
+   * only when both its width and its color are set.
+   */
+  borderColor?: number
 }
 
 export const Style: MessageType<Style> =
@@ -327,6 +388,12 @@ export const Style: MessageType<Style> =
       [12, 'text_align', 14, 0, Align_Enum],
       [13, 'border_radius', 2],
       [14, 'opacity', 2, 4],
+      [15, 'face', 14, 0, Face_Enum],
+      [16, 'uppercase', 8],
+      [17, 'letter_spacing', 2],
+      [18, 'shadow', 8],
+      [19, 'border_width', 2],
+      [20, 'border_color', 7],
     ],
     {
       decode: (r: BinaryReader, end: number, m: Style): Style => {
@@ -375,6 +442,24 @@ export const Style: MessageType<Style> =
               break
             case 14:
               m.opacity = r.float()
+              break
+            case 15:
+              m.face = r.int32()
+              break
+            case 16:
+              m.uppercase = r.bool()
+              break
+            case 17:
+              m.letterSpacing = r.float()
+              break
+            case 18:
+              m.shadow = r.bool()
+              break
+            case 19:
+              m.borderWidth = r.float()
+              break
+            case 20:
+              m.borderColor = r.fixed32()
               break
             default:
               r.skip(t)
@@ -438,6 +523,30 @@ export const Style: MessageType<Style> =
         {
           const v = m.opacity
           if (v != null) w.uint32(117).float(v)
+        }
+        {
+          const v = m.face
+          if (v) w.uint32(120).int32(v)
+        }
+        {
+          const v = m.uppercase
+          if (v) w.uint32(128).bool(v)
+        }
+        {
+          const v = m.letterSpacing
+          if (v != null && v !== 0) w.uint32(141).float(v)
+        }
+        {
+          const v = m.shadow
+          if (v) w.uint32(144).bool(v)
+        }
+        {
+          const v = m.borderWidth
+          if (v != null && v !== 0) w.uint32(157).float(v)
+        }
+        {
+          const v = m.borderColor
+          if (v) w.uint32(165).fixed32(v)
         }
       },
     },

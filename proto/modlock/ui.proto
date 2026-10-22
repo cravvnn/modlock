@@ -114,6 +114,42 @@ message Style {
 
   // Opacity fades the node and its children, from 0 to 1; unset is opaque.
   optional float opacity = 14;
+
+  // Face is the text's typeface, one of the game's own.
+  Face face = 15;
+
+  // Uppercase sets the text in capitals.
+  bool uppercase = 16;
+
+  // LetterSpacing widens the space between letters, in pixels.
+  float letter_spacing = 17;
+
+  // Shadow draws a soft drop shadow under the text, which keeps it readable
+  // over the world.
+  bool shadow = 18;
+
+  // BorderWidth is the width of a line around the node's edge, in pixels.
+  float border_width = 19;
+
+  // BorderColor is the edge line's color as 0xRRGGBBAA. The line is drawn
+  // only when both its width and its color are set.
+  fixed32 border_color = 20;
+}
+
+// Face is one of the game's typefaces.
+enum Face {
+  // FACE_DEFAULT keeps the panel's typeface.
+  FACE_DEFAULT = 0;
+
+  // FACE_BODY is the game's text face, Retail Demo.
+  FACE_BODY = 1;
+
+  // FACE_BLOCK is the game's heading face, VALVEPulp, which draws the match
+  // clock and round titles.
+  FACE_BLOCK = 2;
+
+  // FACE_SERIF is the game's menu face, Reaver.
+  FACE_SERIF = 3;
 }
 
 // Length is a size along one axis.
