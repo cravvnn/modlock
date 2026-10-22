@@ -41,6 +41,7 @@ std::expected<uint32_t, std::string> ModifierStateIndex(const ModuleImage& image
   std::optional<int64_t> value;
   for (auto hit = view.find(pointer_view); hit != std::string_view::npos;
        hit = view.find(pointer_view, hit + 1)) {
+    // Each aligned record holds the string's address, then its value.
     if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) {
       continue;
     }

@@ -239,12 +239,16 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
   // Resolve the core fields that every observation needs.
   EntityLayout layout{};
   size_t hero_component = 0, spawned_hero = 0, hero_id = 0;
+
+  // Each core field names its class, member and minimum size.
   struct CoreField {
     const char* class_name;
     const char* field_name;
     size_t minimum_size;
     size_t* out;
   };
+
+  // Fill every one, or fail at the first missing or short one.
   CoreField core[] = {
       {"CBasePlayerController", "m_hPawn", sizeof(uint32_t), &layout.pawn_handle},
       {"CBaseEntity", "m_CBodyComponent", sizeof(void*), &layout.body_component},
@@ -329,12 +333,16 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
   if (!movement_enabled) {
     return layout;
   }
+
+  // Each optional field names its class, member and minimum size.
   struct OptionalField {
     const char* class_name;
     const char* field_name;
     size_t minimum_size;
     std::optional<size_t>* out;
   };
+
+  // Fill the ones the schema has.
   OptionalField optional[] = {
       {"CBaseEntity", "m_vecAbsVelocity", sizeof(float) * 3, &movement.abs_velocity},
       {"CBaseEntity", "m_hGroundEntity", sizeof(uint32_t), &movement.ground_entity},
@@ -371,12 +379,16 @@ std::expected<AbilityLayout, std::string> ResolveAbilityLayout() {
 
   // Resolve the required ability fields.
   AbilityLayout layout;
+
+  // Each field names its class, member and minimum size.
   struct Wanted {
     const char* type;
     const char* name;
     size_t minimum;
     size_t* offset;
   };
+
+  // Fill every one, or fail at the first missing or short one.
   const Wanted fields[] = {
       {"CCitadelPlayerPawn", "m_CCitadelAbilityComponent", 24, &layout.component},
       {"CCitadelAbilityComponent", "m_vecAbilities", 24, &layout.handles},
@@ -479,6 +491,8 @@ std::expected<StaminaLayout, std::string> ResolveStaminaLayout() {
     const char* name;
     size_t* offset;
   };
+
+  // Name the four floats.
   StaminaLayout offsets;
   size_t current = 0, max = 0, latch_time = 0, latch_value = 0;
   const Wanted fields[] = {
@@ -488,6 +502,7 @@ std::expected<StaminaLayout, std::string> ResolveStaminaLayout() {
       {"m_flLatchValue", &latch_value},
   };
   for (const auto& wanted : fields) {
+    // Each must hold a float.
     auto field = SchemaFieldOf(*schema, "server.dll", "AbilityResource_t", wanted.name);
     if (!field) {
       return std::unexpected(field.error());
@@ -495,6 +510,7 @@ std::expected<StaminaLayout, std::string> ResolveStaminaLayout() {
     if (field->size < sizeof(float)) {
       return std::unexpected(std::string(wanted.name) + " storage is too small for a float");
     }
+
     // Only the latch pair carries network metadata; current/max are plain
     // schema floats the engine mutates locally.
     const bool latch = wanted.offset == fields[2].offset || wanted.offset == fields[3].offset;
@@ -908,11 +924,14 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
   auto* identity = IdentityOfHandle(EntityListOf(current->second), handle);
   void* pawn = identity ? InstanceOf(identity) : nullptr;
   if (!pawn) {
+    // Wait for a pawn this selection already asked for.
     const auto pending = pending_selections_.find(slot);
     if (pending != pending_selections_.end() && pending->second.steam_id == steam_id &&
         pending->second.generation == generation && pending->second.team == team) {
       return std::unexpected("native pawn creation awaiting controller publication");
     }
+
+    // Create the pawn, or an observer for a spectator.
     void* created =
         team == 1 ? calls.spawn_observer(current->first) : calls.create_pawn(current->first, team);
     current = borrow();
@@ -923,6 +942,7 @@ std::expected<void, std::string> PawnObserver::SelectPlayer(int32_t slot, uint64
       return std::unexpected("native pawn creation failed");
     }
     pending_selections_.insert_or_assign(slot, PendingSelection{steam_id, generation, team});
+
     // Reborrow through the controller before writing to the created pawn. A
     // returned object alone does not prove that it is still this player's pawn.
     std::memcpy(&handle, static_cast<const char*>(current->first) + pawn_field, sizeof(handle));
@@ -1158,6 +1178,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
 
   // Resolve the layout once.
   if (!offsets_ok_) {
+    // Resolve the schema layout once.
     if (!seams_.layout) {
       NoteDegradation("no schema layout resolver");
       return std::nullopt;
@@ -1327,6 +1348,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
   // resolve or the values are not finite. Never a fabricated default.
   std::optional<Sample::Stamina> stamina;
   if (layout_.stamina) {
+    // Read stamina when its values are sane.
     const auto& st = *layout_.stamina;
     float st_cur = 0, st_max = 0;
     std::memcpy(&st_cur, bytes + st.current, sizeof(st_cur));
@@ -1338,9 +1360,11 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
   if (movement) {
     const auto abilities = CurrentAbilitiesForSlot(slot);
     if (abilities) {
+      // Read the mantle, slide and jump abilities; two jumps are ambiguous.
       const Ability* jump = nullptr;
       bool ambiguous = false;
       for (const auto& ability : *abilities) {
+        // Mantle and slide read from their slots; the jump slot must be unique.
         if (ability.slot == 0xA) {
           movement->mantling = ability.channeling;
           movement->mantle_ability_handle = ability.handle;
@@ -1362,6 +1386,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
         movement->consecutive_wall_jumps = jump->consecutive_wall_jumps;
       }
       if (jump && !ambiguous) {
+        // Copy the jump's wall and zipline state.
         movement->current_wall_normal = jump->current_wall_normal;
         movement->wall_contact_position = jump->wall_contact_position;
         movement->wall_jump_normal_used = jump->wall_jump_normal_used;
@@ -1537,6 +1562,7 @@ std::expected<PawnObserver::Sample, std::string> PawnObserver::PrepareAbilityPoi
   // EAbilityPoints=1, EAbilityUnlocks=2. Each of four abilities costs 1+2+5
   // points to upgrade; native ModifyCurrency owns replication and progression.
   for (const auto [type, target] : {std::pair{1u, 32}, std::pair{2u, 4}}) {
+    // Grant each currency short of its target and check that it held.
     const int32_t balance = (*sample->currencies)[type];
     if (balance >= target) {
       continue;
@@ -1762,6 +1788,8 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
     uint32_t capacity;
     uint32_t flags;
   } handles{};
+
+  // Read the vector and check its bounds.
   static_assert(sizeof(HandleVector) == 24);
   std::memcpy(&handles, static_cast<const unsigned char*>(frame_pawn_) + layout.handles,
               sizeof(handles));
@@ -1774,6 +1802,7 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
   std::vector<Ability> abilities;
   abilities.reserve(handles.count);
   for (int32_t i = 0; i < handles.count; ++i) {
+    // Skip an empty handle; a live one must resolve.
     const uint32_t handle = handles.data[i];
     if (handle == kInvalidEHandleIndex) {
       continue;
@@ -1786,6 +1815,8 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
     if (!entity) {
       return std::unexpected("owned ability has no live instance");
     }
+
+    // Read its owner, identity, slot, upgrades, charges and cooldown.
     uint32_t owner = 0;
     Ability ability{.handle = handle};
     std::memcpy(&owner, entity + layout.owner, sizeof(owner));
@@ -1795,6 +1826,7 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
     std::memcpy(&ability.charges, entity + layout.charges, sizeof(ability.charges));
     std::memcpy(&ability.cooldown_end, entity + layout.cooldown_end, sizeof(ability.cooldown_end));
 
+    // Read its remaining timers; each must be finite.
     std::memcpy(&ability.cooldown_start, entity + layout.cooldown_start,
                 sizeof(ability.cooldown_start));
     std::memcpy(&ability.charge_recharge_start, entity + layout.charge_recharge_start,
@@ -1806,12 +1838,16 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
         !std::isfinite(ability.charge_recharge_end)) {
       return std::unexpected("ability timer is not finite");
     }
+
+    // It must belong to this pawn and have a subclass.
     if (owner != frame_pawn_handle_) {
       return std::unexpected("ability owner does not match the pawn");
     }
     if (!ability.subclass_id) {
       return std::unexpected("owned ability has no subclass identity");
     }
+
+    // Read the channel, mantle, slide and wall jump state its slot carries.
     if (layout.channeling) {
       ability.channeling = entity[*layout.channeling] == 1;
     }
@@ -1832,6 +1868,8 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
         ability.consecutive_wall_jumps = count;
       }
     }
+
+    // The jump slot also carries wall and zipline state.
     const auto vector_at =
         [entity](std::optional<size_t> offset) -> std::optional<std::array<float, 3>> {
       // Read a finite vector at an optional offset.
@@ -1862,6 +1900,8 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
         ability.last_time_on_zipline = time;
       }
     }
+
+    // Keep it unless its handle repeats.
     if (std::any_of(abilities.begin(), abilities.end(),
                     [handle](const auto& a) { return a.handle == handle; })) {
       return std::unexpected("duplicate owned ability handle");
@@ -1906,6 +1946,7 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
 
   // Create each target the pawn lacks, then apply the upgrades.
   for (const auto& target : targets) {
+    // Skip an ability already owned in its slot.
     auto owned = CurrentAbilitiesForSlot(slot);
     if (!owned) {
       return std::unexpected(owned.error());
@@ -1917,6 +1958,8 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
       }
       continue;
     }
+
+    // Otherwise the slot must be free and the definition an enabled ability.
     if (target.slot != 23 &&
         std::ranges::find(*owned, target.slot, &Ability::slot) != owned->end()) {
       return std::unexpected("replay ability slot contains another definition");
@@ -1931,6 +1974,8 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
     if (definition->disabled || definition->name.starts_with("upgrade_")) {
       return std::unexpected("replay ability is not an enabled non-item definition");
     }
+
+    // Create it and check that it landed.
     create(static_cast<unsigned char*>(frame_pawn_) + ability_layout_->component,
            definition->native_definition_pointer, target.slot, 0, true, nullptr);
     owned = CurrentAbilitiesForSlot(slot);
@@ -1951,6 +1996,7 @@ namespace {
 // UpgradeLowWordSetter resolves the engine setter for m_nUpgradeInfo's low
 // word once; builds before game build 6711 have none.
 using SetUpgradeLowWord = void (*)(void* ability, uint32_t value);
+
 SetUpgradeLowWord UpgradeLowWordSetter() {
 #if defined(_WIN32)
   static const SetUpgradeLowWord setter = []() -> SetUpgradeLowWord {
@@ -1981,6 +2027,7 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityUpgrades(
   }
   std::vector<uint32_t> handles;
   for (const auto& target : upgrades) {
+    // Each upgrade matches one owned ability, once.
     const auto matches = [&](const Ability& ability) {
       return ability.subclass_id == target.subclass_id && ability.slot == target.slot;
     };
@@ -2016,6 +2063,8 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityUpgrades(
     if (found->upgrade_info == target.upgrade_info) {
       continue;
     }
+
+    // Set the low word if it differs, then the bits.
     auto* identity = IdentityOfHandle(EntityListOf(frame_entity_system_), found->handle);
     if (!identity) {
       return std::unexpected("upgrade target expired during apply");
@@ -2067,6 +2116,7 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityTimers(
   // Check every target before writing any.
   std::vector<uint32_t> handles;
   for (const auto& target : targets) {
+    // Each target must be valid, unique, owned and replicable.
     if (target.charges < 0 || !std::isfinite(target.cooldown_start) ||
         !std::isfinite(target.cooldown_end) || !std::isfinite(target.charge_recharge_start) ||
         !std::isfinite(target.charge_recharge_end)) {
@@ -2088,6 +2138,7 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityTimers(
 
   // Write each target's timers and read them back.
   for (const auto& target : targets) {
+    // Skip a target whose timers already match.
     owned = CurrentAbilitiesForSlot(slot);
     if (!owned) {
       return std::unexpected(owned.error());
@@ -2100,9 +2151,13 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityTimers(
     if (timers_match(*found, target)) {
       continue;
     }
+
+    // Find the ability's entity.
     auto* identity = IdentityOfHandle(EntityListOf(frame_entity_system_), target.handle);
     auto* entity = static_cast<unsigned char*>(InstanceOf(identity));
     const auto& layout = *ability_layout_;
+
+    // Write its charges and timers and replicate them.
     std::memcpy(entity + layout.charges, &target.charges, sizeof(target.charges));
     std::memcpy(entity + layout.cooldown_start, &target.cooldown_start,
                 sizeof(target.cooldown_start));
@@ -2114,6 +2169,8 @@ std::expected<void, std::string> PawnObserver::ApplyAbilityTimers(
     if (!NotifyEntityStateChanged(entity)) {
       return std::unexpected("ability replication notification is unavailable");
     }
+
+    // Read them back.
     owned = CurrentAbilitiesForSlot(slot);
     if (!owned) {
       return std::unexpected(owned.error());
@@ -2149,6 +2206,7 @@ std::expected<std::vector<PawnObserver::Ability>, std::string> PawnObserver::Fre
 
   // Each fresh ability has full charges and no cooldown.
   for (auto& target : *targets) {
+    // Check that the ability is still owned.
     auto current = CurrentAbilitiesForSlot(slot);
     if (!current) {
       return std::unexpected(current.error());
@@ -2160,6 +2218,8 @@ std::expected<std::vector<PawnObserver::Ability>, std::string> PawnObserver::Fre
     if (std::none_of(current->begin(), current->end(), matches)) {
       return std::unexpected("ability changed before reading its charge maximum");
     }
+
+    // Read its charge maximum and check ownership again.
     auto* identity = IdentityOfHandle(EntityListOf(frame_entity_system_), target.handle);
     auto maximum = seams_.max_charges(InstanceOf(identity));
     if (!maximum) {
@@ -2169,6 +2229,8 @@ std::expected<std::vector<PawnObserver::Ability>, std::string> PawnObserver::Fre
     if (!current || std::none_of(current->begin(), current->end(), matches)) {
       return std::unexpected("ability ownership changed while reading its charge maximum");
     }
+
+    // Restore full charges and clear the timers.
     if (*maximum < 0) {
       return std::unexpected("native ability charge maximum is negative");
     }
@@ -2348,6 +2410,7 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
   std::vector<std::string> names;
   std::vector<uint16_t> active_slots;
   for (const auto& target : targets) {
+    // Each item must be an enabled, unique upgrade with a valid slot.
     auto definition = definitions.Find(target.subclass_id);
     if (!definition) {
       return std::unexpected(definition.error());
@@ -2415,6 +2478,7 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     }
   }
   for (const auto& removal : removals) {
+    // Find the item again.
     items = read_items();
     if (!items) {
       return std::unexpected(items.error());
@@ -2429,6 +2493,8 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     if (!identity) {
       return std::unexpected("item expired before removal");
     }
+
+    // Remove it and check that it left.
     functions.remove(static_cast<unsigned char*>(frame_pawn_) + ability_layout_->component,
                      InstanceOf(identity), 0);
     items = read_items();
@@ -2443,6 +2509,7 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
 
   // Grant each missing target and apply its upgrades.
   for (size_t i = 0; i < targets.size(); ++i) {
+    // Grant the item unless it is owned.
     items = read_items();
     if (!items) {
       return std::unexpected(items.error());
@@ -2463,6 +2530,8 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
         return std::unexpected(items.error());
       }
     }
+
+    // Then apply its upgrades.
     if (std::count_if(items->begin(), items->end(), matches) != 1) {
       return std::unexpected("engine item grant did not produce one owned item");
     }
@@ -2476,6 +2545,7 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
 
   // Move each item to its target slot.
   for (const auto& target : targets) {
+    // Find each slotted item.
     if (!target.slot) {
       continue;
     }
@@ -2489,6 +2559,8 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     if (found == items->end()) {
       return std::unexpected("item disappeared before slot restoration");
     }
+
+    // Swap it into its slot unless it is there.
     if (found->slot == *target.slot) {
       continue;
     }
@@ -2498,6 +2570,8 @@ std::expected<void, std::string> PawnObserver::ReconcileItems(int32_t slot,
     const auto handle = found->handle;
     functions.swap_slots(static_cast<unsigned char*>(frame_pawn_) + ability_layout_->component,
                          found->slot, *target.slot);
+
+    // Check that the swap held.
     items = read_items();
     if (!items) {
       return std::unexpected(items.error());
@@ -2683,6 +2757,8 @@ std::expected<UpgradeBonuses, std::string> UpgradeBonusModifier(void* pawn) {
     uint32_t capacity;
     uint32_t flags;
   } rows{};
+
+  // Read the rows and check their bounds.
   static_assert(sizeof(rows) == 24);
   std::memcpy(&rows, property + layout->modifier_rows, sizeof(rows));
   if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
@@ -2692,6 +2768,7 @@ std::expected<UpgradeBonuses, std::string> UpgradeBonusModifier(void* pawn) {
 
   // Find the bonus modifier the pawn owns.
   for (int32_t i = 0; i < rows.count; ++i) {
+    // The pawn's own row with the bonus table is the one.
     auto* row = rows.data[i];
     if (!row) {
       continue;
@@ -2747,6 +2824,7 @@ std::expected<void, std::string> RestorePawnUpgradeBonuses(void* pawn,
   // The modifier's own deserializer notifies before each changed field; this
   // follows it instead of calling it with a fabricated engine message.
   for (size_t i = 0; i < values.size(); ++i) {
+    // Write each changed value, notifying first.
     auto* field = bonuses->modifier + bonuses->layout->values[i];
     float current;
     std::memcpy(&current, field, sizeof(current));

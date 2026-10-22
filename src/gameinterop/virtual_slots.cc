@@ -62,10 +62,13 @@ bool Executable(std::span<const uint8_t> bytes, size_t offset) {
 
   // The offset is executable when the section holding it is.
   for (size_t i = 0; i < *count; ++i) {
+    // Read the section header.
     const size_t header = sections + i * 40;
     const auto size = Read<uint32_t>(bytes, header + 8);
     const auto address = Read<uint32_t>(bytes, header + 12);
     const auto flags = Read<uint32_t>(bytes, header + 36);
+
+    // An executable section holding the offset answers.
     if (!size || !address || !flags) {
       return false;
     }
@@ -122,6 +125,7 @@ std::vector<size_t> VtableEntries(const ModuleImage& image, size_t table) {
   const auto bytes = image.image_bytes();
   std::vector<size_t> entries;
   while (entries.size() < kMaxEntries) {
+    // Stop at the first entry that is not code in the image.
     const auto pointer = Read<uint64_t>(bytes, table + entries.size() * sizeof(uint64_t));
     if (!pointer || *pointer < image.pointer_base()) {
       break;

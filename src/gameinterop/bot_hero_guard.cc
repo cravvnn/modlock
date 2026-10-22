@@ -45,6 +45,7 @@ struct BotHeroGuard::Impl {
 };
 
 BotHeroGuard::BotHeroGuard(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 BotHeroGuard::BotHeroGuard(BotHeroGuard&&) noexcept = default;
 BotHeroGuard& BotHeroGuard::operator=(BotHeroGuard&&) noexcept = default;
 BotHeroGuard::~BotHeroGuard() = default;

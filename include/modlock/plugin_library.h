@@ -19,6 +19,7 @@ namespace modlock {
 
 class EngineHost;
 class WasmHost;
+
 namespace net {
 struct LaunchConfig;
 }

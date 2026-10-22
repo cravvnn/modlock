@@ -96,11 +96,14 @@ bool Matches(std::span<const uint8_t> data, size_t start, const Signature& sig) 
 std::expected<Signature, std::string> ParseSignature(std::string id, std::string_view pattern) {
   Signature sig{.id = std::move(id)};
   for (size_t i = 0; i < pattern.size();) {
+    // Skip spaces.
     unsigned char c = static_cast<unsigned char>(pattern[i]);
     if (std::isspace(c)) {
       i++;
       continue;
     }
+
+    // A run of question marks is one wildcard byte.
     if (pattern[i] == '?') {
       // One wildcard byte per token; the signature database writes it as
       // '?' or '??'. Consume the whole run of question marks.
@@ -111,6 +114,8 @@ std::expected<Signature, std::string> ParseSignature(std::string id, std::string
       sig.wildcard.push_back(true);
       continue;
     }
+
+    // Anything else is one hex byte.
     auto high = NibbleValue(pattern[i]);
     auto low = i + 1 < pattern.size() ? NibbleValue(pattern[i + 1]) : std::nullopt;
     if (!high || !low) {

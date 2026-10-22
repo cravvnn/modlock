@@ -53,11 +53,15 @@ std::expected<Layout, std::string> Resolve(const char* module, const char* entit
     return std::unexpected(schema.error());
   }
   Layout layout;
+
+  // Each field names its class, its member and the offset it fills.
   struct Field {
     const char* type;
     const char* name;
     size_t* offset;
   };
+
+  // Fill every offset, or fail at the first missing one.
   for (const auto& field :
        {Field{"CPlayer_MovementServices", "m_nButtons", &layout.buttons},
         Field{"CPlayer_MovementServices", "m_nLastCommandNumberProcessed", &layout.command},
@@ -195,6 +199,7 @@ void Dispatch(Hook& hook, void* services, void* data) {
 void ServerThunk(void* services, void* data) {
   Dispatch(g_hooks[0], services, data);
 }
+
 void ClientThunk(void* services, void* data) {
   Dispatch(g_hooks[1], services, data);
 }
@@ -221,6 +226,7 @@ struct MovementHook::Impl {
 };
 
 MovementHook::MovementHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 MovementHook::MovementHook(MovementHook&&) noexcept = default;
 MovementHook& MovementHook::operator=(MovementHook&&) noexcept = default;
 MovementHook::~MovementHook() = default;

@@ -37,6 +37,8 @@ std::vector<uint8_t> BoxRoom() {
     float distance;
     bool outside_front;
   };
+
+  // Each axis has a wall at its maximum and one at its minimum.
   const auto walls = [](const Vector& mins, const Vector& maxs) {
     std::vector<Wall> result;
     for (int axis = 0; axis < 3; ++axis) {
@@ -79,11 +81,14 @@ std::vector<uint8_t> BoxRoom() {
   for (int hull = 0; hull < 2; ++hull) {
     const auto& chain = hull == 0 ? point : player;
     for (int index = 0; index < 6; ++index) {
+      // Write the wall's plane.
       const auto& wall = chain[index];
       const size_t plane = planes + (hull * 6 + index) * 20;
       Put<float>(bytes, plane + wall.axis * 4, 1);
       Put<float>(bytes, plane + 12, wall.distance);
       Put<int32_t>(bytes, plane + 16, wall.axis);
+
+      // Its node sends outside to solid and inside on to the next wall.
       const int16_t inside = index == 5 ? kEmpty : int16_t(index + 1);
       const size_t node = hull == 0 ? nodes + index * 24 : clips + index * 8;
       Put<int32_t>(bytes, node, hull * 6 + index);
@@ -99,6 +104,7 @@ class EmptyWorld final : public CollisionWorld {
   Trace Sweep(const Vector&, const Vector& end, const Vector&, const Vector&) const override {
     return {.end = end};
   }
+
   Contents At(const Vector&) const override { return Contents::kEmpty; }
 };
 
@@ -179,6 +185,7 @@ std::vector<MovementCall> Simulate(PlayerMovement& movement, std::vector<Movemen
                                    std::array<float, 3> origin, std::array<float, 3> velocity,
                                    uint32_t ground = 0) {
   for (auto& call : commands) {
+    // Run each command from the last one's result.
     call.origin = origin;
     call.velocity = velocity;
     call.ground_entity = ground;
@@ -215,6 +222,7 @@ TEST(PlayerMovement, ServerAndClientSplitTheSameCommandsAt77Hz) {
   auto client = Create(PlayerMovement::Side::kClient);
   std::vector<MovementCall> on_server, on_client;
   for (int32_t number = 1; number <= 320; ++number) {
+    // Build each command, and the server's copy with the previous number.
     const float yaw = std::fmod(number * 1.7f, 360.f);
     auto call = Command(number, 1, number % 40 < 20, yaw);
     call.left = number % 2 ? 1.f : -1.f;

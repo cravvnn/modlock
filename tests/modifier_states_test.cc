@@ -13,7 +13,9 @@ namespace {
 // name strings, as the game's server module does.
 struct FakeImage final : modlock::gameinterop::ModuleImage {
   std::vector<uint8_t> bytes = std::vector<uint8_t>(256, 0);
+
   std::uintptr_t base() const override { return 0x180000000; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes; }
 
   // Name places a NUL-terminated string at offset and returns its address.
@@ -22,6 +24,7 @@ struct FakeImage final : modlock::gameinterop::ModuleImage {
     bytes[offset + text.size()] = 0;
     return base() + offset;
   }
+
   // Record places {name pointer, value} at an aligned offset.
   void Record(size_t offset, uint64_t name, int64_t value) {
     std::memcpy(bytes.data() + offset, &name, sizeof(name));

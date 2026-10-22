@@ -94,6 +94,7 @@ class Instance {
                                                             uint32_t size);
   wasmtime::Result<std::monostate, wasmtime::Trap> HostReadImport(wasmtime::Caller caller,
                                                                   uint32_t data, uint32_t size);
+
   // Budget is the running call's processor time limit and how its host calls
   // spent it. began is the thread's processor time when the call started,
   // and spent is the time the call took once it returned.

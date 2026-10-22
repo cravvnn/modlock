@@ -66,7 +66,9 @@ std::string ReadCommand(void* args) {
 void CommandThunk(void* self, int32_t slot, void* args) {
   const auto state = ConnectionTracker::StateForSlot(slot);
   if (g_handler != nullptr && state.occupied && !state.is_bot && state.xuid != 0) {
+    // Read the command.
     auto command = ReadCommand(args);
+
     // Source console command names are case-insensitive; preserve argument case.
     const auto end = command.find_first_of(" \t");
     std::transform(command.begin(),
@@ -96,6 +98,7 @@ struct ClientCommandHook::Impl {
 };
 
 ClientCommandHook::ClientCommandHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 ClientCommandHook::ClientCommandHook(ClientCommandHook&&) noexcept = default;
 ClientCommandHook& ClientCommandHook::operator=(ClientCommandHook&&) noexcept = default;
 ClientCommandHook::~ClientCommandHook() = default;

@@ -29,6 +29,7 @@ using modlock::gameinterop::SignatureTarget;
 class Image final : public ModuleImage {
  public:
   std::uintptr_t base() const override { return 0x1000; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes; }
 
   std::array<uint8_t, 32> bytes{};
@@ -55,12 +56,15 @@ TEST(GameSignatures, TableIsSortedUniqueAndParses) {
   const auto signatures = GameSignatures();
   ASSERT_FALSE(signatures.empty());
   for (size_t i = 0; i < signatures.size(); ++i) {
+    // Ids are sorted and unique, and each names a module and a shape.
     const auto& signature = signatures[i];
     if (i > 0) {
       EXPECT_LT(signatures[i - 1].id, signature.id) << "sort and dedupe the table";
     }
     EXPECT_NE(signature.modules, 0) << signature.id;
     EXPECT_FALSE(signature.shape.empty()) << signature.id;
+
+    // The pattern parses, and a direct match has no delta.
     const auto parsed =
         modlock::gameinterop::ParseSignature(std::string(signature.id), signature.pattern);
     ASSERT_TRUE(parsed) << parsed.error();
@@ -107,6 +111,7 @@ TEST(GameSymbols, EveryTargetRequiresOneMatch) {
 
 TEST(GameSymbols, RelativeInstructionsPreserveSignedDisplacements) {
   for (const int32_t displacement : {-8, 16}) {
+    // A call resolves relative to the next instruction.
     Image image;
     image.bytes[4] = 0xcc;
     image.bytes[5] = 0xe8;
@@ -115,6 +120,7 @@ TEST(GameSymbols, RelativeInstructionsPreserveSignedDisplacements) {
     ASSERT_TRUE(call) << call.error();
     EXPECT_EQ(*call, reinterpret_cast<void*>(0x100a + displacement));
 
+    // So does a RIP-relative load.
     image.bytes[5] = 0x48;
     image.bytes[6] = 0x8d;
     image.bytes[7] = 0x05;

@@ -85,6 +85,7 @@ TEST(CameraPathTest, UnevenSmoothPathReproducesConstantVelocity) {
     *path.add_keys() = Key(t, 3 * t + 1, -2 * t, 0.5 * t);
   }
   for (double time : {0.0, 0.04, 0.1, 0.8, 2.3, 7.1, 10.0}) {
+    // Each sample lies on the line.
     auto evaluated = EvaluatePath(path, time);
     ASSERT_TRUE(evaluated.has_value());
     ExpectClose(evaluated->position().x(), 3 * time + 1, 1e-7);
@@ -135,6 +136,7 @@ TEST(CameraPathTest, ShortestAnglesStayContinuousAcrossSeamsAndRewinds) {
   double max_yaw_delta = 0, max_roll_delta = 0, max_yaw = -1e9, min_roll = 1e9;
   std::vector<modlock::CameraPose> samples;
   for (int i = 0; i <= 3000; ++i) {
+    // Sample the path and track the largest step.
     auto evaluated = EvaluatePath(path, i / 1000.0);
     ASSERT_TRUE(evaluated.has_value());
     samples.push_back(*evaluated);
@@ -156,6 +158,7 @@ TEST(CameraPathTest, ShortestAnglesStayContinuousAcrossSeamsAndRewinds) {
 
   // Each authored view passes exactly through the evaluated path.
   for (const auto& key : path.keys()) {
+    // Each key's angles come back, up to a full turn.
     auto evaluated = EvaluatePath(path, key.time());
     ASSERT_TRUE(evaluated.has_value());
     const auto angle_delta = [](double evaluated, double authored) {
@@ -204,6 +207,7 @@ TEST(CameraPathTest, ExactHalfTurnUsesAuthoredDirection) {
 TEST(CameraPathTest, ExtremeFiniteNumbersNeverProduceNonfiniteOutput) {
   auto path = MakePath({Key(0, -1e308, 0, 0, 0, 1e308), Key(1e-310, 1e308), Key(1)});
   for (double time : {0.0, 0.5e-310, 1e-310, 0.5, 1.0}) {
+    // Every sample stays finite.
     auto evaluated = EvaluatePath(path, time);
     ASSERT_TRUE(evaluated.has_value());
     EXPECT_TRUE(std::isfinite(evaluated->position().x()));
@@ -226,6 +230,7 @@ TEST(CameraPathTest, AspectRatioNeverOvershootsOnUnevenKeys) {
     const double low = std::min(values[i], values[i + 1]);
     const double high = std::max(values[i], values[i + 1]);
     for (int step = 0; step <= 100; ++step) {
+      // The aspect ratio stays between the keys around it.
       const double t = times[i] + (times[i + 1] - times[i]) * step / 100.0;
       auto evaluated = EvaluatePath(path, t);
       ASSERT_TRUE(evaluated.has_value());

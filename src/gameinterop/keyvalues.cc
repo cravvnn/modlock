@@ -23,6 +23,7 @@ std::uint32_t MurmurHash2(const unsigned char* data, size_t length, std::uint32_
   std::uint32_t h = seed ^ static_cast<std::uint32_t>(length);
   size_t position = 0;
   while (length - position >= 4) {
+    // Mix in each four-byte block.
     std::uint32_t k;
     std::memcpy(&k, data + position, sizeof(k));
     k *= m;
@@ -55,6 +56,7 @@ struct RawKeyValues3 {
   std::uint64_t metadata;
   std::uint64_t data;
 };
+
 static_assert(sizeof(RawKeyValues3) == 16);
 
 // KeyValues3 metadata: external storage (bit 0), free-array-memory (bit 1),
@@ -165,10 +167,14 @@ MemberName MakeMemberName(std::string_view key) {
 std::expected<KeyValuesCalls, std::string> ResolveKeyValuesCalls(const ModuleImage& image) {
   // Resolve each raw keyvalues call by signature.
   KeyValuesCalls calls;
+
+  // Each entry names a signature and the call it fills.
   struct Entry {
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"entity-keyvalues.allocate", reinterpret_cast<void**>(&calls.allocate)},
       {"entity-keyvalues.construct", reinterpret_cast<void**>(&calls.construct_key_values)},

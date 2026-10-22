@@ -16,7 +16,9 @@ class MODLOCK_API MappedModuleImage final : public ModuleImage {
   // ForModule borrows an already-loaded image; it never loads or unloads a DLL.
   // Unsupported hosts return an error without accessing process memory.
   static std::expected<MappedModuleImage, std::string> ForModule(std::wstring_view name);
+
   std::uintptr_t base() const override { return base_; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes_; }
 
  private:

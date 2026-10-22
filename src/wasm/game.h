@@ -216,10 +216,12 @@ class GameServices {
   // last sample, and ground_ is the last entity any hero stood on.
   std::optional<gameinterop::MovementHook> steps_;
   gameinterop::MovementHook::Handler step_;
+
   struct Folded {
     MovementCommand command;
     bool stepped = false;
   };
+
   std::map<const void*, Folded> commands_;
   uint32_t ground_ = gameinterop::MovementHook::kNoGround;
   bool world_ready_ = false;
@@ -612,11 +614,13 @@ class Game : public HostService {
   std::set<int32_t> frozen_;
   // movers_ is the players whose movement the mod watches.
   std::set<int32_t> movers_;
+
   // Steered is one hero's replayed command, with its pawn.
   struct Steered {
     void* pawn = nullptr;
     Steering steering;
   };
+
   // steers_ maps each steered player to the command its hero replays.
   std::map<int32_t, Steered> steers_;
   // drives_ maps each driven bot's slot to the command its hero runs.

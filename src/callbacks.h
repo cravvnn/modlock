@@ -18,6 +18,7 @@ template <typename Result, typename... Args>
 class Callbacks<Result(Args...)> {
  public:
   using Callback = std::function<Result(Args...)>;
+
   Subscription Add(Callback callback) {
     if (!callback) {
       return {};

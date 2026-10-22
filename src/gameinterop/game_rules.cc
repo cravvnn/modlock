@@ -91,6 +91,7 @@ struct GameRulesHooks::Impl {
 };
 
 GameRulesHooks::GameRulesHooks(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 GameRulesHooks::GameRulesHooks(GameRulesHooks&&) noexcept = default;
 GameRulesHooks& GameRulesHooks::operator=(GameRulesHooks&&) noexcept = default;
 GameRulesHooks::~GameRulesHooks() = default;

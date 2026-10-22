@@ -15,6 +15,7 @@ namespace {
 class WindowsLoadedModule final : public LoadedModule {
  public:
   explicit WindowsLoadedModule(HMODULE module) : module_(module) {}
+
   ~WindowsLoadedModule() override { FreeLibrary(module_); }
 
  private:

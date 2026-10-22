@@ -6,10 +6,14 @@ std::expected<PlayerSelectionCalls, std::string> PlayerSelectionCalls::Resolve(
     const ModuleImage& server) {
   // Resolve each call by signature into its slot.
   PlayerSelectionCalls calls;
+
+  // Each entry names a signature and the call it fills.
   struct Entry {
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"controller.create-hero-pawn", reinterpret_cast<void**>(&calls.create_pawn)},
       {"pawn.select-hero-internal", reinterpret_cast<void**>(&calls.select_hero)},

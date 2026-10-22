@@ -14,9 +14,11 @@ namespace modlock {
 class MODLOCK_API Subscription {
  public:
   Subscription() = default;
+
   explicit Subscription(std::shared_ptr<void> registration) {
     registrations_.push_back(std::move(registration));
   }
+
   Subscription(Subscription&&) noexcept = default;
   Subscription& operator=(Subscription&&) noexcept = default;
   Subscription(const Subscription&) = delete;

@@ -50,6 +50,7 @@ void ShutdownSocket(intptr_t socket) {
 bool SendAll(intptr_t socket, const char* data, size_t size) {
   while (size > 0) {
 #if defined(_WIN32)
+    // Send what remains.
     const int sent = send(static_cast<SOCKET>(socket), data, static_cast<int>(size), 0);
 #else
     const ssize_t sent = send(static_cast<int>(socket), data, size, MSG_NOSIGNAL);
@@ -68,6 +69,7 @@ bool SendAll(intptr_t socket, const char* data, size_t size) {
 bool ReceiveAll(intptr_t socket, char* data, size_t size) {
   while (size > 0) {
 #if defined(_WIN32)
+    // Receive what remains.
     const int received = recv(static_cast<SOCKET>(socket), data, static_cast<int>(size), 0);
 #else
     const ssize_t received = recv(static_cast<int>(socket), data, size, 0);
@@ -198,6 +200,7 @@ void ControlLink::RunRequests(WasmHost& mods) {
         // Report a reload that did not load; the previous build keeps running.
         const auto& path = request.reload().path();
         if (auto reloaded = mods.Reload(path); !reloaded) {
+          // Report the failed reload to the controller.
           std::cerr << "control: " << reloaded.error() << '\n';
           control::HostEvent event;
           event.mutable_failed()->set_mod(path);
@@ -277,9 +280,12 @@ void ControlLink::Send(std::stop_token stop) {
   // Send events in order until the link closes or the host stops.
   std::unique_lock lock(mu_);
   while (wake_.wait(lock, stop, [this] { return !events_.empty() || closed_; }) && !closed_) {
+    // Take the next event.
     auto event = std::move(events_.front());
     events_.pop_front();
     lock.unlock();
+
+    // Send it, length first, outside the lock.
     const auto data = event.SerializeAsString();
     const auto size = static_cast<uint32_t>(data.size());
     const std::array<char, 4> header{static_cast<char>(size), static_cast<char>(size >> 8),
@@ -298,6 +304,7 @@ void ControlLink::Read() {
   // Queue each request for the engine thread until the controller disconnects.
   std::string packet;
   for (;;) {
+    // Read the length header.
     std::array<unsigned char, 4> header{};
     if (!ReceiveAll(socket_, reinterpret_cast<char*>(header.data()), header.size())) {
       break;
@@ -308,6 +315,8 @@ void ControlLink::Read() {
     if (size > kMaxPacket) {
       break;
     }
+
+    // Read the request.
     packet.resize(size);
     if (!ReceiveAll(socket_, packet.data(), packet.size())) {
       break;
@@ -316,6 +325,8 @@ void ControlLink::Read() {
     if (!request.ParseFromString(packet)) {
       break;
     }
+
+    // Queue it.
     std::lock_guard lock(mu_);
     requests_.push_back(std::move(request));
     pending_.store(true, std::memory_order_release);

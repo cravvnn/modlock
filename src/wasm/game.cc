@@ -49,6 +49,7 @@ struct ListHeader {
   int32_t capacity;
   int32_t grow;
 };
+
 static_assert(sizeof(ListHeader) == 24);
 
 // ReadList copies the header of the list field at address.
@@ -505,6 +506,7 @@ std::expected<void*, std::string> GameServices::Schema() {
 
 std::expected<const gameinterop::HeroDefinitions*, std::string> GameServices::Heroes() {
   if (!heroes_) {
+    // Resolve the hero calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -520,6 +522,7 @@ std::expected<const gameinterop::HeroDefinitions*, std::string> GameServices::He
 
 std::expected<const gameinterop::PlayerSelectionCalls*, std::string> GameServices::Selection() {
   if (!selection_) {
+    // Resolve the selection calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -535,6 +538,7 @@ std::expected<const gameinterop::PlayerSelectionCalls*, std::string> GameService
 
 std::expected<const gameinterop::AbilityDefinitions*, std::string> GameServices::Abilities() {
   if (!abilities_) {
+    // Resolve the ability definitions once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -550,6 +554,7 @@ std::expected<const gameinterop::AbilityDefinitions*, std::string> GameServices:
 
 std::expected<const gameinterop::ItemFunctions*, std::string> GameServices::Items() {
   if (!items_) {
+    // Resolve the item calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -565,6 +570,7 @@ std::expected<const gameinterop::ItemFunctions*, std::string> GameServices::Item
 
 std::expected<const gameinterop::AbilitySlots*, std::string> GameServices::Slots() {
   if (!slots_) {
+    // Resolve the slot calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -584,6 +590,7 @@ std::expected<const gameinterop::AbilitySlots*, std::string> GameServices::Slots
 
 std::expected<gameinterop::CreateAbility, std::string> GameServices::CreateAbility() {
   if (!create_ability_) {
+    // Resolve the ability creation call once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -599,6 +606,7 @@ std::expected<gameinterop::CreateAbility, std::string> GameServices::CreateAbili
 
 std::expected<gameinterop::RespawnPawn, std::string> GameServices::Respawn() {
   if (!respawn_) {
+    // Resolve the respawn call once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -614,6 +622,7 @@ std::expected<gameinterop::RespawnPawn, std::string> GameServices::Respawn() {
 
 std::expected<gameinterop::ResetHeroPawn, std::string> GameServices::ResetHero() {
   if (!reset_hero_) {
+    // Resolve the hero reset call once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -629,6 +638,7 @@ std::expected<gameinterop::ResetHeroPawn, std::string> GameServices::ResetHero()
 
 std::expected<gameinterop::TeleportClientCamera, std::string> GameServices::Teleport() {
   if (!teleport_) {
+    // Resolve the camera teleport once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -644,6 +654,7 @@ std::expected<gameinterop::TeleportClientCamera, std::string> GameServices::Tele
 
 std::expected<const gameinterop::PawnMotion*, std::string> GameServices::Motion() {
   if (!motion_) {
+    // Resolve the motion calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -659,6 +670,7 @@ std::expected<const gameinterop::PawnMotion*, std::string> GameServices::Motion(
 
 std::expected<const gameinterop::BotCreation*, std::string> GameServices::Bots() {
   if (!bots_) {
+    // Resolve the bot calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -668,6 +680,7 @@ std::expected<const gameinterop::BotCreation*, std::string> GameServices::Bots()
       return std::unexpected(bots.error());
     }
     bots_ = *bots;
+
     // Without the guard a solo bot match clears a bot's hero that a human
     // plays; the bots still join, so a failure costs only mirrored heroes.
     if (auto guard = gameinterop::BotHeroGuard::Install(**image)) {
@@ -682,6 +695,7 @@ std::expected<const gameinterop::BotCreation*, std::string> GameServices::Bots()
 std::expected<render::WorldTextGameFactory*, std::string> GameServices::Text() {
   // Build the text factory once from the server module.
   if (!text_) {
+    // Create the text factory once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -705,6 +719,7 @@ std::expected<render::WorldTextGameFactory*, std::string> GameServices::Text() {
 std::expected<render::WorldEffectGameFactory*, std::string> GameServices::Effects() {
   // Build the effect factory once from the server module.
   if (!effects_) {
+    // Create the effect factory once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -727,6 +742,7 @@ std::expected<render::WorldEffectGameFactory*, std::string> GameServices::Effect
 
 std::expected<const gameinterop::NativeDamage*, std::string> GameServices::Damage() {
   if (!damage_) {
+    // Resolve the damage calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -746,6 +762,7 @@ std::expected<const gameinterop::NativeDamage*, std::string> GameServices::Damag
 
 std::expected<gameinterop::ModifyCurrency, std::string> GameServices::Currency() {
   if (!currency_) {
+    // Resolve the currency call once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -761,6 +778,7 @@ std::expected<gameinterop::ModifyCurrency, std::string> GameServices::Currency()
 
 std::expected<const gameinterop::NativeSound*, std::string> GameServices::Sound() {
   if (!sound_) {
+    // Create the sound player once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -776,6 +794,7 @@ std::expected<const gameinterop::NativeSound*, std::string> GameServices::Sound(
 
 std::expected<const gameinterop::GamePause*, std::string> GameServices::Pause() {
   if (!pause_) {
+    // Resolve the pause calls once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -795,6 +814,7 @@ std::expected<const gameinterop::GamePause*, std::string> GameServices::Pause() 
 
 std::expected<gameinterop::MatchClock*, std::string> GameServices::Clock() {
   if (!clock_) {
+    // Resolve the match clock once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -846,6 +866,7 @@ std::expected<void*, std::string> GameServices::Rules() {
 
 std::expected<gameinterop::KothRules*, std::string> GameServices::Rift() {
   if (!rift_) {
+    // Resolve the rift rules once.
     auto image = Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -981,6 +1002,7 @@ uint64_t GameServices::Filter(gameinterop::AbilityInputHook::Input& input) {
   const uint64_t released = ~input.buttons[0] & input.buttons[1];
   uint64_t blocked = 0;
   for (auto* game : games_) {
+    // Merge the game's blocks and record its watched changes.
     blocked |= game->blocked_;
     if (auto found = game->slot_blocked_.find(input.slot); found != game->slot_blocked_.end()) {
       blocked |= found->second;
@@ -989,6 +1011,7 @@ uint64_t GameServices::Filter(gameinterop::AbilityInputHook::Input& input) {
       game->changes_.push_back({input.slot, pressed & game->watched_, released & game->watched_});
     }
 
+    // Take the game's pending press for this slot.
     auto press = game->presses_.find(input.slot);
     if (press == game->presses_.end()) {
       continue;
@@ -1065,6 +1088,7 @@ std::expected<void, std::string> GameServices::Drive() {
 
 std::optional<gameinterop::BotDrive::Command> GameServices::Driven(int32_t slot) {
   for (auto* game : games_) {
+    // The first game driving the slot answers; its press counts once.
     auto found = game->drives_.find(slot);
     if (found == game->drives_.end()) {
       continue;
@@ -1210,6 +1234,7 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
   // Steer a bot that replays a recorded command.
   for (auto* game : games_) {
     for (auto& [slot, steered] : game->steers_) {
+      // Steer the pawn this game replays.
       if (steered.pawn != call.pawn) {
         continue;
       }
@@ -1222,6 +1247,7 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
       call.forward = command.forward();
       call.left = command.left();
       call.up = command.up();
+
       // The recorded view steers the step and becomes the hero's aim; its yaw
       // turns the body, as Game::MovePlayer does. The bot's own command set
       // both before this step, and the eye angles alone leave the body at the
@@ -1232,6 +1258,7 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
         const std::array<float, 3> body{0, call.angles[1], 0};
         (*motion)->set_angles(call.pawn, body.data());
       }
+
       // A press counts once, though the command stays for the ticks after.
       command.set_changed(0);
       command.set_scroll(0);
@@ -1258,6 +1285,7 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
   // buttons and view the drive wrote there. The step stays native.
   for (auto* game : games_) {
     for (auto& [slot, drive] : game->drives_) {
+      // Drive the pawn this game drives.
       if (game->observer_.PawnForSlot(slot) != call.pawn) {
         continue;
       }
@@ -1586,10 +1614,13 @@ std::expected<void, std::string> Game::Announce(const AnnounceRequest& request) 
 std::expected<PlayersResponse, std::string> Game::Players() {
   PlayersResponse players;
   for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+    // List each occupied slot.
     const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
     if (!state.occupied) {
       continue;
     }
+
+    // With its identity and readiness.
     auto* player = players.add_players();
     player->set_player(slot);
     player->set_steam_id(state.is_bot ? 0 : state.xuid);
@@ -1644,11 +1675,14 @@ std::expected<PawnResponse, std::string> Game::Pawn(const PlayerRequest& request
 
   // Copy the hero's scoreboard line.
   if (sample->score) {
+    // Copy the scoreboard.
     auto* score = pawn->mutable_score();
     score->set_kills(sample->score->kills);
     score->set_deaths(sample->score->deaths);
     score->set_assists(sample->score->assists);
     score->set_last_hits(sample->score->last_hits);
+
+    // Then denies, damage, healing and net worth.
     score->set_denies(sample->score->denies);
     score->set_hero_damage(sample->score->hero_damage);
     score->set_hero_healing(sample->score->hero_healing);
@@ -1842,6 +1876,7 @@ std::expected<void, std::string> Game::WriteFieldList(const WriteFieldListReques
   // since its owner is unknown, and doubling bounds what that leaves behind.
   const auto count = request.values_size();
   if (count > list->capacity) {
+    // Grow the list, at least doubling it.
     const int32_t capacity = std::clamp(2 * list->capacity, count, kMaxList);
     void* grown = gameinterop::AllocateNative(static_cast<size_t>(capacity) * stride);
     if (grown == nullptr) {
@@ -1964,6 +1999,7 @@ void Game::ApplyFreeForAll() {
     std::array<int, 4> sides{};
     std::vector<int32_t> unseated;
     for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+      // Count each side and collect the humans without a team.
       const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
       if (!state.occupied) {
         continue;
@@ -2337,12 +2373,15 @@ std::expected<AbilitiesResponse, std::string> Game::Abilities(const PlayerReques
   // Answer each ability's name, slot and timers.
   AbilitiesResponse response;
   for (const auto& ability : *abilities) {
+    // Name the ability, its slot and its entity.
     auto* out = response.add_abilities();
     if (auto definition = (*definitions)->Find(ability.subclass_id)) {
       out->set_name(definition->name);
     }
     out->set_slot(ability.slot);
     out->set_entity(ability.handle);
+
+    // Then its upgrades, charges and timers.
     out->set_upgrades(ability.upgrade_info >> 16);
     out->set_charges(ability.charges);
     out->set_cooldown_end(ability.cooldown_end);
@@ -2414,6 +2453,7 @@ std::expected<void, std::string> Game::LimitCharges(int32_t slot, uint32_t handl
                                                     int32_t maximum) {
   // Create the charge limit once from the server module.
   if (!charge_limit_) {
+    // Create the charge limit once.
     auto image = services_.Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -2502,6 +2542,7 @@ std::expected<void, std::string> Game::HoldModifier(const HoldModifierRequest& r
 
   // Resolve the modifier once for every slot that holds it.
   if (!modifiers_.contains(key)) {
+    // Resolve the modifier once for its key.
     auto image = services_.Image();
     if (!image) {
       return std::unexpected(image.error());
@@ -2801,6 +2842,7 @@ std::expected<void, std::string> Game::SetObjectHidden(const SetObjectHiddenRequ
     return std::unexpected("no object has that identifier");
   }
   if (!request.hidden()) {
+    // Unhide the object, forgetting an empty set.
     auto hidden = hidden_.find(request.player());
     if (hidden == hidden_.end()) {
       return {};
@@ -3459,6 +3501,7 @@ bool Game::ApplyRestore(const HeroRestore::Sample& sample, const RestoreTarget& 
 
   // The build stage restores the level, items, abilities and upgrade bonuses.
   if (stage == HeroRestore::Stage::kBuild) {
+    // Restore the level, items and abilities.
     if (target.level && !gameinterop::RestorePawnLevel(pawn, *target.level)) {
       return false;
     }
@@ -3505,6 +3548,7 @@ bool Game::ApplyRestore(const HeroRestore::Sample& sample, const RestoreTarget& 
   // The pawn stage restores health, and full stamina for a fresh hero.
   if (stage == HeroRestore::Stage::kPawn) {
     if (target.fresh) {
+      // A fresh hero starts with full stamina once its health is live.
       if (!sample.effective_max_health || *sample.effective_max_health <= 0) {
         return false;
       }
@@ -3698,6 +3742,7 @@ void Game::HoldClock() {
 std::expected<void, std::string> Game::ReplicateClock() {
   auto rules = Entity(rules_entity_);
   if (!rules) {
+    // Find the rules entity once.
     auto world = World();
     if (!world) {
       return std::unexpected(world.error());
@@ -3847,6 +3892,7 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
   }
   ButtonsResponse response;
   for (const auto& field : {*pawn_field, *hero_field}) {
+    // Read the pawn's movement services.
     uint32_t handle = 0;
     std::memcpy(&handle, static_cast<unsigned char*>(*controller) + field.offset, sizeof(handle));
     auto* pawn = static_cast<unsigned char*>(gameinterop::EntityInstance(*entities, handle));
@@ -3858,6 +3904,7 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
     if (services == nullptr) {
       continue;
     }
+
     // InButtonState holds its vtable, then the held mask.
     uint64_t held = 0;
     std::memcpy(&held, services + buttons->offset + sizeof(void*), sizeof(held));
@@ -3885,6 +3932,7 @@ std::expected<void, std::string> Game::WatchMovement(const WatchMovementRequest&
 std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) {
   std::vector<MovementSample> samples;
   for (const auto slot : movers_) {
+    // Skip a dead or unmoving pawn.
     const auto sample = observer_.Observe(slot);
     if (!sample || sample->health <= 0 || !sample->movement) {
       continue;
@@ -3893,6 +3941,8 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
     if (!movement.abs_velocity || !movement.grounded_by_handle) {
       continue;
     }
+
+    // Record its pose.
     auto& out = samples.emplace_back();
     out.set_player(slot);
     out.set_pawn(sample->pawn_handle);
@@ -3900,6 +3950,8 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
                                        static_cast<float>(sample->z)});
     SetVector(out.mutable_velocity(), *movement.abs_velocity);
     out.set_grounded(*movement.grounded_by_handle);
+
+    // Its movement state.
     out.set_sliding(movement.sliding);
     out.set_mantling(movement.mantling);
     out.set_climbing(movement.climbing);
@@ -3908,6 +3960,8 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
     out.set_wall_jumps(movement.consecutive_wall_jumps.value_or(0));
     out.set_mantle_ability(movement.mantle_ability_handle.value_or(0));
     out.set_mantle_start(movement.mantle_start_time.value_or(0));
+
+    // Its wall jump and zipline state, and its command.
     if (movement.wall_contact_position) {
       SetVector(out.mutable_wall_contact(), *movement.wall_contact_position);
     }
@@ -3924,6 +3978,8 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
     if (movement.last_time_on_zipline) {
       out.set_zipline_time(*movement.last_time_on_zipline);
     }
+
+    // Its actions and casts this tick.
     for (const auto& fact : facts) {
       if (fact.pawn != sample->pawn_handle) {
         continue;
@@ -3948,6 +4004,7 @@ std::expected<void, std::string> Game::WatchProjectiles(const ProjectileOptions&
 std::vector<Game::Hero> Game::Heroes() {
   std::vector<Hero> heroes;
   for (int32_t slot = 0; slot < kMaxPlayers; ++slot) {
+    // Collect each live hero.
     const auto sample = observer_.Observe(slot);
     if (!sample || sample->health <= 0) {
       continue;
@@ -3978,6 +4035,7 @@ void Game::TrackProjectiles() {
   }
   std::set<uint32_t> seen;
   for (void* entity : gameinterop::EntityInstances(*entities)) {
+    // Track each watched projectile.
     const auto name = DesignerName(entity);
     if (!Watches(projectiles_, name)) {
       continue;
@@ -3987,9 +4045,13 @@ void Game::TrackProjectiles() {
       continue;
     }
     seen.insert(*handle);
+
+    // Skip one already seen.
     if (projectiles_seen_.contains(*handle) || launches_.size() >= kMaxChanges) {
       continue;
     }
+
+    // Report the new one's launch with its owner and position.
     LaunchEvent launch;
     launch.set_entity(*handle);
     launch.set_name(std::string(name));
@@ -4275,6 +4337,7 @@ std::expected<void, std::string> Game::Sound(const SoundRequest& request) {
 
 std::expected<gameinterop::WorldEntities*, std::string> Game::World() {
   if (!world_) {
+    // Resolve the world entities once.
     auto image = services_.Image();
     if (!image) {
       return std::unexpected(image.error());

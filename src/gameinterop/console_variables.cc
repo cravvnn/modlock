@@ -83,6 +83,7 @@ std::expected<std::byte*, std::string> Walk(const void* instance, const Registry
   // Follow the links, checking each entry's bounds and back link.
   uint16_t previous = kInvalidIndex;
   for (size_t visited = 0; index != kInvalidIndex; ++visited) {
+    // Follow each link while it stays in bounds and points back.
     if (!entries || index >= capacity || visited >= capacity) {
       return std::unexpected("console variables: invalid registry bounds or cycle");
     }

@@ -111,6 +111,7 @@ bool PlayerMovement::Step(MovementCall& call) {
   std::vector<CollisionBody> bodies;
   std::vector<uint32_t> handles;
   for (const auto& player : players_) {
+    // Skip the mover, keeping its handle; every other player is a body.
     if (call.pawn && player.pawn == call.pawn) {
       self = player.handle;
       continue;

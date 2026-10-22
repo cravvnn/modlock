@@ -51,10 +51,14 @@ std::expected<std::unique_ptr<WorldEffectGameFactory>, std::string>
 WorldEffectGameFactory::TryCreate(const modlock::gameinterop::ModuleImage& server) {
   // Resolve each engine call by its signature.
   WorldEffectGameCalls calls;
+
+  // Each entry names a signature and the call it fills.
   struct Entry {
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"entity-system.create-entity-by-name",
        reinterpret_cast<void**>(&calls.create_entity_by_name)},
@@ -82,12 +86,14 @@ WorldEffectGameFactory::TryCreate(const modlock::gameinterop::ModuleImage& serve
 }
 
 WorldEffectGameFactory::WorldEffectGameFactory(WorldEffectGameCalls calls) : calls_(calls) {}
+
 WorldEffectGameFactory::~WorldEffectGameFactory() = default;
 
 class GameWorldEffect final : public WorldParticle {
  public:
   GameWorldEffect(WorldEffectGameFactory& factory, ParticleSettings settings)
       : factory_(factory), settings_(std::move(settings)) {}
+
   ~GameWorldEffect() override { Remove(); }
 
   void Move(const modlock::Vec3& origin,
@@ -103,6 +109,7 @@ class GameWorldEffect final : public WorldParticle {
   }
 
   std::expected<void, std::string> Start() override { return Input("Start"); }
+
   std::expected<void, std::string> Stop() override { return Input("Stop"); }
 
   std::expected<void, std::string> Transform(const Vec3& origin,
@@ -315,6 +322,7 @@ class GameWorldEntity final : public WorldEffect {
  public:
   GameWorldEntity(WorldEffectGameFactory& factory, void* entity, std::array<float, 3> angles)
       : factory_(factory), entity_(entity), angles_(angles) {}
+
   ~GameWorldEntity() override { Remove(); }
 
   void Move(const Vec3& origin, const std::optional<std::array<float, 3>>& angles) override {

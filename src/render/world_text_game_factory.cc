@@ -60,10 +60,14 @@ std::expected<std::unique_ptr<WorldTextGameFactory>, std::string> WorldTextGameF
     const modlock::gameinterop::ModuleImage& server) {
   // Resolve each creation call by signature.
   WorldTextGameCalls calls;
+
+  // Each entry names a signature and the call it fills.
   struct Entry {
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"entity-system.create-entity-by-name",
        reinterpret_cast<void**>(&calls.create_entity_by_name)},

@@ -21,6 +21,7 @@ class LibraryHandle {
   using Handle = void*;
 #endif
   explicit LibraryHandle(Handle handle) : handle_(handle) {}
+
   ~LibraryHandle() {
 #if defined(_WIN32)
     FreeLibrary(handle_);
@@ -49,15 +50,22 @@ class LibraryHandle {
 class LibraryPlugin final : public Plugin, public TickContextPlugin {
  public:
   using Destroy = void (*)(Plugin*);
+
   LibraryPlugin(std::unique_ptr<LibraryHandle> library, Plugin* plugin, Destroy destroy)
       : library_(std::move(library)), plugin_(plugin), destroy_(destroy) {}
+
   ~LibraryPlugin() override { destroy_(plugin_); }
 
   uint32_t InterfaceVersion() const override { return plugin_->InterfaceVersion(); }
+
   const char* Name() const override { return plugin_->Name(); }
+
   bool Load() override { return plugin_->Load(); }
+
   bool Start() override { return plugin_->Start(); }
+
   void Tick() override { plugin_->Tick(); }
+
   void Tick(const TickContext& context) override {
     if (auto* contextual = dynamic_cast<TickContextPlugin*>(plugin_)) {
       contextual->Tick(context);
@@ -65,7 +73,9 @@ class LibraryPlugin final : public Plugin, public TickContextPlugin {
     }
     plugin_->Tick();
   }
+
   void Stop() override { plugin_->Stop(); }
+
   std::optional<int> ExitCode() const override { return plugin_->ExitCode(); }
 
  private:

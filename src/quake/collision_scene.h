@@ -27,6 +27,7 @@ class CollisionScene final : public CollisionWorld {
 
   Trace Sweep(const Vector& start, const Vector& end, const Vector& mins,
               const Vector& maxs) const override;
+
   Contents At(const Vector& point) const override { return world_.At(point); }
 
  private:

@@ -189,6 +189,8 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"entity-system.find-class", reinterpret_cast<void**>(&world.calls_.find_class)},
       {"entity-system.create-entity-by-name", reinterpret_cast<void**>(&world.calls_.create)},
@@ -213,6 +215,8 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
     const char* name;
     size_t width;
   };
+
+  // Fill every offset, or fail at the first missing or short one.
   const Field fields[] = {
       {"CBaseEntity", "m_iTeamNum", sizeof(uint8_t)},
       {"CBaseEntity", "m_nSubclassID", sizeof(uint32_t) + sizeof(void*)},
@@ -297,6 +301,7 @@ std::expected<std::vector<WorldEntities::Sample>, std::string> WorldEntities::Re
   }
   std::vector<Sample> result;
   for (void* entity : EntityInstances(*system)) {
+    // Collect each live restored NPC.
     const auto name = DesignerName(entity);
     if (!IsRestoredNpc(name)) {
       continue;
@@ -423,6 +428,7 @@ std::expected<void, std::string> WorldEntities::Restore(std::span<const Target> 
   }
   std::vector<std::optional<uint32_t>> retained(targets.size());
   for (void* entity : EntityInstances(*system)) {
+    // Keep a live structure that matches an unclaimed target; remove the rest.
     const auto name = DesignerName(entity);
     if (!IsRestoredNpc(name)) {
       continue;
@@ -451,6 +457,7 @@ std::expected<void, std::string> WorldEntities::Restore(std::span<const Target> 
 
   // Create the missing targets and place every one.
   for (size_t i = 0; i < targets.size(); ++i) {
+    // Create each target not kept, apply its state, and wait for it.
     void* entity = retained[i] ? EntityInstance(*system, *retained[i]) : nullptr;
     if (!entity) {
       auto created = Create(targets[i]);
@@ -513,6 +520,7 @@ std::expected<void, std::string> WorldEntities::ClearAuthored(const NativeDamage
   // Native death can remove other actors. Reborrow each serial-fenced identity
   // after every mutation instead of retaining the original instance pointers.
   for (const auto handle : actors) {
+    // Remove round objectives and kill the other actors.
     void* entity = EntityInstance(*system, handle);
     if (!entity) {
       continue;
@@ -764,10 +772,12 @@ void WorldEntities::FinishSpawns() {
     return;
   }
   for (const auto& sample : spawned_) {
+    // Reapply each spawn's state.
     void* entity = EntityInstance(*system, sample.handle);
     if (!entity) {
       continue;
     }
+
     // A spawn killed on its first frame stays dead.
     auto live = ReadEntity(entity, std::string(DesignerName(entity)));
     if (!live || live->state.health <= 0) {

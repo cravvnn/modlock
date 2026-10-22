@@ -19,6 +19,7 @@ class CollisionHull {
     int axis = 0;
     float Distance(const Vector& point) const;
   };
+
   struct Node {
     int plane;
     std::array<int, 2> children;

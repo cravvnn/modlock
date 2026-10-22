@@ -25,21 +25,26 @@ TEST(PawnObserver, ChargeQueriesFollowTheNativeRefreshCallsAcrossBuilds) {
   class Image final : public modlock::gameinterop::ModuleImage {
    public:
     uintptr_t base() const override { return 0x1000; }
+
     std::span<const uint8_t> image_bytes() const override { return bytes; }
+
     std::vector<uint8_t> bytes;
   } image;
+
   // Recorded HeroRefresh instructions from September 17's Windows server.dll.
   const std::vector<uint8_t> refresh{
       0xff, 0x90, 0xe8, 0x08, 0,    0,    0x84, 0xc0, 0x74, 0x17, 0x48, 0x8b, 0x1f, 0x48,
       0x8b, 0xcf, 0xff, 0x93, 0xb8, 0x09, 0,    0,    0x8b, 0xd0, 0x48, 0x8b, 0xcf, 0xff,
       0x93, 0xf8, 0x08, 0,    0,    0x45, 0x33, 0xd2, 0xff, 0xc5, 0x49, 0x83, 0xc6, 0x04};
   for (const size_t offset : {32, 96}) {
+    // The current build's slots resolve wherever the call sits.
     image.bytes.assign(offset, 0);
     image.bytes.insert(image.bytes.end(), refresh.begin(), refresh.end());
     auto slots = modlock::gameinterop::ResolveAbilityChargeSlots(image);
     ASSERT_TRUE(slots) << slots.error();
     EXPECT_EQ(slots->has_charges, 285u);
     EXPECT_EQ(slots->max_charges, 311u);
+
     // The previous build used slots one entry earlier at a different address.
     image.bytes[offset + 2] -= 8;
     image.bytes[offset + 18] -= 8;
@@ -56,6 +61,8 @@ TEST(PawnObserver, LiveHealthUsesThePawnVirtualFunction) {
     void** table;
     int32_t maximum;
   };
+
+  // Its table's override returns the stored maximum.
   std::array<void*, 182> table{};
   table[181] =
       reinterpret_cast<void*>(+[](void* pawn) { return static_cast<Pawn*>(pawn)->maximum; });
@@ -826,6 +833,7 @@ TEST(PawnObserver, ReadsOwnedAbilitiesAndRejectsIncompleteOrStaleLoadouts) {
 
   // A timer that is not finite rejects the loadout.
   for (const auto offset : {0x48, 0x4c, 0x50}) {
+    // An infinite timer field fails the read; restore it after.
     float saved;
     std::memcpy(&saved, ability.data() + offset, sizeof(saved));
     const float invalid = std::numeric_limits<float>::infinity();
@@ -969,8 +977,11 @@ struct ItemFixture {
     const int32_t capacity = 4;
     std::memcpy(pawn.data() + 0xd0, &capacity, sizeof(capacity));
   }
+
   ~ItemFixture() { current = nullptr; }
+
   void SetCount(int32_t count) { std::memcpy(pawn.data() + 0xc0, &count, sizeof(count)); }
+
   void InitAbility(Instance& entity, uint32_t id, uint16_t slot) {
     // Owned by the pawn, with its subclass, slot and packed upgrade.
     const uint32_t owner = HandleOf(2, 7), packed = 1;
@@ -979,6 +990,7 @@ struct ItemFixture {
     std::memcpy(entity.data() + 0x38, &slot, 2);
     std::memcpy(entity.data() + 0x3c, &packed, 4);
   }
+
   PawnObserver::Seams Seams() {
     auto seams = SeamsFor(connection);
     seams.ability_layout = []() -> std::expected<modlock::gameinterop::AbilityLayout, std::string> {
@@ -996,6 +1008,7 @@ struct ItemFixture {
     };
     return seams;
   }
+
   static void* Lookup(int32_t scope, uint32_t id) {
     // Name the three known subclasses in scope 4.
     EXPECT_EQ(scope, 4);
@@ -1010,6 +1023,7 @@ struct ItemFixture {
     std::memcpy(current->definition.data() + 16, &name, sizeof(name));
     return current->definition.data();
   }
+
   static modlock::gameinterop::ItemFunctions Functions() {
     return {+[](void* pawn, const char* name, uint64_t upgrade, void* extra) -> void* {
               // Check the grant's arguments, count it, and apply it when asked.
@@ -1019,7 +1033,9 @@ struct ItemFixture {
               EXPECT_EQ(extra, nullptr);
               ++f.adds;
               if (f.apply) {
+                // Give the item its ability.
                 f.InitAbility(f.item, 201, 4);
+
                 // The upgrade's low word holds the bits; its high dword the
                 // packed low word.
                 const uint32_t packed =
@@ -1053,6 +1069,7 @@ struct ItemFixture {
             }};
   }
 };
+
 ItemFixture* ItemFixture::current = nullptr;
 
 TEST(PawnObserver, GrantsAnItemOnceAndPreservesTheExistingLoadout) {
@@ -1425,6 +1442,7 @@ TEST(PawnObserver, RestoresOwnedTimersWithReplicationAndReadback) {
   ASSERT_TRUE(owned) << owned.error();
   auto targets = *owned;
   for (auto& target : targets) {
+    // Every target holds charges and running timers.
     target.charges = 2;
     target.cooldown_start = 100;
     target.cooldown_end = 120;
@@ -1579,6 +1597,7 @@ TEST(PawnObserver, FreshAbilityTargetsFullChargesAndClearedTimers) {
   ASSERT_TRUE(targets) << targets.error();
   ASSERT_EQ(targets->size(), 2u);
   for (const auto& target : *targets) {
+    // Every target keeps its charges and clears its timers.
     EXPECT_EQ(target.charges, 5);
     EXPECT_FLOAT_EQ(target.cooldown_start, 0.0f);
     EXPECT_FLOAT_EQ(target.cooldown_end, 0.0f);
@@ -2149,6 +2168,7 @@ TEST(PawnObserver, DirectMovementFieldsAreFiniteAndGroundProvenanceIsExplicit) {
 
   // Each dash modifier but 0x23 reads as dashing.
   for (uint32_t flag : {0x23u, 0x25u, 0x29u}) {
+    // Every flag but 0x23 reads as a dash.
     const uint32_t mask = uint32_t{1} << (flag % 32);
     std::memcpy(modifiers.data() + 4, &mask, sizeof(mask));
     const auto moving = observer.Observe();

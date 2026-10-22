@@ -24,6 +24,7 @@ class MODLOCK_API NativeChatHook {
     int32_t slot;
     std::string text;
   };
+
   // Decode accepts native length-prefixed human chat bytes. The live hook
   // separately verifies the decoded slot's current authenticated connection.
   static std::optional<Message> Decode(int16_t message_id, std::span<const uint8_t> serialized);

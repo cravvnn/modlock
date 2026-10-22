@@ -15,9 +15,11 @@ struct EnumSchema {
     void** methods;
     void* result;
   };
+
   static void* Scope(void* self, const char*, const char**) {
     return static_cast<Interface*>(self)->result;
   }
+
   static void Enum(void* self, void* result, const char*) {
     *static_cast<void**>(result) = static_cast<Interface*>(self)->result;
   }

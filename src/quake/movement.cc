@@ -53,6 +53,7 @@ class Step {
   MovementResult Run(const MovementCommand& command) {
     // Split a long command into two halves.
     if (command.milliseconds > 50) {
+      // Run a long command as two halves.
       auto half = command;
       half.milliseconds = std::floor(command.milliseconds / 2);
       result_ = Step(state_, world_, profile_).Run(half);
@@ -303,6 +304,7 @@ class Step {
     std::size_t count = 0;
     float remaining = dt_;
     for (int bump = 0; bump < 4; ++bump) {
+      // Sweep along the remaining velocity; a stuck box stops.
       const auto trace = Sweep(state_.origin, AddScaled(state_.origin, state_.velocity, remaining));
       if (trace.start_solid || trace.all_solid) {
         state_.velocity = {};
@@ -315,6 +317,8 @@ class Step {
       if (trace.fraction == 1) {
         break;
       }
+
+      // Touch what it hit and keep its plane.
       Touch(trace.entity);
       remaining -= remaining * trace.fraction;
       if (count == planes.size()) {
@@ -322,6 +326,8 @@ class Step {
         break;
       }
       planes[count++] = trace.normal;
+
+      // Clip the velocity to the first plane that keeps it off the others.
       bool accepted = false;
       for (std::size_t i = 0; i < count; ++i) {
         state_.velocity = Clip(original_velocity, planes[i]);
@@ -336,6 +342,8 @@ class Step {
           break;
         }
       }
+
+      // Slide along the crease of two planes; stop on more, or when turned back.
       if (!accepted) {
         if (count != 2) {
           state_.velocity = {};

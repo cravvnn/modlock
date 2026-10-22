@@ -67,6 +67,7 @@ constexpr std::array<std::pair<std::string_view, MovementExecution>, 10> kMoveme
 // An id the running game does not name stays kUnobservedEvent, which no
 // EModifierEvent value reaches, so only that event goes unobserved.
 constexpr uint32_t kUnobservedEvent = UINT32_MAX;
+
 struct EventIds {
   uint32_t pre_damage = kUnobservedEvent;
   uint32_t damage = kUnobservedEvent;
@@ -75,6 +76,7 @@ struct EventIds {
   uint32_t shield_broadcast = kUnobservedEvent;
   std::array<std::pair<uint32_t, MovementExecution>, kMovementEventNames.size()> movement{};
 };
+
 EventIds g_ids;
 
 CombatEventsHook::Handler* g_handler = nullptr;
@@ -217,6 +219,7 @@ std::expected<void, std::string> ProcessDamageContact(
 
   // Damage that is not suppressed may be adjusted in place.
   if (!suppress || !suppress(event)) {
+    // Adjust the amount, writing back a valid change.
     if (!adjust) {
       return {};
     }
@@ -387,8 +390,11 @@ struct CombatEventsHook::Impl {
 
   ~Impl() {
     if (g_hook == &hook) {
+      // Remove the hooks.
       broadcast.reset();
       hook.reset();
+
+      // Clear the thunk state.
       g_broadcast_hook = nullptr;
       g_hook = nullptr;
       g_handler = nullptr;
@@ -402,6 +408,7 @@ struct CombatEventsHook::Impl {
 };
 
 CombatEventsHook::CombatEventsHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 CombatEventsHook::CombatEventsHook(CombatEventsHook&&) noexcept = default;
 CombatEventsHook& CombatEventsHook::operator=(CombatEventsHook&&) noexcept = default;
 CombatEventsHook::~CombatEventsHook() = default;
@@ -433,6 +440,7 @@ std::expected<uint32_t, std::string> ModifierEventIndex(const ModuleImage& image
   std::optional<int64_t> value;
   for (auto hit = view.find(pointer_view); hit != std::string_view::npos;
        hit = view.find(pointer_view, hit + 1)) {
+    // Each aligned record holds the string's address, then its value.
     if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) {
       continue;
     }
@@ -495,6 +503,7 @@ std::expected<CombatEventsHook, std::string> CombatEventsHook::Install(
   const char* names[] = {"m_nHealthLost", "m_nHealthBefore", "m_nDamageDealt"};
   size_t* slots[] = {&offsets.health_lost, &offsets.health_before, &offsets.damage_dealt};
   for (size_t i = 0; i < std::size(names); ++i) {
+    // Each field must hold an int; dealt damage may instead be a float.
     auto field = SchemaFieldOf(schema_system, "server.dll", "CTakeDamageResult", names[i]);
     if (!field && slots[i] == &offsets.damage_dealt) {
       field = SchemaFieldOf(schema_system, "server.dll", "CTakeDamageResult",
@@ -535,6 +544,7 @@ std::expected<CombatEventsHook, std::string> CombatEventsHook::Install(
     contact = {attacker->offset, flags->offset};
   }
   if (adjust_damage) {
+    // Find the damage info's amount, ability and inflictor.
     const auto amount = SchemaFieldOf(schema_system, "server.dll", "CTakeDamageInfo", "m_flDamage");
     const auto ability =
         SchemaFieldOf(schema_system, "server.dll", "CTakeDamageInfo", "m_hAbility");
@@ -547,6 +557,8 @@ std::expected<CombatEventsHook, std::string> CombatEventsHook::Install(
     contact.amount = amount->offset;
     contact.ability = ability->offset;
     contact.inflictor = inflictor->offset;
+
+    // Then its hit group.
     const auto hit_group =
         SchemaFieldOf(schema_system, "server.dll", "CTakeDamageInfo", "m_iHitGroupId");
     if (!hit_group || hit_group->size < sizeof(int32_t)) {

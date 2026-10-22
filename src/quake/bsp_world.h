@@ -31,6 +31,7 @@ class BspWorld final : public CollisionWorld {
 
   using Plane = CollisionHull::Plane;
   using Node = CollisionHull::Node;
+
   struct Hull {
     std::vector<Node> nodes;
     int root;

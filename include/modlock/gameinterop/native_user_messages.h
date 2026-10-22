@@ -57,6 +57,7 @@ class MODLOCK_API NativeUserMessages {
 
  private:
   NativeUserMessages(void* messages, void* events) : messages_(messages), events_(events) {}
+
   std::expected<void, std::string> Send(int32_t slot, int32_t id,
                                         const google::protobuf::MessageLite& message) const;
 

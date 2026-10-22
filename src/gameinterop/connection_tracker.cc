@@ -105,6 +105,7 @@ ConnectionTracker::ConnectionTracker(ConnectionTracker&& other) noexcept
 
 ConnectionTracker& ConnectionTracker::operator=(ConnectionTracker&& other) noexcept {
   if (this != &other) {
+    // Release our hooks, then take the other's.
     Reset();
     put_in_server_ = std::move(other.put_in_server_);
     fully_connect_ = std::move(other.fully_connect_);

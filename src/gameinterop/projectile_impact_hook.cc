@@ -15,10 +15,12 @@ namespace {
 ProjectileImpactHook::Handler* g_handler = nullptr;
 safetyhook::InlineHook* g_hook = nullptr;
 safetyhook::InlineHook* g_contact_hook = nullptr;
+
 struct Contact {
   void* projectile;
   const GameTrace* trace;
 };
+
 Contact g_contact{};
 
 uintptr_t ContactThunk(void* projectile, void* entity, const GameTrace* contact,
@@ -54,6 +56,7 @@ struct ProjectileImpactHook::Impl {
 #if defined(_WIN32)
   safetyhook::InlineHook hook;
   safetyhook::InlineHook contact_hook;
+
   ~Impl() {
     // Only the installed hook clears the shared state.
     if (g_hook != &hook) {
@@ -70,6 +73,7 @@ struct ProjectileImpactHook::Impl {
 };
 
 ProjectileImpactHook::ProjectileImpactHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 ProjectileImpactHook::ProjectileImpactHook(ProjectileImpactHook&&) noexcept = default;
 ProjectileImpactHook& ProjectileImpactHook::operator=(ProjectileImpactHook&&) noexcept = default;
 ProjectileImpactHook::~ProjectileImpactHook() = default;

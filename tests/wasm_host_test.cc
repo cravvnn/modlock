@@ -25,11 +25,15 @@ class Events final : public WasmHostObserver {
   void Started(std::string_view, bool reloaded) override {
     seen.push_back(reloaded ? "reloaded" : "started");
   }
+
   void Logged(std::string_view, std::string_view) override {}
+
   void Failed(std::string_view, std::string_view error) override {
     seen.push_back("failed: " + std::string(error));
   }
+
   void Ui(std::string_view, int32_t, const modlock::ui::Change&) override {}
+
   void Held(std::string_view, bool held) override { seen.push_back(held ? "held" : "released"); }
 
   std::vector<std::string> seen;

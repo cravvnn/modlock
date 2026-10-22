@@ -10,3 +10,4 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortLambdasOnASingleLine: Inline
 InsertBraces: true
 CommentPragmas: '^go:'
+SeparateDefinitionBlocks: Always

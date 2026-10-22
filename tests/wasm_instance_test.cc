@@ -51,19 +51,26 @@ std::string Zip(const std::vector<std::pair<std::string, std::string>>& files) {
   // Write each file after its local header, and its central directory entry.
   std::string zip, directory;
   for (const auto& [name, data] : files) {
+    // Write the file's local header: signature, version and flags.
     const auto offset = static_cast<uint32_t>(zip.size());
     little(zip, 0x04034b50, 4);
     little(zip, 20, 2);
     little(zip, 0, 2 + 2 + 4 + 4);
+
+    // Then its sizes, name and data.
     little(zip, data.size(), 4);
     little(zip, data.size(), 4);
     little(zip, name.size(), 2);
     little(zip, 0, 2);
     zip += name + data;
+
+    // Write its central directory entry: signature, versions and flags.
     little(directory, 0x02014b50, 4);
     little(directory, 20, 2);
     little(directory, 20, 2);
     little(directory, 0, 2 + 2 + 4 + 4);
+
+    // Then its sizes, name and offset.
     little(directory, data.size(), 4);
     little(directory, data.size(), 4);
     little(directory, name.size(), 2);

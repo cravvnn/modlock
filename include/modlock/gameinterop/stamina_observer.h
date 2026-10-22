@@ -36,12 +36,14 @@ class MODLOCK_API StaminaEvidenceTracker {
  private:
   void StartEpoch();
   void ResetHeadshots();
+
   struct Identity {
     uint32_t pawn_handle;
     uint64_t steam_id;
     uint32_t generation;
     bool operator==(const Identity&) const = default;
   };
+
   std::optional<Identity> identity_;
   uint64_t epoch_ = 0;
   double spent_ = 0;
@@ -49,12 +51,14 @@ class MODLOCK_API StaminaEvidenceTracker {
   bool lost_ = false;
   std::optional<float> last_time_;
   std::optional<std::pair<float, float>> last_values_;
+
   struct HeadshotKey {
     int32_t attacker;
     int32_t victim;
     int32_t server_tick;
     bool operator==(const HeadshotKey&) const = default;
   };
+
   std::vector<HeadshotKey> recent_headshots_;
   uint32_t pending_headshots_ = 0;
 };

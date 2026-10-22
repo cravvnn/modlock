@@ -47,6 +47,7 @@ class Image final : public ModuleImage {
   }
 
   std::uintptr_t base() const override { return kBase; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes; }
 
  private:

@@ -97,15 +97,19 @@ std::optional<std::string> NpcRestore::Match(std::span<const Target> targets,
 
   std::vector<bool> matched(samples.size());
   for (const auto& target : targets) {
+    // Find a matching unit, remembering the nearest for the error.
     const Sample* nearest = nullptr;
     float nearest_distance = std::numeric_limits<float>::max();
     bool found = false;
     for (size_t i = 0; i < samples.size() && !found; ++i) {
+      // Skip a matched or different unit.
       const auto& unit = samples[i].state;
       if (matched[i] || unit.designer_name != target.designer_name ||
           unit.subclass_id != target.subclass_id || unit.team != target.team) {
         continue;
       }
+
+      // Track the nearest and stop at a match.
       const float distance = DistanceSquared(unit.position, target.position);
       if (distance < nearest_distance) {
         nearest = &samples[i];

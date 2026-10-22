@@ -23,20 +23,26 @@ class HelloPlugin final : public modlock::Plugin {
       }
     }
   }
+
   ~HelloPlugin() override { std::cout << "hello: destroyed\n"; }
+
   uint32_t InterfaceVersion() const override { return modlock::PluginInterfaceVersion; }
+
   const char* Name() const override { return "hello"; }
+
   bool Load() override {
     std::cout << std::unitbuf;
     std::cout << "hello: loaded\n";
     return true;
   }
+
   bool Start() override {
     std::cout << "hello: started\n";
 #if defined(SAMPLE_FAIL_START)
     return false;
 #else
     if (!check_only_) {
+      // Simulate each world while it runs.
       auto world = engine_->OnWorld({}, [this](std::string_view) {
         // Each world starts unfinished and asks to keep simulating.
         ++worlds_;
@@ -52,6 +58,8 @@ class HelloPlugin final : public modlock::Plugin {
         return false;
       }
       world_ = std::move(*world);
+
+      // Remove the sample's text before the world ends.
       auto ending = engine_->OnWorldEnding([this] {
         if (text_) {
           text_->Remove();
@@ -72,6 +80,7 @@ class HelloPlugin final : public modlock::Plugin {
     return true;
 #endif
   }
+
   void Tick() override {
     // A finished or check-only run does nothing more.
     if (finished_) {
@@ -113,6 +122,7 @@ class HelloPlugin final : public modlock::Plugin {
     if (image && entities) {
       auto factory = modlock::render::WorldTextGameFactory::TryCreate(*image);
       if (factory) {
+        // Create the sample's text above the world origin.
         factory_ = std::move(*factory);
         factory_->SetEntitySystem(*entities);
         modlock::Vec3 origin;
@@ -144,6 +154,7 @@ class HelloPlugin final : public modlock::Plugin {
     finished_ =
         server->ServerCommand(reload_ && worlds_ == 1 ? "changelevel dl_midtown\n" : "quit\n");
   }
+
   void Stop() override {
     if (text_) {
       text_->InvalidateAfterEngineReset();

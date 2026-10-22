@@ -26,6 +26,7 @@ struct alignas(8) Ray {
   std::uint8_t type = 0;
   std::byte padding[7]{};
 };
+
 static_assert(sizeof(Ray) == 48);
 
 struct QueryAttributes {
@@ -41,6 +42,7 @@ struct QueryAttributes {
   std::uint8_t collision = 0;
   std::uint8_t flags = 0x49;
 };
+
 static_assert(sizeof(QueryAttributes) == 56);
 
 struct Filter {
@@ -48,6 +50,7 @@ struct Filter {
   QueryAttributes attributes;
   std::uint8_t iterate = 1;
 };
+
 static_assert(sizeof(Filter) == 72);
 static_assert(offsetof(Filter, iterate) == 0x40);
 
@@ -63,6 +66,7 @@ std::expected<Ray, std::string> BuildRay(const TraceShape& shape) {
       [&](const auto& value) {
         using T = std::decay_t<decltype(value)>;
         if constexpr (std::is_same_v<T, TraceMesh>) {
+          // A mesh copies its bounds and vertex pointer into the shape.
           struct Mesh {
             TraceVector mins;
             TraceVector maxs;
@@ -78,6 +82,7 @@ std::expected<Ray, std::string> BuildRay(const TraceShape& shape) {
           std::memcpy(ray.shape, &mesh, sizeof(mesh));
           return Finite(value.mins) && Finite(value.maxs);
         } else {
+          // Other shapes copy as they are; check their extents.
           static_assert(sizeof(T) <= sizeof(ray.shape));
           std::memcpy(ray.shape, &value, sizeof(value));
           if constexpr (std::is_same_v<T, TraceLine>) {
@@ -132,6 +137,7 @@ struct FilterVtable {
   void (*destroy)(Filter*, std::uint8_t);
   std::uint8_t (*should_hit)(Filter*, void*);
 };
+
 const FilterVtable kFilterVtable{FilterDestructor, ShouldHitEntity};
 #endif
 
@@ -140,6 +146,7 @@ const FilterVtable kFilterVtable{FilterDestructor, ShouldHitEntity};
 struct NativeTrace::Impl {
 #if defined(_WIN32)
   safetyhook::InlineHook hook;
+
   ~Impl() {
     if (g_hook == &hook) {
       hook.reset();
@@ -151,6 +158,7 @@ struct NativeTrace::Impl {
 };
 
 NativeTrace::NativeTrace(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 NativeTrace::NativeTrace(NativeTrace&&) noexcept = default;
 NativeTrace& NativeTrace::operator=(NativeTrace&&) noexcept = default;
 NativeTrace::~NativeTrace() = default;

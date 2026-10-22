@@ -6,10 +6,14 @@ namespace modlock::gameinterop {
 std::expected<HeroDefinitions, std::string> HeroDefinitions::Resolve(const ModuleImage& server) {
   // Resolve each call by signature.
   HeroDefinitionCalls calls;
+
+  // Each entry names a signature and the call it fills.
   struct Entry {
     std::string_view id;
     void** slot;
   };
+
+  // Fill every call, or fail at the first missing one.
   const Entry entries[] = {
       {"hero-definition-manager.get-manager", reinterpret_cast<void**>(&calls.manager_getter)},
       {"hero-definition-manager.hero-name-to-id", reinterpret_cast<void**>(&calls.hero_name_to_id)},

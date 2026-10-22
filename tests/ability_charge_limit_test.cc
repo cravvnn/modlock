@@ -18,6 +18,7 @@ constexpr size_t kSlot = 9;
 // abilities do: the first word points at the table.
 struct FakeAbility {
   explicit FakeAbility(void** table, uint32_t handle) : table(table), handle(handle) {}
+
   void** table;
   uint32_t handle;
 };
@@ -25,6 +26,7 @@ struct FakeAbility {
 int32_t NativeThree(void*) {
   return 3;
 }
+
 int32_t NativeTwo(void*) {
   return 2;
 }
@@ -51,6 +53,7 @@ struct Tables {
     three[kSlot] = reinterpret_cast<void*>(&NativeThree);
     two[kSlot] = reinterpret_cast<void*>(&NativeTwo);
   }
+
   std::array<void*, 16> three;
   std::array<void*, 16> two;
 };

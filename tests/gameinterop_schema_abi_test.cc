@@ -28,6 +28,8 @@ TEST(NotifyEntityStateChanged, PublishesFullChangeThroughTheCurrentEntityAbi) {
     void** vtable;
     bool notified = false;
   };
+
+  // The table reaches the current slot.
   std::vector<void*> table(kNetworkStateChanged + 1);
 
   // The installed server's old slot returns RequiredEdictIndex through RDX.
@@ -241,15 +243,20 @@ struct ClassInfoBuffers {
   std::array<unsigned char, 16> bases{};
 
   void set_class_size(int size) { std::memcpy(info.data() + 0x20, &size, sizeof(size)); }
+
   void set_field_count(uint16_t count) { std::memcpy(info.data() + 0x24, &count, sizeof(count)); }
+
   void set_base_count(uint8_t count) { std::memcpy(info.data() + 0x29, &count, sizeof(count)); }
+
   void set_fields_pointer(unsigned char* fields_base) {
     std::memcpy(info.data() + kInfoFields, &fields_base, sizeof(fields_base));
   }
+
   void set_bases_pointer(std::array<unsigned char, 16>* bases_base) {
     auto* pointer = bases_base->data();
     std::memcpy(info.data() + 0x38, &pointer, sizeof(pointer));
   }
+
   void set_field(size_t index, const char* name, int offset) {
     std::memcpy(fields.data() + index * kFieldStride + kFieldNameOffset, &name, sizeof(name));
     std::memcpy(fields.data() + index * kFieldStride + kFieldOffsetField, &offset, sizeof(offset));

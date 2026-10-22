@@ -32,6 +32,7 @@ class MODLOCK_API EngineServer {
     int32_t tick;
     float interval;
   };
+
   // Reads GetServerGlobals during the engine frame. Returned values are copied;
   // no globals pointer survives the call. Pauses follow simulation time.
   [[nodiscard]] std::expected<SimulationClock, std::string> ReadClock() const;

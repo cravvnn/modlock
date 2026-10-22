@@ -280,6 +280,8 @@ TEST(DecodeAbilityExecuted, RejectsMissingOrUnreadablePayload) {
 TEST(ProcessDamageContact, ReadsTheWholeHitAndPreservesSuppressionPriority) {
   // The hit's descriptor and payload sit in readable regions.
   using namespace modlock::gameinterop;
+
+  // The descriptor.
   struct Info {
     uint32_t attacker = 11;
     uint32_t ability = 23;
@@ -288,11 +290,15 @@ TEST(ProcessDamageContact, ReadsTheWholeHitAndPreservesSuppressionPriority) {
     uint32_t inflictor = 0x12340027;
     int32_t hit_group = 1;
   } info;
+
+  // The payload, which points at it.
   struct Payload {
     uint32_t victim = 12;
     uint32_t attacker = 11;
     Info* info;
   } payload{12, 11, &info};
+
+  // Both are readable.
   RegionReader regions({{&payload, sizeof(payload)}, {&info, sizeof(info)}});
 
   // Read and write only inside them.
@@ -353,14 +359,20 @@ TEST(DecodeDamageTaken, RetainsSourceAbilityFromTheNativeDescriptor) {
   struct Info {
     uint32_t ability = 47;
   } info;
+
+  // The result.
   struct Result {
     int32_t lost = 10, before = 100, dealt = 10;
   } result;
+
+  // The payload, which points at both.
   struct Payload {
     uint32_t victim = 12, attacker = 11;
     Info* info;
     Result* result;
   } payload{12, 11, &info, &result};
+
+  // Decode it with all three readable.
   RegionReader regions(
       {{&payload, sizeof(payload)}, {&info, sizeof(info)}, {&result, sizeof(result)}});
   auto decoded = DecodeDamageTaken(
@@ -400,6 +412,7 @@ class EnumImage : public modlock::gameinterop::ModuleImage {
   }
 
   std::uintptr_t base() const override { return kBase; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes_; }
 
  private:

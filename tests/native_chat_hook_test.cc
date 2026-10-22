@@ -52,6 +52,7 @@ TEST(NativeChatHook, DecodesGlobalAndTeamGameChatToTheSenderSlot) {
     for (const int slot : {0, 1}) {
       message.set_player_slot(slot);
       for (const auto text : {"/ready", "/again", "/souls 40000"}) {
+        // Each command decodes with its sender's slot.
         message.set_text(text);
         const auto chat = NativeChatHook::Decode(314, EncodeChat(message));
         ASSERT_TRUE(chat);
@@ -72,6 +73,7 @@ TEST(NativeChatHook, DecodesConsoleTeamChatWhileAliveOrDead) {
        {"Cstrike_Chat_CT", "Cstrike_Chat_CT_Dead", "Cstrike_Chat_CT_Loc", "Cstrike_Chat_T",
         "Cstrike_Chat_T_Dead", "Cstrike_Chat_T_Loc", "Cstrike_Chat_Spec"}) {
     for (const auto prefix : {"", "#"}) {
+      // The audience decodes with or without its prefix.
       message.set_message_name(std::string(prefix) + audience);
       const auto chat = NativeChatHook::Decode(118, EncodeChat(message));
       ASSERT_TRUE(chat);

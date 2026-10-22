@@ -44,6 +44,7 @@ struct BitWriter {
   bool overflow = false;
   bool assert_overflow = false;
 };
+
 static_assert(offsetof(BitWriter, cursor) == 16);
 static_assert(offsetof(BitWriter, debug_name) == 24);
 static_assert(sizeof(BitWriter) == 40);
@@ -164,6 +165,7 @@ struct NativeChatHook::Impl {
 };
 
 NativeChatHook::NativeChatHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 NativeChatHook::NativeChatHook(NativeChatHook&&) noexcept = default;
 NativeChatHook& NativeChatHook::operator=(NativeChatHook&&) noexcept = default;
 NativeChatHook::~NativeChatHook() = default;

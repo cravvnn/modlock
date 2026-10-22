@@ -122,6 +122,7 @@ std::expected<SchemaField, std::string> FieldInClassInfo(const schema::ClassInfo
   for (; info != nullptr; info = FirstBaseOf(info)) {
     const std::span fields(info->fields, info->field_count);
     for (const auto& field : fields) {
+      // Size the named field up to the next field's offset.
       if (field.name == nullptr || std::strcmp(field.name, field_name) != 0) {
         continue;
       }
@@ -255,6 +256,7 @@ std::vector<void*> EntityInstances(void* entity_system) {
       continue;
     }
     for (uint32_t index = 0; index < 512; ++index) {
+      // Each live entry whose handle matches its index is an instance.
       const auto* identity = entries + index * 0x70;
       void* instance = ReadPointer(identity, 0);
       if (!instance || IdentityOf(instance) != identity) {
@@ -306,6 +308,7 @@ std::expected<void*, std::string> ResolveLiveEntitySystem() {
   if (trace) {
     static bool traced = false;
     if (!traced) {
+      // Trace the resource service's first slots once.
       traced = true;
       const auto* service = static_cast<const unsigned char*>(*resource_service);
       std::fprintf(stderr, "[modlock] interop trace: resource_service=%p\n", *resource_service);
@@ -443,6 +446,8 @@ bool NotifyEntityStateChanged(void* entity) {
     int16_t mode = 0;
     int16_t tail = 0;
   } changed;
+
+  // Send a full change.
   static_assert(sizeof(FullChange) == 64);
   using Notify = void (*)(void*, const FullChange&);
   reinterpret_cast<Notify>(notification)(entity, changed);

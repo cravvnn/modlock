@@ -31,6 +31,7 @@ struct BitReader {
   bool overflow = false;
   bool assert_overflow = false;
 };
+
 static_assert(offsetof(BitReader, cursor) == 16);
 static_assert(offsetof(BitReader, debug_name) == 24);
 static_assert(sizeof(BitReader) == 40);

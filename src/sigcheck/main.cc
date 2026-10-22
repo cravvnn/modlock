@@ -112,6 +112,7 @@ class PeImage final : public ModuleImage {
                 std::min<size_t>({*header_size, file.size(), image.bytes_.size()}));
     const size_t sections = optional + *optional_size;
     for (size_t i = 0; i < *section_count; ++i) {
+      // Copy each section's raw bytes to its virtual address.
       const size_t header = sections + i * 40;
       const auto virtual_address = read32(header + 12);
       const auto raw_size = read32(header + 16);
@@ -130,7 +131,9 @@ class PeImage final : public ModuleImage {
   }
 
   std::uintptr_t base() const override { return 0; }
+
   std::uintptr_t pointer_base() const override { return image_base_; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes_; }
 
  private:
@@ -172,6 +175,7 @@ size_t Hits(const ModuleImage& image, std::string_view pattern) {
 std::string Pattern(std::span<const uint8_t> bytes, const std::vector<bool>& wildcard) {
   std::string out;
   for (size_t i = 0; i < bytes.size(); ++i) {
+    // Spaced hex bytes, with ?? for a wildcard.
     if (!out.empty()) {
       out += ' ';
     }
@@ -219,6 +223,7 @@ std::optional<std::string> Suggest(const GameSignature& signature, const PeImage
   ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
   size_t end = 0;
   while (end < window.size()) {
+    // Decode the next instruction and wildcard its relative operands.
     ZydisDecoderContext context;
     ZydisDecodedInstruction instruction;
     if (ZYAN_FAILED(ZydisDecoderDecodeInstruction(&decoder, &context, window.data() + end,
@@ -241,6 +246,7 @@ std::optional<std::string> Suggest(const GameSignature& signature, const PeImage
       continue;
     }
 
+    // A candidate that hits once and resolves wins.
     const auto candidate = Pattern(window.first(end), wildcard);
     if (Hits(current, candidate) != 1) {
       continue;
@@ -396,6 +402,7 @@ int main(int argc, char** argv) {
   size_t checked = failed;
   for (const auto& signature : modlock::gameinterop::GameSignatures()) {
     for (const auto module : kModules) {
+      // Resolve the signature in each module that has it.
       if (!signature.In(module)) {
         continue;
       }
@@ -409,6 +416,8 @@ int main(int argc, char** argv) {
                     static_cast<size_t>(reinterpret_cast<std::uintptr_t>(*resolved)));
         continue;
       }
+
+      // Report a failure, with a suggestion from the baseline.
       ++failed;
       std::printf("FAIL  %-12s %-44s hits=%zu %s\n", file.c_str(), id.c_str(),
                   Hits(image, signature.pattern), resolved.error().c_str());

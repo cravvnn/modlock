@@ -10,6 +10,7 @@ namespace {
 using modlock::gameinterop::AbilityDefinitions;
 std::array<unsigned char, 0x30> definition;
 uint32_t requested_id;
+
 void* Lookup(int32_t scope, uint32_t id) {
   EXPECT_EQ(scope, 4);
   requested_id = id;
@@ -57,7 +58,9 @@ TEST(AbilityDefinitions, ResolvesUnsignedIdentityAndPreservesDisabledState) {
 class Image : public modlock::gameinterop::ModuleImage {
  public:
   std::vector<uint8_t> bytes;
+
   std::uintptr_t base() const override { return reinterpret_cast<std::uintptr_t>(bytes.data()); }
+
   std::span<const uint8_t> image_bytes() const override { return bytes; }
 };
 

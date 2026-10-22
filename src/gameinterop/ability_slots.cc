@@ -128,6 +128,8 @@ std::expected<void, std::string> AbilitySlots::Remove(PawnObserver& observer, in
     uint32_t capacity;
     uint32_t flags;
   };
+
+  // Read each vector and check its bounds.
   static_assert(sizeof(Handles) == 24);
   std::array<Handles, 2> vectors{};
   for (size_t i = 0; i < vector_count_; ++i) {
@@ -150,6 +152,7 @@ std::expected<void, std::string> AbilitySlots::Remove(PawnObserver& observer, in
   for (size_t i = 0; i < vector_count_; ++i) {
     auto& vector = vectors[i];
     for (int32_t index = 0; index < vector.count; ++index) {
+      // Remove the handle where it appears.
       if (vector.data[index] != current->handle) {
         continue;
       }

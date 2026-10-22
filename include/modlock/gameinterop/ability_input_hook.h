@@ -25,6 +25,7 @@ class MODLOCK_API AbilityInputHook {
     uint32_t session_generation = 0;
     std::array<uint64_t, 3> buttons{};
   };
+
   using Handler = std::function<uint64_t(Input&)>;
 
   struct Layout {

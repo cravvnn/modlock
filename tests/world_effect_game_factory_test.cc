@@ -22,34 +22,43 @@ void* Create(void*, const char* name, int) {
   steps.emplace_back(std::string("create:") + name);
   return entity.data();
 }
+
 void Teleport(void*, const float* p, const float*, const float*) {
   steps.emplace_back("teleport:" + std::to_string(static_cast<int>(p[0])));
 }
+
 void Queue(void*, void*, void*) {
   steps.emplace_back("queue");
 }
+
 void Execute(void*) {
   steps.emplace_back("execute");
 }
+
 bool Accept(void*, const char* input, void*, void*, void* value, int, void*) {
   const auto* variant = static_cast<const char*>(value);
   (void)variant;
   steps.emplace_back(std::string("input:") + input);
   return accept_result;
 }
+
 void* MakeKv() {
   steps.emplace_back("keyvalues");
   return reinterpret_cast<void*>(0x2200);
 }
+
 void* SetKeyValue(void*, const modlock::gameinterop::MemberName* name, unsigned char) {
   return const_cast<modlock::gameinterop::MemberName*>(name);
 }
+
 void SetString(void*, const modlock::gameinterop::MemberName* name, const char* value) {
   steps.emplace_back(std::string("kv:") + name->string + "=" + value);
 }
+
 void SetBool(void*, const modlock::gameinterop::MemberName* name, unsigned char value) {
   steps.emplace_back(std::string("kv:") + name->string + "=" + (value ? "1" : "0"));
 }
+
 void Remove(void*) {
   ++removes;
   steps.emplace_back("remove");
@@ -105,6 +114,7 @@ class EffectTest : public ::testing::Test {
     accept_result = true;
     factory = std::make_unique<WorldEffectGameFactory>(Calls());
   }
+
   std::unique_ptr<WorldEffectGameFactory> factory;
 };
 

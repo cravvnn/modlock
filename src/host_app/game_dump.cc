@@ -232,6 +232,7 @@ struct Image {
 
     // Keep each writable section that lies inside the image.
     for (uint16_t i = 0; i < count; ++i, section += 40) {
+      // Collect each writable section that fits.
       if (section + 40 > bytes.data() + bytes.size()) {
         break;
       }
@@ -252,6 +253,7 @@ std::vector<Image> LoadedModules(const GamePaths& paths) {
   for (const auto& directory : {paths.engine2_dll.parent_path(), paths.server_dll.parent_path()}) {
     std::error_code error;
     for (const auto& entry : fs::directory_iterator(directory, error)) {
+      // Map each new DLL in the directory.
       if (entry.path().extension() != ".dll") {
         continue;
       }
@@ -284,6 +286,7 @@ SchemaRecords(void* schema_system, const Image& image) {
   // A record that points to itself and is declared in the scope is a class or an enum.
   for (const auto section : image.WritableSections()) {
     for (size_t offset = 0; offset + sizeof(schema::EnumInfo) <= section.size(); offset += 8) {
+      // A self-pointing record names a class or enum the scope declares.
       const auto* record = section.data() + offset;
       if (Load<const void*>(record) != record) {
         continue;
@@ -340,6 +343,7 @@ void AddClass(const schema::ClassInfo& info, dump::SchemaClass& out) {
     added.set_offset(base.offset);
   }
   for (const auto& field : std::span(info.fields, info.field_count)) {
+    // Add each field with its type, offset and metadata.
     auto& added = *out.add_fields();
     added.set_name(Text(field.name));
     added.set_type(field.type ? Text(field.type->name) : "");
@@ -380,6 +384,7 @@ std::vector<const EntityClassInfo*> EntityClasses(
   std::unordered_set<std::string_view> designer_names;
   for (const auto section : server.WritableSections()) {
     for (size_t offset = 0; offset + sizeof(EntityClassInfo) <= section.size(); offset += 8) {
+      // Keep one class for each designer name bound to a server class.
       const auto* info = reinterpret_cast<const EntityClassInfo*>(section.data() + offset);
       if (!server_classes.contains(info->schema_binding)) {
         continue;
@@ -424,6 +429,7 @@ void AddDataMap(const DataMap& map, dump::DataMap& out) {
   }
   for (const auto& field : std::span(map.fields, size_t(std::max(map.field_count, 0)))) {
     if (field.flags & kKeyFlag) {
+      // A key field carries its external name.
       auto& key = *out.add_key_values();
       key.set_name(Text(field.external_name));
       key.set_field(Text(field.name));
@@ -453,6 +459,7 @@ std::string QuoteNonFinite(std::string_view json) {
   out.reserve(json.size());
   bool in_string = false;
   for (size_t i = 0; i < json.size(); ++i) {
+    // Copy strings as they are and quote bare words.
     const char c = json[i];
     if (in_string) {
       out += c;
@@ -466,6 +473,7 @@ std::string QuoteNonFinite(std::string_view json) {
     const auto word = std::ranges::find_if(
         kWords, [rest = json.substr(i)](std::string_view word) { return rest.starts_with(word); });
     if (word != std::end(kWords)) {
+      // Quote the word.
       out += '"';
       out += *word;
       out += '"';
@@ -568,11 +576,14 @@ void AddPulseBindings(const google::protobuf::Struct& metadata, dump::Entities& 
   // Add each binding that targets an entity as an input or an output.
   constexpr std::string_view kEntityHandle = "PVAL_EHANDLE";
   for (const auto& [key, binding] : bindings->struct_value().fields()) {
+    // Keep a pulse method or output.
     const auto* meta = Member(&binding, "m_MetaData");
     const bool input = Bool(Member(meta, "is_pulse_target_method"));
     if (!input && !Bool(Member(meta, "is_pulse_target_output"))) {
       continue;
     }
+
+    // Its target must be an entity handle, perhaps of one class.
     const auto target = String(Member(meta, "target_arg_name"));
     const auto* parameters = Member(meta, input ? "pulse_inparams" : "pulse_outparams");
     const auto target_type = String(Member(Member(parameters, target), "type"));
@@ -584,10 +595,13 @@ void AddPulseBindings(const google::protobuf::Struct& metadata, dump::Entities& 
     if (!type.empty() && !type.starts_with(':')) {
       continue;
     }
+
+    // Add it to the inputs or the outputs.
     const auto entity = std::string(type.empty() ? type : type.substr(1));
     const auto name = key.substr(key.rfind(':') + 1);
     const auto description = String(Member(&binding, "m_Description"));
     if (input) {
+      // An input has parameters and returns.
       auto& added = *entities.add_inputs();
       added.set_entity(entity);
       added.set_name(name);
@@ -595,6 +609,7 @@ void AddPulseBindings(const google::protobuf::Struct& metadata, dump::Entities& 
       AddParameters(parameters, target, added.mutable_parameters());
       AddParameters(Member(meta, "pulse_outparams"), target, added.mutable_returns());
     } else {
+      // An output has parameters.
       auto& added = *entities.add_outputs();
       added.set_entity(entity);
       added.set_name(name);
@@ -692,6 +707,7 @@ std::expected<GameDumpCounts, std::string> WriteGameDump(const GamePaths& paths,
   const Image* tier0 = nullptr;
   const auto images = LoadedModules(paths);
   for (const auto& image : images) {
+    // Collect every module's records, noting the server and tier0.
     auto [module_classes, module_enums] = SchemaRecords(*schema_system, image);
     if (image.file == paths.server_dll.filename()) {
       server = &image;
@@ -734,6 +750,7 @@ std::expected<GameDumpCounts, std::string> WriteGameDump(const GamePaths& paths,
   const std::unordered_set<const EntityClassInfo*> listed(entity_classes.begin(),
                                                           entity_classes.end());
   for (const auto* info : entity_classes) {
+    // Add the class's names, description and data map.
     auto& added = *entities.add_classes();
     added.set_designer_name(info->designer_name);
     added.set_class_name(info->class_name);
@@ -743,6 +760,7 @@ std::expected<GameDumpCounts, std::string> WriteGameDump(const GamePaths& paths,
     if (info->data_map && info->data_map->name) {
       added.set_data_map(info->data_map->name);
     }
+
     // Abstract records without a designer name sit between listed classes.
     const auto* base = info->base;
     while (base && !listed.contains(base)) {
@@ -788,6 +806,7 @@ std::expected<GameDumpCounts, std::string> WriteGameDump(const GamePaths& paths,
   dump::Console listing;
   listing.set_build(build);
   for (const auto& variable : *variables) {
+    // Add each variable with its type, bounds and help.
     auto& added = *listing.add_variables();
     added.set_name(variable.name);
     added.set_type(static_cast<dump::ConsoleVariableType>(variable.type + 1));

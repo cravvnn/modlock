@@ -21,6 +21,7 @@ struct Fixture {
   std::vector<void*> functions = std::vector<void*>(std::max(kCommand, kGlobals) + 1);
   std::array<unsigned char, 96> globals{};
   bool available = true;
+
   Fixture() {
     table = functions.data();
     functions[kCommand] = reinterpret_cast<void*>(+[](void*, const char*) {});
@@ -29,6 +30,7 @@ struct Fixture {
       return fixture->available ? fixture->globals.data() : nullptr;
     });
   }
+
   void Set(float time, int32_t tick, float interval) {
     std::memcpy(globals.data() + 48, &time, 4);
     std::memcpy(globals.data() + 68, &tick, 4);

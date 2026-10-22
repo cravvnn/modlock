@@ -264,6 +264,7 @@ std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
       return std::unexpected(owned.error());
     }
     for (const auto& timer : target_.timers) {
+      // Find the one ability the timer names.
       const auto matches = [&](const Ability& a) {
         return a.subclass_id == timer.subclass_id;
       };
@@ -272,6 +273,8 @@ std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
             std::format("the hero does not own exactly one of {}", timer.subclass_id));
       }
       auto ability = *std::ranges::find_if(*owned, matches);
+
+      // Rebase its intervals onto the current clock; zero stays unset.
       const auto rebase = [&](const std::array<float, 2>& interval) {
         if (interval[0] == 0 && interval[1] == 0) {
           return interval;
@@ -280,6 +283,8 @@ std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
       };
       const auto cooldown = rebase(timer.cooldown);
       const auto recharge = rebase(timer.recharge);
+
+      // Write the charges and intervals.
       ability.charges = timer.charges;
       ability.cooldown_start = cooldown[0];
       ability.cooldown_end = cooldown[1];
@@ -390,6 +395,7 @@ bool HeroRestore::ItemsMatch(int32_t slot) const {
   // Every owned item is one of the targets, and every target is owned.
   size_t count = 0;
   for (const auto& ability : *owned) {
+    // Every upgrade must be enabled and match one target item.
     auto definition = engine_.definition(ability.subclass_id);
     if (!definition) {
       return false;
@@ -425,6 +431,7 @@ bool HeroRestore::AdoptGrowth(const Sample& sample, uint64_t tick) {
   // Adopt each ability's added upgrades.
   auto abilities = target_.abilities;
   for (auto& target : abilities) {
+    // Each target matches one ability, which holds at least its upgrades.
     const auto matches = [&](const Ability& a) {
       return a.subclass_id == target.subclass_id && a.slot == target.slot;
     };

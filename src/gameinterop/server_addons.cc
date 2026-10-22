@@ -53,6 +53,7 @@ struct ServerAddonsHook::Impl {
 };
 
 ServerAddonsHook::ServerAddonsHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 ServerAddonsHook::ServerAddonsHook(ServerAddonsHook&&) noexcept = default;
 ServerAddonsHook& ServerAddonsHook::operator=(ServerAddonsHook&&) noexcept = default;
 ServerAddonsHook::~ServerAddonsHook() = default;

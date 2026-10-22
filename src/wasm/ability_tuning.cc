@@ -50,12 +50,15 @@ void SetProperties(unsigned char* definition, void* schema, const char* module,
 
   // Set each requested property that the map holds.
   for (int32_t i = 0; i < count; ++i) {
+    // Skip a free node, whose left link names itself.
     auto* node = nodes + i * (24 + *size);
     int32_t left = 0;
     std::memcpy(&left, node, sizeof(left));
     if (left == i) {
       continue;
     }
+
+    // Find the tuned value for its key.
     const char* key = nullptr;
     std::memcpy(&key, node + 16, sizeof(key));
     if (!key) {
@@ -88,15 +91,20 @@ std::expected<SchemaField, std::string> ResolvePath(void* schema, const char* mo
   SchemaField result{};
   size_t offset = 0;
   while (!path.empty()) {
+    // Split off the next step.
     const auto slash = path.find('/');
     const auto step = path.substr(0, slash);
     path = slash == std::string_view::npos ? std::string_view{} : path.substr(slash + 1);
+
+    // Each step is Class.field.
     const auto dot = step.find('.');
     if (dot == std::string_view::npos) {
       return std::unexpected("field path step lacks a class");
     }
     const std::string type(step.substr(0, dot));
     const std::string name(step.substr(dot + 1));
+
+    // Add its offset.
     auto field = gameinterop::SchemaFieldOf(schema, module, type.c_str(), name.c_str());
     if (!field) {
       return std::unexpected(field.error());
@@ -133,6 +141,7 @@ std::expected<std::vector<std::string>, std::string> TuneAbilities(
   // Tune each ability, naming it in its problems.
   std::vector<std::string> problems;
   for (int index = 0; index < abilities.size(); ++index) {
+    // Apply the ability's properties, fields and copies, then report its problems.
     const auto& ability = abilities[index];
     auto* definition = found[index];
     std::vector<std::string> own;

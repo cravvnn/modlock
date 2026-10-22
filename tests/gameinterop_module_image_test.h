@@ -18,6 +18,7 @@ namespace modlock::gameinterop::testing {
 class FakeModuleImage : public ModuleImage {
  public:
   std::uintptr_t base() const override { return base_; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes_; }
 
   // Add lays the pattern down at the next free slot (32-byte spacing) and

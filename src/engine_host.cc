@@ -36,7 +36,9 @@ class ConnectionDispatch final : public gameinterop::ConnectionEventSink {
   void OnConnected(int32_t slot, uint64_t xuid, bool bot, const char* name) override {
     connected.Dispatch(slot, xuid, bot, name);
   }
+
   void OnDisconnecting(int32_t slot, uint64_t xuid) override { disconnecting.Dispatch(slot, xuid); }
+
   Callbacks<void(int32_t, uint64_t, bool, const char*)> connected;
   Callbacks<void(int32_t, uint64_t)> disconnecting;
 };
@@ -98,10 +100,13 @@ struct EngineHost::Impl {
 };
 
 EngineHost::EngineHost() : impl_(std::make_unique<Impl>()) {}
+
 EngineHost::~EngineHost() = default;
+
 const host_app::GamePaths& EngineHost::Paths() const {
   return impl_->paths;
 }
+
 const std::expected<int, std::string>& EngineHost::Result() const {
   return impl_->result;
 }
@@ -234,6 +239,7 @@ std::expected<Subscription, std::string> EngineHost::OnCombat(
     gameinterop::AdjustDamage adjust_damage) {
   // Install the combat hook on first use.
   if (!impl_->combat_hook) {
+    // Install the hook once, from the server module and its schema.
     auto image = gameinterop::MappedModuleImage::ForModule(L"server.dll");
     if (!image) {
       return std::unexpected(image.error());
@@ -363,6 +369,7 @@ std::expected<Subscription, std::string> EngineHost::OnWorld(
 std::expected<Subscription, std::string> EngineHost::OnRespawn(
     std::function<bool(uint32_t)> blocked) {
   if (!impl_->respawn_hook) {
+    // Install the guard once, from the server module.
     auto image = gameinterop::MappedModuleImage::ForModule(L"server.dll");
     if (!image) {
       return std::unexpected(image.error());
@@ -380,6 +387,7 @@ std::expected<Subscription, std::string> EngineHost::OnRespawn(
 std::expected<Subscription, std::string> EngineHost::OnHeroReady(
     gameinterop::HeroReadiness& readiness) {
   if (!impl_->hero_hook) {
+    // Install the hook once, from the server module.
     auto image = gameinterop::MappedModuleImage::ForModule(L"server.dll");
     if (!image) {
       return std::unexpected(image.error());
@@ -397,6 +405,7 @@ std::expected<Subscription, std::string> EngineHost::OnHeroReady(
 
 std::expected<gameinterop::NativeTrace*, std::string> EngineHost::Trace() {
   if (!impl_->trace) {
+    // Install the trace once, from the server module.
     auto image = gameinterop::MappedModuleImage::ForModule(L"server.dll");
     if (!image) {
       return std::unexpected(image.error());

@@ -160,6 +160,7 @@ int Handle(lua_State* L) {
 int Print(lua_State* L) {
   std::string line;
   for (int i = 1; i <= lua_gettop(L); ++i) {
+    // Join the arguments with tabs, as print does.
     size_t size;
     const char* text = luaL_tolstring(L, i, &size);
     if (i > 1) {

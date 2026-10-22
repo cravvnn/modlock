@@ -86,6 +86,7 @@ struct HeroInitializationHook::Impl {
 
 HeroInitializationHook::HeroInitializationHook(std::unique_ptr<Impl> impl)
     : impl_(std::move(impl)) {}
+
 HeroInitializationHook::HeroInitializationHook(HeroInitializationHook&&) noexcept = default;
 HeroInitializationHook& HeroInitializationHook::operator=(HeroInitializationHook&&) noexcept =
     default;

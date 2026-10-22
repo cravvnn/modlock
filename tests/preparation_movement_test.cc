@@ -26,6 +26,7 @@ constexpr std::array<uint8_t, 42> kMovement{
 class Image final : public ModuleImage {
  public:
   std::uintptr_t base() const override { return 0x180000000; }
+
   std::span<const uint8_t> image_bytes() const override { return bytes; }
 
   void Place(size_t offset) {
@@ -39,6 +40,7 @@ class Image final : public ModuleImage {
 
 TEST(PreparationMovement, ResolvesRelocatedInstructionWindows) {
   for (const size_t offset : {32, 384}) {
+    // The call resolves wherever it sits.
     Image image;
     image.Place(offset);
     const auto movement = ResolvePreparationMovement(image);

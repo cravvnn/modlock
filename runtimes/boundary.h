@@ -146,6 +146,7 @@ static inline int read_zip(const uint8_t* zip, size_t size, zip_file each, void*
 
   // Read each file through its local header, skipping directories.
   for (size_t i = 0; i < entries; ++i) {
+    // Read the central directory entry and step past it.
     if (at + 46 > size || little(zip + at, 4) != 0x02014b50) {
       return 0;
     }
@@ -158,12 +159,16 @@ static inline int read_zip(const uint8_t* zip, size_t size, zip_file each, void*
       return 0;
     }
     at += 46 + name_size + little(zip + at + 30, 2) + little(zip + at + 32, 2);
+
+    // Skip directories; only stored files can be read.
     if (name_size && name[name_size - 1] == '/') {
       continue;
     }
     if (method != 0) {
       return 0;
     }
+
+    // Find the data after the local header and pass it on.
     if (local + 30 > size || little(zip + local, 4) != 0x04034b50) {
       return 0;
     }

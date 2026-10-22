@@ -17,9 +17,13 @@ class EngineLog {
     std::fwrite(message, 1, std::strlen(message), stdout);
     std::fflush(stdout);
   }
+
   virtual void OnFlush() {}
+
   virtual void OnChannelRegistered(int /*channel*/) {}
+
   virtual void OnChannelVerbosityChanged(int /*channel*/) {}
+
   virtual void OnChannelFlagsChanged(int /*channel*/) {}
 };
 

@@ -143,6 +143,7 @@ class NativeWorld : public testing::Test {
       // A subclassed entity's token and resolved pointer must both exist
       // before queued creation.
       if (subclass != 0) {
+        // A subclassed entity holds its token and definition.
         uint32_t token = 0;
         void* vdata = nullptr;
         std::memcpy(&token, entity.data() + kSubclassOffset, sizeof(token));

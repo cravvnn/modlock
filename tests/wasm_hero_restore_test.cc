@@ -95,6 +95,7 @@ struct World {
   bool Apply(const RestoreTarget& target, HeroRestore::Stage stage) {
     // The build stage sets the level, upgrades and bonuses.
     if (stage == HeroRestore::Stage::kBuild) {
+      // The build stage applies the level, upgrades and bonuses.
       ++builds;
       if (target.level) {
         sample.level = *target.level;

@@ -122,6 +122,7 @@ struct BotDrive::Impl {
 };
 
 BotDrive::BotDrive(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 BotDrive::BotDrive(BotDrive&&) noexcept = default;
 BotDrive& BotDrive::operator=(BotDrive&&) noexcept = default;
 BotDrive::~BotDrive() = default;

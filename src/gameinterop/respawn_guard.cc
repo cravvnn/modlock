@@ -41,6 +41,7 @@ struct RespawnGuard::Impl {
 };
 
 RespawnGuard::RespawnGuard(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 RespawnGuard::RespawnGuard(RespawnGuard&&) noexcept = default;
 RespawnGuard& RespawnGuard::operator=(RespawnGuard&&) noexcept = default;
 RespawnGuard::~RespawnGuard() = default;

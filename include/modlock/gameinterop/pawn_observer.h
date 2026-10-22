@@ -54,6 +54,7 @@ struct PawnMotion {
   void (*set_angles)(void*, const float*);
   void (*set_velocity)(void*, const float*);
 };
+
 [[nodiscard]] MODLOCK_API std::expected<PawnMotion, std::string> ResolvePawnMotion(
     const ModuleImage& server);
 
@@ -338,6 +339,7 @@ class MODLOCK_API PawnObserver {
     // Raw native scoreboard counters from the owning controller; absent when
     // the schema capability did not resolve.
     std::optional<ScoreTotals> score;
+
     // Observed native stamina resource; absent when the schema capability did
     // not resolve or the values are not finite. Never a fabricated default.
     struct Stamina {
@@ -345,6 +347,7 @@ class MODLOCK_API PawnObserver {
       float max;
       friend bool operator==(const Stamina&, const Stamina&) = default;
     };
+
     std::optional<Stamina> stamina;
   };
 
@@ -541,9 +544,11 @@ class MODLOCK_API PawnObserver {
     uint32_t generation;
     int32_t team;
   };
+
   std::map<int32_t, PendingSelection> pending_selections_;
   // cameras_ holds the handle of each slot's camera while its hero lives on.
   std::map<int32_t, uint32_t> cameras_;
+
   // Freeze ownership follows the retained pawn, including across a reconnect.
   struct FrozenPawn {
     uint32_t handle;
@@ -552,6 +557,7 @@ class MODLOCK_API PawnObserver {
     uint8_t move_type;
     uint8_t move_collide;
   };
+
   std::map<int32_t, FrozenPawn> frozen_pawns_;
   // The loaded server outlives this observer; cache failed bindings as well.
   std::optional<std::expected<SetMoveType, std::string>> preparation_movement_;

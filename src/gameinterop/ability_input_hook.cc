@@ -140,6 +140,7 @@ struct AbilityInputHook::Impl {
 };
 
 AbilityInputHook::AbilityInputHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 AbilityInputHook::AbilityInputHook(AbilityInputHook&&) noexcept = default;
 AbilityInputHook& AbilityInputHook::operator=(AbilityInputHook&&) noexcept = default;
 AbilityInputHook::~AbilityInputHook() = default;

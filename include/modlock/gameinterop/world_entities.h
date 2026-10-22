@@ -41,6 +41,7 @@ class MODLOCK_API WorldEntities {
     uint32_t (*set_transmit_state)(void* component, uint32_t flags) = nullptr;
     std::array<size_t, 9> offsets{};
   };
+
   explicit WorldEntities(Calls calls) : calls_(std::move(calls)) {}
 
   struct Target {
@@ -54,10 +55,12 @@ class MODLOCK_API WorldEntities {
     int32_t max_health;
     std::optional<uint32_t> lane;
   };
+
   struct Sample {
     uint32_t handle;
     Target state;
   };
+
   static std::expected<WorldEntities, std::string> Resolve(const ModuleImage& server,
                                                            void* schema_system);
   std::expected<std::vector<Sample>, std::string> Read() const;

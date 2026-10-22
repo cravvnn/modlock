@@ -93,6 +93,8 @@ std::expected<bool, std::string> AbilityModifier::Attached(PawnObserver& observe
   if (!property) {
     return std::unexpected(property.error());
   }
+
+  // The vector is a CUtlVector of modifier pointers.
   struct PointerVector {
     int32_t count;
     uint32_t padding;
@@ -100,6 +102,8 @@ std::expected<bool, std::string> AbilityModifier::Attached(PawnObserver& observe
     uint32_t capacity;
     uint32_t flags;
   } rows{};
+
+  // Read it and check its bounds.
   std::memcpy(&rows, *property + modifiers_, sizeof(rows));
   if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
       (rows.count && !rows.data)) {

@@ -15,7 +15,9 @@ namespace modlock::gameinterop {
 class MODLOCK_API AbilityDefinitions {
  public:
   using Lookup = void* (*)(int32_t scope, uint32_t subclass_id);
+
   explicit AbilityDefinitions(Lookup lookup) : lookup_(lookup) {}
+
   static std::expected<AbilityDefinitions, std::string> Resolve(const ModuleImage& server);
 
   struct Definition {
@@ -24,6 +26,7 @@ class MODLOCK_API AbilityDefinitions {
     // native_definition_pointer is borrowed from the mapped engine registry.
     void* native_definition_pointer;
   };
+
   // Missing, disabled and enabled definitions remain distinct. This lookup
   // grants neither ownership nor permission to claim an item was restored.
   std::expected<Definition, std::string> Find(uint32_t subclass_id) const;

@@ -69,6 +69,7 @@ class PlayerMovement {
     uint32_t on = 0;
     float speed = 0;
   };
+
   std::vector<Landing> TakeLandings() { return std::exchange(landings_, {}); }
 
  private:

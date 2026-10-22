@@ -16,7 +16,9 @@ using modlock::gameinterop::ThunkOwner;
 using modlock::gameinterop::VtableSlotHook;
 
 void TargetA() {}
+
 void TargetB() {}
+
 void Replacement() {}
 
 void* Ptr(void (*fn)()) {

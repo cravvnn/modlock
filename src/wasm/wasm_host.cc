@@ -153,6 +153,7 @@ std::expected<Build, std::string> ReadBuild(const std::filesystem::path& path,
   if (manifest.runtime() == wasm::Manifest::RUNTIME_WASM) {
     build.module = std::move(*entry);
   } else {
+    // Other runtimes run their source in the host's interpreter.
     const auto interpreter = InterpreterFile(manifest.runtime());
     if (interpreter.empty()) {
       return std::unexpected(manifest_path.string() + ": this host does not know the runtime");
@@ -204,6 +205,7 @@ class ClientMod final : public Plugin {
   explicit ClientMod(Build build) : build_(std::move(build)) {}
 
   uint32_t InterfaceVersion() const override { return PluginInterfaceVersion; }
+
   const char* Name() const override { return build_.name.c_str(); }
 
   bool Start() override {
@@ -394,7 +396,9 @@ class WasmPlugin final : public Plugin {
   }
 
   uint32_t InterfaceVersion() const override { return PluginInterfaceVersion; }
+
   const char* Name() const override { return name_.c_str(); }
+
   bool Start() override;
   void Tick() override;
   void Stop() override;
@@ -491,6 +495,7 @@ class WasmPlugin final : public Plugin {
   // and waiting_ holds the newest build a reload brought meanwhile.
   bool held_ = false;
   std::optional<Build> waiting_;
+
   // Successor is an instance that waits until starting_until_ for the bots
   // its predecessor kicked to leave, since a bot it adds under a leaving
   // bot's name takes that bot's queued kick.
@@ -498,6 +503,7 @@ class WasmPlugin final : public Plugin {
     std::unique_ptr<wasm::Instance> instance;
     std::optional<Build> build;
   };
+
   std::optional<Successor> successor_;
   std::chrono::steady_clock::time_point starting_until_;
   // stopped_ is true while a failed instance waits for a player to restart
@@ -625,6 +631,7 @@ class Departures final : public gameinterop::ConnectionEventSink {
   explicit Departures(std::function<void(int32_t)> leave) : leave_(std::move(leave)) {}
 
   void OnConnected(int32_t, uint64_t, bool, const char*) override {}
+
   void OnDisconnecting(int32_t slot, uint64_t) override { leave_(slot); }
 
  private:
@@ -997,6 +1004,7 @@ void WasmPlugin::Tick() {
 
   // Log the skipped frames at most once a minute.
   if (skipped_ > 0 && ended - shed_logged_ >= std::chrono::minutes(1)) {
+    // Log the shed frames at most once a minute.
     const auto slowest = std::chrono::duration_cast<std::chrono::milliseconds>(slowest_);
     Log(std::format("skipped {} frames to repay slow ones; the slowest took {} ms: {}", skipped_,
                     slowest.count(), slowest_report_));
@@ -1063,11 +1071,14 @@ void WasmPlugin::Steer() {
     return;
   }
   for (const auto& landing : movement_->TakeLandings()) {
+    // Find the player who landed and what they landed on.
     const auto player = hero_slots_.find(landing.player);
     if (player == hero_slots_.end()) {
       continue;
     }
     const auto on = landing.on == 0 ? hero_slots_.end() : hero_slots_.find(landing.on);
+
+    // Tell the mod, which may stop movement.
     wasm::LandedEvent event;
     event.set_player(player->second);
     event.set_on(on == hero_slots_.end() ? -1 : on->second);
@@ -1251,9 +1262,12 @@ void WasmPlugin::DeliverDamaged() {
     hits.swap(damaged_);
   }
   for (const auto& hit : hits) {
+    // Stop once the mod is gone.
     if (!instance_) {
       return;
     }
+
+    // Tell the mod about each hit.
     wasm::DamagedEvent event;
     event.set_victim(hit.victim_handle);
     event.set_attacker(hit.attacker_handle);
@@ -1267,6 +1281,7 @@ void WasmPlugin::DeliverDamaged() {
 
 void WasmPlugin::DeliverGameEvents() {
   for (const auto& change : game_.TakeButtonChanges()) {
+    // Tell the mod about each change while it runs.
     if (!instance_) {
       return;
     }
@@ -1283,6 +1298,7 @@ void WasmPlugin::DeliverGameEvents() {
     static_cast<void>(mod_.Launch(launch));
   }
   for (const auto& restored : game_.TakeRestored()) {
+    // Tell the mod about each restore while it runs.
     if (!instance_) {
       return;
     }
@@ -1375,6 +1391,7 @@ void WasmPlugin::ReportPlayers() {
 bool WasmPlugin::Command(int32_t slot, std::string_view line) {
   // A press names its mod; the other mods leave it alone and never see it.
   if (line.starts_with(kPressCommand)) {
+    // A press names this mod, then its command.
     const auto pressed = line.substr(kPressCommand.size());
     const auto space = pressed.find(' ');
     if (space == std::string_view::npos || pressed.substr(0, space) != name_) {
@@ -1503,6 +1520,7 @@ void WasmPlugin::SettingChanged(uint64_t steam_id, std::string_view key, std::st
 
   // Tell the mod for each slot the player holds.
   for (int32_t slot = 0; slot < wasm::kMaxPlayers; ++slot) {
+    // Tell the mod for each slot the player holds.
     if (SteamId(slot) != steam_id) {
       continue;
     }

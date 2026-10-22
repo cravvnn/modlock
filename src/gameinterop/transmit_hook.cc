@@ -109,6 +109,7 @@ void TransmitHook::Reset() {
 
 std::expected<TransmitHook, std::string> TransmitHook::Install(Handler handler) {
   if (!g_owner) {
+    // The first owner hooks the entity system's transmit check.
     const auto entities = ResolveEngineInterface(L"server.dll", kInterfaceVersion);
     if (!entities) {
       return std::unexpected(entities.error());

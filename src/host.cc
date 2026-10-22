@@ -48,6 +48,7 @@ bool PluginHost::StartAll(std::string& error) {
   }
   accepting_ = false;
   for (auto& entry : entries_) {
+    // Load and start each registered plugin; a failure stops them all.
     if (entry.state != State::kRegistered) {
       continue;
     }

@@ -373,6 +373,7 @@ TEST(ConnectionTracker, TraceReceiptsCoverTheFullRosterAndReconnects) {
 
   // Every slot's join appears in both rounds, and its leave.
   for (int slot = 0; slot < 12; ++slot) {
+    // Each slot is put in the server twice and disconnected.
     const auto receipt = "ClientPutInServer slot " + std::to_string(slot) + " xuid 0";
     const auto first = trace.find(receipt);
     EXPECT_NE(first, std::string::npos);

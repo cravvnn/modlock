@@ -199,6 +199,7 @@ struct StaminaObserver::Impl {
     bool assert_overflow = false;
     bool aligned = true;
   };
+
   static_assert(offsetof(BitWriter, debug_name) == 24);
   static_assert(offsetof(BitWriter, overflow) == 32);
   static_assert(sizeof(BitWriter) == 40);
@@ -296,6 +297,7 @@ struct StaminaObserver::Impl {
 };
 
 StaminaObserver::StaminaObserver(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+
 StaminaObserver::StaminaObserver(StaminaObserver&&) noexcept = default;
 StaminaObserver& StaminaObserver::operator=(StaminaObserver&&) noexcept = default;
 StaminaObserver::~StaminaObserver() = default;

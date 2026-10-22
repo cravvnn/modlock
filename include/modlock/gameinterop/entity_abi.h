@@ -105,10 +105,12 @@ struct alignas(8) Variant {
     bool boolean;
     KeyValueColor color;
   };
+
   VariantType type = VariantType::kVoid;
   std::uint8_t alignment = 0;
   std::uint16_t flags = 0;
 };
+
 static_assert(sizeof(Variant) == 16);
 
 // IdentityOf reads the entity-identity pointer QueueSpawnEntity consumes.

@@ -134,6 +134,7 @@ std::vector<double> MonotoneTangents(const std::vector<double>& times,
   // Inner tangents take the weighted harmonic mean, zero at an extremum.
   std::vector<double> derivatives(n, 0.0);
   for (std::size_t i = 1; i + 1 < n; ++i) {
+    // Same-signed slopes take a weighted harmonic mean; others stay flat.
     double left = slopes[i - 1], right = slopes[i];
     if (left == 0 || right == 0 || (left > 0) != (right > 0)) {
       continue;
@@ -224,6 +225,7 @@ std::expected<void, std::string> ValidatePath(const modlock::CameraPath& path) {
   const double previous_time = -std::numeric_limits<double>::infinity();
   double last_time = previous_time;
   for (int i = 0; i < path.keys_size(); ++i) {
+    // Check each key's time, pose and aspect ratio.
     const auto& key = path.keys(i);
     const double time = key.time();
     if (!Finite(time) || time < 0) {
@@ -273,12 +275,16 @@ std::expected<modlock::CameraPose, std::string> EvaluatePath(const modlock::Came
 
   // Unspecified matches the authored default: shortest-path rotation.
   const bool shortest = path.rotation_mode() != modlock::ROTATION_MODE_UNWRAPPED;
+
+  // Each channel names its field and how it interpolates.
   struct Channel {
     int field;
     bool monotone;
     bool wrap;
     modlock::Interpolation interpolation;
   };
+
+  // Position, angles and aspect ratio.
   const std::array<Channel, 7> channels{{
       {0, false, false, path.interpolation()},      // x
       {1, false, false, path.interpolation()},      // y

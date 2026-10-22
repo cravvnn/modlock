@@ -33,6 +33,7 @@ struct alignas(16) GameTrace {
   bool exact = false;
   std::byte padding[3]{};
 };
+
 static_assert(sizeof(GameTrace) == 192);
 static_assert(offsetof(GameTrace, fraction) == 0xac);
 static_assert(offsetof(GameTrace, start_solid) == 0xbb);

@@ -91,12 +91,15 @@ class FailureRecorder final : public modlock::WasmHostObserver {
   std::string error;
 
   void Started(std::string_view, bool) override {}
+
   void Logged(std::string_view, std::string_view) override {}
+
   void Failed(std::string_view mod, std::string_view why) override {
     if (error.empty()) {
       error = std::string(mod) + ": " + std::string(why);
     }
   }
+
   void Ui(std::string_view, int32_t, const modlock::ui::Change&) override {}
 };
 
@@ -134,6 +137,7 @@ int main(int argc, char** argv) {
     launch.host_port = *port;
   }
   for (int index = 1; index < argc; ++index) {
+    // Read each option; flags take no value.
     const std::string_view argument(argv[index]);
     if (argument == "--help") {
       Help();
@@ -152,6 +156,8 @@ int main(int argc, char** argv) {
       plugin_argv = argv + index;
       break;
     }
+
+    // Every other option takes one.
     if (argument != "--plugin" && argument != "--game-dir" && argument != "--hostport" &&
         argument != "--map" && argument != "--connect" && argument != "--engine-args" &&
         argument != "--control" && argument != "--settings" && argument != "--dump" &&
@@ -164,6 +170,8 @@ int main(int argc, char** argv) {
       return 2;
     }
     const std::string_view value(argv[index]);
+
+    // Store paths and strings as given.
     if (argument == "--plugin") {
       libraries.emplace_back(value);
     }
@@ -182,6 +190,8 @@ int main(int argc, char** argv) {
     if (argument == "--game-data") {
       game_data = value;
     }
+
+    // Check the address and map, and parse the port.
     if (argument == "--connect") {
       if (value.empty() ||
           value.find_first_not_of(
@@ -251,6 +261,7 @@ int main(int argc, char** argv) {
   mods.Observe(&failures);
   std::unique_ptr<modlock::host_app::ControlLink> link;
   if (!control.empty()) {
+    // Dial the control link and watch the engine through it.
     auto dialed = modlock::host_app::ControlLink::Dial(control);
     if (!dialed) {
       std::cerr << dialed.error() << '\n';
@@ -273,6 +284,7 @@ int main(int argc, char** argv) {
                                        .launch = &launch,
                                        .wasm = &mods};
   for (const auto& library : libraries) {
+    // Load each plugin, built mod or native library.
     const auto path = std::filesystem::absolute(library);
     const bool built = path.extension() == ".wasm" || std::filesystem::is_directory(path);
     auto plugin = built ? mods.Load(path, context) : modlock::LoadPluginLibrary(path, context);
@@ -293,6 +305,7 @@ int main(int argc, char** argv) {
     return 1;
   }
   if (check_only) {
+    // A check runs one tick and stops.
     plugins.TickAll();
     plugins.StopAll();
     if (!failures.error.empty()) {

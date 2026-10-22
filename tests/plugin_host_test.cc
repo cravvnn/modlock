@@ -19,21 +19,29 @@ class CountingPlugin final : public Plugin {
   explicit CountingPlugin(std::string name) : name_(std::move(name)) {}
 
   uint32_t InterfaceVersion() const override { return version_; }
+
   const char* Name() const override { return name_.c_str(); }
+
   bool Load() override {
     events_.emplace_back("load");
     return load_ok_;
   }
+
   bool Start() override {
     events_.emplace_back("start");
     return start_ok_;
   }
+
   void Tick() override { events_.emplace_back("tick"); }
+
   void Stop() override { events_.emplace_back("stop"); }
 
   void set_version(uint32_t v) { version_ = v; }
+
   void set_load_ok(bool v) { load_ok_ = v; }
+
   void set_start_ok(bool v) { start_ok_ = v; }
+
   const std::vector<std::string>& events() const { return events_; }
 
  private:
