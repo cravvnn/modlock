@@ -560,7 +560,9 @@ if(BUILD_TESTING)
   add_executable(net_listen_boot_test tests/net_listen_boot_test.cc)
   target_link_libraries(net_listen_boot_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME net_listen_boot_test COMMAND net_listen_boot_test)
-  add_executable(pawn_observer_test tests/pawn_observer_test.cc tests/preparation_movement_test.cc)
+  add_executable(
+    pawn_observer_test tests/pawn_observer_test.cc tests/pawn_observer_ability_test.cc
+    tests/pawn_observer_selection_test.cc tests/preparation_movement_test.cc)
   target_link_libraries(pawn_observer_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME pawn_observer_test COMMAND pawn_observer_test)
   add_executable(callbacks_test tests/callbacks_test.cc)
