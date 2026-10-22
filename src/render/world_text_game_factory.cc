@@ -61,28 +61,17 @@ std::expected<std::unique_ptr<WorldTextGameFactory>, std::string> WorldTextGameF
   // Resolve each creation call by signature.
   WorldTextGameCalls calls;
 
-  // Each entry names a signature and the call it fills.
-  struct Entry {
-    std::string_view id;
-    void** slot;
-  };
-
   // Fill every call, or fail at the first missing one.
-  const Entry entries[] = {
-      {"entity-system.create-entity-by-name",
-       reinterpret_cast<void**>(&calls.create_entity_by_name)},
-      {"entity-system.queue-spawn-entity", reinterpret_cast<void**>(&calls.queue_spawn_entity)},
-      {"entity-system.execute-queued-creation",
-       reinterpret_cast<void**>(&calls.execute_queued_creation)},
-      {"entity-instance.accept-input", reinterpret_cast<void**>(&calls.accept_input)},
-      {"entity.remove", reinterpret_cast<void**>(&calls.util_remove)},
+  const modlock::gameinterop::SignatureCall signatures[] = {
+      {"entity-system.create-entity-by-name", &calls.create_entity_by_name},
+      {"entity-system.queue-spawn-entity", &calls.queue_spawn_entity},
+      {"entity-system.execute-queued-creation", &calls.execute_queued_creation},
+      {"entity-instance.accept-input", &calls.accept_input},
+      {"entity.remove", &calls.util_remove},
   };
-  for (const auto& entry : entries) {
-    if (auto address = modlock::gameinterop::ResolveSignature(server, entry.id)) {
-      *entry.slot = *address;
-    } else {
-      return std::unexpected(address.error());
-    }
+  auto resolved = modlock::gameinterop::ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
 
   // Add the keyvalue calls and the message writer.

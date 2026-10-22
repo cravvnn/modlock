@@ -116,4 +116,16 @@ std::expected<void*, std::string> ResolveSignature(const ModuleImage& image, std
   return ResolveSignature(image, *signature);
 }
 
+std::expected<void, std::string> ResolveSignatures(const ModuleImage& image,
+                                                   std::span<const SignatureCall> calls) {
+  for (const auto& call : calls) {
+    auto address = ResolveSignature(image, call.id);
+    if (!address) {
+      return std::unexpected(address.error());
+    }
+    *call.target = *address;
+  }
+  return {};
+}
+
 }  // namespace modlock::gameinterop

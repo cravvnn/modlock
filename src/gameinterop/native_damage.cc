@@ -13,17 +13,14 @@ std::expected<NativeDamage, std::string> NativeDamage::Resolve(const ModuleImage
                                                                void* schema_system) {
   // Resolve the damage calls.
   NativeDamage calls;
-  auto construct = ResolveSignature(server, "damage.construct");
-  auto destroy = ResolveSignature(server, "damage.destroy");
-  auto damage = ResolveSignature(server, "entity.take-damage");
-  if (!construct) {
-    return std::unexpected(construct.error());
-  }
-  if (!destroy) {
-    return std::unexpected(destroy.error());
-  }
-  if (!damage) {
-    return std::unexpected(damage.error());
+  const SignatureCall signatures[] = {
+      {"damage.construct", &calls.construct_},
+      {"damage.destroy", &calls.destroy_},
+      {"entity.take-damage", &calls.damage_},
+  };
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
 
   // Resolve the damage info's size and fields.
@@ -55,10 +52,7 @@ std::expected<NativeDamage, std::string> NativeDamage::Resolve(const ModuleImage
     return std::unexpected("native damage field storage is incomplete");
   }
 
-  // Keep the calls and offsets.
-  calls.construct_ = reinterpret_cast<decltype(calls.construct_)>(*construct);
-  calls.destroy_ = reinterpret_cast<decltype(calls.destroy_)>(*destroy);
-  calls.damage_ = reinterpret_cast<decltype(calls.damage_)>(*damage);
+  // Keep the offsets.
   calls.size_ = *size;
   calls.flags_offset_ = flags->offset;
   calls.health_offset_ = health->offset;

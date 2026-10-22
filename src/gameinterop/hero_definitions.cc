@@ -7,24 +7,15 @@ std::expected<HeroDefinitions, std::string> HeroDefinitions::Resolve(const Modul
   // Resolve each call by signature.
   HeroDefinitionCalls calls;
 
-  // Each entry names a signature and the call it fills.
-  struct Entry {
-    std::string_view id;
-    void** slot;
-  };
-
   // Fill every call, or fail at the first missing one.
-  const Entry entries[] = {
-      {"hero-definition-manager.get-manager", reinterpret_cast<void**>(&calls.manager_getter)},
-      {"hero-definition-manager.hero-name-to-id", reinterpret_cast<void**>(&calls.hero_name_to_id)},
-      {"hero-definition-manager.get-hero-by-id", reinterpret_cast<void**>(&calls.get_hero_by_id)},
+  const SignatureCall signatures[] = {
+      {"hero-definition-manager.get-manager", &calls.manager_getter},
+      {"hero-definition-manager.hero-name-to-id", &calls.hero_name_to_id},
+      {"hero-definition-manager.get-hero-by-id", &calls.get_hero_by_id},
   };
-  for (const auto& entry : entries) {
-    auto address = ResolveSignature(server, entry.id);
-    if (!address) {
-      return std::unexpected(address.error());
-    }
-    *entry.slot = *address;
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
   return HeroDefinitions(calls);
 }

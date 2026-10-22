@@ -168,24 +168,15 @@ std::expected<KeyValuesCalls, std::string> ResolveKeyValuesCalls(const ModuleIma
   // Resolve each raw keyvalues call by signature.
   KeyValuesCalls calls;
 
-  // Each entry names a signature and the call it fills.
-  struct Entry {
-    std::string_view id;
-    void** slot;
-  };
-
   // Fill every call, or fail at the first missing one.
-  const Entry entries[] = {
-      {"entity-keyvalues.allocate", reinterpret_cast<void**>(&calls.allocate)},
-      {"entity-keyvalues.construct", reinterpret_cast<void**>(&calls.construct_key_values)},
-      {"entity-keyvalues.set-key-value", reinterpret_cast<void**>(&calls.set_key_value)},
+  const SignatureCall signatures[] = {
+      {"entity-keyvalues.allocate", &calls.allocate},
+      {"entity-keyvalues.construct", &calls.construct_key_values},
+      {"entity-keyvalues.set-key-value", &calls.set_key_value},
   };
-  for (const auto& entry : entries) {
-    auto address = ResolveSignature(image, entry.id);
-    if (!address) {
-      return std::unexpected(address.error());
-    }
-    *entry.slot = *address;
+  auto resolved = ResolveSignatures(image, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
   return calls;
 }

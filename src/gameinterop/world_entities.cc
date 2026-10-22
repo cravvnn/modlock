@@ -184,29 +184,20 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
   }
   world.calls_.key_values = *key_values;
 
-  // Resolve each native call by its signature.
-  struct Entry {
-    std::string_view id;
-    void** slot;
+  // Resolve each native call by its signature, or fail at the first missing one.
+  const SignatureCall signatures[] = {
+      {"entity-system.find-class", &world.calls_.find_class},
+      {"entity-system.create-entity-by-name", &world.calls_.create},
+      {"entity-system.queue-spawn-entity", &world.calls_.queue},
+      {"entity-system.execute-queued-creation", &world.calls_.execute},
+      {"entity.remove", &world.calls_.remove},
+      {"vdata.lookup-by-hash", &world.calls_.definition},
+      {"entity-instance.accept-input", &world.calls_.accept_input},
+      {"network-transmit.set-state", &world.calls_.set_transmit_state},
   };
-
-  // Fill every call, or fail at the first missing one.
-  const Entry entries[] = {
-      {"entity-system.find-class", reinterpret_cast<void**>(&world.calls_.find_class)},
-      {"entity-system.create-entity-by-name", reinterpret_cast<void**>(&world.calls_.create)},
-      {"entity-system.queue-spawn-entity", reinterpret_cast<void**>(&world.calls_.queue)},
-      {"entity-system.execute-queued-creation", reinterpret_cast<void**>(&world.calls_.execute)},
-      {"entity.remove", reinterpret_cast<void**>(&world.calls_.remove)},
-      {"vdata.lookup-by-hash", reinterpret_cast<void**>(&world.calls_.definition)},
-      {"entity-instance.accept-input", reinterpret_cast<void**>(&world.calls_.accept_input)},
-      {"network-transmit.set-state", reinterpret_cast<void**>(&world.calls_.set_transmit_state)},
-  };
-  for (const auto& entry : entries) {
-    auto address = ResolveSignature(server, entry.id);
-    if (!address) {
-      return std::unexpected(address.error());
-    }
-    *entry.slot = *address;
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
 
   // Resolve each field the NPCs read and write, with its minimum width.

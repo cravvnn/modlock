@@ -22,27 +22,21 @@ std::expected<AbilitySlots, std::string> AbilitySlots::Resolve(const ModuleImage
   }
 
   // Resolve the slot calls.
-  auto find = ResolveSignature(server, "ability.find-slot");
-  auto detach = ResolveSignature(server, "ability.detach-slot");
-  auto remove = ResolveSignature(server, "entity.remove");
-  if (!find) {
-    return std::unexpected(find.error());
-  }
-  if (!detach) {
-    return std::unexpected(detach.error());
-  }
-  if (!remove) {
-    return std::unexpected(remove.error());
+  AbilitySlots result;
+  const SignatureCall signatures[] = {
+      {"ability.find-slot", &result.find_},
+      {"ability.detach-slot", &result.detach_},
+      {"entity.remove", &result.remove_},
+  };
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
 
-  // Keep the offsets and calls.
-  AbilitySlots result;
+  // Keep the offsets.
   result.component_ = component->offset;
   result.vectors_ = {abilities->offset, thinkable ? thinkable->offset : 0};
   result.vector_count_ = thinkable ? 2 : 1;
-  result.find_ = reinterpret_cast<decltype(result.find_)>(*find);
-  result.detach_ = reinterpret_cast<decltype(result.detach_)>(*detach);
-  result.remove_ = reinterpret_cast<decltype(result.remove_)>(*remove);
   return result;
 }
 

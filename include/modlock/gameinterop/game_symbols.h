@@ -7,6 +7,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include "modlock/export.h"
@@ -122,5 +123,22 @@ struct GameSignatureLoad {
 // an error.
 [[nodiscard]] MODLOCK_API std::expected<void*, std::string> ResolveSignature(
     const ModuleImage& image, std::string_view id);
+
+// SignatureCall names a recorded signature and the pointer its address fills,
+// usually a function pointer in a table of resolved calls.
+struct SignatureCall {
+  template <typename Pointer>
+    requires std::is_pointer_v<Pointer>
+  SignatureCall(std::string_view id, Pointer* target)
+      : id(id), target(reinterpret_cast<void**>(target)) {}
+
+  std::string_view id;
+  void** target;
+};
+
+// ResolveSignatures resolves each call's signature into its target and stops
+// at the first failure, whose error it returns.
+[[nodiscard]] MODLOCK_API std::expected<void, std::string> ResolveSignatures(
+    const ModuleImage& image, std::span<const SignatureCall> calls);
 
 }  // namespace modlock::gameinterop

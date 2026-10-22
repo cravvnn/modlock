@@ -2315,44 +2315,40 @@ std::expected<TeleportClientCamera, std::string> ResolveTeleportClientCamera(
 }
 
 std::expected<PawnMotion, std::string> ResolvePawnMotion(const ModuleImage& server) {
+  // Resolve the three setters, or fail at the first missing one.
   PawnMotion motion{};
-  const std::pair<const char*, void (**)(void*, const float*)> setters[] = {
+  const SignatureCall signatures[] = {
       {"entity.set-abs-origin", &motion.set_origin},
       {"entity.set-abs-angles", &motion.set_angles},
       {"entity.set-abs-velocity", &motion.set_velocity},
   };
-  for (const auto& [id, setter] : setters) {
-    auto address = ResolveSignature(server, id);
-    if (!address) {
-      return std::unexpected(address.error());
-    }
-    *setter = reinterpret_cast<void (*)(void*, const float*)>(*address);
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
   return motion;
 }
 
 std::expected<ItemFunctions, std::string> ItemFunctions::Resolve(const ModuleImage& server) {
-  // Resolve the item add and remove functions.
-  auto add = ResolveSignature(server, "pawn.add-item");
-  if (!add) {
-    return std::unexpected(add.error());
-  }
-  auto remove = ResolveSignature(server, "ability.remove-item");
-  if (!remove) {
-    return std::unexpected(remove.error());
+  // Resolve the item add, remove and slot swap functions.
+  ItemFunctions functions{};
+  const SignatureCall signatures[] = {
+      {"pawn.add-item", &functions.add},
+      {"ability.remove-item", &functions.remove},
+      {"ability.swap-item-slots", &functions.swap_slots},
+  };
+  auto resolved = ResolveSignatures(server, signatures);
+  if (!resolved) {
+    return std::unexpected(resolved.error());
   }
 
-  // Resolve the upgrade bits setter and the slot swap.
+  // Resolve the upgrade bits setter.
   auto bits = ResolveSetUpgradeBits(server);
   if (!bits) {
     return std::unexpected(bits.error());
   }
-  auto swap = ResolveSignature(server, "ability.swap-item-slots");
-  if (!swap) {
-    return std::unexpected(swap.error());
-  }
-  return ItemFunctions{reinterpret_cast<Add>(*add), reinterpret_cast<Remove>(*remove), *bits,
-                       reinterpret_cast<SwapSlots>(*swap)};
+  functions.set_bits = *bits;
+  return functions;
 }
 
 std::expected<PawnObserver::Ability, std::string> PawnObserver::GrantItem(
