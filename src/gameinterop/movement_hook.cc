@@ -54,26 +54,17 @@ std::expected<Layout, std::string> Resolve(const char* module, const char* entit
   }
   Layout layout;
 
-  // Each field names its class, its member and the offset it fills.
-  struct Field {
-    const char* type;
-    const char* name;
-    size_t* offset;
-  };
-
   // Fill every offset, or fail at the first missing one.
-  for (const auto& field :
-       {Field{"CPlayer_MovementServices", "m_nButtons", &layout.buttons},
-        Field{"CPlayer_MovementServices", "m_nLastCommandNumberProcessed", &layout.command},
-        Field{"CPlayerPawnComponent", "__m_pChainEntity", &layout.chain},
-        Field{pawn, "m_pMovementServices", &layout.services},
-        Field{entity, "m_hGroundEntity", &layout.ground},
-        Field{entity, "m_MoveType", &layout.move_type}}) {
-    auto resolved = SchemaFieldOf(*schema, module, field.type, field.name);
-    if (!resolved) {
-      return std::unexpected(std::string(field.type) + "." + field.name + ": " + resolved.error());
-    }
-    *field.offset = resolved->offset;
+  const SchemaOffset fields[] = {
+      {"CPlayer_MovementServices", "m_nButtons", 0, &layout.buttons},
+      {"CPlayer_MovementServices", "m_nLastCommandNumberProcessed", 0, &layout.command},
+      {"CPlayerPawnComponent", "__m_pChainEntity", 0, &layout.chain},
+      {pawn, "m_pMovementServices", 0, &layout.services},
+      {entity, "m_hGroundEntity", 0, &layout.ground},
+      {entity, "m_MoveType", 0, &layout.move_type},
+  };
+  if (auto resolved = ResolveSchemaOffsets(*schema, module, fields); !resolved) {
+    return std::unexpected(resolved.error());
   }
   return layout;
 }

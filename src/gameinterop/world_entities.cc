@@ -201,32 +201,20 @@ std::expected<WorldEntities, std::string> WorldEntities::Resolve(const ModuleIma
   }
 
   // Resolve each field the NPCs read and write, with its minimum width.
-  struct Field {
-    const char* owner;
-    const char* name;
-    size_t width;
+  auto& offsets = world.calls_.offsets;
+  const SchemaOffset fields[] = {
+      {"CBaseEntity", "m_iTeamNum", sizeof(uint8_t), &offsets[0]},
+      {"CBaseEntity", "m_nSubclassID", sizeof(uint32_t) + sizeof(void*), &offsets[1]},
+      {"CBaseEntity", "m_iHealth", sizeof(int32_t), &offsets[2]},
+      {"CBaseEntity", "m_iMaxHealth", sizeof(int32_t), &offsets[3]},
+      {"CBaseEntity", "m_CBodyComponent", sizeof(void*), &offsets[4]},
+      {"CBodyComponent", "m_pSceneNode", sizeof(void*), &offsets[5]},
+      {"CGameSceneNode", "m_vecAbsOrigin", sizeof(float) * 3, &offsets[6]},
+      {"CBaseEntity", "m_NetworkTransmitComponent", sizeof(uint8_t), &offsets[7]},
+      {"CNetworkTransmitComponent", "m_nTransmitStateOwnedCounter", sizeof(uint8_t), &offsets[8]},
   };
-
-  // Fill every offset, or fail at the first missing or short one.
-  const Field fields[] = {
-      {"CBaseEntity", "m_iTeamNum", sizeof(uint8_t)},
-      {"CBaseEntity", "m_nSubclassID", sizeof(uint32_t) + sizeof(void*)},
-      {"CBaseEntity", "m_iHealth", sizeof(int32_t)},
-      {"CBaseEntity", "m_iMaxHealth", sizeof(int32_t)},
-      {"CBaseEntity", "m_CBodyComponent", sizeof(void*)},
-      {"CBodyComponent", "m_pSceneNode", sizeof(void*)},
-      {"CGameSceneNode", "m_vecAbsOrigin", sizeof(float) * 3},
-      {"CBaseEntity", "m_NetworkTransmitComponent", sizeof(uint8_t)},
-      {"CNetworkTransmitComponent", "m_nTransmitStateOwnedCounter", sizeof(uint8_t)}};
-  for (size_t i = 0; i < world.calls_.offsets.size(); ++i) {
-    auto field = SchemaFieldOf(schema_system, "server.dll", fields[i].owner, fields[i].name);
-    if (!field) {
-      return std::unexpected(field.error());
-    }
-    if (field->size < fields[i].width) {
-      return std::unexpected(std::string("NPC field storage too short: ") + fields[i].name);
-    }
-    world.calls_.offsets[i] = field->offset;
+  if (auto resolved = ResolveSchemaOffsets(schema_system, "server.dll", fields); !resolved) {
+    return std::unexpected(resolved.error());
   }
   return world;
 }

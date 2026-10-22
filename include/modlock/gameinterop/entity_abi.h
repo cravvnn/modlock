@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <expected>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -207,6 +208,21 @@ struct SchemaField {
 // belongs to an ancestor. schema_system is the live ISchemaSystem instance.
 [[nodiscard]] MODLOCK_API std::expected<SchemaField, std::string> SchemaFieldOf(
     void* schema_system, const char* module_name, const char* class_name, const char* field_name);
+
+// SchemaOffset names a schema field, the storage it must span, and the offset
+// it fills.
+struct SchemaOffset {
+  const char* class_name;
+  const char* field_name;
+  size_t minimum_size;
+  size_t* offset;
+};
+
+// ResolveSchemaOffsets fills each field's offset from the module's schema and
+// stops at the first field that is missing or spans less than its minimum,
+// returning an error that names it.
+[[nodiscard]] MODLOCK_API std::expected<void, std::string> ResolveSchemaOffsets(
+    void* schema_system, const char* module_name, std::span<const SchemaOffset> fields);
 
 // SchemaClassOfEntity returns the schema class info (SchemaClassInfoData_t)
 // the engine binds to a live entity: CEntityIdentity::m_pClass,

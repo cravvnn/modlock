@@ -376,6 +376,23 @@ std::expected<SchemaField, std::string> SchemaFieldOf(void* schema_system, const
   return FieldInClassInfo(*info, field_name);
 }
 
+std::expected<void, std::string> ResolveSchemaOffsets(void* schema_system, const char* module_name,
+                                                      std::span<const SchemaOffset> fields) {
+  for (const auto& wanted : fields) {
+    // Find the field; a missing or short one names itself in the error.
+    const auto name = std::string(wanted.class_name) + "." + wanted.field_name;
+    auto field = SchemaFieldOf(schema_system, module_name, wanted.class_name, wanted.field_name);
+    if (!field) {
+      return std::unexpected(name + ": " + field.error());
+    }
+    if (field->size < wanted.minimum_size) {
+      return std::unexpected(name + " storage span is too small");
+    }
+    *wanted.offset = field->offset;
+  }
+  return {};
+}
+
 std::expected<size_t, std::string> SchemaClassSizeOf(void* schema_system, const char* module_name,
                                                      const char* class_name) {
   auto info = SchemaClassInfoOf(schema_system, module_name, class_name);

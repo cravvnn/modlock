@@ -211,16 +211,8 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
   EntityLayout layout{};
   size_t hero_component = 0, spawned_hero = 0, hero_id = 0;
 
-  // Each core field names its class, member and minimum size.
-  struct CoreField {
-    const char* class_name;
-    const char* field_name;
-    size_t minimum_size;
-    size_t* out;
-  };
-
   // Fill every one, or fail at the first missing or short one.
-  CoreField core[] = {
+  const SchemaOffset core[] = {
       {"CBasePlayerController", "m_hPawn", sizeof(uint32_t), &layout.pawn_handle},
       {"CBaseEntity", "m_CBodyComponent", sizeof(void*), &layout.body_component},
       {"CBodyComponent", "m_pSceneNode", sizeof(void*), &layout.scene_node},
@@ -235,12 +227,8 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
       {"CCitadelPlayerPawn", "m_angEyeAngles", sizeof(float) * 3, &layout.eye_angles},
       {"CCitadelPlayerPawn", "m_angClientCamera", sizeof(float) * 3, &layout.camera_angles},
   };
-  for (const auto& wanted : core) {
-    auto field = resolve_field(wanted.class_name, wanted.field_name, wanted.minimum_size);
-    if (!field) {
-      return std::unexpected(field.error());
-    }
-    *wanted.out = field.value();
+  if (auto resolved = ResolveSchemaOffsets(*schema_system, "server.dll", core); !resolved) {
+    return std::unexpected(resolved.error());
   }
 
   // Resolve the optional controller and view fields.
@@ -351,16 +339,8 @@ std::expected<AbilityLayout, std::string> ResolveAbilityLayout() {
   // Resolve the required ability fields.
   AbilityLayout layout;
 
-  // Each field names its class, member and minimum size.
-  struct Wanted {
-    const char* type;
-    const char* name;
-    size_t minimum;
-    size_t* offset;
-  };
-
   // Fill every one, or fail at the first missing or short one.
-  const Wanted fields[] = {
+  const SchemaOffset fields[] = {
       {"CCitadelPlayerPawn", "m_CCitadelAbilityComponent", 24, &layout.component},
       {"CCitadelAbilityComponent", "m_vecAbilities", 24, &layout.handles},
       {"CBaseEntity", "m_hOwnerEntity", 4, &layout.owner},
@@ -373,15 +353,8 @@ std::expected<AbilityLayout, std::string> ResolveAbilityLayout() {
       {"CCitadelBaseAbility", "m_flChargeRechargeStart", 4, &layout.charge_recharge_start},
       {"CCitadelBaseAbility", "m_flChargeRechargeEnd", 4, &layout.charge_recharge_end},
   };
-  for (const auto& wanted : fields) {
-    auto field = SchemaFieldOf(*schema, "server.dll", wanted.type, wanted.name);
-    if (!field) {
-      return std::unexpected(field.error());
-    }
-    if (field->size < wanted.minimum) {
-      return std::unexpected(std::string(wanted.name) + " storage is too small");
-    }
-    *wanted.offset = field->offset;
+  if (auto resolved = ResolveSchemaOffsets(*schema, "server.dll", fields); !resolved) {
+    return std::unexpected(resolved.error());
   }
   layout.handles += layout.component;
 
