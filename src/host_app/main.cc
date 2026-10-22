@@ -103,57 +103,115 @@ class FailureRecorder final : public modlock::WasmHostObserver {
   void Ui(std::string_view, int32_t, const modlock::ui::Change&) override {}
 };
 
-}  // namespace
-
-int main(int argc, char** argv) {
-  // Guard stdio and unbuffer the output.
-  modlock::host_app::InstallStdioGuard();
-  std::cout << std::unitbuf;
-
-  // The paths and the control address the options name.
+// Options holds what the environment and the command line select.
+struct Options {
   std::vector<std::filesystem::path> libraries;
   std::filesystem::path game_dir;
   std::string_view control;
   std::filesystem::path settings_file;
   std::filesystem::path dump_directory;
   std::filesystem::path game_data;
-
-  // The launch and plugin options.
   modlock::net::LaunchConfig launch;
   bool check_only = false;
   int plugin_argc = 0;
   const char* const* plugin_argv = nullptr;
+};
 
-  // Read the environment, then the command line.
+// The characters a connect address and a map name may hold.
+constexpr std::string_view kAddressCharacters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-";
+constexpr std::string_view kMapCharacters =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_/-";
+
+// ExitCode is the status main returns when parsing ends the program.
+using ExitCode = int;
+
+bool OnlyCharacters(std::string_view value, std::string_view allowed) {
+  return !value.empty() && value.find_first_not_of(allowed) == std::string_view::npos;
+}
+
+// SetOption stores the value of one option that takes a value, or fails with
+// the exit code after reporting why.
+std::expected<void, ExitCode> SetOption(Options& options, std::string_view argument,
+                                        std::string_view value) {
+  // Store paths and strings as given.
+  if (argument == "--plugin") {
+    options.libraries.emplace_back(value);
+  } else if (argument == "--engine-args") {
+    options.launch.engine_arguments = value;
+  } else if (argument == "--control") {
+    options.control = value;
+  } else if (argument == "--settings") {
+    options.settings_file = value;
+  } else if (argument == "--dump") {
+    options.dump_directory = value;
+  } else if (argument == "--game-data") {
+    options.game_data = value;
+  } else if (argument == "--game-dir") {
+    options.game_dir = value;
+    return {};
+  }
+
+  // Check the address and map, and parse the port.
+  if (argument == "--connect") {
+    if (!OnlyCharacters(value, kAddressCharacters)) {
+      std::cerr << "The connect address must be a host name or address with an optional port.\n";
+      return std::unexpected(2);
+    }
+    options.launch.connect = value;
+  } else if (argument == "--map") {
+    if (!OnlyCharacters(value, kMapCharacters)) {
+      std::cerr << "The map must be a Source 2 map name.\n";
+      return std::unexpected(2);
+    }
+    options.launch.map = value;
+  } else if (argument == "--hostport") {
+    auto port = Port(value);
+    if (!port) {
+      std::cerr << "The host port must be an integer from 0 to 65535.\n";
+      return std::unexpected(2);
+    }
+    options.launch.host_port = *port;
+  }
+  return {};
+}
+
+// ParseOptions reads the environment, then the command line. It fails with
+// the exit code when an option is wrong or ends the program, as --help does.
+std::expected<Options, ExitCode> ParseOptions(int argc, char** argv) {
+  // Read the environment.
+  Options options;
   if (const char* environment = std::getenv("DEADLOCK_DIR")) {
-    game_dir = environment;
+    options.game_dir = environment;
   }
   if (const char* environment = std::getenv("MODLOCK_HOST_PORT")) {
     auto port = Port(environment);
     if (!port) {
       std::cerr << "MODLOCK_HOST_PORT must be an integer from 0 to 65535.\n";
-      return 2;
+      return std::unexpected(2);
     }
-    launch.host_port = *port;
+    options.launch.host_port = *port;
   }
+
+  // Then read the command line.
   for (int index = 1; index < argc; ++index) {
     // Read each option; flags take no value.
     const std::string_view argument(argv[index]);
     if (argument == "--help") {
       Help();
-      return 0;
+      return std::unexpected(0);
     }
     if (argument == "--version") {
       std::cout << "Modlock " << MODLOCK_SOURCE_REVISION << '\n';
-      return 0;
+      return std::unexpected(0);
     }
     if (argument == "--check-plugin") {
-      check_only = true;
+      options.check_only = true;
       continue;
     }
     if (argument == "--") {
-      plugin_argc = argc - index;
-      plugin_argv = argv + index;
+      options.plugin_argc = argc - index;
+      options.plugin_argv = argv + index;
       break;
     }
 
@@ -163,70 +221,35 @@ int main(int argc, char** argv) {
         argument != "--control" && argument != "--settings" && argument != "--dump" &&
         argument != "--game-data") {
       std::cerr << "Unknown option: " << argument << ". Use --help for usage.\n";
-      return 2;
+      return std::unexpected(2);
     }
     if (++index == argc) {
       std::cerr << argument << " needs a value.\n";
-      return 2;
+      return std::unexpected(2);
     }
-    const std::string_view value(argv[index]);
-
-    // Store paths and strings as given.
-    if (argument == "--plugin") {
-      libraries.emplace_back(value);
-    }
-    if (argument == "--engine-args") {
-      launch.engine_arguments = value;
-    }
-    if (argument == "--control") {
-      control = value;
-    }
-    if (argument == "--settings") {
-      settings_file = value;
-    }
-    if (argument == "--dump") {
-      dump_directory = value;
-    }
-    if (argument == "--game-data") {
-      game_data = value;
-    }
-
-    // Check the address and map, and parse the port.
-    if (argument == "--connect") {
-      if (value.empty() ||
-          value.find_first_not_of(
-              "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-") !=
-              std::string_view::npos) {
-        std::cerr << "The connect address must be a host name or address with an optional port.\n";
-        return 2;
-      }
-      launch.connect = value;
-    }
-    if (argument == "--game-dir") {
-      game_dir = value;
-    }
-    if (argument == "--map") {
-      if (value.empty() ||
-          value.find_first_not_of(
-              "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_/-") !=
-              std::string_view::npos) {
-        std::cerr << "The map must be a Source 2 map name.\n";
-        return 2;
-      }
-      launch.map = value;
-    }
-    if (argument == "--hostport") {
-      auto port = Port(value);
-      if (!port) {
-        std::cerr << "The host port must be an integer from 0 to 65535.\n";
-        return 2;
-      }
-      launch.host_port = *port;
+    if (auto set = SetOption(options, argument, argv[index]); !set) {
+      return std::unexpected(set.error());
     }
   }
+  return options;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+  // Guard stdio and unbuffer the output.
+  modlock::host_app::InstallStdioGuard();
+  std::cout << std::unitbuf;
+
+  // Read the options.
+  auto parsed = ParseOptions(argc, argv);
+  if (!parsed) {
+    return parsed.error();
+  }
+  Options& options = *parsed;
 
   // A plugin or a dump is required.
-  if (libraries.empty() && dump_directory.empty()) {
+  if (options.libraries.empty() && options.dump_directory.empty()) {
     std::cerr << "Select a plugin with --plugin PATH. Use --help for usage.\n";
     return 2;
   }
@@ -234,16 +257,17 @@ int main(int argc, char** argv) {
   // The game data file and the interpreter modules ship beside the executable;
   // a newer game data file may come from the launcher.
   const auto directory = std::filesystem::absolute(argv[0]).parent_path();
-  LoadSignatures({game_data, directory / "game_signatures.txtpb"});
+  LoadSignatures({options.game_data, directory / "game_signatures.txtpb"});
 
   // Open the game unless only checking the plugin.
   modlock::EngineHost engine;
-  if (!check_only) {
-    if (game_dir.empty()) {
+  if (!options.check_only) {
+    if (options.game_dir.empty()) {
       std::cerr << "Set DEADLOCK_DIR or pass --game-dir with your Deadlock installation.\n";
       return 2;
     }
-    if (auto opened = engine.Open(std::filesystem::absolute(game_dir), launch); !opened) {
+    if (auto opened = engine.Open(std::filesystem::absolute(options.game_dir), options.launch);
+        !opened) {
       std::cerr << opened.error() << '\n';
       return 1;
     }
@@ -254,22 +278,22 @@ int main(int argc, char** argv) {
   // outlives the mods that keep players' settings in it.
   std::optional<modlock::FileSettings> settings;
   modlock::WasmHost mods(directory);
-  if (!settings_file.empty()) {
-    mods.KeepSettings(&settings.emplace(settings_file));
+  if (!options.settings_file.empty()) {
+    mods.KeepSettings(&settings.emplace(options.settings_file));
   }
   FailureRecorder failures;
   mods.Observe(&failures);
   std::unique_ptr<modlock::host_app::ControlLink> link;
-  if (!control.empty()) {
+  if (!options.control.empty()) {
     // Dial the control link and watch the engine through it.
-    auto dialed = modlock::host_app::ControlLink::Dial(control);
+    auto dialed = modlock::host_app::ControlLink::Dial(options.control);
     if (!dialed) {
       std::cerr << dialed.error() << '\n';
       return 1;
     }
     link = std::move(*dialed);
     mods.Observe(link.get());
-    if (auto watched = link->Watch(engine); !watched && !check_only) {
+    if (auto watched = link->Watch(engine); !watched && !options.check_only) {
       std::cerr << "control: " << watched.error() << '\n';
     }
   }
@@ -278,12 +302,12 @@ int main(int argc, char** argv) {
   // link and engine resources.
   modlock::host::PluginHost plugins;
   const modlock::PluginContext context{.engine = &engine,
-                                       .argc = plugin_argc,
-                                       .argv = plugin_argv,
-                                       .check_only = check_only,
-                                       .launch = &launch,
+                                       .argc = options.plugin_argc,
+                                       .argv = options.plugin_argv,
+                                       .check_only = options.check_only,
+                                       .launch = &options.launch,
                                        .wasm = &mods};
-  for (const auto& library : libraries) {
+  for (const auto& library : options.libraries) {
     // Load each plugin, built mod or native library.
     const auto path = std::filesystem::absolute(library);
     const bool built = path.extension() == ".wasm" || std::filesystem::is_directory(path);
@@ -304,7 +328,7 @@ int main(int argc, char** argv) {
     std::cerr << error << '\n';
     return 1;
   }
-  if (check_only) {
+  if (options.check_only) {
     // A check runs one tick and stops.
     plugins.TickAll();
     plugins.StopAll();
@@ -321,14 +345,14 @@ int main(int argc, char** argv) {
   std::optional<modlock::host_app::GameDumpCounts> dumped;
   std::string dump_error;
   modlock::Subscription dump_world;
-  if (!dump_directory.empty()) {
+  if (!options.dump_directory.empty()) {
     auto subscribed = engine.OnWorld({}, [&](std::string_view) {
       // Write the dump once, then quit the server.
       if (dumped || !dump_error.empty()) {
         return;
       }
-      auto written = modlock::host_app::WriteGameDump(engine.Paths(),
-                                                      std::filesystem::absolute(dump_directory));
+      auto written = modlock::host_app::WriteGameDump(
+          engine.Paths(), std::filesystem::absolute(options.dump_directory));
       if (written) {
         dumped = *written;
       } else {
@@ -359,7 +383,7 @@ int main(int argc, char** argv) {
   }
 
   // Run the engine, then stop the plugins and report the result.
-  auto result = engine.Run(launch);
+  auto result = engine.Run(options.launch);
   frames->Reset();
   dump_world.Reset();
   plugins.StopAll();
@@ -367,7 +391,7 @@ int main(int argc, char** argv) {
     std::cerr << result.error() << '\n';
     return 1;
   }
-  if (!dump_directory.empty()) {
+  if (!options.dump_directory.empty()) {
     if (!dumped) {
       std::cerr << "dump: " << (dump_error.empty() ? "the world never became ready" : dump_error)
                 << '\n';
@@ -377,7 +401,7 @@ int main(int argc, char** argv) {
               << dumped->designer_names << " designer names, " << dumped->data_maps
               << " data maps, " << dumped->inputs << " inputs, " << dumped->outputs << " outputs, "
               << dumped->variables << " console variables and " << dumped->commands
-              << " commands to " << dump_directory.string() << ".\n";
+              << " commands to " << options.dump_directory.string() << ".\n";
     return 0;
   }
   return plugins.ExitCode(*result);
