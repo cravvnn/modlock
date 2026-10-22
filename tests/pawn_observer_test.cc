@@ -1620,6 +1620,8 @@ TEST(PawnObserver, WatchingKeepsTheHeroAndReturnsToIt) {
   fixture.controller[kTeamField] = 2;
   Instance hero{}, camera{};
   camera_pawn = camera.data();
+  const int32_t health = 800;
+  std::memcpy(hero.data() + kHealthField, &health, sizeof(health));
   fixture.image.SetIdentity(1, fixture.controller.data(), 1, 0);
   fixture.image.SetIdentity(2, hero.data(), 7, 0);
   fixture.image.SetIdentity(3, camera.data(), 8, 0);
@@ -1659,6 +1661,16 @@ TEST(PawnObserver, WatchingKeepsTheHeroAndReturnsToIt) {
   EXPECT_EQ(rebound, hero.data());
   EXPECT_EQ(observer.ReturnToHero(0, calls).value_or(1), 0u);
   EXPECT_TRUE(observer.WatchingSlots().empty());
+
+  // A camera still bound after the player reconnects, or after the runtime
+  // forgot it, returns the player to their living hero all the same.
+  const auto camera_handle = HandleOf(3, 8);
+  std::memcpy(fixture.controller.data() + kPawnHandleField, &camera_handle, sizeof(camera_handle));
+  fixture.generation = 4;
+  rebound = nullptr;
+  PawnObserver restarted{HeroSeamsFor(fixture)};
+  EXPECT_EQ(restarted.ReturnToHero(0, calls).value_or(0), camera_handle);
+  EXPECT_EQ(rebound, hero.data());
   active = nullptr;
 }
 

@@ -435,8 +435,9 @@ class MODLOCK_API PawnObserver {
   std::expected<void*, std::string> CameraPawnForSlot(int32_t slot,
                                                       const PlayerSelectionCalls& calls);
 
-  // ReturnToHero binds a watching player back to their hero and returns the
-  // handle of the camera to remove, or zero when the player has none.
+  // ReturnToHero binds a player whose camera is bound in place of their living
+  // hero back to it, whichever connection bound the camera, and returns the
+  // handle of the camera to remove, or zero when there is none.
   std::expected<uint32_t, std::string> ReturnToHero(int32_t slot,
                                                     const PlayerSelectionCalls& calls);
 
@@ -541,13 +542,8 @@ class MODLOCK_API PawnObserver {
     int32_t team;
   };
   std::map<int32_t, PendingSelection> pending_selections_;
-  // A camera belongs to the connection it was made for; a reconnect's
-  // controller never binds the earlier connection's hero.
-  struct Camera {
-    uint32_t handle;
-    uint32_t generation;
-  };
-  std::map<int32_t, Camera> cameras_;
+  // cameras_ holds the handle of each slot's camera while its hero lives on.
+  std::map<int32_t, uint32_t> cameras_;
   // Freeze ownership follows the retained pawn, including across a reconnect.
   struct FrozenPawn {
     uint32_t handle;

@@ -590,48 +590,54 @@ std::expected<void*, std::string> PawnObserver::CameraPawnForSlot(
   }
 
   // A player with a hero watches through a camera of its own while the hero
-  // stays where it stands, as the game binds one when the hero dies.
+  // stays where it stands, as the game binds one when the hero dies. Record
+  // whatever camera the spawn bound, even one the watch then refuses, so
+  // ReturnToHero removes it.
   if (!calls.spawn_observer) return std::unexpected("native camera unavailable");
-  const auto state = seams_.slot_state ? seams_.slot_state(slot) : ConnectionTracker::SlotState{};
   void* created = calls.spawn_observer(controller);
   current = ControllerOfSlot(slot);
   if (!current) return std::unexpected(current.error());
   std::memcpy(&handle, current->first + layout_.pawn_handle, sizeof(handle));
   identity = IdentityOfHandle(current->second, handle);
   pawn = identity ? InstanceOf(identity) : nullptr;
+  if (pawn && handle != hero) cameras_.insert_or_assign(slot, handle);
   if (!created || pawn != created) return std::unexpected("the player's camera is not ready");
-  cameras_.insert_or_assign(slot, Camera{handle, state.generation});
   return pawn;
 }
 
 std::expected<uint32_t, std::string> PawnObserver::ReturnToHero(int32_t slot,
                                                                 const PlayerSelectionCalls& calls) {
+  // The controller's binding decides, not the record: a camera bound by an
+  // earlier connection in the slot, or one whose watch failed partway, still
+  // returns to a living hero.
   const auto camera = cameras_.find(slot);
-  if (camera == cameras_.end()) return 0;
-  const Camera owned = camera->second;
-  cameras_.erase(camera);
-  const auto state = seams_.slot_state ? seams_.slot_state(slot) : ConnectionTracker::SlotState{};
-  if (!state.occupied || state.generation != owned.generation) return 0;
+  const uint32_t owned = camera == cameras_.end() ? 0 : camera->second;
   auto current = ControllerOfSlot(slot);
-  if (!current) return std::unexpected(current.error());
+  if (!current) {
+    cameras_.erase(slot);
+    return std::unexpected(current.error());
+  }
   auto [controller, list] = *current;
-
-  // The game may have bound a camera of its own since, after the hero died;
-  // its respawn returns the player to the hero then.
   uint32_t handle = 0;
   uint32_t hero = 0;
   std::memcpy(&handle, controller + layout_.pawn_handle, sizeof(handle));
   std::memcpy(&hero, controller + *layout_.hero_pawn_handle, sizeof(hero));
   auto* identity = IdentityOfHandle(list, hero);
   void* pawn = identity ? InstanceOf(identity) : nullptr;
-  if (handle == owned.handle) {
-    if (!pawn || !calls.set_pawn) {
-      cameras_.insert_or_assign(slot, owned);
-      return std::unexpected("the player's hero is not ready");
-    }
-    calls.set_pawn(controller, pawn, false, false, false, false);
+  int32_t health = 0;
+  if (pawn) std::memcpy(&health, static_cast<const char*>(pawn) + layout_.health, sizeof(health));
+
+  // A spectator has no hero to return to, and a dead hero's respawn returns
+  // the player once the game binds it; until then the camera stays bound.
+  if (controller[layout_.team] == 1 || handle == hero || !pawn || health <= 0) {
+    if (owned == handle && handle != hero) return 0;
+    cameras_.erase(slot);
+    return owned;
   }
-  return owned.handle;
+  if (!calls.set_pawn) return std::unexpected("the player's hero is not ready");
+  calls.set_pawn(controller, pawn, false, false, false, false);
+  cameras_.erase(slot);
+  return handle;
 }
 
 std::vector<int32_t> PawnObserver::WatchingSlots() const {
