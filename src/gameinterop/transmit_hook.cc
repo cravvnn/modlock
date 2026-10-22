@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "modlock/gameinterop/connection_tracker.h"
+#include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/thunk_owner.h"
 #include "modlock/gameinterop/virtual_slots.h"
@@ -61,7 +62,7 @@ int32_t TransmitSet::Slot() const {
 
 void TransmitSet::Withhold(uint32_t handle) {
   // The engine clears its own withheld entities' bits the same way.
-  const uint32_t index = handle & 0x7FFF;
+  const uint32_t index = EntityIndexOf(handle);
   if (index >= kEntityCount) {
     return;
   }

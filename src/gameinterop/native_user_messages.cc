@@ -17,6 +17,10 @@
 namespace modlock::gameinterop {
 namespace {
 
+// kHudPrintCenter is HUD_PRINTCENTER, the text message destination that
+// centers the text on screen.
+constexpr int32_t kHudPrintCenter = 4;
+
 #if defined(_WIN32)
 
 // BitReader matches the installed networksystem's bf_read. Unserialize checks
@@ -61,15 +65,15 @@ std::expected<void, std::string> NativeUserMessages::Chat(int32_t slot,
   message.set_player_slot(-1);
   message.set_text(text);
   message.set_all_chat(true);
-  return Send(slot, 314, message);
+  return Send(slot, kChatMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::CenterText(int32_t slot,
                                                                 std::string_view text) const {
   engine::HudTextMessage message;
-  message.set_dest(4);
+  message.set_dest(kHudPrintCenter);
   message.add_param(text);
-  return Send(slot, 124, message);
+  return Send(slot, kHudTextMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::Announce(int32_t slot, std::string_view title,
@@ -77,7 +81,7 @@ std::expected<void, std::string> NativeUserMessages::Announce(int32_t slot, std:
   engine::HudAnnouncement message;
   message.set_title_locstring(title);
   message.set_description_locstring(description);
-  return Send(slot, 363, message);
+  return Send(slot, kHudAnnouncementMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::ScreenEffect(
@@ -94,7 +98,7 @@ std::expected<void, std::string> NativeUserMessages::ScreenEffect(
   message.set_hold_time(timing.hold);
   message.set_fade_out_time(timing.fade_out);
   message.set_scale(timing.scale);
-  return Send(slot, 332, message);
+  return Send(slot, kScreenEffectMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::ClearScreenEffect(
@@ -104,7 +108,7 @@ std::expected<void, std::string> NativeUserMessages::ClearScreenEffect(
   message.set_entindex_owner(owner);
   message.set_clear_all_states(true);
   message.set_state(state);
-  return Send(slot, 332, message);
+  return Send(slot, kScreenEffectMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::Send(
@@ -114,7 +118,7 @@ std::expected<void, std::string> NativeUserMessages::Send(
     return std::unexpected("native user recipient slot is invalid");
   }
   const auto size = message.ByteSizeLong();
-  if (size == 0 || size > 4096) {
+  if (size == 0 || size > kMaxUserMessageSize) {
     return std::unexpected("native user message size is invalid");
   }
 

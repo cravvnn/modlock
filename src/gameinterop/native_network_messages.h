@@ -15,6 +15,18 @@ namespace modlock::gameinterop {
 inline constexpr size_t kSerializerAllocateOffset = 0x8;
 inline constexpr size_t kSerializerMessageIdOffset = 0x18;
 
+// The user message ids the framework sends or reads: CUserMessageSayText2,
+// CUserMessageTextMsg, Deadlock's chat message, PostProcessingAnim and
+// HudGameAnnouncement.
+inline constexpr int16_t kPlayerChatMessageId = 118;
+inline constexpr int16_t kHudTextMessageId = 124;
+inline constexpr int16_t kChatMessageId = 314;
+inline constexpr int16_t kScreenEffectMessageId = 332;
+inline constexpr int16_t kHudAnnouncementMessageId = 363;
+
+// kMaxUserMessageSize bounds one serialized user message.
+inline constexpr size_t kMaxUserMessageSize = 4096;
+
 // NetworkMessageIdOf reads the 32-bit message ID from a native serializer.
 inline int32_t NetworkMessageIdOf(const void* serializer) {
   int32_t id = 0;

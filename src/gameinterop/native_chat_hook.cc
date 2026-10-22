@@ -23,9 +23,6 @@
 namespace modlock::gameinterop {
 namespace {
 
-constexpr int16_t kPlayerChatMessageId = 118;
-constexpr int16_t kChatMessageId = 314;
-
 constexpr std::array<std::string_view, 10> kPlayerChatAudiences{
     "Cstrike_Chat_All",     "Cstrike_Chat_AllDead", "Cstrike_Chat_AllSpec", "Cstrike_Chat_CT",
     "Cstrike_Chat_CT_Dead", "Cstrike_Chat_CT_Loc",  "Cstrike_Chat_T",       "Cstrike_Chat_T_Dead",
@@ -80,7 +77,7 @@ std::optional<NativeChatHook::Message> ReadChat(void* serializer, const void* na
   }
 
   // Serialize the message and decode it.
-  std::array<uint8_t, 4096> bytes{};
+  std::array<uint8_t, kMaxUserMessageSize> bytes{};
   BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                    static_cast<int32_t>(bytes.size() * 8)};
   using Serialize = bool (*)(void*, BitWriter&, const void*);
@@ -118,7 +115,7 @@ std::optional<NativeChatHook::Message> NativeChatHook::Decode(int16_t message_id
                                                               std::span<const uint8_t> serialized) {
   // Read the length prefix of one chat message.
   if ((message_id != kPlayerChatMessageId && message_id != kChatMessageId) || serialized.empty() ||
-      serialized.size() > 4096) {
+      serialized.size() > kMaxUserMessageSize) {
     return std::nullopt;
   }
   google::protobuf::io::CodedInputStream input(serialized.data(),

@@ -29,6 +29,21 @@ struct alignas(8) Ray {
 
 static_assert(sizeof(Ray) == 48);
 
+// RnQueryObjectSet: static, keyframed, dynamic and locatable objects.
+constexpr std::uint8_t kAllQueryObjects = 0x0f;
+
+// RnQueryShapeAttr_t flag bits. Bit 6 has no SDK name; the engine's default
+// query attributes set it, with hit-solid and ignore-disabled-pairs.
+constexpr unsigned kHitSolidBit = 0;
+constexpr unsigned kRequireContactsBit = 1;
+constexpr unsigned kHitTriggerBit = 2;
+constexpr unsigned kIgnoreDisabledPairsBit = 3;
+constexpr unsigned kIgnoreSharedHitboxesBit = 4;
+constexpr unsigned kForceHitEverythingBit = 5;
+constexpr std::uint8_t kDefaultQueryFlag = 1 << 6;
+constexpr std::uint8_t kDefaultQueryFlags =
+    kDefaultQueryFlag | 1 << kHitSolidBit | 1 << kIgnoreDisabledPairsBit;
+
 struct QueryAttributes {
   std::uint64_t with = 0;
   std::uint64_t exclude = 0;
@@ -38,9 +53,9 @@ struct QueryAttributes {
   std::uint16_t hierarchies[2]{};
   std::uint16_t detail_layers = UINT16_MAX;
   std::uint8_t detail = 0;
-  std::uint8_t objects = 0x0f;
+  std::uint8_t objects = kAllQueryObjects;
   std::uint8_t collision = 0;
-  std::uint8_t flags = 0x49;
+  std::uint8_t flags = kDefaultQueryFlags;
 };
 
 static_assert(sizeof(QueryAttributes) == 56);
@@ -245,10 +260,12 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
   attributes.detail = options.target_detail_layer;
   attributes.objects = options.object_set;
   attributes.collision = options.collision_group;
-  attributes.flags = 0x40 | static_cast<unsigned>(options.hit_solid) |
-                     (options.require_contacts << 1) | (options.hit_trigger << 2) |
-                     (options.ignore_disabled_pairs << 3) | (options.ignore_shared_hitboxes << 4) |
-                     (options.force_hit_everything << 5);
+  attributes.flags = kDefaultQueryFlag | options.hit_solid << kHitSolidBit |
+                     options.require_contacts << kRequireContactsBit |
+                     options.hit_trigger << kHitTriggerBit |
+                     options.ignore_disabled_pairs << kIgnoreDisabledPairsBit |
+                     options.ignore_shared_hitboxes << kIgnoreSharedHitboxesBit |
+                     options.force_hit_everything << kForceHitEverythingBit;
   filter.iterate = options.iterate_entities;
 
   // Trace with the native query.
