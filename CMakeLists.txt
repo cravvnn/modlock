@@ -264,6 +264,9 @@ endif()
 add_executable(modlock-host
   src/host_app/control_link.cc
   src/host_app/game_dump.cc
+  src/host_app/game_dump_console.cc
+  src/host_app/game_dump_entities.cc
+  src/host_app/game_dump_schemas.cc
   src/host_app/main.cc
   proto/modlock/control/control.pb.cc
   proto/modlock/dump/dump.pb.cc)
