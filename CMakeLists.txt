@@ -140,6 +140,12 @@ add_library(modlock_sdk SHARED
   src/gameinterop/native_user_messages.cc
   src/gameinterop/modifier_states.cc
   src/gameinterop/pawn_observer.cc
+  src/gameinterop/pawn_observer_abilities.cc
+  src/gameinterop/pawn_observer_items.cc
+  src/gameinterop/pawn_observer_layout.cc
+  src/gameinterop/pawn_observer_players.cc
+  src/gameinterop/pawn_observer_restore.cc
+  src/gameinterop/pawn_observer_souls.cc
   src/gameinterop/player_selection.cc
   src/gameinterop/respawn_guard.cc
   src/gameinterop/setpawn_observe.cc
