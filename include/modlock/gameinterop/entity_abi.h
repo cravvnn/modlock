@@ -44,14 +44,15 @@ inline constexpr char kGameResourceServiceServerVersion[] = "GameResourceService
 // comments), public/entityhandle.h (m_Parts bitfields), and
 // entity2/entitysystem.h plus entity2/concreteentitylist.h (CGameEntitySystem
 // member order and the chunk table).
-inline constexpr uint32_t kMaxEntitiesInList = 512;      // MAX_ENTITIES_IN_LIST
-inline constexpr uint32_t kMaxEntityLists = 64;          // MAX_ENTITY_LISTS
-inline constexpr size_t kIdentitySize = 0x70;            // sizeof(CEntityIdentity)
-inline constexpr size_t kIdentityInstanceOffset = 0x00;  // m_pInstance
-inline constexpr size_t kIdentityEHandleOffset = 0x10;   // m_EHandle
-inline constexpr size_t kIdentityFlagsOffset = 0x30;     // m_flags
-inline constexpr uint32_t kEntityIndexBits = 0x7FFF;     // m_Parts.m_EntityIndex : 15
-inline constexpr uint32_t kSerialShift = 15;             // m_Parts.m_Serial : 17
+inline constexpr uint32_t kMaxEntitiesInList = 512;          // MAX_ENTITIES_IN_LIST
+inline constexpr uint32_t kMaxEntityLists = 64;              // MAX_ENTITY_LISTS
+inline constexpr size_t kIdentitySize = 0x70;                // sizeof(CEntityIdentity)
+inline constexpr size_t kIdentityInstanceOffset = 0x00;      // m_pInstance
+inline constexpr size_t kIdentityEHandleOffset = 0x10;       // m_EHandle
+inline constexpr size_t kIdentityDesignerNameOffset = 0x20;  // m_designerName
+inline constexpr size_t kIdentityFlagsOffset = 0x30;         // m_flags
+inline constexpr uint32_t kEntityIndexBits = 0x7FFF;         // m_Parts.m_EntityIndex : 15
+inline constexpr uint32_t kSerialShift = 15;                 // m_Parts.m_Serial : 17
 inline constexpr uint32_t kSerialBits = 0x1FFFF;
 inline constexpr uint32_t kInvalidEHandleIndex = 0xFFFFFFFF;
 inline constexpr uint32_t kEfInvalidEHandle = 0x1;  // EF_IS_INVALID_EHANDLE

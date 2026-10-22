@@ -39,7 +39,21 @@ class MODLOCK_API WorldEntities {
     bool (*accept_input)(void* entity, const char* input, void* activator, void* caller,
                          void* value, int output_id, void* unknown) = nullptr;
     uint32_t (*set_transmit_state)(void* component, uint32_t flags) = nullptr;
-    std::array<size_t, 9> offsets{};
+
+    // Offsets are the schema field offsets WorldEntities reads and writes.
+    struct Offsets {
+      size_t team = 0;
+      size_t subclass = 0;
+      size_t health = 0;
+      size_t max_health = 0;
+      size_t body = 0;
+      size_t scene_node = 0;
+      size_t origin = 0;
+      size_t transmit = 0;
+      size_t transmit_owned = 0;
+    };
+
+    Offsets offsets;
   };
 
   explicit WorldEntities(Calls calls) : calls_(std::move(calls)) {}

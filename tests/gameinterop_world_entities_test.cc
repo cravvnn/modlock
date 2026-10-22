@@ -98,7 +98,7 @@ class NativeWorld : public testing::Test {
     };
 
     // Resolve definitions, recording the subclass token.
-    calls.offsets = {0x30, kSubclassOffset, 0, 0, 0, 0, 0};
+    calls.offsets = {.team = 0x30, .subclass = kSubclassOffset};
     calls.definition = [](int32_t type, uint32_t token) -> void* {
       EXPECT_EQ(type, -1);
       subclass = token;

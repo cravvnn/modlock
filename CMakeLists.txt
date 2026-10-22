@@ -157,6 +157,8 @@ add_library(modlock_sdk SHARED
   src/gameinterop/vtable_slot_hook.cc
   src/gameinterop/thunk_owner.cc
   src/gameinterop/world_entities.cc
+  src/gameinterop/world_entities_restore.cc
+  src/gameinterop/world_entities_spawn.cc
   src/host.cc
   src/host_app/game_paths.cc
   src/host_app/stdio_guard.cc
