@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <span>
 #include <utility>
 
 #include "modlock/gameinterop/entity_abi.h"
@@ -139,6 +140,11 @@ uint32_t ReadUint32(const unsigned char* base, size_t offset) {
   return value;
 }
 
+// The EModifierState values of the native dash and climb action states.
+constexpr uint16_t kGroundDashingState = 0x25;
+constexpr uint16_t kAirDashingState = 0x29;
+constexpr uint16_t kClimbingState = 0xbc;
+
 std::optional<PawnObserver::Sample::MovementState> ReadMovementState(const EntityLayout& layout,
                                                                      void* pawn) {
   // Without movement fields there is no movement state.
@@ -169,9 +175,8 @@ std::optional<PawnObserver::Sample::MovementState> ReadMovementState(const Entit
         const auto word = ReadUint32(property, *movement.modifier_state_mask + (flag / 32) * 4);
         return (word & (uint32_t{1} << (flag % 32))) != 0;
       };
-      // EModifierState::GroundDashing and AirDashing are native action states.
-      state.dashing = enabled(0x25) || enabled(0x29);
-      state.climbing = enabled(0xbc);
+      state.dashing = enabled(kGroundDashingState) || enabled(kAirDashingState);
+      state.climbing = enabled(kClimbingState);
     }
   }
   return state;
@@ -470,6 +475,124 @@ std::expected<StaminaLayout, std::string> ResolveStaminaLayout() {
   offsets.latch_time = component->offset + resource->offset + latch_time;
   offsets.latch_value = component->offset + resource->offset + latch_value;
   return offsets;
+}
+
+bool AllFinite(std::span<const float> values) {
+  return std::ranges::all_of(values, [](float value) { return std::isfinite(value); });
+}
+
+// CNetworkViewOffsetVector stores its three network floats eight bytes apart,
+// starting 0x10 into the field.
+constexpr size_t kViewOffsetFirstFloat = 0x10;
+constexpr size_t kViewOffsetFloatStride = 8;
+
+// ReadEyePosition offsets origin by the pawn's view offset, or is empty when
+// the field did not resolve or the result is not finite.
+std::optional<std::array<float, 3>> ReadEyePosition(const EntityLayout& layout,
+                                                    const unsigned char* pawn,
+                                                    const float* origin) {
+  // Without a view offset there is no eye position.
+  if (!layout.view_offset) {
+    return std::nullopt;
+  }
+
+  // Offset each network float from the origin.
+  std::array<float, 3> eye{};
+  for (size_t axis = 0; axis < eye.size(); ++axis) {
+    const size_t at = *layout.view_offset + kViewOffsetFirstFloat + axis * kViewOffsetFloatStride;
+    std::memcpy(&eye[axis], pawn + at, sizeof(float));
+    eye[axis] += origin[axis];
+  }
+  if (!AllFinite(eye)) {
+    return std::nullopt;
+  }
+  return eye;
+}
+
+// ReadCurrencies reads the pawn's currencies when their field resolved.
+std::optional<std::array<int32_t, 3>> ReadCurrencies(const EntityLayout& layout,
+                                                     const unsigned char* pawn) {
+  if (!layout.currencies) {
+    return std::nullopt;
+  }
+  std::array<int32_t, 3> currencies{};
+  std::memcpy(currencies.data(), pawn + *layout.currencies, sizeof(currencies));
+  return currencies;
+}
+
+// ReadScore reads the scoreboard totals from the controller's player data. It
+// borrows the engine-owned controller only for the read.
+std::optional<ScoreTotals> ReadScore(const EntityLayout& layout, const void* controller) {
+  // Without score fields there are no totals.
+  if (!layout.score) {
+    return std::nullopt;
+  }
+
+  // Read each counter from the player data.
+  const ScoreLayout& offsets = *layout.score;
+  const auto* data = static_cast<const unsigned char*>(controller) + offsets.player_data_global;
+  ScoreTotals totals;
+  for (const auto& counter : kScoreCounters) {
+    std::memcpy(&(totals.*counter.total), data + offsets.*counter.offset, sizeof(int32_t));
+  }
+  return totals;
+}
+
+// ReadStamina reads the pawn's native stamina. It is empty when the field did
+// not resolve or the values are not sane, never a fabricated default.
+std::optional<PawnObserver::Sample::Stamina> ReadStamina(const EntityLayout& layout,
+                                                         const unsigned char* pawn) {
+  // Without stamina fields there is no stamina.
+  if (!layout.stamina) {
+    return std::nullopt;
+  }
+
+  // Read the current and maximum stamina.
+  float current = 0;
+  float max = 0;
+  std::memcpy(&current, pawn + layout.stamina->current, sizeof(current));
+  std::memcpy(&max, pawn + layout.stamina->max, sizeof(max));
+  if (!std::isfinite(current) || !std::isfinite(max) || max <= 0) {
+    return std::nullopt;
+  }
+  return PawnObserver::Sample::Stamina{.current = current, .max = max};
+}
+
+// ApplyMovementAbilities copies the mantle, slide and jump abilities' state
+// into movement. The jump state is copied only from a unique jump ability.
+void ApplyMovementAbilities(PawnObserver::Sample::MovementState& movement,
+                            std::span<const PawnObserver::Ability> abilities) {
+  // Mantle and slide read from their slots; find the jump ability.
+  const PawnObserver::Ability* jump = nullptr;
+  bool ambiguous = false;
+  for (const auto& ability : abilities) {
+    if (ability.slot == kMantleSlot) {
+      movement.mantling = ability.channeling;
+      movement.mantle_ability_handle = ability.handle;
+      movement.mantle_start_time = ability.mantle_start_time;
+    }
+    if (ability.slot == kSlideSlot) {
+      movement.sliding = ability.sliding;
+    }
+    if (ability.slot == kJumpSlot) {
+      ambiguous = jump != nullptr;
+      jump = &ability;
+    }
+  }
+  if (jump == nullptr || ambiguous) {
+    return;
+  }
+
+  // Copy the jump's wall and zipline state.
+  if (jump->consecutive_wall_jumps) {
+    movement.jump_ability_handle = jump->handle;
+    movement.consecutive_wall_jumps = jump->consecutive_wall_jumps;
+  }
+  movement.current_wall_normal = jump->current_wall_normal;
+  movement.wall_contact_position = jump->wall_contact_position;
+  movement.wall_jump_normal_used = jump->wall_jump_normal_used;
+  movement.wall_jump_facing = jump->wall_jump_facing;
+  movement.last_time_on_zipline = jump->last_time_on_zipline;
 }
 
 }  // namespace
@@ -1213,7 +1336,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
                  origin[0], origin[1], origin[2], static_cast<unsigned long long>(slot_state.xuid));
     std::fflush(stderr);
   }
-  if (!std::isfinite(origin[0]) || !std::isfinite(origin[1]) || !std::isfinite(origin[2])) {
+  if (!AllFinite(std::span<const float>(origin, 3))) {
     return std::nullopt;
   }
 
@@ -1240,24 +1363,10 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
   std::array<float, 3> eye_angles, camera_angles;
   std::memcpy(eye_angles.data(), bytes + layout_.eye_angles, sizeof(eye_angles));
   std::memcpy(camera_angles.data(), bytes + layout_.camera_angles, sizeof(camera_angles));
-  std::optional<std::array<float, 3>> eye_position;
-  if (layout_.view_offset) {
-    std::array<float, 3> eye{};
-    // CNetworkViewOffsetVector stores the three network floats eight bytes apart.
-    for (size_t axis = 0; axis < eye.size(); ++axis) {
-      std::memcpy(&eye[axis], bytes + *layout_.view_offset + 0x10 + axis * 8, sizeof(float));
-      eye[axis] += origin[axis];
-    }
-    if (std::ranges::all_of(eye, [](float value) { return std::isfinite(value); })) {
-      eye_position = eye;
-    }
-  }
+  const auto eye_position = ReadEyePosition(layout_, bytes, origin);
 
   // Reject a pose whose angles are not finite.
-  if (!std::all_of(camera_angles.begin(), camera_angles.end(),
-                   [](float angle) { return std::isfinite(angle); }) ||
-      !std::all_of(eye_angles.begin(), eye_angles.end(),
-                   [](float angle) { return std::isfinite(angle); })) {
+  if (!AllFinite(camera_angles) || !AllFinite(eye_angles)) {
     return std::nullopt;
   }
 
@@ -1268,75 +1377,10 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
   frame_connection_ = slot_state;
   frame_slot_ = slot;
 
-  // Read the currencies when their field resolves.
-  std::optional<std::array<int32_t, 3>> currencies;
-  if (layout_.currencies) {
-    currencies.emplace();
-    std::memcpy(currencies->data(), static_cast<const unsigned char*>(pawn) + *layout_.currencies,
-                sizeof(*currencies));
-  }
-
-  // The totals borrow this frame's engine-owned controller instance; no
-  // pointer survives Observe, and the read shares the pawn's lifetime.
-  std::optional<ScoreTotals> score;
-  if (layout_.score) {
-    const ScoreLayout& offsets = *layout_.score;
-    const auto* data = static_cast<const unsigned char*>(controller) + offsets.player_data_global;
-    ScoreTotals& totals = score.emplace();
-    for (const auto& counter : kScoreCounters) {
-      std::memcpy(&(totals.*counter.total), data + offsets.*counter.offset, sizeof(int32_t));
-    }
-  }
-
-  // Observed native stamina; absent when the schema capability did not
-  // resolve or the values are not finite. Never a fabricated default.
-  std::optional<Sample::Stamina> stamina;
-  if (layout_.stamina) {
-    // Read stamina when its values are sane.
-    const auto& st = *layout_.stamina;
-    float st_cur = 0, st_max = 0;
-    std::memcpy(&st_cur, bytes + st.current, sizeof(st_cur));
-    std::memcpy(&st_max, bytes + st.max, sizeof(st_max));
-    if (std::isfinite(st_cur) && std::isfinite(st_max) && st_max > 0) {
-      stamina = Sample::Stamina{.current = st_cur, .max = st_max};
-    }
-  }
+  // Read the movement abilities when the movement state resolved.
   if (movement) {
-    const auto abilities = CurrentAbilitiesForSlot(slot);
-    if (abilities) {
-      // Read the mantle, slide and jump abilities; two jumps are ambiguous.
-      const Ability* jump = nullptr;
-      bool ambiguous = false;
-      for (const auto& ability : *abilities) {
-        // Mantle and slide read from their slots; the jump slot must be unique.
-        if (ability.slot == kMantleSlot) {
-          movement->mantling = ability.channeling;
-          movement->mantle_ability_handle = ability.handle;
-          movement->mantle_start_time = ability.mantle_start_time;
-        }
-        if (ability.slot == kSlideSlot) {
-          movement->sliding = ability.sliding;
-        }
-        if (ability.slot != kJumpSlot) {
-          continue;
-        }
-        if (jump) {
-          ambiguous = true;
-        }
-        jump = &ability;
-      }
-      if (jump && !ambiguous && jump->consecutive_wall_jumps) {
-        movement->jump_ability_handle = jump->handle;
-        movement->consecutive_wall_jumps = jump->consecutive_wall_jumps;
-      }
-      if (jump && !ambiguous) {
-        // Copy the jump's wall and zipline state.
-        movement->current_wall_normal = jump->current_wall_normal;
-        movement->wall_contact_position = jump->wall_contact_position;
-        movement->wall_jump_normal_used = jump->wall_jump_normal_used;
-        movement->wall_jump_facing = jump->wall_jump_facing;
-        movement->last_time_on_zipline = jump->last_time_on_zipline;
-      }
+    if (const auto abilities = CurrentAbilitiesForSlot(slot)) {
+      ApplyMovementAbilities(*movement, *abilities);
     }
   }
   return Sample{.slot = slot,
@@ -1352,7 +1396,7 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
                 .health = health,
                 .max_health = max_health,
                 .level = level,
-                .currencies = currencies,
+                .currencies = ReadCurrencies(layout_, bytes),
                 .eye_angles = eye_angles,
                 .camera_angles = camera_angles,
                 .eye_position = eye_position,
@@ -1360,8 +1404,8 @@ std::optional<PawnObserver::Sample> PawnObserver::Observe(int32_t slot) {
                 .effective_max_health =
                     seams_.effective_max_health ? seams_.effective_max_health(pawn) : std::nullopt,
                 .upgrade_bonuses = ReadPawnUpgradeBonuses(pawn),
-                .score = score,
-                .stamina = stamina};
+                .score = ReadScore(layout_, controller),
+                .stamina = ReadStamina(layout_, bytes)};
 }
 
 void PawnObserver::Invalidate() {
