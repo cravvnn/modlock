@@ -393,6 +393,19 @@ std::expected<void, std::string> ResolveSchemaOffsets(void* schema_system, const
   return {};
 }
 
+size_t ResolveOptionalSchemaOffsets(void* schema_system, const char* module_name,
+                                    std::span<const OptionalSchemaOffset> fields) {
+  size_t filled = 0;
+  for (const auto& wanted : fields) {
+    auto field = SchemaFieldOf(schema_system, module_name, wanted.class_name, wanted.field_name);
+    if (field && field->size >= wanted.minimum_size) {
+      *wanted.offset = field->offset;
+      ++filled;
+    }
+  }
+  return filled;
+}
+
 std::expected<size_t, std::string> SchemaClassSizeOf(void* schema_system, const char* module_name,
                                                      const char* class_name) {
   auto info = SchemaClassInfoOf(schema_system, module_name, class_name);

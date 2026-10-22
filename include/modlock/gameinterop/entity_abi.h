@@ -224,6 +224,21 @@ struct SchemaOffset {
 [[nodiscard]] MODLOCK_API std::expected<void, std::string> ResolveSchemaOffsets(
     void* schema_system, const char* module_name, std::span<const SchemaOffset> fields);
 
+// OptionalSchemaOffset names a schema field the caller can do without, the
+// storage it must span, and the offset it fills when the field is usable.
+struct OptionalSchemaOffset {
+  const char* class_name;
+  const char* field_name;
+  size_t minimum_size;
+  std::optional<size_t>* offset;
+};
+
+// ResolveOptionalSchemaOffsets fills the offset of each field the module's
+// schema has with at least its minimum span, leaves the others untouched, and
+// returns how many it filled.
+MODLOCK_API size_t ResolveOptionalSchemaOffsets(void* schema_system, const char* module_name,
+                                                std::span<const OptionalSchemaOffset> fields);
+
 // SchemaClassOfEntity returns the schema class info (SchemaClassInfoData_t)
 // the engine binds to a live entity: CEntityIdentity::m_pClass,
 // CEntityClass::m_pClassInfo and CEntityClassInfo::m_pSchemaBinding, at the

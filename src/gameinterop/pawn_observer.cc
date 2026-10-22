@@ -140,6 +140,16 @@ uint32_t ReadUint32(const unsigned char* base, size_t offset) {
   return value;
 }
 
+// CNetworkViewOffsetVector stores its three network floats eight bytes apart,
+// starting 0x10 into the field.
+constexpr size_t kViewOffsetFirstFloat = 0x10;
+constexpr size_t kViewOffsetFloatStride = 8;
+constexpr size_t kViewOffsetSize =
+    kViewOffsetFirstFloat + 2 * kViewOffsetFloatStride + sizeof(float);
+
+// m_bvEnabledStateMask is a CBitVec of the native modifier states.
+constexpr size_t kModifierStateMaskSize = 24;
+
 // The EModifierState values of the native dash and climb action states.
 constexpr uint16_t kGroundDashingState = 0x25;
 constexpr uint16_t kAirDashingState = 0x29;
@@ -182,35 +192,69 @@ std::optional<PawnObserver::Sample::MovementState> ReadMovementState(const Entit
   return state;
 }
 
+// ResolveScoreLayout resolves the scoreboard counters inside the controller's
+// PlayerDataGlobal_t. Each inline counter must fit both its own field and the
+// controller's enclosing storage.
+std::optional<ScoreLayout> ResolveScoreLayout(void* schema_system) {
+  // Find the enclosing player data.
+  const auto data =
+      SchemaFieldOf(schema_system, "server.dll", "CCitadelPlayerController", "m_PlayerDataGlobal");
+  if (!data) {
+    return std::nullopt;
+  }
+
+  // Resolve every counter inside it.
+  ScoreLayout score{.player_data_global = data->offset};
+  for (const auto& counter : kScoreCounters) {
+    const auto field =
+        SchemaFieldOf(schema_system, "server.dll", "PlayerDataGlobal_t", counter.field_name);
+    if (!field || field->size < sizeof(int32_t) || field->offset > data->size ||
+        data->size - field->offset < sizeof(int32_t)) {
+      return std::nullopt;
+    }
+    score.*counter.offset = field->offset;
+  }
+  return score;
+}
+
+// ResolveMovementLayout resolves the movement fields the schema has, or is
+// empty when it has none of them.
+std::optional<MovementLayout> ResolveMovementLayout(void* schema_system) {
+  // Resolve velocity and ground.
+  MovementLayout movement{};
+  const OptionalSchemaOffset optional[] = {
+      {"CBaseEntity", "m_vecAbsVelocity", sizeof(float) * 3, &movement.abs_velocity},
+      {"CBaseEntity", "m_hGroundEntity", sizeof(uint32_t), &movement.ground_entity},
+  };
+  bool available = ResolveOptionalSchemaOffsets(schema_system, "server.dll", optional) > 0;
+
+  // Modifier states mark dashing and climbing; they need both fields.
+  size_t property = 0;
+  size_t mask = 0;
+  const SchemaOffset modifier[] = {
+      {"CBaseEntity", "m_pModifierProp", sizeof(void*), &property},
+      {"CModifierProperty", "m_bvEnabledStateMask", kModifierStateMaskSize, &mask},
+  };
+  if (ResolveSchemaOffsets(schema_system, "server.dll", modifier)) {
+    movement.modifier_property = property;
+    movement.modifier_state_mask = mask;
+    available = true;
+  }
+  if (!available) {
+    return std::nullopt;
+  }
+  return movement;
+}
+
 // ResolveEntityLayout reads core offsets through the game's own schema system.
-// Each movement field is optional: a missing field or a storage span too small
+// Each optional field is optional: a missing field or a storage span too small
 // for its direct type omits only that field and leaves core observation usable.
 std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabled) {
-  // Resolve schema fields, checking each one's storage size.
+  // Resolve the schema system.
   auto schema_system = ResolveSchemaSystem();
   if (!schema_system) {
     return std::unexpected(schema_system.error());
   }
-  auto resolve_schema_field = [&](const char* class_name, const char* field_name,
-                                  size_t minimum_size) -> std::expected<SchemaField, std::string> {
-    auto field = SchemaFieldOf(schema_system.value(), "server.dll", class_name, field_name);
-    if (!field) {
-      return std::unexpected(field.error());
-    }
-    if (field->size < minimum_size) {
-      return std::unexpected(std::string("schema field '") + class_name + "." + field_name +
-                             " storage span is too small");
-    }
-    return *field;
-  };
-  auto resolve_field = [&](const char* class_name, const char* field_name,
-                           size_t minimum_size) -> std::expected<size_t, std::string> {
-    auto field = resolve_schema_field(class_name, field_name, minimum_size);
-    if (!field) {
-      return std::unexpected(field.error());
-    }
-    return field->offset;
-  };
 
   // Resolve the core fields that every observation needs.
   EntityLayout layout{};
@@ -236,100 +280,28 @@ std::expected<EntityLayout, std::string> ResolveEntityLayout(bool movement_enabl
     return std::unexpected(resolved.error());
   }
 
-  // Resolve the optional controller and view fields.
-  if (auto field = SchemaFieldOf(schema_system.value(), "server.dll", "CCitadelPlayerController",
-                                 "m_hHeroPawn")) {
-    layout.hero_pawn_handle = field->offset;
-  }
-  if (auto field =
-          SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerController", "m_ePlayState");
-      field && field->size >= sizeof(int32_t)) {
-    layout.play_state = field->offset;
-  }
-  if (auto field =
-          SchemaFieldOf(*schema_system, "server.dll", "CBaseModelEntity", "m_vecViewOffset");
-      field && field->size >= 0x24) {
-    layout.view_offset = field->offset;
-  }
-
   // Hero component and spawn data are inline schema structures.
   layout.hero_id = hero_component + spawned_hero + hero_id;
 
-  // Native ECurrencyType places gold, ability points and unlocks first in
-  // m_nCurrencies. Missing economy schema does not disable pose observation.
-  auto currencies =
-      SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerPawn", "m_nCurrencies");
-  if (currencies && currencies->size >= sizeof(int32_t) * 3) {
-    layout.currencies = currencies->offset;
-  }
+  // Resolve the optional controller, view and economy fields. Native
+  // ECurrencyType places gold, ability points and unlocks first in
+  // m_nCurrencies.
+  const OptionalSchemaOffset optional[] = {
+      {"CCitadelPlayerController", "m_hHeroPawn", 0, &layout.hero_pawn_handle},
+      {"CCitadelPlayerController", "m_ePlayState", sizeof(int32_t), &layout.play_state},
+      {"CBaseModelEntity", "m_vecViewOffset", kViewOffsetSize, &layout.view_offset},
+      {"CCitadelPlayerPawn", "m_nCurrencies", sizeof(int32_t) * 3, &layout.currencies},
+  };
+  ResolveOptionalSchemaOffsets(*schema_system, "server.dll", optional);
 
-  // Missing scoreboard schema leaves pose observation available. Each inline
-  // counter must fit both its own field and the controller's enclosing storage.
-  const auto data =
-      SchemaFieldOf(*schema_system, "server.dll", "CCitadelPlayerController", "m_PlayerDataGlobal");
-  ScoreLayout score{};
-  bool score_available = data.has_value();
-  for (const auto& counter : kScoreCounters) {
-    if (!score_available) {
-      break;
-    }
-    const auto field =
-        SchemaFieldOf(*schema_system, "server.dll", "PlayerDataGlobal_t", counter.field_name);
-    if (!field || field->size < sizeof(int32_t) || field->offset > data->size ||
-        data->size - field->offset < sizeof(int32_t)) {
-      score_available = false;
-      break;
-    }
-    score.*counter.offset = field->offset;
-  }
-  if (score_available) {
-    score.player_data_global = data->offset;
-    layout.score = score;
-  }
-
-  // Missing stamina schema leaves pose observation available.
+  // Missing scoreboard, stamina or movement schema leaves pose observation
+  // available.
+  layout.score = ResolveScoreLayout(*schema_system);
   if (auto stamina = ResolveStaminaLayout()) {
     layout.stamina = *stamina;
   }
-
-  // Movement fields are optional and read only when enabled.
-  MovementLayout movement{};
-  if (!movement_enabled) {
-    return layout;
-  }
-
-  // Each optional field names its class, member and minimum size.
-  struct OptionalField {
-    const char* class_name;
-    const char* field_name;
-    size_t minimum_size;
-    std::optional<size_t>* out;
-  };
-
-  // Fill the ones the schema has.
-  OptionalField optional[] = {
-      {"CBaseEntity", "m_vecAbsVelocity", sizeof(float) * 3, &movement.abs_velocity},
-      {"CBaseEntity", "m_hGroundEntity", sizeof(uint32_t), &movement.ground_entity},
-  };
-  bool movement_available = false;
-  for (const auto& wanted : optional) {
-    auto field = resolve_field(wanted.class_name, wanted.field_name, wanted.minimum_size);
-    if (field.has_value()) {
-      *wanted.out = field.value();
-      movement_available = true;
-    }
-  }
-
-  // Modifier states mark dashing and climbing.
-  const auto property = resolve_field("CBaseEntity", "m_pModifierProp", sizeof(void*));
-  const auto mask = resolve_field("CModifierProperty", "m_bvEnabledStateMask", 24);
-  if (property && mask) {
-    movement.modifier_property = *property;
-    movement.modifier_state_mask = *mask;
-    movement_available = true;
-  }
-  if (movement_available) {
-    layout.movement = movement;
+  if (movement_enabled) {
+    layout.movement = ResolveMovementLayout(*schema_system);
   }
   return layout;
 }
@@ -363,56 +335,23 @@ std::expected<AbilityLayout, std::string> ResolveAbilityLayout() {
   }
   layout.handles += layout.component;
 
-  // Resolve the optional wall jump fields.
-  const auto wall_count =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump", "m_nConsecutiveWallJumps");
-  if (wall_count && wall_count->size >= sizeof(int8_t)) {
-    layout.consecutive_wall_jumps = wall_count->offset;
-  }
-  const auto wall_normal =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump", "m_vCurrentWallNormal");
-  if (wall_normal && wall_normal->size >= 3 * sizeof(float)) {
-    layout.current_wall_normal = wall_normal->offset;
-  }
-  const auto contact_position = SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump",
-                                              "m_vLastValidWallJumpNormal_PlayerPosition");
-  if (contact_position && contact_position->size >= 3 * sizeof(float)) {
-    layout.wall_contact_position = contact_position->offset;
-  }
-  const auto normal_used =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump", "m_vWallJumpNormalUsed");
-  if (normal_used && normal_used->size >= 3 * sizeof(float)) {
-    layout.wall_jump_normal_used = normal_used->offset;
-  }
-
-  // Resolve the optional jump facing and zipline fields.
-  const auto facing =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump", "m_eWallJumpFacing");
-  if (facing && facing->size >= sizeof(uint16_t)) {
-    layout.wall_jump_facing = facing->offset;
-  }
-  const auto zipline_time =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Jump", "m_flLastTimeOnZipLine");
-  if (zipline_time && zipline_time->size >= sizeof(float)) {
-    layout.last_time_on_zipline = zipline_time->offset;
-  }
-
-  // Resolve the optional action fields: channeling, sliding and mantling.
-  const auto channeling =
-      SchemaFieldOf(*schema, "server.dll", "CCitadelBaseAbility", "m_bChanneling");
-  if (channeling && channeling->size >= 1) {
-    layout.channeling = channeling->offset;
-  }
-  const auto sliding =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Slide", "m_bIsSliding");
-  if (sliding && sliding->size >= 1) {
-    layout.sliding = sliding->offset;
-  }
-  const auto mantle_start =
-      SchemaFieldOf(*schema, "server.dll", "CCitadel_Ability_Mantle", "m_flStartTime");
-  if (mantle_start && mantle_start->size >= sizeof(float)) {
-    layout.mantle_start_time = mantle_start->offset;
-  }
+  // Resolve the optional jump, slide and mantle fields.
+  constexpr size_t kVector = 3 * sizeof(float);
+  const OptionalSchemaOffset optional[] = {
+      {"CCitadel_Ability_Jump", "m_nConsecutiveWallJumps", sizeof(int8_t),
+       &layout.consecutive_wall_jumps},
+      {"CCitadel_Ability_Jump", "m_vCurrentWallNormal", kVector, &layout.current_wall_normal},
+      {"CCitadel_Ability_Jump", "m_vLastValidWallJumpNormal_PlayerPosition", kVector,
+       &layout.wall_contact_position},
+      {"CCitadel_Ability_Jump", "m_vWallJumpNormalUsed", kVector, &layout.wall_jump_normal_used},
+      {"CCitadel_Ability_Jump", "m_eWallJumpFacing", sizeof(uint16_t), &layout.wall_jump_facing},
+      {"CCitadel_Ability_Jump", "m_flLastTimeOnZipLine", sizeof(float),
+       &layout.last_time_on_zipline},
+      {"CCitadelBaseAbility", "m_bChanneling", sizeof(bool), &layout.channeling},
+      {"CCitadel_Ability_Slide", "m_bIsSliding", sizeof(bool), &layout.sliding},
+      {"CCitadel_Ability_Mantle", "m_flStartTime", sizeof(float), &layout.mantle_start_time},
+  };
+  ResolveOptionalSchemaOffsets(*schema, "server.dll", optional);
   return layout;
 }
 
@@ -480,11 +419,6 @@ std::expected<StaminaLayout, std::string> ResolveStaminaLayout() {
 bool AllFinite(std::span<const float> values) {
   return std::ranges::all_of(values, [](float value) { return std::isfinite(value); });
 }
-
-// CNetworkViewOffsetVector stores its three network floats eight bytes apart,
-// starting 0x10 into the field.
-constexpr size_t kViewOffsetFirstFloat = 0x10;
-constexpr size_t kViewOffsetFloatStride = 8;
 
 // ReadEyePosition offsets origin by the pawn's view offset, or is empty when
 // the field did not resolve or the result is not finite.
