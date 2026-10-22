@@ -4,8 +4,8 @@
 
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
-#include "modlock/gameinterop/virtual_slots.h"
 #include "modlock/gameinterop/pawn_observer.h"
+#include "modlock/gameinterop/virtual_slots.h"
 #include "pawn_observer_internal.h"
 #include "utl_vector.h"
 

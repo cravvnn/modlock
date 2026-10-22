@@ -188,6 +188,8 @@ add_library(modlock_sdk SHARED
   src/wasm/file_settings.cc
   src/wasm/build.cc
   src/wasm/wasm_plugin.cc
+  src/wasm/wasm_plugin_calls.cc
+  src/wasm/wasm_plugin_events.cc
   src/wasm/wasm_host.cc
   proto/modlock/camera.pb.cc
   proto/modlock/chat.pb.cc

@@ -1,0 +1,316 @@
+#include <string_view>
+#include <utility>
+
+#include "modlock/gameinterop/connection_tracker.h"
+#include "wasm/wasm_plugin.h"
+
+namespace modlock::wasm {
+
+namespace {
+
+// kPressCommand starts the console command a player's game sends when they
+// press a mod's button: "modlockpress <mod> <node>". The engine names the
+// player who sent it, so a press reaches the mod from any player's game.
+constexpr std::string_view kPressCommand = "modlockpress ";
+
+}  // namespace
+
+std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call) {
+  // Every event after Start sees the current players, which the report
+  // before it carries; a nested event is refused, so it reports nothing.
+  if (!sending_ && call.method() != "Start" && call.method() != "PlayersChanged") {
+    ReportPlayers();
+  }
+  if (!instance_) {
+    return std::unexpected(name_ + " is not running");
+  }
+  const bool nested = std::exchange(sending_, true);
+  auto reply = instance_->Deliver(call);
+  sending_ = nested;
+  if (!reply) {
+    // A failed mod stops alone; a refused nested event leaves it running.
+    if (instance_->Failure()) {
+      Failed("stopped: " + reply.error());
+      Halt();
+      instance_.reset();
+      Stopped();
+    }
+    return reply;
+  }
+
+  // A handler's error goes to the service's caller, or else to the log. A
+  // build from before PlayersChanged answers that it has no such method,
+  // which it says at every report, so the report's error is not logged.
+  if (!reply->error().empty() && call.method() != "Serve" && call.method() != "PlayersChanged") {
+    Log(reply->error());
+  }
+  if (instance_->Slow()) {
+    Slowed(instance_->Report());
+  }
+  return reply;
+}
+
+void WasmPlugin::ReportPlayers() {
+  // Report only a changed set of players.
+  if (check_only_ || !instance_) {
+    return;
+  }
+  const auto revision = gameinterop::ConnectionTracker::Revision();
+  if (reported_ == revision) {
+    return;
+  }
+
+  // Mark it heard first, so a build that refuses the report gets it once
+  // per change rather than before every event.
+  reported_ = revision;
+
+  // The report lists the players as the mod's Players call does.
+  auto players = static_cast<wasm::HostService&>(game_).Players();
+  if (!players) {
+    return;
+  }
+  wasm::PlayersChangedEvent event;
+  *event.mutable_players() = std::move(*players->mutable_players());
+  static_cast<void>(mod_.PlayersChanged(event));
+}
+
+bool WasmPlugin::Command(int32_t slot, std::string_view line) {
+  // A press names its mod; the other mods leave it alone and never see it.
+  if (line.starts_with(kPressCommand)) {
+    // A press names this mod, then its command.
+    const auto pressed = line.substr(kPressCommand.size());
+    const auto space = pressed.find(' ');
+    if (space == std::string_view::npos || pressed.substr(0, space) != name_) {
+      return false;
+    }
+    if (auto refused = Press(slot, pressed.substr(space + 1)); !refused) {
+      Log(refused.error());
+    }
+    return true;
+  }
+
+  // Then the free for all, then the mod, may claim the command.
+  if (game_.FreeForAllCommand(line)) {
+    return true;
+  }
+  wasm::CommandEvent event;
+  event.set_player(slot);
+  event.set_line(std::string(line));
+  auto result = mod_.Command(event);
+  return result && result->claimed();
+}
+
+void WasmPlugin::ShowUi(int32_t slot, const ui::Change& change) {
+  host_.Notify([&](WasmHostObserver& observer) { observer.Ui(name_, slot, change); });
+}
+
+void WasmPlugin::Leave(int32_t slot) {
+  // Hand on the player's metrics and drop their state.
+  HandOn(slot);
+  game_.Leave(slot);
+  if (!ui_.Drop(slot)) {
+    return;
+  }
+
+  // Reset their interface.
+  ui::Change reset;
+  reset.set_reset(true);
+  ShowUi(slot, reset);
+}
+
+wasm::Reply WasmPlugin::Call(const wasm::Call& call) {
+  // A check runs no game; the mod may still log, reach the host's services
+  // and hold its build.
+  wasm::Reply reply;
+  if (!check_only_ || call.method() == "Log" || call.method() == "CallService" ||
+      call.method() == "HoldReload") {
+    reply = game_.Dispatch(call);
+  } else {
+    reply.set_error("no game is running");
+  }
+
+  // Report a failed call in the server log too.
+  if (!reply.error().empty()) {
+    Log(reply.error());
+  }
+  return reply;
+}
+
+std::expected<void, std::string> WasmPlugin::ApplyUi(const wasm::UiRequest& request) {
+  if (auto applied = ui_.Apply(request.player(), request.change()); !applied) {
+    return applied;
+  }
+  ShowUi(request.player(), request.change());
+  return {};
+}
+
+std::expected<wasm::ServiceReply, std::string> WasmPlugin::CallService(
+    const wasm::ServiceCall& call) {
+  // Find the service, ask it, and wrap its answer.
+  auto found = host_.extensions.find(call.service());
+  if (found == host_.extensions.end()) {
+    return std::unexpected("this host provides no service " + call.service());
+  }
+  auto answer = found->second(name_, call.method(), call.payload());
+  if (!answer) {
+    return std::unexpected(answer.error());
+  }
+  wasm::ServiceReply reply;
+  reply.set_payload(std::move(*answer));
+  return reply;
+}
+
+std::expected<std::string, std::string> WasmPlugin::PlayerSetting(int32_t slot,
+                                                                  std::string_view key) {
+  const auto* setting = wasm::FindSetting(manifest_, key);
+  if (!setting) {
+    return std::unexpected("mod.json declares no setting " + std::string(key));
+  }
+  if (const auto steam_id = SteamId(slot); steam_id != 0) {
+    if (auto kept = host_.settings->Value(name_, steam_id, key)) {
+      if (auto value = wasm::Canonical(*setting, *kept)) {
+        return *value;
+      }
+    }
+  }
+  return wasm::DefaultValue(*setting);
+}
+
+std::expected<void, std::string> WasmPlugin::SetPlayerSetting(int32_t slot, std::string_view key,
+                                                              std::string_view value) {
+  // Keep only a value the manifest declares, for a player with an account.
+  const auto* setting = wasm::FindSetting(manifest_, key);
+  if (!setting) {
+    return std::unexpected("mod.json declares no setting " + std::string(key));
+  }
+  const auto canonical = wasm::Canonical(*setting, value);
+  if (!canonical) {
+    return std::unexpected(std::string(value) + " is not a value of setting " + std::string(key));
+  }
+  if (const auto steam_id = SteamId(slot); steam_id != 0) {
+    host_.settings->Store(name_, steam_id, key, *canonical);
+  }
+  return {};
+}
+
+void WasmPlugin::SettingChanged(uint64_t steam_id, std::string_view key, std::string_view value) {
+  // Deliver only a declared value to a running mod.
+  const auto* setting = wasm::FindSetting(manifest_, key);
+  if (!instance_ || !setting || steam_id == 0) {
+    return;
+  }
+  const auto canonical = wasm::Canonical(*setting, value);
+  if (!canonical) {
+    return;
+  }
+
+  // Tell the mod for each slot the player holds.
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
+    // Tell the mod for each slot the player holds.
+    if (SteamId(slot) != steam_id) {
+      continue;
+    }
+    wasm::SettingChangedEvent event;
+    event.set_player(slot);
+    event.set_key(std::string(key));
+    event.set_value(*canonical);
+    static_cast<void>(mod_.SettingChanged(event));
+  }
+}
+
+std::expected<void, std::string> WasmPlugin::AddMetric(int32_t slot, std::string_view name,
+                                                       double value, std::string_view label) {
+  // Count only a declared metric and label, for a player with an account.
+  const auto* metric = wasm::FindMetric(manifest_, name);
+  if (!metric) {
+    return std::unexpected("mod.json declares no metric " + std::string(name));
+  }
+  if (!wasm::Labeled(*metric, label)) {
+    return std::unexpected(std::string(label) + " is not a label of metric " + std::string(name));
+  }
+  const auto steam_id = SteamId(slot);
+  if (steam_id == 0) {
+    return {};
+  }
+
+  // A new player in the slot starts their own totals.
+  if (auto found = tallies_.find(slot);
+      found != tallies_.end() && found->second.first != steam_id) {
+    HandOn(slot);
+  }
+  auto& [account, tally] = tallies_[slot];
+  account = steam_id;
+  tally.Add(*metric, label, value);
+  return {};
+}
+
+void WasmPlugin::HandOn(int32_t slot) {
+  // Take the player's tally.
+  auto found = tallies_.find(slot);
+  if (found == tallies_.end()) {
+    return;
+  }
+  auto [steam_id, tally] = std::move(found->second);
+  tallies_.erase(found);
+  if (tally.Empty()) {
+    return;
+  }
+
+  // Keep it, or log it without a metrics store.
+  if (host_.metrics) {
+    host_.metrics->Keep(name_, steam_id, tally.Totals());
+  } else {
+    Log("metrics for " + std::to_string(steam_id) + ": " + tally.Text());
+  }
+}
+
+uint64_t WasmPlugin::SteamId(int32_t slot) {
+  const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
+  return state.occupied && !state.is_bot ? state.xuid : 0;
+}
+
+std::expected<void, std::string> PluginGame::Log(const wasm::LogRequest& request) {
+  plugin_.Log(request.message());
+  return {};
+}
+
+std::expected<void, std::string> PluginGame::Ui(const wasm::UiRequest& request) {
+  return plugin_.ApplyUi(request);
+}
+
+std::expected<wasm::ServiceReply, std::string> PluginGame::CallService(
+    const wasm::ServiceCall& request) {
+  return plugin_.CallService(request);
+}
+
+std::expected<wasm::SettingResponse, std::string> PluginGame::PlayerSetting(
+    const wasm::PlayerSettingRequest& request) {
+  // Read the setting and wrap it.
+  auto value = plugin_.PlayerSetting(request.player(), request.key());
+  if (!value) {
+    return std::unexpected(value.error());
+  }
+  wasm::SettingResponse response;
+  response.set_value(std::move(*value));
+  return response;
+}
+
+std::expected<void, std::string> PluginGame::SetPlayerSetting(
+    const wasm::SetPlayerSettingRequest& request) {
+  return plugin_.SetPlayerSetting(request.player(), request.key(), request.value());
+}
+
+std::expected<void, std::string> PluginGame::AddMetric(const wasm::AddMetricRequest& request) {
+  return plugin_.AddMetric(request.player(), request.name(), request.value(), request.label());
+}
+
+std::expected<void, std::string> PluginGame::HoldReload(const wasm::HoldReloadRequest& request) {
+  plugin_.Hold(request.held());
+  return {};
+}
+
+void PluginGame::Impacted(const wasm::ImpactEvent& event) {
+  plugin_.Impacted(event);
+}
+
+}  // namespace modlock::wasm
