@@ -33,7 +33,10 @@ constexpr size_t kHeadshotDedupLimit = 64;
 
 template <typename Message>
 bool ParseFramed(std::span<const uint8_t> serialized, Message& message) {
-  if (serialized.empty() || serialized.size() > kMaximumSerializedEventBytes) return false;
+  // Accept one length prefixed message that fills the buffer exactly.
+  if (serialized.empty() || serialized.size() > kMaximumSerializedEventBytes) {
+    return false;
+  }
   google::protobuf::io::CodedInputStream input(serialized.data(),
                                                static_cast<int>(serialized.size()));
   uint32_t length = 0;
@@ -47,6 +50,7 @@ bool ParseFramed(std::span<const uint8_t> serialized, Message& message) {
 }  // namespace
 
 void StaminaEvidenceTracker::StartEpoch() {
+  // Each epoch starts with nothing spent and no evidence.
   ++epoch_;
   spent_ = 0;
   live_ = false;
@@ -62,36 +66,52 @@ void StaminaEvidenceTracker::ResetHeadshots() {
 
 std::optional<modlock::StaminaEvidence> StaminaEvidenceTracker::Bind(
     const std::optional<PawnObserver::Sample>& sample) {
+  // Without an identified pawn there is nothing to bind.
   if (!sample || sample->steam_id == 0 || sample->pawn_handle == 0 ||
       sample->pawn_handle == 0xffffffff) {
     identity_.reset();
     ResetHeadshots();
     return std::nullopt;
   }
+
+  // A new pawn, player or session starts a new epoch.
   const Identity next{sample->pawn_handle, sample->steam_id, sample->session_generation};
   if (!identity_ || *identity_ != next) {
     identity_ = next;
     StartEpoch();
     ResetHeadshots();
   }
-  if (!live_ || lost_ || epoch_ == 0) return std::nullopt;
+
+  // Evidence exists only while spending is live and unbroken.
+  if (!live_ || lost_ || epoch_ == 0) {
+    return std::nullopt;
+  }
   modlock::StaminaEvidence result;
   result.set_epoch(epoch_);
   result.set_total_spent(spent_);
   return result;
 }
 
-void StaminaEvidenceTracker::Invalidate() { lost_ = true; }
+void StaminaEvidenceTracker::Invalidate() {
+  lost_ = true;
+}
 
 void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
-  if (!identity_) return;
+  // Read a receipt for the bound pawn; a malformed one breaks the evidence.
+  if (!identity_) {
+    return;
+  }
   modlock::engine::StaminaConsumed message;
   if (!ParseFramed(serialized, message) || !message.has_entindex_target() ||
       message.entindex_target() < 0) {
     Invalidate();
     return;
   }
-  if (message.entindex_target() != static_cast<int32_t>(identity_->pawn_handle & 0x7fff)) return;
+  if (message.entindex_target() != static_cast<int32_t>(identity_->pawn_handle & 0x7fff)) {
+    return;
+  }
+
+  // A receipt with bad numbers or a repeated time is ambiguous.
   const float before = message.stamina_before();
   const float after = message.stamina_after();
   const float time = message.gametime();
@@ -105,6 +125,8 @@ void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
     Invalidate();
     return;
   }
+
+  // After a loss, only a positive receipt starts a new epoch.
   if (lost_) {
     // A valid zero-cost observation can advance the known event clock, but
     // only an attributed positive receipt proves that spending is live again.
@@ -115,6 +137,8 @@ void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
     }
     StartEpoch();
   }
+
+  // Add the cost to the running total.
   const double next = spent_ + (static_cast<double>(before) - after);
   if (!std::isfinite(next)) {
     Invalidate();
@@ -127,7 +151,10 @@ void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
 }
 
 void StaminaEvidenceTracker::RecordDamage(std::span<const uint8_t> serialized) {
-  if (!identity_) return;
+  // Accept a well formed headshot by the bound pawn.
+  if (!identity_) {
+    return;
+  }
   modlock::engine::Damage message;
   if (!ParseFramed(serialized, message) || !message.has_damage() || message.damage() <= 0 ||
       !message.has_entindex_attacker() || message.entindex_attacker() < 0 ||
@@ -138,16 +165,25 @@ void StaminaEvidenceTracker::RecordDamage(std::span<const uint8_t> serialized) {
       message.entindex_attacker() != static_cast<int32_t>(identity_->pawn_handle & 0x7fff)) {
     return;
   }
+
+  // Count each headshot once, in a bounded window of recent ones.
   const HeadshotKey key{message.entindex_attacker(), message.entindex_victim(),
                         message.server_tick()};
-  if (std::ranges::find(recent_headshots_, key) != recent_headshots_.end()) return;
-  if (recent_headshots_.size() == kHeadshotDedupLimit)
+  if (std::ranges::find(recent_headshots_, key) != recent_headshots_.end()) {
+    return;
+  }
+  if (recent_headshots_.size() == kHeadshotDedupLimit) {
     recent_headshots_.erase(recent_headshots_.begin());
+  }
   recent_headshots_.push_back(key);
-  if (pending_headshots_ != std::numeric_limits<uint32_t>::max()) ++pending_headshots_;
+  if (pending_headshots_ != std::numeric_limits<uint32_t>::max()) {
+    ++pending_headshots_;
+  }
 }
 
-uint32_t StaminaEvidenceTracker::ConsumeHeadshots() { return std::exchange(pending_headshots_, 0); }
+uint32_t StaminaEvidenceTracker::ConsumeHeadshots() {
+  return std::exchange(pending_headshots_, 0);
+}
 
 struct StaminaObserver::Impl {
 #if defined(_WIN32)
@@ -183,10 +219,14 @@ struct StaminaObserver::Impl {
   bool trace_live = false;
 
   void Trace(const char* reason, std::span<const uint8_t> bytes = {}) {
-    if (!InteropTraceEnabled() || trace_count++ >= 64) return;
+    if (!InteropTraceEnabled() || trace_count++ >= 64) {
+      return;
+    }
     std::fprintf(stderr, "[modlock] stamina trace: %s thread=%lu frame_thread=%lu bytes=", reason,
                  GetCurrentThreadId(), frame_thread);
-    for (const auto byte : bytes) std::fprintf(stderr, "%02x", byte);
+    for (const auto byte : bytes) {
+      std::fprintf(stderr, "%02x", byte);
+    }
     std::fprintf(stderr, "\n");
   }
 
@@ -202,20 +242,33 @@ struct StaminaObserver::Impl {
     {
       std::lock_guard lock(mutex);
       forward = original;
-      if (active && self == active->events) active->ReadEvent(serializer, message);
+      if (active && self == active->events) {
+        active->ReadEvent(serializer, message);
+      }
     }
-    if (forward) forward(self, slot, local, count, clients, serializer, message, size, buffer_type);
+    if (forward) {
+      forward(self, slot, local, count, clients, serializer, message, size, buffer_type);
+    }
   }
 
   void ReadEvent(void* serializer, const void* message) {
-    if (frame_thread == 0 || !serializer || !message) return;
-    const auto id = NetworkMessageIdOf(serializer);
-    if (id != kStaminaConsumedMessageId && id != kDamageMessageId) return;
-    if (GetCurrentThreadId() != frame_thread || !messages) {
-      Trace("native event thread or serializer unavailable");
-      if (id == kStaminaConsumedMessageId) tracker.Invalidate();
+    // Read only stamina and damage messages on the frame thread.
+    if (frame_thread == 0 || !serializer || !message) {
       return;
     }
+    const auto id = NetworkMessageIdOf(serializer);
+    if (id != kStaminaConsumedMessageId && id != kDamageMessageId) {
+      return;
+    }
+    if (GetCurrentThreadId() != frame_thread || !messages) {
+      Trace("native event thread or serializer unavailable");
+      if (id == kStaminaConsumedMessageId) {
+        tracker.Invalidate();
+      }
+      return;
+    }
+
+    // Serialize the message back to its wire bytes.
     alignas(8) std::array<uint8_t, 1024> bytes{};
     BitWriter writer{bytes.data(), static_cast<int32_t>(bytes.size()),
                      static_cast<int32_t>(bytes.size() * 8)};
@@ -224,15 +277,20 @@ struct StaminaObserver::Impl {
         writer.overflow || writer.cursor <= 0 ||
         writer.cursor > static_cast<int32_t>(bytes.size() * 8) || writer.cursor % 8 != 0) {
       Trace("native event serialization failed");
-      if (id == kStaminaConsumedMessageId) tracker.Invalidate();
+      if (id == kStaminaConsumedMessageId) {
+        tracker.Invalidate();
+      }
       return;
     }
+
+    // Pass the bytes to the tracker.
     const auto serialized = std::span(bytes.data(), static_cast<size_t>(writer.cursor / 8));
     Trace(id == kStaminaConsumedMessageId ? "stamina receipt" : "damage receipt", serialized);
-    if (id == kStaminaConsumedMessageId)
+    if (id == kStaminaConsumedMessageId) {
       tracker.Record(serialized);
-    else
+    } else {
       tracker.RecordDamage(serialized);
+    }
   }
 #endif
 };
@@ -244,23 +302,42 @@ StaminaObserver::~StaminaObserver() = default;
 
 std::expected<StaminaObserver, std::string> StaminaObserver::Install() {
 #if defined(_WIN32)
+  // Install once, resolving the event system first.
   std::lock_guard lock(Impl::mutex);
-  if (Impl::active) return std::unexpected("stamina observer already installed");
+  if (Impl::active) {
+    return std::unexpected("stamina observer already installed");
+  }
   const auto resolved = ResolveEngineInterface(L"engine2.dll", "GameEventSystemServerV001");
-  if (!resolved) return std::unexpected(resolved.error());
+  if (!resolved) {
+    return std::unexpected(resolved.error());
+  }
+
+  // Resolve the message serializer and both virtual slots.
   void* events = *resolved;
   const auto messages = ResolveEngineInterface(L"networksystem.dll", "NetworkMessagesVersion001");
-  if (!messages) return std::unexpected(messages.error());
+  if (!messages) {
+    return std::unexpected(messages.error());
+  }
   const auto post_slot = ResolveVirtualSlot("game-event-system.post-event");
   const auto serialize_slot = ResolveVirtualSlot("network-messages.serialize");
-  if (!post_slot) return std::unexpected(post_slot.error());
-  if (!serialize_slot) return std::unexpected(serialize_slot.error());
+  if (!post_slot) {
+    return std::unexpected(post_slot.error());
+  }
+  if (!serialize_slot) {
+    return std::unexpected(serialize_slot.error());
+  }
+
+  // Hook the post slot.
   auto impl = std::make_unique<Impl>();
   impl->events = events;
   impl->messages = *messages;
   impl->serialize_slot = *serialize_slot;
   auto hook = VtableSlotHook::Install(events, *post_slot, reinterpret_cast<void*>(&Impl::OnEvent));
-  if (!hook) return std::unexpected(hook.error());
+  if (!hook) {
+    return std::unexpected(hook.error());
+  }
+
+  // Route events to this observer while it lives.
   Impl::original = reinterpret_cast<Impl::PostEvent>(hook->Original());
   impl->owner.emplace(std::move(*hook), &Impl::Clear);
   Impl::active = impl.get();
@@ -272,6 +349,7 @@ std::expected<StaminaObserver, std::string> StaminaObserver::Install() {
 
 void StaminaObserver::Observe(std::optional<PawnObserver::Sample>& sample) {
 #if defined(_WIN32)
+  // Evidence is valid only on one frame thread.
   std::lock_guard lock(Impl::mutex);
   auto& state = *impl_;
   const auto thread = GetCurrentThreadId();
@@ -283,6 +361,8 @@ void StaminaObserver::Observe(std::optional<PawnObserver::Sample>& sample) {
     }
     return;
   }
+
+  // Bind the sample and report the evidence.
   state.frame_thread = thread;
   const auto evidence = state.tracker.Bind(sample);
   const auto headshot_count = state.tracker.ConsumeHeadshots();

@@ -11,7 +11,9 @@ namespace {
 
 // TableOf reads the dispatch table an object points at. The vptr is the first
 // word of the object.
-void** TableOf(void* instance) { return *static_cast<void***>(instance); }
+void** TableOf(void* instance) {
+  return *static_cast<void***>(instance);
+}
 
 // WriteSlot stores one entry into a live dispatch table. A module's table sits
 // in read-only image memory, so Windows grants write access for the store and
@@ -19,16 +21,21 @@ void** TableOf(void* instance) { return *static_cast<void***>(instance); }
 // need no grant.
 bool WriteSlot(void** slot, void* value) {
 #if defined(_WIN32)
+  // Unprotect the slot and write it.
   DWORD previous = 0;
   if (::VirtualProtect(slot, sizeof(void*), PAGE_READWRITE, &previous) == 0) {
     return false;
   }
   *slot = value;
+
+  // Restore the protection and flush the write.
   DWORD restored = 0;
   ::VirtualProtect(slot, sizeof(void*), previous, &restored);
   ::FlushInstructionCache(::GetCurrentProcess(), slot, sizeof(void*));
   return true;
+
 #else
+  // Other platforms write the slot directly.
   *slot = value;
   return true;
 #endif
@@ -36,10 +43,17 @@ bool WriteSlot(void** slot, void* value) {
 
 }  // namespace
 
-VtableSlotHook::VtableSlotHook(VtableSlotHook&& other) noexcept { *this = std::move(other); }
+VtableSlotHook::VtableSlotHook(VtableSlotHook&& other) noexcept {
+  *this = std::move(other);
+}
 
 VtableSlotHook& VtableSlotHook::operator=(VtableSlotHook&& other) noexcept {
-  if (this == &other) return *this;
+  // Self-assignment keeps the hook.
+  if (this == &other) {
+    return *this;
+  }
+
+  // Restore this hook, then take the other's slot.
   Restore();
   slot_ = other.slot_;
   original_ = other.original_;
@@ -48,10 +62,13 @@ VtableSlotHook& VtableSlotHook::operator=(VtableSlotHook&& other) noexcept {
   return *this;
 }
 
-VtableSlotHook::~VtableSlotHook() { Restore(); }
+VtableSlotHook::~VtableSlotHook() {
+  Restore();
+}
 
 std::expected<VtableSlotHook, std::string> VtableSlotHook::Install(void* instance, size_t slot,
                                                                    void* replacement) {
+  // Read the table the object points at.
   if (instance == nullptr || replacement == nullptr) {
     return std::unexpected("vtable slot hook requires an object and a replacement target");
   }
@@ -59,6 +76,8 @@ std::expected<VtableSlotHook, std::string> VtableSlotHook::Install(void* instanc
   if (table == nullptr) {
     return std::unexpected("object carries a null vtable pointer");
   }
+
+  // Swap the slot, keeping the original.
   VtableSlotHook hook;
   hook.original_ = table[slot];
   if (!WriteSlot(&table[slot], replacement)) {

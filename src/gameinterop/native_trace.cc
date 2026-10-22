@@ -56,6 +56,7 @@ bool Finite(const TraceVector& value) {
 }
 
 std::expected<Ray, std::string> BuildRay(const TraceShape& shape) {
+  // Copy the shape into the ray and check its values.
   Ray ray;
   ray.type = static_cast<std::uint8_t>(shape.index());
   bool valid = std::visit(
@@ -70,28 +71,35 @@ std::expected<Ray, std::string> BuildRay(const TraceShape& shape) {
           } mesh{value.mins, value.maxs, value.vertices.data(), 0};
           static_assert(sizeof(Mesh) == 40);
           if (value.vertices.empty() || value.vertices.size() > INT32_MAX ||
-              !std::ranges::all_of(value.vertices, Finite))
+              !std::ranges::all_of(value.vertices, Finite)) {
             return false;
+          }
           mesh.count = static_cast<std::int32_t>(value.vertices.size());
           std::memcpy(ray.shape, &mesh, sizeof(mesh));
           return Finite(value.mins) && Finite(value.maxs);
         } else {
           static_assert(sizeof(T) <= sizeof(ray.shape));
           std::memcpy(ray.shape, &value, sizeof(value));
-          if constexpr (std::is_same_v<T, TraceLine>)
+          if constexpr (std::is_same_v<T, TraceLine>) {
             return Finite(value.offset) && std::isfinite(value.radius) && value.radius >= 0;
-          if constexpr (std::is_same_v<T, TraceSphere>)
+          }
+          if constexpr (std::is_same_v<T, TraceSphere>) {
             return Finite(value.center) && std::isfinite(value.radius) && value.radius >= 0;
-          if constexpr (std::is_same_v<T, TraceHull>)
+          }
+          if constexpr (std::is_same_v<T, TraceHull>) {
             return Finite(value.mins) && Finite(value.maxs) && value.mins[0] <= value.maxs[0] &&
                    value.mins[1] <= value.maxs[1] && value.mins[2] <= value.maxs[2];
-          if constexpr (std::is_same_v<T, TraceCapsule>)
+          }
+          if constexpr (std::is_same_v<T, TraceCapsule>) {
             return Finite(value.center_a) && Finite(value.center_b) &&
                    std::isfinite(value.radius) && value.radius >= 0;
+          }
         }
       },
       shape);
-  if (!valid) return std::unexpected("trace shape has invalid bounds or coordinates");
+  if (!valid) {
+    return std::unexpected("trace shape has invalid bounds or coordinates");
+  }
   return ray;
 }
 
@@ -108,9 +116,14 @@ void TraceThunk(void* physics, Ray* ray, TraceVector* start, TraceVector* end, F
 void FilterDestructor(Filter*, std::uint8_t) {}
 
 std::uint8_t ShouldHitEntity(Filter* filter, void* entity) {
-  if (!entity) return 0;
+  // Hit every entity except the two ignored ones.
+  if (!entity) {
+    return 0;
+  }
   const auto handle = ReferenceHandleOf(entity);
-  if (!handle) return 1;
+  if (!handle) {
+    return 1;
+  }
   const auto index = *handle & 0x7fff;
   return index != filter->attributes.entities[0] && index != filter->attributes.entities[1];
 }
@@ -144,17 +157,29 @@ NativeTrace::~NativeTrace() = default;
 
 std::expected<NativeTrace, std::string> NativeTrace::Install(const ModuleImage& server) {
 #if defined(_WIN32)
-  if (g_hook) return std::unexpected("native trace is already installed");
+  // Install once, resolving the trace function.
+  if (g_hook) {
+    return std::unexpected("native trace is already installed");
+  }
   auto target = ResolveSignature(server, "physics.trace-shape");
-  if (!target) return std::unexpected(target.error());
+  if (!target) {
+    return std::unexpected(target.error());
+  }
+
+  // Detour it.
   auto hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&TraceThunk),
                                         safetyhook::InlineHook::StartDisabled);
-  if (!hook) return std::unexpected("native trace hook creation failed");
+  if (!hook) {
+    return std::unexpected("native trace hook creation failed");
+  }
+
+  // Own the detour and enable it.
   auto impl = std::make_unique<Impl>();
   impl->hook = std::move(hook);
   g_hook = &impl->hook;
-  if (auto enabled = impl->hook.enable(); !enabled)
+  if (auto enabled = impl->hook.enable(); !enabled) {
     return std::unexpected("native trace hook activation failed");
+  }
   return NativeTrace(std::move(impl));
 #else
   (void)server;
@@ -174,12 +199,23 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
                                                            const TraceVector& end,
                                                            const TraceShape& shape,
                                                            const TraceOptions& options) const {
-  if (!Finite(start) || !Finite(end)) return std::unexpected("trace endpoints are not finite");
+  // The endpoints and shape must be valid.
+  if (!Finite(start) || !Finite(end)) {
+    return std::unexpected("trace endpoints are not finite");
+  }
   auto ray = BuildRay(shape);
-  if (!ray) return std::unexpected(ray.error());
+  if (!ray) {
+    return std::unexpected(ray.error());
+  }
+
 #if defined(_WIN32)
+  // The physics query must be ready.
   void* physics = g_physics.load(std::memory_order_acquire);
-  if (!impl_ || !physics) return std::unexpected("native physics query is not ready");
+  if (!impl_ || !physics) {
+    return std::unexpected("native physics query is not ready");
+  }
+
+  // Build the filter from the options.
   Filter filter;
   filter.vtable = &kFilterVtable;
   auto& attributes = filter.attributes;
@@ -194,6 +230,8 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
         options.ignored_owners[i] == UINT32_MAX ? UINT32_MAX : options.ignored_owners[i] & 0x7fff;
     attributes.hierarchies[i] = options.ignored_hierarchies[i];
   }
+
+  // Set the layers, groups and flags.
   attributes.detail_layers = options.included_detail_layers;
   attributes.detail = options.target_detail_layer;
   attributes.objects = options.object_set;
@@ -203,6 +241,8 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
                      (options.ignore_disabled_pairs << 3) | (options.ignore_shared_hitboxes << 4) |
                      (options.force_hit_everything << 5);
   filter.iterate = options.iterate_entities;
+
+  // Trace with the native query.
   GameTrace native;
   const float one = 1;
   std::memcpy(native.transform + 12, &one, sizeof(one));
@@ -210,11 +250,15 @@ std::expected<TraceResult, std::string> NativeTrace::Query(const TraceVector& st
   auto to = end;
   impl_->hook.call<void>(physics, &*ray, &from, &to, &filter, &native);
   if (!std::isfinite(native.fraction) || native.fraction < 0 || native.fraction > 1 ||
-      !Finite(native.normal))
+      !Finite(native.normal)) {
     return std::unexpected("native trace returned invalid hit data");
+  }
+
+  // Interpolate the hit position.
   auto result = ReadGameTrace(native);
-  for (size_t i = 0; i < 3; ++i)
+  for (size_t i = 0; i < 3; ++i) {
     result.position[i] = start[i] + (end[i] - start[i]) * native.fraction;
+  }
   return result;
 #else
   (void)options;
@@ -226,8 +270,10 @@ std::expected<TraceResult, std::string> NativeTrace::RayAngles(const TraceVector
                                                                const TraceVector& angles,
                                                                float distance,
                                                                const TraceOptions& options) const {
-  if (!Finite(angles) || !std::isfinite(distance) || distance <= 0)
+  // Trace a line along the angles for the distance.
+  if (!Finite(angles) || !std::isfinite(distance) || distance <= 0) {
     return std::unexpected("trace angles or distance are invalid");
+  }
   const float pitch = angles[0] * std::numbers::pi_v<float> / 180;
   const float yaw = angles[1] * std::numbers::pi_v<float> / 180;
   const TraceVector end{start[0] + std::cos(pitch) * std::cos(yaw) * distance,
@@ -238,7 +284,9 @@ std::expected<TraceResult, std::string> NativeTrace::RayAngles(const TraceVector
 
 void NativeTrace::InvalidateAfterEngineReset() {
 #if defined(_WIN32)
-  if (impl_) g_physics.store(nullptr, std::memory_order_release);
+  if (impl_) {
+    g_physics.store(nullptr, std::memory_order_release);
+  }
 #endif
 }
 

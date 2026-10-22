@@ -17,6 +17,7 @@ constexpr std::uint32_t kStringTokenSeed = 0x31415926u;
 // MurmurHash2 is the conventional 32-bit mix from tier1/generichash.cpp,
 // transcribed byte-for-byte so the built names hash exactly as the game's.
 std::uint32_t MurmurHash2(const unsigned char* data, size_t length, std::uint32_t seed) {
+  // Mix the input four bytes at a time.
   constexpr std::uint32_t m = 0x5bd1e995u;
   constexpr int r = 24;
   std::uint32_t h = seed ^ static_cast<std::uint32_t>(length);
@@ -31,6 +32,8 @@ std::uint32_t MurmurHash2(const unsigned char* data, size_t length, std::uint32_
     h ^= k;
     position += 4;
   }
+
+  // Mix the remaining bytes and finish.
   const size_t remaining = length - position;
   if (remaining == 3) {
     h ^= static_cast<std::uint32_t>(data[position + 2]) << 16;
@@ -87,6 +90,7 @@ std::uint8_t RawType(const RawKeyValues3& value) {
 
 void SetFreshMetadata(RawKeyValues3& value, std::uint8_t type, std::uint8_t subtype,
                       std::uint8_t array_count = 0) {
+  // Clear the type fields and set the fresh ones.
   value.metadata &= ~(kTypeMask | kSubtypeMask | kFreeArrayMemoryMask | kArrayCountMask);
   value.metadata |= static_cast<std::uint64_t>(type) << 2;
   value.metadata |= static_cast<std::uint64_t>(subtype) << 10;
@@ -159,6 +163,7 @@ MemberName MakeMemberName(std::string_view key) {
 }
 
 std::expected<KeyValuesCalls, std::string> ResolveKeyValuesCalls(const ModuleImage& image) {
+  // Resolve each raw keyvalues call by signature.
   KeyValuesCalls calls;
   struct Entry {
     std::string_view id;
@@ -171,7 +176,9 @@ std::expected<KeyValuesCalls, std::string> ResolveKeyValuesCalls(const ModuleIma
   };
   for (const auto& entry : entries) {
     auto address = ResolveSignature(image, entry.id);
-    if (!address) return std::unexpected(address.error());
+    if (!address) {
+      return std::unexpected(address.error());
+    }
     *entry.slot = *address;
   }
   return calls;
@@ -179,6 +186,7 @@ std::expected<KeyValuesCalls, std::string> ResolveKeyValuesCalls(const ModuleIma
 
 void* AllocateEmptyEntityKeyValues() {
 #if defined(_WIN32)
+  // Find tier0's allocator.
   HMODULE tier0 = GetModuleHandleW(L"tier0.dll");
   if (tier0 == nullptr) {
     return nullptr;
@@ -188,6 +196,8 @@ void* AllocateEmptyEntityKeyValues() {
   if (mem_alloc == nullptr || mem_free == nullptr) {
     return nullptr;
   }
+
+  // Allocate zeroed storage.
   void* storage = mem_alloc(kEntityKeyValuesSize);
   if (storage != nullptr) {
     std::memset(storage, 0, kEntityKeyValuesSize);
@@ -199,6 +209,7 @@ void* AllocateEmptyEntityKeyValues() {
 }
 
 void FreeEmptyEntityKeyValues(void* key_values) {
+  // Free through tier0's allocator.
   if (key_values == nullptr) {
     return;
   }
@@ -218,6 +229,7 @@ void FreeEmptyEntityKeyValues(void* key_values) {
 
 std::expected<void*, std::string> BuildEntityKeyValues(const KeyValuesCalls& calls,
                                                        std::span<const EntityKeyValue> pairs) {
+  // Construct the keyvalues through whichever surface resolved.
   const bool raw_surface = calls.allocate != nullptr && calls.construct_key_values != nullptr &&
                            calls.set_key_value != nullptr;
   void* ekv = nullptr;
@@ -238,6 +250,7 @@ std::expected<void*, std::string> BuildEntityKeyValues(const KeyValuesCalls& cal
     return std::unexpected("CEntityKeyValues construction returned null");
   }
 
+  // Set each pair, through the raw surface or the typed setters.
   for (const auto& pair : pairs) {
     const MemberName name = MakeMemberName(pair.key);
     if (raw_surface && calls.create_key_values == nullptr) {

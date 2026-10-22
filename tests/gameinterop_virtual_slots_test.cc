@@ -23,6 +23,7 @@ constexpr size_t kTable = 0x288;
 class Image final : public ModuleImage {
  public:
   Image() {
+    // Write a file header with a code section and a data section.
     Put<uint32_t>(0x3C, 0x40);
     Put<uint16_t>(0x40 + 6, 2);
     Section(0, 0x100, 0x100, 0x60000020);
@@ -30,15 +31,19 @@ class Image final : public ModuleImage {
 
     // The first and third functions share their entry bytes.
     const std::array<uint8_t, 2> entries[] = {{0xAA, 0xBB}, {0xCC, 0xDD}, {0xAA, 0xBB}};
-    for (size_t i = 0; i < 3; ++i)
+    for (size_t i = 0; i < 3; ++i) {
       std::memcpy(bytes.data() + 0x100 + i * 0x10, entries[i].data(), 2);
+    }
 
+    // Write the type name, its locator and the table.
     const char name[] = ".?AVCThing@@";
     std::memcpy(bytes.data() + 0x210, name, sizeof(name));
     const uint32_t locator[] = {1, 0, 0, 0x200};
     std::memcpy(bytes.data() + 0x240, locator, sizeof(locator));
     Put<uint64_t>(kTable - 8, kBase + 0x240);
-    for (size_t i = 0; i < 3; ++i) Put<uint64_t>(kTable + i * 8, kBase + 0x100 + i * 0x10);
+    for (size_t i = 0; i < 3; ++i) {
+      Put<uint64_t>(kTable + i * 8, kBase + 0x100 + i * 0x10);
+    }
   }
 
   std::uintptr_t base() const override { return kBase; }
@@ -70,6 +75,7 @@ VirtualSlot Slot(std::string_view class_name, size_t index, std::string_view pat
 }
 
 TEST(VirtualSlots, FindsTableThroughTypeInformation) {
+  // The table is found through its type information.
   const Image image;
   const auto table = FindVtable(image, "CThing");
   ASSERT_TRUE(table) << table.error();
@@ -84,11 +90,13 @@ TEST(VirtualSlots, MissingClassIsAnError) {
 }
 
 TEST(VirtualSlots, ReportsEveryMatchingIndex) {
+  // A unique pattern matches one index.
   const Image image;
   const auto unique = MatchingSlots(image, kTable, Slot("CThing", 1, "CC DD"));
   ASSERT_TRUE(unique) << unique.error();
   EXPECT_EQ(*unique, (std::vector<size_t>{1}));
 
+  // A shared one matches each.
   const auto shared = MatchingSlots(image, kTable, Slot("CThing", 0, "AA ??"));
   ASSERT_TRUE(shared) << shared.error();
   EXPECT_EQ(*shared, (std::vector<size_t>{0, 2}));

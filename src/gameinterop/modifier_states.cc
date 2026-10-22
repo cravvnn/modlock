@@ -16,8 +16,10 @@ constexpr int64_t kMaxModifierState = 4096;
 
 std::expected<uint32_t, std::string> ModifierStateIndex(const ModuleImage& image,
                                                         std::string_view name) {
+  // View the image as text.
   const auto bytes = image.image_bytes();
   const std::string_view view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+
   // The name is a whole NUL-terminated string, not a prefix of a longer one.
   std::string needle;
   needle.reserve(name.size() + 2);
@@ -25,8 +27,11 @@ std::expected<uint32_t, std::string> ModifierStateIndex(const ModuleImage& image
   needle.append(name);
   needle.push_back('\0');
   const auto at = view.find(needle);
-  if (at == std::string_view::npos)
+  if (at == std::string_view::npos) {
     return std::unexpected("modifier state " + std::string(name) + " is not in the game module");
+  }
+
+  // The enumerator records point at the string's address.
   const uint64_t address = static_cast<uint64_t>(image.base()) + at + 1;
   char pointer[sizeof(address)];
   std::memcpy(pointer, &address, sizeof(address));
@@ -36,16 +41,22 @@ std::expected<uint32_t, std::string> ModifierStateIndex(const ModuleImage& image
   std::optional<int64_t> value;
   for (auto hit = view.find(pointer_view); hit != std::string_view::npos;
        hit = view.find(pointer_view, hit + 1)) {
-    if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) continue;
+    if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) {
+      continue;
+    }
     int64_t candidate = 0;
     std::memcpy(&candidate, view.data() + hit + sizeof(uint64_t), sizeof(candidate));
-    if (candidate < 0 || candidate >= kMaxModifierState) continue;
-    if (value && *value != candidate)
+    if (candidate < 0 || candidate >= kMaxModifierState) {
+      continue;
+    }
+    if (value && *value != candidate) {
       return std::unexpected("modifier state " + std::string(name) + " has conflicting values");
+    }
     value = candidate;
   }
-  if (!value)
+  if (!value) {
     return std::unexpected("modifier state " + std::string(name) + " has no enumerator record");
+  }
   return static_cast<uint32_t>(*value);
 }
 
@@ -55,7 +66,9 @@ std::expected<std::vector<uint32_t>, std::string> ModifierStateIndices(
   out.reserve(names.size());
   for (const auto name : names) {
     auto index = ModifierStateIndex(image, name);
-    if (!index) return std::unexpected(index.error());
+    if (!index) {
+      return std::unexpected(index.error());
+    }
     out.push_back(*index);
   }
   return out;
@@ -64,7 +77,9 @@ std::expected<std::vector<uint32_t>, std::string> ModifierStateIndices(
 std::expected<std::vector<uint32_t>, std::string> ServerModifierStates(
     std::span<const std::string_view> names) {
   auto image = MappedModuleImage::ForModule(L"server.dll");
-  if (!image) return std::unexpected(image.error());
+  if (!image) {
+    return std::unexpected(image.error());
+  }
   return ModifierStateIndices(*image, names);
 }
 

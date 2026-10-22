@@ -39,13 +39,18 @@ class Events final : public WasmHostObserver {
 // method "refuse".
 std::expected<std::string, std::string> Shout(std::string_view mod, std::string_view method,
                                               std::string_view payload) {
-  if (method == "refuse") return std::unexpected(std::string(mod) + " may not refuse");
+  if (method == "refuse") {
+    return std::unexpected(std::string(mod) + " may not refuse");
+  }
   std::string answer = std::string(method) + ":" + std::string(payload);
-  for (auto& c : answer) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  for (auto& c : answer) {
+    c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  }
   return answer;
 }
 
 TEST(WasmHost, ModsAndHostCallEachOthersServices) {
+  // Load the test mod with the shout service.
   WasmHost host({});
   host.Provide("shout", Shout);
   auto plugin = host.Load(EXTENSION_GO_WASM, PluginContext{.check_only = true});
@@ -77,6 +82,7 @@ TEST(WasmHost, ModsAndHostCallEachOthersServices) {
 }
 
 TEST(WasmHost, HeldModKeepsItsBuildUntilReleased) {
+  // Load the test mod, watching its events.
   WasmHost host({});
   Events events;
   host.Observe(&events);
@@ -106,6 +112,7 @@ TEST(WasmHost, HeldModKeepsItsBuildUntilReleased) {
 }
 
 TEST(WasmHost, StoppedModWaitsForRestart) {
+  // Load the test mod with the shout service, watching its events.
   WasmHost host({});
   host.Provide("shout", Shout);
   Events events;

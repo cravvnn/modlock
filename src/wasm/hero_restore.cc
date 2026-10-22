@@ -46,7 +46,10 @@ bool Finite(const std::array<float, 3>& values) {
 
 std::expected<HeroRestore, std::string> HeroRestore::Create(const Sample& pawn,
                                                             RestoreTarget target, Engine engine) {
-  if (pawn.health <= 0) return std::unexpected("the player has no live hero");
+  // The pawn must be alive and the target well formed.
+  if (pawn.health <= 0) {
+    return std::unexpected("the player has no live hero");
+  }
   if (!Finite(target.position) || !Finite(target.angles)) {
     return std::unexpected("the target's position and angles must be finite");
   }
@@ -85,10 +88,13 @@ HeroRestore::HeroRestore(const Sample& pawn, RestoreTarget target, Engine engine
       max_health_(target_.max_health) {}
 
 HeroRestore::Result HeroRestore::Tick(const std::optional<Sample>& sample, uint64_t tick) {
+  // A live, unchanged hero within the deadline runs the current phase.
   if (!sample || !SamePawn(*sample, pawn_) || sample->health <= 0) {
     return std::unexpected("the hero died or changed during the restore");
   }
-  if (phase_ == Phase::kStart) started_ = tick;
+  if (phase_ == Phase::kStart) {
+    started_ = tick;
+  }
   if (tick - started_ > kDeadline) {
     return std::unexpected(timer_error_.empty()
                                ? "the hero did not settle in 30 seconds"
@@ -119,7 +125,9 @@ HeroRestore::Result HeroRestore::Start(const Sample& sample, uint64_t tick) {
 HeroRestore::Result HeroRestore::Settle(const Sample& sample, uint64_t tick) {
   // Leave a second for derived stats, purchases and the spawn area's healing
   // to settle before health is written; the later readback is the proof.
-  if (tick - since_ < kSecond) return std::nullopt;
+  if (tick - since_ < kSecond) {
+    return std::nullopt;
+  }
   if (target_.fresh) {
     if (!sample.effective_max_health || *sample.effective_max_health <= 0 ||
         sample.max_health < 0) {
@@ -129,7 +137,9 @@ HeroRestore::Result HeroRestore::Settle(const Sample& sample, uint64_t tick) {
     max_health_ = sample.max_health;
   }
   const bool upgrades = UpgradesMatch(sample.slot);
-  if (!upgrades && AdoptGrowth(sample, tick)) return std::nullopt;
+  if (!upgrades && AdoptGrowth(sample, tick)) {
+    return std::nullopt;
+  }
   const bool items = ItemsMatch(sample.slot);
   if ((target_.level && sample.level != *target_.level) || !upgrades || !items) {
     return std::unexpected(
@@ -148,7 +158,9 @@ HeroRestore::Result HeroRestore::Settle(const Sample& sample, uint64_t tick) {
 
 HeroRestore::Result HeroRestore::WriteTimers(const Sample& sample, uint64_t tick) {
   // A refused write retries each second until the deadline.
-  if (!timer_error_.empty() && tick - since_ < kSecond) return std::nullopt;
+  if (!timer_error_.empty() && tick - since_ < kSecond) {
+    return std::nullopt;
+  }
   since_ = tick;
   if (auto written = RestoreTimers(sample.slot); !written) {
     timer_error_ = written.error();
@@ -160,6 +172,7 @@ HeroRestore::Result HeroRestore::WriteTimers(const Sample& sample, uint64_t tick
 }
 
 HeroRestore::Result HeroRestore::Verify(const Sample& sample, uint64_t tick) {
+  // Note whether the pose, health and aim have held.
   const bool held = Beside(sample, target_.position);
   healthy_ = healthy_ || std::abs(sample.health - health_) <= 1 || (target_.fresh && held);
   aimed_ = aimed_ || sample.is_bot || Aimed(sample, target_.angles);
@@ -170,8 +183,13 @@ HeroRestore::Result HeroRestore::Verify(const Sample& sample, uint64_t tick) {
     return std::unexpected("the pose could not be written again");
   }
 
+  // A bot that grew its build settles again.
   const bool upgrades = UpgradesMatch(sample.slot);
-  if (!upgrades && AdoptGrowth(sample, tick)) return std::nullopt;
+  if (!upgrades && AdoptGrowth(sample, tick)) {
+    return std::nullopt;
+  }
+
+  // Compare every part of the hero with the target.
   const bool items = ItemsMatch(sample.slot);
   const bool stamina =
       !target_.fresh ||
@@ -187,13 +205,19 @@ HeroRestore::Result HeroRestore::Verify(const Sample& sample, uint64_t tick) {
   const bool pawn = (held || (!target_.fresh && placed_)) && health && stamina &&
                     (target_.fresh || aimed_) && level && bonuses && upgrades && items;
   const bool timers = TimersMatch(sample.slot);
+
+  // Accept after a stable second, or wait out the grace period.
   if (pawn && timers) {
     placed_ = true;
-    if (++stable_frames_ < kSecond) return std::nullopt;
+    if (++stable_frames_ < kSecond) {
+      return std::nullopt;
+    }
     return std::expected<void, std::string>();
   }
   stable_frames_ = 0;
-  if (tick - since_ <= 2 * kSecond) return std::nullopt;
+  if (tick - since_ <= 2 * kSecond) {
+    return std::nullopt;
+  }
 
   // An ability that ends after the write can start a new cooldown. A fresh
   // target clears the timers twice more, each needing its own stable second.
@@ -215,27 +239,43 @@ HeroRestore::Result HeroRestore::Verify(const Sample& sample, uint64_t tick) {
 }
 
 std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
+  // Write nothing when an exact target has no timers.
   written_.clear();
   written_clock_.reset();
-  if (!target_.fresh && target_.timers.empty()) return {};
+  if (!target_.fresh && target_.timers.empty()) {
+    return {};
+  }
+
+  // Build the timers against the current clock: ready ones for a fresh target, rebased ones for an
+  // exact one.
   auto clock = engine_.clock();
-  if (!clock) return std::unexpected(clock.error());
+  if (!clock) {
+    return std::unexpected(clock.error());
+  }
   if (target_.fresh) {
     auto ready = engine_.ready_timers(slot);
-    if (!ready) return std::unexpected(ready.error());
+    if (!ready) {
+      return std::unexpected(ready.error());
+    }
     written_ = std::move(*ready);
   } else {
     auto owned = engine_.abilities(slot);
-    if (!owned) return std::unexpected(owned.error());
+    if (!owned) {
+      return std::unexpected(owned.error());
+    }
     for (const auto& timer : target_.timers) {
-      const auto matches = [&](const Ability& a) { return a.subclass_id == timer.subclass_id; };
+      const auto matches = [&](const Ability& a) {
+        return a.subclass_id == timer.subclass_id;
+      };
       if (std::ranges::count_if(*owned, matches) != 1) {
         return std::unexpected(
             std::format("the hero does not own exactly one of {}", timer.subclass_id));
       }
       auto ability = *std::ranges::find_if(*owned, matches);
       const auto rebase = [&](const std::array<float, 2>& interval) {
-        if (interval[0] == 0 && interval[1] == 0) return interval;
+        if (interval[0] == 0 && interval[1] == 0) {
+          return interval;
+        }
         return std::array{clock->current_time + interval[0], clock->current_time + interval[1]};
       };
       const auto cooldown = rebase(timer.cooldown);
@@ -248,11 +288,15 @@ std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
       written_.push_back(ability);
     }
   }
-  if (auto set = engine_.set_timers(slot, written_); !set) return set;
+  if (auto set = engine_.set_timers(slot, written_); !set) {
+    return set;
+  }
 
   // Check the write took before trusting later frames to keep it.
   auto owned = engine_.abilities(slot);
-  if (!owned) return std::unexpected(owned.error());
+  if (!owned) {
+    return std::unexpected(owned.error());
+  }
   for (const auto& target : written_) {
     if (std::ranges::none_of(*owned, [&](const Ability& a) {
           return a.handle == target.handle && a.subclass_id == target.subclass_id &&
@@ -270,18 +314,27 @@ std::expected<void, std::string> HeroRestore::RestoreTimers(int32_t slot) {
 }
 
 bool HeroRestore::TimersMatch(int32_t slot) {
-  if (written_.empty()) return true;
+  // Nothing written leaves nothing to check.
+  if (written_.empty()) {
+    return true;
+  }
+
+  // Read the timers on a later tick than the write.
   auto clock = engine_.clock();
   if (!clock || !written_clock_ || clock->tick <= written_clock_->tick ||
       clock->current_time <= written_clock_->current_time) {
     return false;
   }
   auto owned = engine_.abilities(slot);
-  if (!owned) return false;
+  if (!owned) {
+    return false;
+  }
   const auto holds = [&](float start, float end, float actual_start, float actual_end) {
     return (start == actual_start && end == actual_end) ||
            (end <= clock->current_time && actual_start == 0 && actual_end == 0);
   };
+
+  // Every written timer holds or has expired.
   for (const auto& target : written_) {
     const auto found = std::ranges::find_if(*owned, [&](const Ability& a) {
       return a.handle == target.handle && a.subclass_id == target.subclass_id &&
@@ -303,9 +356,13 @@ bool HeroRestore::TimersMatch(int32_t slot) {
 }
 
 bool HeroRestore::UpgradesMatch(int32_t slot) const {
-  if (target_.abilities.empty()) return true;
+  if (target_.abilities.empty()) {
+    return true;
+  }
   auto owned = engine_.abilities(slot);
-  if (!owned) return false;
+  if (!owned) {
+    return false;
+  }
   return std::ranges::all_of(target_.abilities, [&](const gameinterop::AbilityUpgrade& target) {
     const auto matches = [&](const Ability& a) {
       return a.subclass_id == target.subclass_id && a.slot == target.slot;
@@ -316,9 +373,14 @@ bool HeroRestore::UpgradesMatch(int32_t slot) const {
 }
 
 bool HeroRestore::ItemsMatch(int32_t slot) const {
-  if (!target_.items) return true;
+  // Read the owned abilities when the target names items.
+  if (!target_.items) {
+    return true;
+  }
   auto owned = engine_.abilities(slot);
-  if (!owned) return false;
+  if (!owned) {
+    return false;
+  }
   const auto& items = *target_.items;
   const auto same = [](const gameinterop::ItemTarget& target, const Ability& a) {
     return target.subclass_id == a.subclass_id && target.upgrade_info == a.upgrade_info &&
@@ -329,9 +391,15 @@ bool HeroRestore::ItemsMatch(int32_t slot) const {
   size_t count = 0;
   for (const auto& ability : *owned) {
     auto definition = engine_.definition(ability.subclass_id);
-    if (!definition) return false;
-    if (!definition->name.starts_with("upgrade_")) continue;
-    if (definition->disabled) return false;
+    if (!definition) {
+      return false;
+    }
+    if (!definition->name.starts_with("upgrade_")) {
+      continue;
+    }
+    if (definition->disabled) {
+      return false;
+    }
     ++count;
     if (std::ranges::count_if(items, [&](const auto& target) { return same(target, ability); }) !=
         1) {
@@ -345,15 +413,24 @@ bool HeroRestore::ItemsMatch(int32_t slot) const {
 }
 
 bool HeroRestore::AdoptGrowth(const Sample& sample, uint64_t tick) {
-  if (!sample.is_bot || !target_.fresh || !ItemsMatch(sample.slot)) return false;
+  // Only a fresh bot whose items match can grow.
+  if (!sample.is_bot || !target_.fresh || !ItemsMatch(sample.slot)) {
+    return false;
+  }
   auto owned = engine_.abilities(sample.slot);
-  if (!owned) return false;
+  if (!owned) {
+    return false;
+  }
+
+  // Adopt each ability's added upgrades.
   auto abilities = target_.abilities;
   for (auto& target : abilities) {
     const auto matches = [&](const Ability& a) {
       return a.subclass_id == target.subclass_id && a.slot == target.slot;
     };
-    if (std::ranges::count_if(*owned, matches) != 1) return false;
+    if (std::ranges::count_if(*owned, matches) != 1) {
+      return false;
+    }
     const auto& ability = *std::ranges::find_if(*owned, matches);
     if ((ability.upgrade_info & 0xffffu) != (target.upgrade_info & 0xffffu) ||
         (ability.upgrade_info & target.upgrade_info) != target.upgrade_info) {

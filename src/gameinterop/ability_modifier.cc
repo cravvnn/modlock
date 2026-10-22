@@ -17,22 +17,36 @@ std::expected<AbilityModifier, std::string> AbilityModifier::Resolve(const Modul
   // contract.
   auto lookup = ResolveSignature(server, "vdata.lookup-by-hash");
   auto add = ResolveSignature(server, "modifier.add");
-  if (!lookup) return std::unexpected(lookup.error());
-  if (!add) return std::unexpected(add.error());
+  if (!lookup) {
+    return std::unexpected(lookup.error());
+  }
+  if (!add) {
+    return std::unexpected(add.error());
+  }
+
+  // Find the modifier property layout.
   const auto property = SchemaFieldOf(schema, "server.dll", "CBaseEntity", "m_pModifierProp");
   const auto modifiers = SchemaFieldOf(schema, "server.dll", "CModifierProperty", "m_vecModifiers");
   const auto predicted =
       SchemaFieldOf(schema, "server.dll", "CModifierProperty", "m_bPredictedOwner");
   const auto lifetime = SchemaFieldOf(schema, "server.dll", "CModifierVData", "m_flDuration");
-  if (!property || !modifiers || !predicted || !lifetime)
+  if (!property || !modifiers || !predicted || !lifetime) {
     return std::unexpected("modifier property schema unavailable");
+  }
+
+  // Find the modifier's definition.
   const auto find = reinterpret_cast<AbilityDefinitions::Lookup>(*lookup);
   auto* definition = static_cast<unsigned char*>(find(2, MakeMemberName(key).hash));
-  if (!definition)
+  if (!definition) {
     return std::unexpected("modifier definition " + std::string(key) + " unavailable");
+  }
+
+  // Swap in the duration, keeping the original to restore.
   AbilityModifier modifier;
   std::memcpy(&modifier.previous_, definition + lifetime->offset, sizeof(modifier.previous_));
   std::memcpy(definition + lifetime->offset, &duration, sizeof(duration));
+
+  // Record the call and the offsets.
   modifier.add_ = reinterpret_cast<AddModifier>(*add);
   modifier.definition_ = definition;
   modifier.duration_ = lifetime->offset;
@@ -44,13 +58,20 @@ std::expected<AbilityModifier, std::string> AbilityModifier::Resolve(const Modul
 
 std::expected<void, std::string> AbilityModifier::Attach(PawnObserver& observer, int32_t slot,
                                                          uint32_t ability) const {
+  // The pawn must own the source ability.
   auto property = Property(observer, slot);
-  if (!property) return std::unexpected(property.error());
+  if (!property) {
+    return std::unexpected(property.error());
+  }
   const auto sample = observer.Observe(slot);
   auto owned = observer.CurrentAbilitiesForSlot(slot);
-  if (!sample || !owned) return std::unexpected("modifier pawn unavailable");
+  if (!sample || !owned) {
+    return std::unexpected("modifier pawn unavailable");
+  }
   const auto source = std::ranges::find(*owned, ability, &PawnObserver::Ability::subclass_id);
-  if (source == owned->end()) return std::unexpected("modifier source ability unavailable");
+  if (source == owned->end()) {
+    return std::unexpected("modifier source ability unavailable");
+  }
 
   // The native call replicates only from a predicted owner.
   auto* pawn = observer.PawnForSlot(slot);
@@ -59,14 +80,19 @@ std::expected<void, std::string> AbilityModifier::Attach(PawnObserver& observer,
   void* attached =
       add_(*property, pawn, source->handle, sample->team, definition_, nullptr, nullptr);
   (*property)[predicted_] = predicted;
-  if (!attached) return std::unexpected("modifier was not attached");
+  if (!attached) {
+    return std::unexpected("modifier was not attached");
+  }
   return {};
 }
 
 std::expected<bool, std::string> AbilityModifier::Attached(PawnObserver& observer,
                                                            int32_t slot) const {
+  // Read the pawn's modifier vector.
   auto property = Property(observer, slot);
-  if (!property) return std::unexpected(property.error());
+  if (!property) {
+    return std::unexpected(property.error());
+  }
   struct PointerVector {
     int32_t count;
     uint32_t padding;
@@ -76,15 +102,22 @@ std::expected<bool, std::string> AbilityModifier::Attached(PawnObserver& observe
   } rows{};
   std::memcpy(&rows, *property + modifiers_, sizeof(rows));
   if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
-      (rows.count && !rows.data))
+      (rows.count && !rows.data)) {
     return std::unexpected("modifier vector is invalid");
+  }
+
+  // Look for this definition among the modifiers.
   for (int32_t index = 0; index < rows.count; ++index) {
-    if (!rows.data[index]) continue;
+    if (!rows.data[index]) {
+      continue;
+    }
     // CBaseModifier's definition pointer is at +0x10, as in Deadworks
     // CBaseModifier.
     void* current = nullptr;
     std::memcpy(&current, rows.data[index] + 0x10, sizeof(current));
-    if (current == definition_) return true;
+    if (current == definition_) {
+      return true;
+    }
   }
   return false;
 }
@@ -95,12 +128,17 @@ void AbilityModifier::Restore() const {
 
 std::expected<unsigned char*, std::string> AbilityModifier::Property(PawnObserver& observer,
                                                                      int32_t slot) const {
+  // A live pawn holds the property.
   const auto sample = observer.Observe(slot);
   auto* pawn = static_cast<unsigned char*>(observer.PawnForSlot(slot));
-  if (!sample || sample->health <= 0 || !pawn) return std::unexpected("modifier pawn unavailable");
+  if (!sample || sample->health <= 0 || !pawn) {
+    return std::unexpected("modifier pawn unavailable");
+  }
   unsigned char* property = nullptr;
   std::memcpy(&property, pawn + property_, sizeof(property));
-  if (!property) return std::unexpected("modifier property unavailable");
+  if (!property) {
+    return std::unexpected("modifier property unavailable");
+  }
   return property;
 }
 

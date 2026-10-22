@@ -22,6 +22,7 @@ namespace {
 // paged in from disk is not in it.
 std::chrono::nanoseconds ThreadTime() {
 #if defined(_WIN32)
+  // Read the thread's processor time.
   FILETIME creation, exit, kernel, user;
   GetThreadTimes(GetCurrentThread(), &creation, &exit, &kernel, &user);
   auto hundreds = [](FILETIME time) {
@@ -39,17 +40,24 @@ std::chrono::nanoseconds ThreadTime() {
 // range leaves memory.
 std::optional<std::span<uint8_t>> Bytes(wasmtime::Span<uint8_t> memory, uint32_t data,
                                         uint32_t size) {
-  if (uint64_t{data} + size > memory.size()) return std::nullopt;
+  if (uint64_t{data} + size > memory.size()) {
+    return std::nullopt;
+  }
   return std::span<uint8_t>(memory.data() + data, size);
 }
 
 // CallerBytes resolves a range of the calling mod's exported memory.
 std::optional<std::span<uint8_t>> CallerBytes(wasmtime::Caller& caller, uint32_t data,
                                               uint32_t size) {
+  // Find the caller's exported memory.
   auto exported = caller.get_export("memory");
-  if (!exported) return std::nullopt;
+  if (!exported) {
+    return std::nullopt;
+  }
   auto* memory = std::get_if<wasmtime::Memory>(&*exported);
-  if (!memory) return std::nullopt;
+  if (!memory) {
+    return std::nullopt;
+  }
   return Bytes(memory->data(caller.context()), data, size);
 }
 
@@ -68,7 +76,9 @@ Instance::Instance(Runtime& runtime, const Limits& limits, HostCall host_call)
   store_.epoch_deadline_callback(
       [this](wasmtime::Store::Context,
              uint64_t& delta) -> wasmtime::Result<wasmtime::DeadlineKind> {
-        if (Left() <= Left().zero()) return wasmtime::Error("the time budget is spent");
+        if (Left() <= Left().zero()) {
+          return wasmtime::Error("the time budget is spent");
+        }
         delta = Ticks(Left());
         return wasmtime::DeadlineKind::Continue;
       });
@@ -88,7 +98,9 @@ std::expected<std::unique_ptr<Instance>, std::string> Instance::Load(
 std::expected<void, std::string> Instance::Instantiate(std::span<const uint8_t> module) {
   // Compile the module, or share the copy another instance compiled.
   auto compiled = runtime_.Compile(module);
-  if (!compiled) return std::unexpected(compiled.error());
+  if (!compiled) {
+    return std::unexpected(compiled.error());
+  }
   module_ = std::move(*compiled);
 
   // Give the mod standard output and error and nothing else from WASI.
@@ -104,20 +116,28 @@ std::expected<void, std::string> Instance::Instantiate(std::span<const uint8_t> 
   if (auto defined = linker.define_wasi(); !defined) {
     return std::unexpected("cannot define WASI: " + defined.err().message());
   }
-  if (auto defined = DefineImports(linker); !defined) return defined;
+  if (auto defined = DefineImports(linker); !defined) {
+    return defined;
+  }
   SetBudget("initialization", limits_.start_budget);
   auto instance = linker.instantiate(store_.context(), *module_);
-  if (!instance) return std::unexpected("cannot instantiate the mod: " + instance.err().message());
+  if (!instance) {
+    return std::unexpected("cannot instantiate the mod: " + instance.err().message());
+  }
 
   // Find the memory and the event entry point the boundary needs.
   auto context = store_.context();
   auto memory = instance.ok_ref().get(context, "memory");
   if (memory) {
-    if (auto* exported = std::get_if<wasmtime::Memory>(&*memory)) memory_ = *exported;
+    if (auto* exported = std::get_if<wasmtime::Memory>(&*memory)) {
+      memory_ = *exported;
+    }
   }
   auto event = instance.ok_ref().get(context, "modlock_event");
   if (event) {
-    if (auto* exported = std::get_if<wasmtime::Func>(&*event)) event_ = *exported;
+    if (auto* exported = std::get_if<wasmtime::Func>(&*event)) {
+      event_ = *exported;
+    }
   }
   if (!memory_ || !event_) {
     return std::unexpected("the mod must export memory and modlock_event");
@@ -126,35 +146,53 @@ std::expected<void, std::string> Instance::Instantiate(std::span<const uint8_t> 
   // Run the reactor's initialization, which registers the mod's handlers.
   auto initialize = instance.ok_ref().get(context, "_initialize");
   auto* function = initialize ? std::get_if<wasmtime::Func>(&*initialize) : nullptr;
-  if (!function) return {};
+  if (!function) {
+    return {};
+  }
   busy_ = true;
   auto initialized = function->call(context, {});
   busy_ = false;
-  if (!initialized) return std::unexpected(Stop(initialized.err().message()));
+  if (!initialized) {
+    return std::unexpected(Stop(initialized.err().message()));
+  }
   return {};
 }
 
 std::expected<void, std::string> Instance::DefineImports(wasmtime::Linker& linker) {
+  // Define the host call and host read imports.
   auto call = linker.func_wrap("modlock", "host_call",
                                [this](wasmtime::Caller caller, uint32_t data, uint32_t size) {
                                  return HostCallImport(caller, data, size);
                                });
-  if (!call) return std::unexpected("cannot define host_call: " + call.err().message());
+  if (!call) {
+    return std::unexpected("cannot define host_call: " + call.err().message());
+  }
   auto read = linker.func_wrap("modlock", "host_read",
                                [this](wasmtime::Caller caller, uint32_t data, uint32_t size) {
                                  return HostReadImport(caller, data, size);
                                });
-  if (!read) return std::unexpected("cannot define host_read: " + read.err().message());
+  if (!read) {
+    return std::unexpected("cannot define host_read: " + read.err().message());
+  }
   return {};
 }
 
 std::expected<Reply, std::string> Instance::Deliver(const Call& call) {
-  if (failure_) return std::unexpected(*failure_);
-  if (busy_) return std::unexpected("the mod is already handling an event");
+  // Handle one event at a time, and none after a failure.
+  if (failure_) {
+    return std::unexpected(*failure_);
+  }
+  if (busy_) {
+    return std::unexpected("the mod is already handling an event");
+  }
 
   // Call the mod, which copies the call out with host_read.
   auto typed = event_->typed<uint32_t, uint64_t>(store_.context());
-  if (!typed) return std::unexpected(Fail("modlock_event must take i32 and return i64"));
+  if (!typed) {
+    return std::unexpected(Fail("modlock_event must take i32 and return i64"));
+  }
+
+  // Pass the call, timing the mod within its budget.
   call.SerializeToString(&pending_);
   SetBudget(call.method(), call.method() == "Start" ? limits_.start_budget : limits_.event_budget);
   busy_ = true;
@@ -162,15 +200,21 @@ std::expected<Reply, std::string> Instance::Deliver(const Call& call) {
   busy_ = false;
   budget_.spent = ThreadTime() - budget_.began;
   pending_.clear();
-  if (!called) return std::unexpected(Stop(called.err().message()));
+  if (!called) {
+    return std::unexpected(Stop(called.err().message()));
+  }
 
   // Decode the reply the mod left in its memory.
   const uint64_t packed = called.ok();
   Reply reply;
-  if (packed == 0) return reply;
+  if (packed == 0) {
+    return reply;
+  }
   auto bytes = Bytes(memory_->data(store_.context()), static_cast<uint32_t>(packed >> 32),
                      static_cast<uint32_t>(packed));
-  if (!bytes) return std::unexpected(Fail("modlock_event returned a reply outside memory"));
+  if (!bytes) {
+    return std::unexpected(Fail("modlock_event returned a reply outside memory"));
+  }
   if (!reply.ParseFromArray(bytes->data(), static_cast<int>(bytes->size()))) {
     return std::unexpected(Fail("modlock_event returned an invalid Reply"));
   }
@@ -181,7 +225,9 @@ wasmtime::Result<uint32_t, wasmtime::Trap> Instance::HostCallImport(wasmtime::Ca
                                                                     uint32_t data, uint32_t size) {
   // Decode the call from mod memory.
   auto bytes = CallerBytes(caller, data, size);
-  if (!bytes) return wasmtime::Trap("modlock.host_call: the call is outside memory");
+  if (!bytes) {
+    return wasmtime::Trap("modlock.host_call: the call is outside memory");
+  }
   Call call;
   if (!call.ParseFromArray(bytes->data(), static_cast<int>(bytes->size()))) {
     return wasmtime::Trap("modlock.host_call: invalid Call");
@@ -204,11 +250,14 @@ wasmtime::Result<uint32_t, wasmtime::Trap> Instance::HostCallImport(wasmtime::Ca
 wasmtime::Result<std::monostate, wasmtime::Trap> Instance::HostReadImport(wasmtime::Caller caller,
                                                                           uint32_t data,
                                                                           uint32_t size) {
+  // Copy the pending call into the mod's buffer.
   if (size != pending_.size()) {
     return wasmtime::Trap("modlock.host_read: the size differs from the pending message");
   }
   auto bytes = CallerBytes(caller, data, size);
-  if (!bytes) return wasmtime::Trap("modlock.host_read: the buffer is outside memory");
+  if (!bytes) {
+    return wasmtime::Trap("modlock.host_read: the buffer is outside memory");
+  }
   std::memcpy(bytes->data(), pending_.data(), size);
   pending_.clear();
   return std::monostate{};
@@ -224,15 +273,22 @@ std::chrono::nanoseconds Instance::Left() const {
 }
 
 uint64_t Instance::Ticks(std::chrono::nanoseconds left) {
-  if (left <= left.zero()) return 0;
+  if (left <= left.zero()) {
+    return 0;
+  }
   return static_cast<uint64_t>((left + kEpochTick - std::chrono::nanoseconds{1}) / kEpochTick);
 }
 
-void Instance::ArmDeadline() { store_.context().set_epoch_deadline(Ticks(Left())); }
+void Instance::ArmDeadline() {
+  store_.context().set_epoch_deadline(Ticks(Left()));
+}
 
-std::string Instance::Report() const { return std::format("{} took {}", budget_.call, Spent()); }
+std::string Instance::Report() const {
+  return std::format("{} took {}", budget_.call, Spent());
+}
 
 std::string Instance::Spent() const {
+  // Report the time spent and the host calls' share.
   using std::chrono::duration_cast;
   using std::chrono::milliseconds;
   auto text = std::format("{} ms", duration_cast<milliseconds>(budget_.spent).count());
@@ -246,7 +302,9 @@ std::string Instance::Spent() const {
 
 std::string Instance::Stop(std::string trap) {
   budget_.spent = ThreadTime() - budget_.began;
-  if (budget_.spent < budget_.limit) return Fail(std::move(trap));
+  if (budget_.spent < budget_.limit) {
+    return Fail(std::move(trap));
+  }
   return Fail(std::format("{} ran past its {} ms budget: {}", budget_.call, budget_.limit.count(),
                           Spent()));
 }

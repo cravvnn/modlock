@@ -10,41 +10,63 @@ namespace modlock::gameinterop {
 
 std::expected<MatchClock, std::string> MatchClock::Resolve(const ModuleImage& server,
                                                            void* schema_system) {
+  // Find the current game rules and the server module's range.
   auto current = ResolveCurrentGameRules(server);
-  if (!current) return std::unexpected(current.error());
+  if (!current) {
+    return std::unexpected(current.error());
+  }
   MatchClock clock;
   clock.current_ = *current;
   clock.module_begin_ = server.base();
   clock.module_size_ = server.image_bytes().size();
+
+  // Resolve the clock's schema fields.
   const char* names[] = {"m_flGameStartTime", "m_nTotalPausedTicks", "m_bGamePaused",
                          "m_nPauseStartTick"};
   for (size_t i = 0; i < clock.offsets_.size(); ++i) {
     auto field = SchemaFieldOf(schema_system, "server.dll", "CCitadelGameRules", names[i]);
-    if (!field) return std::unexpected(field.error());
-    if (field->size < (i == 2 ? sizeof(bool) : sizeof(uint32_t)))
+    if (!field) {
+      return std::unexpected(field.error());
+    }
+    if (field->size < (i == 2 ? sizeof(bool) : sizeof(uint32_t))) {
       return std::unexpected(std::string("match clock storage too short: ") + names[i]);
+    }
     clock.offsets_[i] = field->offset;
   }
   return clock;
 }
 
 std::expected<void*, std::string> MatchClock::Current() const {
-  if (!current_) return std::unexpected("match clock is unresolved");
+  // Read the current rules pointer.
+  if (!current_) {
+    return std::unexpected("match clock is unresolved");
+  }
   void* rules = nullptr;
   std::memcpy(&rules, current_, sizeof(rules));
-  if (!rules) return std::unexpected("match clock game rules are not active");
+  if (!rules) {
+    return std::unexpected("match clock game rules are not active");
+  }
+
+  // The rules' vtable must lie in the server module.
   uintptr_t table = 0;
   std::memcpy(&table, rules, sizeof(table));
-  if (table < module_begin_ || table - module_begin_ >= module_size_)
+  if (table < module_begin_ || table - module_begin_ >= module_size_) {
     return std::unexpected("match clock rules leave the server module");
+  }
   return rules;
 }
 
 std::expected<float, std::string> MatchClock::GameTime(float current_time, float interval) const {
-  if (!std::isfinite(current_time) || !std::isfinite(interval) || interval <= 0)
+  // Read the rules on a finite clock.
+  if (!std::isfinite(current_time) || !std::isfinite(interval) || interval <= 0) {
     return std::unexpected("match clock requires a finite simulation clock");
+  }
   auto rules = Current();
-  if (!rules) return std::unexpected(rules.error());
+  if (!rules) {
+    return std::unexpected(rules.error());
+  }
+
+  // Read the pause fields.
   const auto* bytes = static_cast<const unsigned char*>(*rules);
   int32_t paused_ticks = 0;
   int32_t pause_start = 0;
@@ -52,36 +74,58 @@ std::expected<float, std::string> MatchClock::GameTime(float current_time, float
   std::memcpy(&paused_ticks, bytes + offsets_[1], sizeof(paused_ticks));
   std::memcpy(&paused, bytes + offsets_[2], sizeof(paused));
   std::memcpy(&pause_start, bytes + offsets_[3], sizeof(pause_start));
-  if (paused_ticks < 0 || pause_start < 0)
+  if (paused_ticks < 0 || pause_start < 0) {
     return std::unexpected("native match clock fields are invalid");
-  if (paused && current_time > pause_start * interval) current_time = pause_start * interval;
+  }
+
+  // Freeze the clock at a pause's start and subtract the paused time.
+  if (paused && current_time > pause_start * interval) {
+    current_time = pause_start * interval;
+  }
   return current_time - paused_ticks * interval;
 }
 
 std::expected<float, std::string> MatchClock::Read(float current_time, float interval) const {
+  // Read the game time less the match's start.
   auto time = GameTime(current_time, interval);
-  if (!time) return std::unexpected(time.error());
+  if (!time) {
+    return std::unexpected(time.error());
+  }
   float start = 0;
   std::memcpy(&start, static_cast<const unsigned char*>(*Current()) + offsets_[0], sizeof(start));
-  if (!std::isfinite(start)) return std::unexpected("native match clock fields are invalid");
+  if (!std::isfinite(start)) {
+    return std::unexpected("native match clock fields are invalid");
+  }
   return *time - start;
 }
 
 std::expected<void, std::string> MatchClock::Restore(float seconds, float current_time,
                                                      float interval) {
-  if (!std::isfinite(seconds)) return std::unexpected("source match clock is nonfinite");
+  // Read the clock now.
+  if (!std::isfinite(seconds)) {
+    return std::unexpected("source match clock is nonfinite");
+  }
   auto before = Read(current_time, interval);
-  if (!before) return std::unexpected(before.error());
+  if (!before) {
+    return std::unexpected(before.error());
+  }
   auto rules = Current();
-  if (!rules) return std::unexpected(rules.error());
+  if (!rules) {
+    return std::unexpected(rules.error());
+  }
+
+  // Move the start so the clock reads the source's seconds.
   auto* bytes = static_cast<unsigned char*>(*rules);
   float start = 0;
   std::memcpy(&start, bytes + offsets_[0], sizeof(start));
   start += *before - seconds;
   std::memcpy(bytes + offsets_[0], &start, sizeof(start));
+
+  // Check the clock reads back within a tick.
   auto after = Read(current_time, interval);
-  if (!after || std::abs(*after - seconds) > interval)
+  if (!after || std::abs(*after - seconds) > interval) {
     return std::unexpected("native match clock readback differs from source");
+  }
   return {};
 }
 

@@ -67,16 +67,21 @@ struct Map {
 
   NpcRestore::Result Run(NpcRestore& restore) {
     for (int frame = 0; frame < 3; ++frame) {
-      if (auto result = restore.Tick()) return result;
+      if (auto result = restore.Tick()) {
+        return result;
+      }
     }
     return std::nullopt;
   }
 };
 
 TEST(NpcRestore, PlacedUnitsHold) {
+  // Restore two troopers and a guardian.
   Map map;
   auto restore = NpcRestore::Create({Trooper(0, 1), Trooper(0, 4), Guardian()}, map.Engine());
   ASSERT_TRUE(restore) << restore.error();
+
+  // Two frames settle; the third succeeds and finishes.
   EXPECT_FALSE(restore->Tick());
   EXPECT_FALSE(restore->Tick());
   auto result = restore->Tick();
@@ -86,6 +91,7 @@ TEST(NpcRestore, PlacedUnitsHold) {
 }
 
 TEST(NpcRestore, DriftBeyondReachFails) {
+  // Units that drift out of reach fail, naming the nearest.
   Map map;
   map.drift = 40;
   auto restore = NpcRestore::Create({Trooper(0, 1)}, map.Engine());
@@ -98,6 +104,7 @@ TEST(NpcRestore, DriftBeyondReachFails) {
 }
 
 TEST(NpcRestore, CountsNameTheKindThatDiffers) {
+  // An extra trooper is named by kind and count.
   std::vector<Target> targets{Trooper(0, 1), Guardian()};
   std::vector<Sample> samples{{.handle = 1, .state = Trooper(0, 1)},
                               {.handle = 2, .state = Trooper(0, 1)},
@@ -115,16 +122,19 @@ TEST(NpcRestore, EachTargetNeedsItsOwnUnit) {
                               {.handle = 2, .state = Trooper(0, 4)}};
   EXPECT_TRUE(NpcRestore::Match(targets, samples));
 
+  // Moving the second trooper's lane leaves one target unmatched.
   samples[1].state.lane = 1;
   EXPECT_FALSE(NpcRestore::Match(targets, samples));
 }
 
 TEST(NpcRestore, RejectsMalformedTargets) {
+  // A trooper needs a lane.
   Map map;
   auto target = Trooper(0, 1);
   target.lane.reset();
   EXPECT_FALSE(NpcRestore::Create({target}, map.Engine()));
 
+  // A guardian needs health; neither reaches the engine.
   target = Guardian();
   target.health = 0;
   EXPECT_FALSE(NpcRestore::Create({target}, map.Engine()));

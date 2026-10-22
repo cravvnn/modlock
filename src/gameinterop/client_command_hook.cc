@@ -26,7 +26,9 @@ CommandFn g_original = nullptr;
 ClientCommandHook::Handler* g_handler = nullptr;
 
 // Preserve call-through for a dispatch already entering the old thunk.
-void ClearThunkState() { g_handler = nullptr; }
+void ClearThunkState() {
+  g_handler = nullptr;
+}
 
 // CCommand::m_ArgSBuffer is the first CUtlVectorFixedGrowable after an int.
 // In the x64 SDK, its count is at +8 and allocator pointer at +16.
@@ -34,7 +36,10 @@ void ClearThunkState() { g_handler = nullptr; }
 // Copy through the OS so an incompatible command layout is forwarded untouched
 // instead of dereferenced.
 std::string ReadCommand(void* args) {
-  if (args == nullptr) return {};
+  // Read the argument count and buffer.
+  if (args == nullptr) {
+    return {};
+  }
   int32_t count = 0;
   const char* data = nullptr;
   const auto* base = static_cast<const unsigned char*>(args);
@@ -42,10 +47,16 @@ std::string ReadCommand(void* args) {
       !ReadNative(base + 16, &data, sizeof(data)) || data == nullptr) {
     return {};
   }
+
+  // Copy the text and cut it at its terminator.
   std::array<char, 512> text{};
-  if (!ReadNative(data, text.data(), count)) return {};
+  if (!ReadNative(data, text.data(), count)) {
+    return {};
+  }
   const auto* end = static_cast<const char*>(std::memchr(text.data(), '\0', count));
-  if (end == nullptr) return {};
+  if (end == nullptr) {
+    return {};
+  }
   return std::string(text.data(), static_cast<size_t>(end - text.data()));
 }
 
@@ -67,9 +78,13 @@ void CommandThunk(void* self, int32_t slot, void* args) {
       std::fprintf(stderr, "[modlock] client command slot %d: %s\n", slot, command.c_str());
       std::fflush(stderr);
     }
-    if (!command.empty() && (*g_handler)(slot, command)) return;
+    if (!command.empty() && (*g_handler)(slot, command)) {
+      return;
+    }
   }
-  if (g_original != nullptr) g_original(self, slot, args);
+  if (g_original != nullptr) {
+    g_original(self, slot, args);
+  }
 }
 #endif
 }  // namespace
@@ -87,22 +102,36 @@ ClientCommandHook::~ClientCommandHook() = default;
 
 std::expected<ClientCommandHook, std::string> ClientCommandHook::Install(Handler handler) {
 #if defined(_WIN32)
-  if (g_handler != nullptr || !handler)
+  // Install once.
+  if (g_handler != nullptr || !handler) {
     return std::unexpected("client command hook already installed or handler absent");
+  }
+
+  // Find the game clients interface and the command slot.
   const auto resolved = ResolveEngineInterface(L"server.dll", "Source2GameClients001");
-  if (!resolved) return std::unexpected(resolved.error());
+  if (!resolved) {
+    return std::unexpected(resolved.error());
+  }
   void* clients = *resolved;
   const auto slot = ResolveVirtualSlot("game-clients.command");
-  if (!slot) return std::unexpected(slot.error());
+  if (!slot) {
+    return std::unexpected(slot.error());
+  }
+
+  // Swap the slot and publish the thunk state.
   auto impl = std::make_unique<Impl>();
   impl->handler = std::move(handler);
   auto hook = VtableSlotHook::Install(clients, *slot, reinterpret_cast<void*>(&CommandThunk));
-  if (!hook) return std::unexpected(hook.error());
+  if (!hook) {
+    return std::unexpected(hook.error());
+  }
   g_original = reinterpret_cast<CommandFn>(hook->Original());
   impl->owner.emplace(std::move(*hook), &ClearThunkState);
   g_handler = &impl->handler;
   return ClientCommandHook(std::move(impl));
+
 #else
+  // Other platforms have no native server.
   (void)handler;
   return std::unexpected("client command hook requires the Windows host build");
 #endif

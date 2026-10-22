@@ -37,6 +37,7 @@ struct World {
   int builds = 0;
 
   World() {
+    // Start a level hero with full stamina and two upgrades.
     sample.slot = 2;
     sample.steam_id = 7;
     sample.pawn_handle = 42;
@@ -71,7 +72,9 @@ struct World {
                              std::span<const Ability> timers) -> std::expected<void, std::string> {
           for (const auto& timer : timers) {
             for (auto& ability : owned) {
-              if (ability.handle == timer.handle) ability = timer;
+              if (ability.handle == timer.handle) {
+                ability = timer;
+              }
             }
           }
           return {};
@@ -90,9 +93,12 @@ struct World {
   }
 
   bool Apply(const RestoreTarget& target, HeroRestore::Stage stage) {
+    // The build stage sets the level, upgrades and bonuses.
     if (stage == HeroRestore::Stage::kBuild) {
       ++builds;
-      if (target.level) sample.level = *target.level;
+      if (target.level) {
+        sample.level = *target.level;
+      }
       for (const auto& upgrade : target.abilities) {
         for (auto& ability : owned) {
           if (ability.subclass_id == upgrade.subclass_id) {
@@ -100,18 +106,28 @@ struct World {
           }
         }
       }
-      if (target.upgrade_bonuses) sample.upgrade_bonuses = target.upgrade_bonuses;
+      if (target.upgrade_bonuses) {
+        sample.upgrade_bonuses = target.upgrade_bonuses;
+      }
       return true;
     }
+
+    // The pawn stage fills a fresh hero, or sets the saved health.
     if (stage == HeroRestore::Stage::kPawn) {
       if (target.fresh) {
         sample.stamina->current = sample.stamina->max;
-        if (health_sticks) sample.health = *sample.effective_max_health;
+        if (health_sticks) {
+          sample.health = *sample.effective_max_health;
+        }
       } else {
-        if (health_sticks) sample.health = target.health;
+        if (health_sticks) {
+          sample.health = target.health;
+        }
         sample.max_health = target.max_health;
       }
     }
+
+    // Every stage places the hero, pushed aside by the world.
     sample.x = target.position[0] + push;
     sample.y = target.position[1] + push;
     sample.z = target.position[2] + push;
@@ -122,7 +138,9 @@ struct World {
   // Run ticks restore until it ends or frames run out.
   HeroRestore::Result Run(HeroRestore& restore, int frames) {
     for (int frame = 0; frame < frames; ++frame) {
-      if (auto result = restore.Tick(sample, static_cast<uint64_t>(tick))) return result;
+      if (auto result = restore.Tick(sample, static_cast<uint64_t>(tick))) {
+        return result;
+      }
       time += 1.0f / 64;
       ++tick;
       sample.z -= fall;
@@ -145,12 +163,15 @@ RestoreTarget Exact() {
 }
 
 TEST(HeroRestore, ExactTargetHolds) {
+  // Restore the exact target.
   World world;
   auto restore = HeroRestore::Create(world.sample, Exact(), world.Engine());
   ASSERT_TRUE(restore) << restore.error();
   auto result = world.Run(*restore, 30 * 64);
   ASSERT_TRUE(result);
   ASSERT_TRUE(*result) << result->error();
+
+  // Health, level and upgrades hold.
   EXPECT_EQ(world.sample.health, 320);
   EXPECT_EQ(world.sample.level, 9);
   EXPECT_EQ(world.owned[0].upgrade_info, 0x30005u);
@@ -163,18 +184,22 @@ TEST(HeroRestore, ExactTargetHolds) {
 }
 
 TEST(HeroRestore, FreshTargetFillsHealthAndStamina) {
+  // Restore a fresh hero.
   World world;
   RestoreTarget target{.position = {1, 2, 3}, .fresh = true};
   auto restore = HeroRestore::Create(world.sample, target, world.Engine());
   ASSERT_TRUE(restore) << restore.error();
   auto result = world.Run(*restore, 30 * 64);
   ASSERT_TRUE(result && *result) << (result ? result->error() : "still running");
+
+  // Health and stamina fill, and the charges refill.
   EXPECT_EQ(world.sample.health, 650);
   EXPECT_EQ(world.sample.stamina->current, 3);
   EXPECT_EQ(world.owned[0].charges, 2);
 }
 
 TEST(HeroRestore, FreshTargetLetsTheHeroFallOrBePushed) {
+  // A fresh hero that falls or is pushed still restores.
   World world;
   world.fall = 8;
   world.push = 14;
@@ -186,6 +211,7 @@ TEST(HeroRestore, FreshTargetLetsTheHeroFallOrBePushed) {
 }
 
 TEST(HeroRestore, FreshBotKeepsBoughtUpgrades) {
+  // Make a bot whose upgrades grow past the target.
   World world;
   world.sample.is_bot = true;
   world.grow = true;
@@ -193,6 +219,8 @@ TEST(HeroRestore, FreshBotKeepsBoughtUpgrades) {
       .position = {1, 2, 3},
       .fresh = true,
       .abilities = {{.subclass_id = kAbility, .slot = 0, .upgrade_info = 0x30005}}};
+
+  // It still restores, keeping the grown upgrades.
   auto restore = HeroRestore::Create(world.sample, target, world.Engine());
   ASSERT_TRUE(restore) << restore.error();
   auto result = world.Run(*restore, 30 * 64);
@@ -201,6 +229,7 @@ TEST(HeroRestore, FreshBotKeepsBoughtUpgrades) {
 }
 
 TEST(HeroRestore, PersonsUpgradesMustMatch) {
+  // A person's upgrades that grow past the target fail.
   World world;
   world.grow = true;
   auto restore = HeroRestore::Create(world.sample, Exact(), world.Engine());
@@ -212,6 +241,7 @@ TEST(HeroRestore, PersonsUpgradesMustMatch) {
 }
 
 TEST(HeroRestore, HealthThatNeverTakesFails) {
+  // Health that never takes fails and names the health.
   World world;
   world.health_sticks = false;
   auto restore = HeroRestore::Create(world.sample, Exact(), world.Engine());
@@ -223,10 +253,13 @@ TEST(HeroRestore, HealthThatNeverTakesFails) {
 }
 
 TEST(HeroRestore, DeathEndsTheRestore) {
+  // Start a restore.
   World world;
   auto restore = HeroRestore::Create(world.sample, Exact(), world.Engine());
   ASSERT_TRUE(restore) << restore.error();
   EXPECT_FALSE(world.Run(*restore, 10));
+
+  // A new pawn means the hero died; the restore ends.
   world.sample.pawn_handle = 43;
   auto result = world.Run(*restore, 1);
   ASSERT_TRUE(result);
@@ -234,20 +267,24 @@ TEST(HeroRestore, DeathEndsTheRestore) {
 }
 
 TEST(HeroRestore, RejectsMalformedTargets) {
+  // A zero health target is refused.
   World world;
   auto target = Exact();
   target.health = 0;
   EXPECT_FALSE(HeroRestore::Create(world.sample, target, world.Engine()));
 
+  // A nonfinite position is refused.
   target = Exact();
   target.position[0] = std::numeric_limits<float>::quiet_NaN();
   EXPECT_FALSE(HeroRestore::Create(world.sample, target, world.Engine()));
 
+  // An item in a slot past the shop is refused.
   target = Exact();
   target.items = std::vector<modlock::gameinterop::ItemTarget>{
       {.subclass_id = kItem, .upgrade_info = 0x10000, .slot = 9}};
   EXPECT_FALSE(HeroRestore::Create(world.sample, target, world.Engine()));
 
+  // A dead hero is refused.
   world.sample.health = 0;
   EXPECT_FALSE(HeroRestore::Create(world.sample, Exact(), world.Engine()));
 }

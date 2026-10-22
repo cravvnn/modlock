@@ -27,11 +27,14 @@ int g_hero_id_pointer_count = 0;
 
 // ManagerGetter stands in for the TLS-guarded CHeroDefinitionManager getter
 // decoded from the recorded anchor.
-void* ManagerGetter() { return g_manager_sentinel; }
+void* ManagerGetter() {
+  return g_manager_sentinel;
+}
 
 // RecordHeroNameToId mirrors the native ABI: HeroNameToId returns a
 // pointer and the lookup only reads *out_id, never the returned pointer.
 int* RecordHeroNameToId(void* manager, int* out_id, const char* name) {
+  // Record the lookup and answer the fake id.
   EXPECT_EQ(manager, g_manager_sentinel);
   *out_id = g_fake_hero_id;
   g_recorded_hero_name = name;
@@ -47,6 +50,7 @@ void* RecordGetHeroById(void* manager, unsigned hero_id) {
 }
 
 HeroDefinitionCalls RecordingCalls() {
+  // Point each call at its recorder.
   HeroDefinitionCalls calls;
   calls.manager_getter = &ManagerGetter;
   calls.hero_name_to_id = &RecordHeroNameToId;
@@ -55,6 +59,7 @@ HeroDefinitionCalls RecordingCalls() {
 }
 
 void ResetFakes() {
+  // Reset every recorded value.
   g_manager_sentinel = reinterpret_cast<void*>(0x1400);
   g_fake_hero_id = 7;
   g_recorded_hero_id = -1;
@@ -84,9 +89,12 @@ constexpr std::string_view kSignatureIds[] = {
 };
 
 gti::FakeModuleImage ImageWithout(std::string_view missing) {
+  // Add every signature but the missing one, and patch the manager call.
   gti::FakeModuleImage image;
   for (const auto id : kSignatureIds) {
-    if (id != missing) image.AddSignature(id);
+    if (id != missing) {
+      image.AddSignature(id);
+    }
   }
   image.Seal(reinterpret_cast<std::uintptr_t>(&ManagerGetter));
   image.PatchRelativeCall("hero-definition-manager.get-manager", 0xE,
@@ -111,6 +119,7 @@ TEST(HeroDefinitionsResolveTest, ResolveFailsClosedWhenASignatureIsAbsent) {
 // ---- Find: the lookup contract over recording fakes. ----
 
 TEST_F(HeroDefinitionsTest, FindResolvesNameToIdAndDefinition) {
+  // A name resolves to its id and definition.
   auto hero = owner_.Find("vesta");
   ASSERT_TRUE(hero.has_value()) << hero.error();
   EXPECT_EQ(hero->id, 7);
@@ -120,6 +129,7 @@ TEST_F(HeroDefinitionsTest, FindResolvesNameToIdAndDefinition) {
 }
 
 TEST_F(HeroDefinitionsTest, FindResolvesSourceIdToDefinition) {
+  // A source id resolves to its definition without a name lookup.
   auto hero = owner_.Find(17u);
   ASSERT_TRUE(hero.has_value()) << hero.error();
   EXPECT_EQ(hero->id, 17);
@@ -143,6 +153,7 @@ TEST_F(HeroDefinitionsTest, FindIgnoresTheReturnedPointerAndJudgesFromOutId) {
 }
 
 TEST_F(HeroDefinitionsTest, UnknownNameRefusesWithoutDefinitionRead) {
+  // An unknown name stops before reading a definition.
   g_fake_hero_id = -1;
   auto refused = owner_.Find("hero_inferno");
   ASSERT_FALSE(refused.has_value());
@@ -151,6 +162,7 @@ TEST_F(HeroDefinitionsTest, UnknownNameRefusesWithoutDefinitionRead) {
 }
 
 TEST_F(HeroDefinitionsTest, UnliveManagerRefusesBeforeAnyLookup) {
+  // A manager that is not live stops every lookup.
   g_manager_sentinel = nullptr;
   auto refused = owner_.Find("vesta");
   g_manager_sentinel = reinterpret_cast<void*>(0x1400);
@@ -160,6 +172,7 @@ TEST_F(HeroDefinitionsTest, UnliveManagerRefusesBeforeAnyLookup) {
 }
 
 TEST_F(HeroDefinitionsTest, UnresolvedSlotRefusesBeforeAnyEngineCall) {
+  // A table of unresolved calls refuses before calling the engine.
   HeroDefinitionCalls calls;  // every slot null
   modlock::gameinterop::HeroDefinitions owner(calls);
   auto refused = owner.Find("vesta");

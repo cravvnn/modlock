@@ -2,9 +2,12 @@
 
 namespace modlock::host {
 
-PluginHost::~PluginHost() { StopAll(); }
+PluginHost::~PluginHost() {
+  StopAll();
+}
 
 std::unique_ptr<std::string> PluginHost::Register(std::unique_ptr<Plugin> plugin) {
+  // Accept a named plugin of this version while registration is open.
   if (!accepting_) {
     return std::make_unique<std::string>("plugin registration is closed");
   }
@@ -24,6 +27,8 @@ std::unique_ptr<std::string> PluginHost::Register(std::unique_ptr<Plugin> plugin
   if (!name || !*name) {
     return std::make_unique<std::string>("plugin name is empty");
   }
+
+  // Names are unique.
   for (const auto& entry : entries_) {
     if (entry.plugin->Name() != nullptr && name != nullptr &&
         std::string(entry.plugin->Name()) == name) {
@@ -108,9 +113,13 @@ std::vector<LoadedPlugin> PluginHost::Plugins() const {
 }
 
 int PluginHost::ExitCode(int engine_exit) const {
-  if (engine_exit != 0) return engine_exit;
+  if (engine_exit != 0) {
+    return engine_exit;
+  }
   for (const auto& entry : entries_) {
-    if (auto result = entry.plugin->ExitCode(); result && *result != 0) return *result;
+    if (auto result = entry.plugin->ExitCode(); result && *result != 0) {
+      return *result;
+    }
   }
   return 0;
 }

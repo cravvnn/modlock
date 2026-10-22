@@ -12,22 +12,35 @@ namespace modlock::gameinterop {
 namespace {
 
 // DispatchTableOf reads the vptr every MSVC object carries as its first word.
-void** DispatchTableOf(void* instance) { return *static_cast<void***>(instance); }
+void** DispatchTableOf(void* instance) {
+  return *static_cast<void***>(instance);
+}
 
 }  // namespace
 
 std::expected<EngineServer, std::string> EngineServer::Resolve() {
   const auto instance = ResolveEngineInterface(L"engine2.dll", kEngineToServerVersion);
-  if (!instance) return std::unexpected(instance.error());
+  if (!instance) {
+    return std::unexpected(instance.error());
+  }
   return Bind(*instance);
 }
 
 std::expected<EngineServer, std::string> EngineServer::Bind(void* instance) {
-  if (!instance) return std::unexpected("engine server interface is null");
+  // Resolve the command slot from the instance's table.
+  if (!instance) {
+    return std::unexpected("engine server interface is null");
+  }
   const auto slot = ResolveVirtualSlot("engine-server.server-command");
-  if (!slot) return std::unexpected(slot.error());
+  if (!slot) {
+    return std::unexpected(slot.error());
+  }
   auto** table = DispatchTableOf(instance);
-  if (!table || !table[*slot]) return std::unexpected("engine server command slot is unavailable");
+  if (!table || !table[*slot]) {
+    return std::unexpected("engine server command slot is unavailable");
+  }
+
+  // Keep the instance and slot.
   EngineServer server;
   server.instance_ = instance;
   server.command_slot_ = *slot;
@@ -35,15 +48,27 @@ std::expected<EngineServer, std::string> EngineServer::Bind(void* instance) {
 }
 
 std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadClock() const {
-  if (!instance_) return std::unexpected("engine server interface is unavailable");
+  // Find the globals slot in the instance's table.
+  if (!instance_) {
+    return std::unexpected("engine server interface is unavailable");
+  }
   const auto slot = ResolveVirtualSlot("engine-server.globals");
-  if (!slot) return std::unexpected(slot.error());
+  if (!slot) {
+    return std::unexpected(slot.error());
+  }
   auto** table = DispatchTableOf(instance_);
-  if (!table || !table[*slot]) return std::unexpected("server globals slot is unavailable");
+  if (!table || !table[*slot]) {
+    return std::unexpected("server globals slot is unavailable");
+  }
+
+  // Call it.
   using GetGlobals = const void* (*)(void*);
   const auto* globals =
       static_cast<const unsigned char*>(reinterpret_cast<GetGlobals>(table[*slot])(instance_));
-  if (!globals) return std::unexpected("server simulation globals are unavailable");
+  if (!globals) {
+    return std::unexpected("server simulation globals are unavailable");
+  }
+
   // CGlobalVarsBase x64 layout from the pinned SDK's globalvars_base.h:
   // curtime +0x30, tickcount +0x44, interval_per_tick +0x54. The callback's
   // engine frame owns the globals storage and all three values.
@@ -55,6 +80,7 @@ std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadCloc
       !std::isfinite(clock.interval) || clock.interval <= 0 || clock.interval > 1) {
     return std::unexpected("invalid server simulation clock");
   }
+
   // Reject an inconsistent ABI read, allowing two simulation ticks and float
   // rounding at long uptimes. This is not a replacement or synthesized clock.
   const double tolerance =
@@ -68,10 +94,15 @@ std::expected<EngineServer::SimulationClock, std::string> EngineServer::ReadCloc
 
 bool EngineServer::ServerCommand(const char* command) const {
 #if defined(_WIN32)
-  if (instance_ == nullptr || command == nullptr) return false;
+  // Call the command slot.
+  if (instance_ == nullptr || command == nullptr) {
+    return false;
+  }
   using ServerCommandFn = void (*)(void* self, const char* str);
   void** table = DispatchTableOf(instance_);
-  if (table == nullptr || table[command_slot_] == nullptr) return false;
+  if (table == nullptr || table[command_slot_] == nullptr) {
+    return false;
+  }
   reinterpret_cast<ServerCommandFn>(table[command_slot_])(instance_, command);
   return true;
 #else

@@ -31,6 +31,7 @@ std::optional<safetyhook::InlineHook> g_shutdown_hook;
 // original would swallow every engine session startup.
 void ClearThunkState() {
 #if defined(_WIN32)
+  // Unhook shutdown and drop every callback.
   g_shutdown_hook.reset();
 #endif
   g_before_shutdown = {};
@@ -47,25 +48,39 @@ using StartupServerFn = void (*)(void* self, const void* config, void* world_ses
 // INetworkGameServer::Shutdown's dispatch table belongs to engine2.dll and
 // outlives the server instance.
 void ShutdownServerThunk(void* self) {
-  if (g_before_shutdown) g_before_shutdown();
+  if (g_before_shutdown) {
+    g_before_shutdown();
+  }
   g_shutdown_hook->call<void>(self);
 }
 
 std::expected<void, std::string> ArmShutdown(void* service) {
+  // Resolve the server service's slots.
   const auto game_server_slot = ResolveVirtualSlot("network-server-service.game-server");
   const auto shutdown_slot = ResolveVirtualSlot("network-game-server.shutdown");
-  if (!game_server_slot) return std::unexpected(game_server_slot.error());
-  if (!shutdown_slot) return std::unexpected(shutdown_slot.error());
+  if (!game_server_slot) {
+    return std::unexpected(game_server_slot.error());
+  }
+  if (!shutdown_slot) {
+    return std::unexpected(shutdown_slot.error());
+  }
+
+  // Find the network game server.
   auto table = *static_cast<void***>(service);
   auto server = reinterpret_cast<void* (*)(void*)>(table[*game_server_slot])(service);
-  if (!server) return std::unexpected("network game server unavailable after startup");
+  if (!server) {
+    return std::unexpected("network game server unavailable after startup");
+  }
   g_shutdown_hook.reset();
   auto server_table = *static_cast<void***>(server);
+
   // The engine calls this implementation directly during normal quit, so an
   // inline hook is required; replacing only the virtual slot misses teardown.
   auto hook = safetyhook::create_inline(server_table[*shutdown_slot],
                                         reinterpret_cast<void*>(&ShutdownServerThunk));
-  if (!hook) return std::unexpected("could not hook network game server shutdown");
+  if (!hook) {
+    return std::unexpected("could not hook network game server shutdown");
+  }
   g_shutdown_hook.emplace(std::move(hook));
   return {};
 }
@@ -83,10 +98,14 @@ void StartupServerThunk(void* self, const void* config, void* world_session, con
       },
       [&](std::string_view map) {
         if (auto armed = ArmShutdown(self); !armed) {
-          if (g_on_error) g_on_error(armed.error());
+          if (g_on_error) {
+            g_on_error(armed.error());
+          }
           return;
         }
-        if (g_after_startup) g_after_startup(map);
+        if (g_after_startup) {
+          g_after_startup(map);
+        }
       });
 }
 #endif
@@ -114,13 +133,24 @@ std::expected<StartupServerProbe, std::string> StartupServerProbe::Install(
     StartupCallback before_startup, StartupCallback after_startup,
     std::function<void()> before_shutdown, std::function<void(std::string)> on_error) {
 #if defined(_WIN32)
+  // Find the network server service's startup slot.
   const auto resolved = ResolveEngineInterface(L"engine2.dll", kNetworkServerServiceVersion);
-  if (!resolved) return std::unexpected(resolved.error());
+  if (!resolved) {
+    return std::unexpected(resolved.error());
+  }
   void* service = *resolved;
   const auto slot = ResolveVirtualSlot("network-server-service.startup-server");
-  if (!slot) return std::unexpected(slot.error());
+  if (!slot) {
+    return std::unexpected(slot.error());
+  }
+
+  // Hook the slot.
   auto hook = VtableSlotHook::Install(service, *slot, reinterpret_cast<void*>(&StartupServerThunk));
-  if (!hook) return std::unexpected(hook.error());
+  if (!hook) {
+    return std::unexpected(hook.error());
+  }
+
+  // Keep the original and the callbacks for the thunk.
   g_startup_server_original = hook->Original();
   g_before_startup = std::move(before_startup);
   g_after_startup = std::move(after_startup);
