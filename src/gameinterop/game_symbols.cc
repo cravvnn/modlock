@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <optional>
 
 #include "modlock/gameinterop/signature.h"
 
@@ -126,6 +127,53 @@ std::expected<void, std::string> ResolveSignatures(const ModuleImage& image,
     *call.target = *address;
   }
   return {};
+}
+
+std::expected<uint32_t, std::string> EnumeratorValue(const ModuleImage& image,
+                                                     std::string_view name, int64_t limit) {
+  // View the image as text.
+  const auto bytes = image.image_bytes();
+  const std::string_view view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+
+  // The name is a whole NUL-terminated string, not a prefix of a longer one.
+  std::string needle;
+  needle.reserve(name.size() + 2);
+  needle.push_back('\0');
+  needle.append(name);
+  needle.push_back('\0');
+  const auto at = view.find(needle);
+  if (at == std::string_view::npos) {
+    return std::unexpected(std::string(name) + " is not in the game module");
+  }
+
+  // The enumerator records point at the string's address.
+  const uint64_t address = static_cast<uint64_t>(image.base()) + at + 1;
+  char pointer[sizeof(address)];
+  std::memcpy(pointer, &address, sizeof(address));
+  const std::string_view pointer_view(pointer, sizeof(pointer));
+
+  // Every enumerator record naming this string must agree on one value.
+  std::optional<int64_t> value;
+  for (auto hit = view.find(pointer_view); hit != std::string_view::npos;
+       hit = view.find(pointer_view, hit + 1)) {
+    // Each aligned record holds the string's address, then its value.
+    if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) {
+      continue;
+    }
+    int64_t candidate = 0;
+    std::memcpy(&candidate, view.data() + hit + sizeof(uint64_t), sizeof(candidate));
+    if (candidate < 0 || candidate >= limit) {
+      continue;
+    }
+    if (value && *value != candidate) {
+      return std::unexpected(std::string(name) + " has conflicting values");
+    }
+    value = candidate;
+  }
+  if (!value) {
+    return std::unexpected(std::string(name) + " has no enumerator record");
+  }
+  return static_cast<uint32_t>(*value);
 }
 
 }  // namespace modlock::gameinterop

@@ -141,4 +141,11 @@ struct SignatureCall {
 [[nodiscard]] MODLOCK_API std::expected<void, std::string> ResolveSignatures(
     const ModuleImage& image, std::span<const SignatureCall> calls);
 
+// EnumeratorValue reads the value of the schema enumerator called name from
+// image's enumerator records: aligned pairs of the name's string address and
+// its value. Every record must agree on a value in [0, limit). Errors start
+// with name.
+[[nodiscard]] MODLOCK_API std::expected<uint32_t, std::string> EnumeratorValue(
+    const ModuleImage& image, std::string_view name, int64_t limit);
+
 }  // namespace modlock::gameinterop

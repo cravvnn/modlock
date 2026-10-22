@@ -4,7 +4,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-#include <optional>
 #include <string_view>
 #include <utility>
 
@@ -415,49 +414,11 @@ CombatEventsHook::~CombatEventsHook() = default;
 
 std::expected<uint32_t, std::string> ModifierEventIndex(const ModuleImage& image,
                                                         std::string_view name) {
-  // View the module as text.
-  const auto bytes = image.image_bytes();
-  const std::string_view view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
-
-  // The name is a whole NUL-terminated string, not a prefix of a longer one.
-  std::string needle;
-  needle.reserve(name.size() + 2);
-  needle.push_back('\0');
-  needle.append(name);
-  needle.push_back('\0');
-  const auto at = view.find(needle);
-  if (at == std::string_view::npos) {
-    return std::unexpected("modifier event " + std::string(name) + " is not in the game module");
-  }
-
-  // Find the string's address as a pointer to search for.
-  const uint64_t address = static_cast<uint64_t>(image.base()) + at + 1;
-  char pointer[sizeof(address)];
-  std::memcpy(pointer, &address, sizeof(address));
-  const std::string_view pointer_view(pointer, sizeof(pointer));
-
-  // Every enumerator record naming this string must agree on one value.
-  std::optional<int64_t> value;
-  for (auto hit = view.find(pointer_view); hit != std::string_view::npos;
-       hit = view.find(pointer_view, hit + 1)) {
-    // Each aligned record holds the string's address, then its value.
-    if (hit % alignof(uint64_t) != 0 || hit + 2 * sizeof(uint64_t) > view.size()) {
-      continue;
-    }
-    int64_t candidate = 0;
-    std::memcpy(&candidate, view.data() + hit + sizeof(uint64_t), sizeof(candidate));
-    if (candidate < 0 || candidate >= kMaxModifierEvent) {
-      continue;
-    }
-    if (value && *value != candidate) {
-      return std::unexpected("modifier event " + std::string(name) + " has conflicting values");
-    }
-    value = candidate;
-  }
+  auto value = EnumeratorValue(image, name, kMaxModifierEvent);
   if (!value) {
-    return std::unexpected("modifier event " + std::string(name) + " has no enumerator record");
+    return std::unexpected("modifier event " + value.error());
   }
-  return static_cast<uint32_t>(*value);
+  return *value;
 }
 
 std::expected<CombatEventsHook, std::string> CombatEventsHook::Install(
