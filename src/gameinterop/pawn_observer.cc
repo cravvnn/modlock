@@ -10,6 +10,7 @@
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/native_damage.h"
 #include "modlock/gameinterop/virtual_slots.h"
+#include "utl_vector.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -1749,31 +1750,19 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
   }
   const auto& layout = *ability_layout_;
 
-  // Pinned x64 CUtlVectorBase: int count, alignment padding, then
-  // CUtlVectorMemory's data pointer, allocation count and growth flags.
-  struct HandleVector {
-    int32_t count;
-    uint32_t padding;
-    const uint32_t* data;
-    uint32_t capacity;
-    uint32_t flags;
-  } handles{};
-
-  // Read the vector and check its bounds.
-  static_assert(sizeof(HandleVector) == 24);
-  std::memcpy(&handles, static_cast<const unsigned char*>(frame_pawn_) + layout.handles,
-              sizeof(handles));
-  if (handles.count < 0 || handles.count > 256 ||
-      static_cast<uint32_t>(handles.count) > handles.capacity || (handles.count && !handles.data)) {
+  // Read the ability handle vector.
+  const auto handles = ReadUtlVector<const uint32_t>(
+      static_cast<const unsigned char*>(frame_pawn_) + layout.handles, kMaxAbilities);
+  if (!handles) {
     return std::unexpected("invalid ability handle vector");
   }
 
   // Read each owned ability.
   std::vector<Ability> abilities;
-  abilities.reserve(handles.count);
-  for (int32_t i = 0; i < handles.count; ++i) {
+  abilities.reserve(handles->count);
+  for (int32_t i = 0; i < handles->count; ++i) {
     // Skip an empty handle; a live one must resolve.
-    const uint32_t handle = handles.data[i];
+    const uint32_t handle = handles->data[i];
     if (handle == kInvalidEHandleIndex) {
       continue;
     }
@@ -2715,27 +2704,16 @@ std::expected<UpgradeBonuses, std::string> UpgradeBonusModifier(void* pawn) {
     return std::unexpected("upgrade bonuses: modifier property unavailable");
   }
 
-  // Read the modifier rows.
-  struct PointerVector {
-    int32_t count;
-    uint32_t padding;
-    unsigned char** data;
-    uint32_t capacity;
-    uint32_t flags;
-  } rows{};
-
-  // Read the rows and check their bounds.
-  static_assert(sizeof(rows) == 24);
-  std::memcpy(&rows, property + layout->modifier_rows, sizeof(rows));
-  if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
-      (rows.count && !rows.data)) {
+  // Read the modifier rows->
+  const auto rows = ReadUtlVector<unsigned char*>(property + layout->modifier_rows, kMaxModifiers);
+  if (!rows) {
     return std::unexpected("upgrade bonuses: invalid modifier vector");
   }
 
   // Find the bonus modifier the pawn owns.
-  for (int32_t i = 0; i < rows.count; ++i) {
+  for (int32_t i = 0; i < rows->count; ++i) {
     // The pawn's own row with the bonus table is the one.
-    auto* row = rows.data[i];
+    auto* row = rows->data[i];
     if (!row) {
       continue;
     }

@@ -6,6 +6,7 @@
 #include "modlock/gameinterop/ability_definitions.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/keyvalues.h"
+#include "utl_vector.h"
 
 namespace modlock::gameinterop {
 
@@ -95,30 +96,20 @@ std::expected<bool, std::string> AbilityModifier::Attached(PawnObserver& observe
   }
 
   // The vector is a CUtlVector of modifier pointers.
-  struct PointerVector {
-    int32_t count;
-    uint32_t padding;
-    unsigned char** data;
-    uint32_t capacity;
-    uint32_t flags;
-  } rows{};
-
-  // Read it and check its bounds.
-  std::memcpy(&rows, *property + modifiers_, sizeof(rows));
-  if (rows.count < 0 || rows.count > 1024 || uint32_t(rows.count) > rows.capacity ||
-      (rows.count && !rows.data)) {
+  const auto rows = ReadUtlVector<unsigned char*>(*property + modifiers_, kMaxModifiers);
+  if (!rows) {
     return std::unexpected("modifier vector is invalid");
   }
 
   // Look for this definition among the modifiers.
-  for (int32_t index = 0; index < rows.count; ++index) {
-    if (!rows.data[index]) {
+  for (int32_t index = 0; index < rows->count; ++index) {
+    if (!rows->data[index]) {
       continue;
     }
     // CBaseModifier's definition pointer is at +0x10, as in Deadworks
     // CBaseModifier.
     void* current = nullptr;
-    std::memcpy(&current, rows.data[index] + 0x10, sizeof(current));
+    std::memcpy(&current, rows->data[index] + 0x10, sizeof(current));
     if (current == definition_) {
       return true;
     }

@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "modlock/gameinterop/entity_abi.h"
+#include "utl_vector.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -12,9 +13,6 @@ namespace {
 // kSlotTableOffset locates the ability component's slot table, which the
 // find-slot and detach-slot calls take, as Deadworks RemoveAbilityImpl reads it.
 constexpr size_t kSlotTableOffset = 0x30;
-
-// kMaxAbilities bounds a sane ability vector; a larger count is torn memory.
-constexpr int32_t kMaxAbilities = 256;
 
 }  // namespace
 
@@ -123,26 +121,15 @@ std::expected<void, std::string> AbilitySlots::Remove(PawnObserver& observer, in
     return std::unexpected("native ability entity unavailable");
   }
 
-  // CUtlVector<uint32_t> and OnAbilityRemoved's slot table are the native
+  // The handle vectors and OnAbilityRemoved's slot table are the native
   // indexes used by Deadworks RemoveAbilityImpl. Validate before detaching.
-  struct Handles {
-    int32_t count;
-    uint32_t padding;
-    uint32_t* data;
-    uint32_t capacity;
-    uint32_t flags;
-  };
-
-  // Read each vector and check its bounds.
-  static_assert(sizeof(Handles) == 24);
-  std::array<Handles, 2> vectors{};
+  std::array<UtlVector<uint32_t>, 2> vectors{};
   for (size_t i = 0; i < vector_count_; ++i) {
-    auto& vector = vectors[i];
-    std::memcpy(&vector, component + vectors_[i], sizeof(vector));
-    if (vector.count < 0 || vector.count > kMaxAbilities ||
-        uint32_t(vector.count) > vector.capacity || (vector.count && !vector.data)) {
+    auto vector = ReadUtlVector<uint32_t>(component + vectors_[i], kMaxAbilities);
+    if (!vector) {
       return std::unexpected("native ability vector is invalid");
     }
+    vectors[i] = *vector;
   }
 
   // Detach the slot table entry.
