@@ -9,6 +9,7 @@
 #include <optional>
 
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/pe_layout.h"
 #include "modlock/gameinterop/signature.h"
 
 namespace modlock::gameinterop {
@@ -16,9 +17,6 @@ namespace {
 
 // kMaxEntries bounds a table walk; the largest game table holds a few hundred.
 constexpr size_t kMaxEntries = 4096;
-
-// kExecutable is IMAGE_SCN_MEM_EXECUTE in a PE section's characteristics.
-constexpr uint32_t kExecutable = 0x20000000;
 
 template <typename T>
 std::optional<T> Read(std::span<const uint8_t> bytes, size_t at) {
@@ -49,31 +47,32 @@ std::expected<size_t, std::string> Find(std::span<const uint8_t> bytes,
 // executable.
 bool Executable(std::span<const uint8_t> bytes, size_t offset) {
   // Find the section table.
-  const auto pe = Read<uint32_t>(bytes, 0x3C);
-  if (!pe) {
+  const auto nt_headers = Read<uint32_t>(bytes, pe::kNtHeadersOffset);
+  if (!nt_headers) {
     return false;
   }
-  const auto count = Read<uint16_t>(bytes, *pe + 6);
-  const auto optional_size = Read<uint16_t>(bytes, *pe + 20);
+  const size_t file_header = *nt_headers + pe::kSignatureSize;
+  const auto count = Read<uint16_t>(bytes, file_header + pe::kSectionCountOffset);
+  const auto optional_size = Read<uint16_t>(bytes, file_header + pe::kOptionalHeaderSizeOffset);
   if (!count || !optional_size) {
     return false;
   }
-  const size_t sections = *pe + 24 + *optional_size;
+  const size_t sections = file_header + pe::kFileHeaderSize + *optional_size;
 
   // The offset is executable when the section holding it is.
   for (size_t i = 0; i < *count; ++i) {
     // Read the section header.
-    const size_t header = sections + i * 40;
-    const auto size = Read<uint32_t>(bytes, header + 8);
-    const auto address = Read<uint32_t>(bytes, header + 12);
-    const auto flags = Read<uint32_t>(bytes, header + 36);
+    const size_t header = sections + i * pe::kSectionHeaderSize;
+    const auto size = Read<uint32_t>(bytes, header + pe::kSectionVirtualSizeOffset);
+    const auto address = Read<uint32_t>(bytes, header + pe::kSectionVirtualAddressOffset);
+    const auto flags = Read<uint32_t>(bytes, header + pe::kSectionCharacteristicsOffset);
 
     // An executable section holding the offset answers.
     if (!size || !address || !flags) {
       return false;
     }
     if (offset >= *address && offset - *address < *size) {
-      return (*flags & kExecutable) != 0;
+      return (*flags & pe::kSectionExecute) != 0;
     }
   }
   return false;

@@ -19,12 +19,14 @@
 #include "modlock/gameinterop/console_variables.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/pe_layout.h"
 #include "proto/modlock/dump/dump.pb.h"
 
 namespace modlock::host_app {
 namespace {
 
 namespace fs = std::filesystem;
+namespace pe = gameinterop::pe;
 namespace schema = gameinterop::schema;
 
 // The server's entity class records, after sourcesdk public/entity2 and
@@ -181,11 +183,13 @@ struct Image {
   // FileHeader returns the PE file header, which the PE32+ optional header
   // follows, or null when the image has none.
   const uint8_t* FileHeader() const {
-    if (bytes.size() < 0x40) {
+    if (bytes.size() < pe::kDosHeaderSize) {
       return nullptr;
     }
-    const auto offset = size_t(Load<uint32_t>(bytes.data() + 0x3c)) + 4;
-    return offset + 20 + 240 <= bytes.size() ? bytes.data() + offset : nullptr;
+    const auto offset =
+        size_t(Load<uint32_t>(bytes.data() + pe::kNtHeadersOffset)) + pe::kSignatureSize;
+    const bool fits = offset + pe::kFileHeaderSize + pe::kOptionalHeaderSize <= bytes.size();
+    return fits ? bytes.data() + offset : nullptr;
   }
 
   // Export returns the address of the named export, or zero. The loader has
@@ -196,17 +200,19 @@ struct Image {
     if (!file_header) {
       return 0;
     }
-    const auto directory = Load<uint32_t>(file_header + 20 + 112);
-    if (!directory || size_t(directory) + 40 > bytes.size()) {
+    const auto directory =
+        Load<uint32_t>(file_header + pe::kFileHeaderSize + pe::kExportDirectoryOffset);
+    if (!directory || size_t(directory) + pe::kExportDirectorySize > bytes.size()) {
       return 0;
     }
 
     // Match the name, then map its ordinal to the function's address.
     const auto* exports = bytes.data() + directory;
-    const auto* functions = bytes.data() + Load<uint32_t>(exports + 28);
-    const auto* names = bytes.data() + Load<uint32_t>(exports + 32);
-    const auto* ordinals = bytes.data() + Load<uint32_t>(exports + 36);
-    for (uint32_t i = 0, count = Load<uint32_t>(exports + 24); i < count; ++i) {
+    const auto* functions = bytes.data() + Load<uint32_t>(exports + pe::kExportFunctionsOffset);
+    const auto* names = bytes.data() + Load<uint32_t>(exports + pe::kExportNamesOffset);
+    const auto* ordinals = bytes.data() + Load<uint32_t>(exports + pe::kExportOrdinalsOffset);
+    for (uint32_t i = 0, count = Load<uint32_t>(exports + pe::kExportNameCountOffset); i < count;
+         ++i) {
       const auto* text =
           reinterpret_cast<const char*>(bytes.data() + Load<uint32_t>(names + 4 * i));
       if (Name(text) != name) {
@@ -227,18 +233,20 @@ struct Image {
     if (!file_header) {
       return sections;
     }
-    const auto count = Load<uint16_t>(file_header + 2);
-    const auto* section = file_header + 20 + Load<uint16_t>(file_header + 16);
+    const auto count = Load<uint16_t>(file_header + pe::kSectionCountOffset);
+    const auto* section = file_header + pe::kFileHeaderSize +
+                          Load<uint16_t>(file_header + pe::kOptionalHeaderSizeOffset);
 
     // Keep each writable section that lies inside the image.
-    for (uint16_t i = 0; i < count; ++i, section += 40) {
+    for (uint16_t i = 0; i < count; ++i, section += pe::kSectionHeaderSize) {
       // Collect each writable section that fits.
-      if (section + 40 > bytes.data() + bytes.size()) {
+      if (section + pe::kSectionHeaderSize > bytes.data() + bytes.size()) {
         break;
       }
-      const auto size = Load<uint32_t>(section + 8);
-      const auto address = Load<uint32_t>(section + 12);
-      const bool writable = Load<uint32_t>(section + 36) & 0x80000000u;
+      const auto size = Load<uint32_t>(section + pe::kSectionVirtualSizeOffset);
+      const auto address = Load<uint32_t>(section + pe::kSectionVirtualAddressOffset);
+      const bool writable =
+          Load<uint32_t>(section + pe::kSectionCharacteristicsOffset) & pe::kSectionWrite;
       if (writable && size_t(address) + size <= bytes.size()) {
         sections.push_back(bytes.subspan(address, size));
       }

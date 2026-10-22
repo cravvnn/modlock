@@ -36,12 +36,14 @@
 #include <vector>
 
 #include "modlock/gameinterop/game_symbols.h"
+#include "modlock/gameinterop/pe_layout.h"
 #include "modlock/gameinterop/signature.h"
 #include "modlock/gameinterop/virtual_slots.h"
 
 namespace {
 
 namespace fs = std::filesystem;
+namespace pe = modlock::gameinterop::pe;
 using modlock::gameinterop::GameModule;
 using modlock::gameinterop::GameSignature;
 using modlock::gameinterop::ModuleImage;
@@ -83,20 +85,20 @@ class PeImage final : public ModuleImage {
     };
 
     // Find the PE header.
-    const auto pe = read32(0x3C);
-    if (!pe || read32(*pe) != 0x00004550u) {
+    const auto nt_headers = read32(pe::kNtHeadersOffset);
+    if (!nt_headers || read32(*nt_headers) != pe::kSignature) {
       return std::unexpected(path.string() + " is not a PE");
     }
 
     // Read the COFF and optional header fields.
-    const size_t coff = *pe + 4;
-    const auto section_count = read16(coff + 2);
-    const auto optional_size = read16(coff + 16);
-    const size_t optional = coff + 20;
-    const auto image_base_low = read32(optional + 24);
-    const auto image_base_high = read32(optional + 28);
-    const auto image_size = read32(optional + 56);
-    const auto header_size = read32(optional + 60);
+    const size_t coff = *nt_headers + pe::kSignatureSize;
+    const auto section_count = read16(coff + pe::kSectionCountOffset);
+    const auto optional_size = read16(coff + pe::kOptionalHeaderSizeOffset);
+    const size_t optional = coff + pe::kFileHeaderSize;
+    const auto image_base_low = read32(optional + pe::kImageBaseOffset);
+    const auto image_base_high = read32(optional + pe::kImageBaseOffset + 4);
+    const auto image_size = read32(optional + pe::kImageSizeOffset);
+    const auto header_size = read32(optional + pe::kHeadersSizeOffset);
 
     // A field past the end of the file is a truncated header.
     if (!section_count || !optional_size || !image_base_low || !image_base_high || !image_size ||
@@ -113,10 +115,10 @@ class PeImage final : public ModuleImage {
     const size_t sections = optional + *optional_size;
     for (size_t i = 0; i < *section_count; ++i) {
       // Copy each section's raw bytes to its virtual address.
-      const size_t header = sections + i * 40;
-      const auto virtual_address = read32(header + 12);
-      const auto raw_size = read32(header + 16);
-      const auto raw_offset = read32(header + 20);
+      const size_t header = sections + i * pe::kSectionHeaderSize;
+      const auto virtual_address = read32(header + pe::kSectionVirtualAddressOffset);
+      const auto raw_size = read32(header + pe::kSectionRawSizeOffset);
+      const auto raw_offset = read32(header + pe::kSectionRawOffsetOffset);
       if (!virtual_address || !raw_size || !raw_offset) {
         return std::unexpected(path.string() + " has a truncated section table");
       }
