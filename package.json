@@ -8,7 +8,7 @@
   "scripts": {
     "gen": "./scripts/gen-proto.sh --language ts",
     "prepare": "sh scripts/install-hooks.sh",
-    "typecheck": "tsrs --noEmit -p js/tsconfig.json && tsrs --noEmit -p js/test/tsconfig.json && tsrs --noEmit -p panorama/tsconfig.json && tsrs --noEmit -p scripts/tsconfig.json",
+    "typecheck": "tsrs --noEmit -p js/tsconfig.json && tsrs --noEmit -p js/test/tsconfig.json && tsrs --noEmit -p panorama/tsconfig.json && tsrs --noEmit -p panorama/browser/tsconfig.json && tsrs --noEmit -p scripts/tsconfig.json",
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
     "lint:cc": "bun scripts/lint-cc.ts",

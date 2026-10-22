@@ -1,0 +1,134 @@
+/* Panorama layout approximated with CSS for DomPanel, the browser stand-in for
+   game panels. A page that draws DomPanels links this sheet. */
+
+.p {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.p-Label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+.p-Button {
+  cursor: pointer;
+  outline: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.no-hit,
+.no-hit-children * {
+  pointer-events: none;
+}
+
+.disabled {
+  cursor: default;
+}
+
+/* A label holds only text; as a block its overflow can end in an ellipsis. */
+.p-Label.flow-none {
+  display: block;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shrink {
+  overflow: hidden;
+}
+
+/* Without a flow direction, children overlap at their alignment. */
+.flow-none {
+  display: grid;
+  grid-template: 1fr / 1fr;
+}
+.flow-none > .p {
+  grid-area: 1 / 1;
+  justify-self: start;
+  align-self: start;
+}
+.flow-none > [data-ha='center'] {
+  justify-self: center;
+}
+.flow-none > [data-ha='right'] {
+  justify-self: end;
+}
+.flow-none > [data-va='center'] {
+  align-self: center;
+}
+.flow-none > [data-va='bottom'] {
+  align-self: end;
+}
+
+.flow-down,
+.flow-down-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.flow-down > .p {
+  align-self: flex-start;
+}
+.flow-down > [data-ha='center'] {
+  align-self: center;
+}
+.flow-down > [data-ha='right'] {
+  align-self: flex-end;
+}
+
+.flow-right,
+.flow-right-wrap {
+  display: flex;
+  flex-direction: row;
+}
+.flow-right-wrap {
+  flex-wrap: wrap;
+}
+.flow-right > .p,
+.flow-right-wrap > .p {
+  align-self: flex-start;
+}
+.flow-right > [data-va='center'],
+.flow-right-wrap > [data-va='center'] {
+  align-self: center;
+}
+.flow-right > [data-va='bottom'],
+.flow-right-wrap > [data-va='bottom'] {
+  align-self: flex-end;
+}
+
+.flow-right > .grow-width,
+.flow-down > .grow-height {
+  flex: var(--grow) 1 0;
+}
+.flow-right > .grow-height,
+.flow-down > .grow-width,
+.flow-none > .grow-width,
+.flow-none > .grow-height {
+  flex: none;
+}
+.flow-down > .grow-width,
+.flow-none > .grow-width {
+  width: 100%;
+}
+.flow-right > .grow-height,
+.flow-none > .grow-height {
+  height: 100%;
+}
+
+/* An image fills its box the way Panorama scales an Image panel by default. */
+.p-Image {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
