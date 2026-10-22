@@ -9076,7 +9076,8 @@ export const CountResponse: MessageType<CountResponse> =
  */
 export interface HitOptions {
   /**
-   * Victim is the entity to hurt.
+   * Victim is the hero or unit to hurt. The world, props and buildings are
+   * refused: the client crashes on their damage events.
    */
   victim?: number
   /**

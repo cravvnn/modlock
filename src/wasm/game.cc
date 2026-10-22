@@ -2300,6 +2300,15 @@ std::expected<void, std::string> Game::Damage(const HitOptions& request) {
   if (!damage) return std::unexpected(damage.error());
   auto victim = Entity(request.victim());
   if (!victim) return std::unexpected(victim.error());
+  // Only heroes and units take hits: the client crashes on a damage event for
+  // the world, a prop or a building.
+  auto victim_class = gameinterop::SchemaClassOfEntity(*victim, gameinterop::ReadNative);
+  if (!victim_class) return std::unexpected(victim_class.error());
+  if (!services_.Derives(*victim_class, "CBaseCombatCharacter")) {
+    return std::unexpected("the victim is a " +
+                           std::string(gameinterop::SchemaClassNameOf(*victim_class)) +
+                           ", not a hero or unit");
+  }
   // A hit nobody dealt is a hazard: it may kill and credits no one.
   if (request.attacker() == 0) return (*damage)->Hazard(*victim, request.amount());
   auto attacker = Entity(request.attacker());

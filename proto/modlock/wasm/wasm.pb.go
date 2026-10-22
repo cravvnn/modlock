@@ -5680,7 +5680,8 @@ func (x *CountResponse) GetCount() int32 {
 // HitOptions describes damage the mod deals.
 type HitOptions struct {
 	unknownFields []byte
-	// Victim is the entity to hurt.
+	// Victim is the hero or unit to hurt. The world, props and buildings are
+	// refused: the client crashes on their damage events.
 	Victim uint32 `protobuf:"varint,1,opt,name=victim,proto3" json:"victim,omitempty"`
 	// Attacker is the entity credited with the hit. Without one the hit is a
 	// hazard, such as poison gas, which credits no one and ignores the

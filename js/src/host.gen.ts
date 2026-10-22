@@ -1369,7 +1369,10 @@ function fromNpcState(message: pb.NpcState): NpcState {
 
 /** HitOptions describes damage the mod deals. */
 export interface HitOptions {
-  /** victim is the entity to hurt. */
+  /**
+   * victim is the hero or unit to hurt. The world, props and buildings are
+   * refused: the client crashes on their damage events.
+   */
   victim: number
   /**
    * attacker is the entity credited with the hit. Without one the hit is a

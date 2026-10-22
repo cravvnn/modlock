@@ -2179,7 +2179,8 @@ message CountResponse {
 
 // HitOptions describes damage the mod deals.
 message HitOptions {
-  // Victim is the entity to hurt.
+  // Victim is the hero or unit to hurt. The world, props and buildings are
+  // refused: the client crashes on their damage events.
   uint32 victim = 1;
 
   // Attacker is the entity credited with the hit. Without one the hit is a

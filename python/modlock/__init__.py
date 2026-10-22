@@ -984,7 +984,8 @@ class NpcState:
 class HitOptions:
     """HitOptions describes damage the mod deals."""
 
-    # victim is the entity to hurt.
+    # victim is the hero or unit to hurt. The world, props and buildings are
+    # refused: the client crashes on their damage events.
     victim: int = 0
     # attacker is the entity credited with the hit. Without one the hit is a
     # hazard, such as poison gas, which credits no one and ignores the
