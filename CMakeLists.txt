@@ -181,6 +181,7 @@ add_library(modlock_sdk SHARED
   src/wasm/game_heroes.cc
   src/wasm/game_match.cc
   src/wasm/game_services.cc
+  src/wasm/game_services_input.cc
   src/wasm/game_watches.cc
   src/wasm/hero_restore.cc
   src/wasm/npc_restore.cc
