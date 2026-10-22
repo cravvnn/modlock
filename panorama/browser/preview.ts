@@ -8,7 +8,7 @@ import {
   Preview,
   type Stopped,
 } from '../../proto/modlock/cli/cli.pb.js'
-import { Drawing } from '../src/draw.js'
+import { Drawing, type Layouts } from '../src/draw.js'
 import { DomPanel, domPanorama } from './dom.js'
 
 /** View is what the page shows, derived from modlock dev's latest state. */
@@ -69,6 +69,15 @@ const fit = () => {
 addEventListener('resize', fit)
 fit()
 
+// A mod's layouts load from its latest build, so each build names them anew
+// and the drawing loads them again.
+let build = 0
+const layouts: Layouts = {
+  url: (mod, path) =>
+    `/layout/${encodeURIComponent(mod)}/${path}?build=${build}`,
+  unloaded() {},
+}
+
 // The drawing fills the screen, as the game's interface layer does, and a
 // press reaches the mods as the player's.
 const root = new DomPanel('Panel', 'ModlockUi')
@@ -76,9 +85,17 @@ root.hittest = false
 root.style.width = '100%'
 root.style.height = '100%'
 stage.append(root.element)
-const drawing = new Drawing(domPanorama, root, (mod, node) => {
-  send({ body: { case: 'press', value: { mod, node } } })
-})
+const drawing = new Drawing(
+  domPanorama,
+  root,
+  (mod, node) => {
+    send({ body: { case: 'press', value: { mod, node } } })
+  },
+  layouts,
+)
+
+/** building is true while the latest state reports a build. */
+let building = false
 
 /** socket is the open connection to modlock dev, if any. */
 let socket: WebSocket | undefined
@@ -204,7 +221,10 @@ function connect() {
     socket = next
   }
   next.onmessage = (message) => {
+    // A new build names the layouts anew, then the page draws the state.
     const preview = Preview.fromJsonString(String(message.data))
+    if (preview.state?.case === 'building' && !building) build++
+    building = preview.state?.case === 'building'
     drawing.draw(preview.screen ?? {})
     note.textContent = preview.note ?? ''
     render(viewOf(preview))

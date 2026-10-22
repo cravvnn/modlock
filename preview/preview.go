@@ -2,19 +2,26 @@
 // draws every screen the mods show the local player with the game's own
 // drawing on a browser stand-in for Panorama, says what the build and the mods
 // are doing, and passes the page's presses and chat commands to the mods as
-// that player's input.
+// that player's input. It serves the built mod's layouts as XML, so the page
+// draws a mod's own layouts too.
 package preview
 
 import (
 	"context"
+	"io/fs"
 	"net/http"
+	"os"
+	"path"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/aperturerobotics/go-websocket"
+	"github.com/paralin/modlock/check"
 	"github.com/paralin/modlock/proto/modlock/cli"
 	"github.com/paralin/modlock/session"
+	"github.com/paralin/modlock/source2/panorama"
 )
 
 // logLines is how many of a mod's last log lines a stop carries.
@@ -32,11 +39,14 @@ type Input func(ctx context.Context, in *cli.Input) string
 // Page follows the command line's events and serves the preview page from a
 // directory of its files at /. The page opens a websocket at /socket, which
 // carries its state down as JSON cli.Preview messages and the player's input
-// up as JSON cli.Input messages. It serves loopback hosts and its own pages
-// only.
+// up as JSON cli.Input messages. GET /layout/<mod>/<path> answers with the
+// source of the mod's built layout at path. It serves loopback hosts and its
+// own pages only.
 type Page struct {
 	// files serves the page's files.
 	files http.Handler
+	// built is the built mod, whose content addon holds its layouts.
+	built fs.FS
 	// input passes the page's input to the mods.
 	input Input
 	// screens keeps the local player's screen.
@@ -55,12 +65,14 @@ type Page struct {
 	changed chan struct{}
 }
 
-// New returns a page serving the files in dir and passing input to the mods,
-// for a mod that rebuilds on each save when watch is true. It shows the first
-// player who joins, the stand-in player in the sandbox.
-func New(dir string, watch bool, input Input) *Page {
+// New returns a page serving the files in dir and the layouts of the mod
+// built in built, and passing input to the mods, for a mod that rebuilds on
+// each save when watch is true. It shows the first player who joins, the
+// stand-in player in the sandbox.
+func New(dir, built string, watch bool, input Input) *Page {
 	return &Page{
 		files:   http.FileServer(http.Dir(dir)),
+		built:   os.DirFS(built),
 		input:   input,
 		screens: session.NewScreens(0, ""),
 		watch:   watch,
@@ -123,11 +135,49 @@ func (p *Page) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 	switch {
 	case request.URL.Path == "/socket":
 		p.connect(w, request)
+	case request.Method == http.MethodGet && strings.HasPrefix(request.URL.Path, "/layout/"):
+		p.layout(w, strings.TrimPrefix(request.URL.Path, "/layout/"))
 	case request.Method == http.MethodGet:
 		p.files.ServeHTTP(w, request)
 	default:
 		http.NotFound(w, request)
 	}
+}
+
+// layout answers with the source of the built layout that name, <mod>/<path>,
+// names, read from the mod's content addon on each request so a rebuild
+// shows at once.
+func (p *Page) layout(w http.ResponseWriter, name string) {
+	// Find the layout in the addon of the mod's build; a slug names one mod,
+	// and its addon is the slug and a version.
+	mod, file, _ := strings.Cut(name, "/")
+	compiled, ok := panorama.Compiled(file)
+	if !ok || !fs.ValidPath(compiled) || mod == "" || strings.Contains(mod, "/") {
+		http.NotFound(w, nil)
+		return
+	}
+	kind := path.Join(check.ContentDir, "layout")
+	addons, _ := fs.ReadDir(p.built, kind)
+	for _, addon := range addons {
+		if !addon.IsDir() || !strings.HasPrefix(addon.Name(), mod+"-") {
+			continue
+		}
+
+		// Answer with the layout as its source reads.
+		data, err := fs.ReadFile(p.built, path.Join(kind, addon.Name(), compiled))
+		if err != nil {
+			break
+		}
+		source, err := panorama.Decompile(data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+		_, _ = w.Write([]byte(source))
+		return
+	}
+	http.Error(w, "the mod's build has no layout "+file, http.StatusNotFound)
 }
 
 // current returns the page's state with the player's screen, and channels

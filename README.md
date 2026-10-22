@@ -794,7 +794,9 @@ clears it when the player leaves or the mod stops.
 that runs code in the player's game: it loads a layout from the mod's content
 addon. Only a host that has reviewed the mod's content loads it, by passing
 `Layouts` to the `Drawing` in `panorama/src/draw.ts`; Modlock's own renderer
-draws an empty panel. The layout's script reads `data` from its panel's
+draws an empty panel. The `modlock dev` preview page draws the layout from the
+mod's latest build, with its panels and inline styles, but runs none of its
+scripts or style sheets. The layout's script reads `data` from its panel's
 `modlock_data` attribute and reads it again whenever it hears the unhandled
 `PlaySoundEffect` event `modlock_data_changed`. It answers the mod with its own
 console commands.

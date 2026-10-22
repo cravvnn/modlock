@@ -6,7 +6,9 @@ import type { Panel, Panorama } from '../src/draw.js'
  * layout with the CSS in panels.css, which the page must link: children
  * overlap unless the panel flows them down or right, and fill-parent-flow
  * takes the remaining space. Fonts and engine-only styles are approximate,
- * and it loads no layout files; the installed game remains the reference.
+ * and a layout it loads draws its panels, their classes and inline styles but
+ * runs none of its scripts or style sheets; the installed game remains the
+ * reference.
  */
 export class DomPanel implements Panel {
   readonly element: HTMLElement
@@ -169,9 +171,7 @@ export class DomPanel implements Panel {
   }
 
   ClearPropertyFromCode(name: string) {
-    delete this.style[
-      name.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
-    ]
+    delete this.style[camel(name)]
   }
 
   SetAttributeString(name: string, value: string) {
@@ -188,10 +188,75 @@ export class DomPanel implements Panel {
       : ''
   }
 
-  BLoadLayout() {
-    return false
+  /**
+   * BLoadLayout loads the layout a page path such as /layout/mod/board.xml
+   * serves into this panel, as Panorama does: the layout's top panel
+   * describes this one and its children become this panel's, though a style
+   * the drawing already gave this panel stays. It loads in the background,
+   * and refuses a game path, which a browser cannot read.
+   */
+  BLoadLayout(url: string) {
+    if (!url.startsWith('/')) return false
+    void fetch(url)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(await response.text())
+        return new DOMParser().parseFromString(
+          await response.text(),
+          'text/xml',
+        )
+      })
+      .then((layout) => {
+        const top = [...layout.documentElement.children].find(
+          (child) => !nonPanels.has(child.tagName.toLowerCase()),
+        )
+        if (this.valid && top)
+          this.loadElement(top, new Set(Object.keys(this.style)))
+      })
+      .catch((error: unknown) => console.debug(`layout ${url}:`, error))
+    return true
+  }
+
+  // loadElement gives this panel a layout element's attributes, except the
+  // style properties in kept, then adds a panel for each of its child
+  // elements.
+  private loadElement(source: Element, kept = new Set<string>()) {
+    for (const { name, value } of source.attributes) {
+      switch (name) {
+        case 'class':
+          for (const each of value.split(/\s+/)) if (each) this.AddClass(each)
+          break
+        case 'style':
+          for (const declaration of value.split(';')) {
+            const [property = '', ...rest] = declaration.split(':')
+            const key = camel(property.trim())
+            if (key && !kept.has(key)) this.style[key] = rest.join(':').trim()
+          }
+          break
+        case 'text':
+          this.text = value
+          break
+        case 'src':
+          this.SetImage(value)
+          break
+        case 'hittest':
+        case 'visible':
+        case 'enabled':
+          this[name] = value !== 'false'
+          break
+      }
+    }
+    for (const child of source.children) {
+      if (nonPanels.has(child.tagName.toLowerCase())) continue
+      const panel = new DomPanel(child.tagName, child.getAttribute('id') ?? '')
+      panel.SetParent(this)
+      panel.loadElement(child)
+    }
   }
 }
+
+// nonPanels are the layout elements that hold a panel's resources rather
+// than panels.
+const nonPanels = new Set(['styles', 'scripts', 'snippets'])
 
 /**
  * domPanorama is the part of Panorama a Drawing uses, on DomPanels. Debug
@@ -210,6 +275,11 @@ export const domPanorama = {
   },
 } satisfies Panorama
 
+// camel returns a style property's name as code writes it.
+function camel(kebab: string): string {
+  return kebab.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase())
+}
+
 // panelOf returns the stand-in panel an element belongs to, if any.
 function panelOf(element: Element | null | undefined): DomPanel | null {
   return (element as (Element & { panel?: DomPanel }) | null)?.panel ?? null
@@ -219,9 +289,7 @@ function panelOf(element: Element | null | undefined): DomPanel | null {
 // the engine accepts, into CSS.
 function applyStyle(element: HTMLElement, kebab: string, value: string): void {
   const css = element.style
-  const name = kebab.replace(/-([a-z])/g, (_, letter: string) =>
-    letter.toUpperCase(),
-  )
+  const name = camel(kebab)
   switch (name) {
     case 'flowChildren': {
       element.classList.remove(

@@ -53,7 +53,7 @@ func devCommand(out *printer) *cli.Command {
 			watch := c.Bool("watch")
 			var box atomic.Pointer[sandbox.Sandbox]
 			if port := c.Uint("preview-port"); port != 0 {
-				servePreview(c.Context, out, int(port), watch, func(ctx context.Context, in *modcli.Input) string {
+				servePreview(c.Context, out, int(port), opened.Output(), watch, func(ctx context.Context, in *modcli.Input) string {
 					if box := box.Load(); box != nil {
 						return deliver(ctx, box, in)
 					}
@@ -118,17 +118,17 @@ func devCommand(out *printer) *cli.Command {
 }
 
 // servePreview serves the preview page on the loopback port until ctx ends,
-// for a mod that rebuilds on each save when watch is true, passing its input
-// to input. The page is optional: when it cannot start,
+// for the mod built in built that rebuilds on each save when watch is true,
+// passing its input to input. The page is optional: when it cannot start,
 // the mod runs without it.
-func servePreview(ctx context.Context, out *printer, port int, watch bool, input preview.Input) {
+func servePreview(ctx context.Context, out *printer, port int, built string, watch bool, input preview.Input) {
 	// Find the page's files in the library.
 	library, err := js.Library(ctx)
 	if err != nil {
 		out.note("the preview page is off:", err)
 		return
 	}
-	page := preview.New(filepath.Join(library, js.Preview), watch, input)
+	page := preview.New(filepath.Join(library, js.Preview), built, watch, input)
 
 	// Listen on loopback, and follow the command line's events.
 	address := net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
