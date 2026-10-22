@@ -553,6 +553,13 @@ std::expected<const gameinterop::BotCreation*, std::string> GameServices::Bots()
     auto bots = gameinterop::BotCreation::Resolve(**image);
     if (!bots) return std::unexpected(bots.error());
     bots_ = *bots;
+    // Without the guard a solo bot match clears a bot's hero that a human
+    // plays; the bots still join, so a failure costs only mirrored heroes.
+    if (auto guard = gameinterop::BotHeroGuard::Install(**image)) {
+      bot_heroes_ = std::move(*guard);
+    } else {
+      std::cerr << "mod bots: " << guard.error() << '\n';
+    }
   }
   return &*bots_;
 }

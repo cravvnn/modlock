@@ -84,6 +84,15 @@ signatures {
   shape: "CreateCitadelBot(const char* name, int team, int hero, const Vector* position)"
 }
 
+# The TEST AL,AL after the solo bot match check in the bot brain's hero
+# think, which then clears the bot's hero when a human plays the same one.
+signatures {
+  id: "bot.duplicate-hero-check"
+  modules: GAME_MODULE_SERVER
+  pattern: "84 C0 0F 84 ?? ?? ?? ?? 48 8D 94 24 88 00 00 00 48 8D 4C 24 70"
+  shape: "solo bot match test before the human hero comparison in the bot hero think"
+}
+
 signatures {
   id: "combat.broadcast"
   modules: GAME_MODULE_SERVER

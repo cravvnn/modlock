@@ -21,6 +21,7 @@
 #include "modlock/gameinterop/ability_modifier.h"
 #include "modlock/gameinterop/ability_slots.h"
 #include "modlock/gameinterop/bot_creation.h"
+#include "modlock/gameinterop/bot_hero_guard.h"
 #include "modlock/gameinterop/engine_server.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/game_rules.h"
@@ -176,6 +177,8 @@ class GameServices {
   gameinterop::TeleportClientCamera teleport_ = nullptr;
   std::optional<gameinterop::PawnMotion> motion_;
   std::optional<gameinterop::BotCreation> bots_;
+  // bot_heroes_ lets bots keep a human's hero once a mod adds one.
+  std::optional<gameinterop::BotHeroGuard> bot_heroes_;
   std::unique_ptr<render::WorldTextGameFactory> text_;
   std::unique_ptr<render::WorldEffectGameFactory> effects_;
   std::optional<gameinterop::NativeDamage> damage_;
