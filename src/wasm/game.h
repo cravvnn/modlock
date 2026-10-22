@@ -318,6 +318,11 @@ class Game : public HostService {
   // manifest. SetFreeForAll changes it while the mod runs.
   void StartFreeForAll(bool enabled) { free_for_all_ = enabled; }
 
+  // StartContentAddon names the content addon of the mod that starts, which
+  // CreateEntity writes in place of {addon} in a text key value, so a world
+  // panel names its layout as file://{resources}/layout/{addon}/panel.xml.
+  void StartContentAddon(std::string addon) { addon_ = std::move(addon); }
+
   // FreeForAllCommand reports whether free-for-all consumes a player's console
   // line. Seating is the host's, so it drops the team commands.
   bool FreeForAllCommand(std::string_view line) const;
@@ -635,6 +640,8 @@ class Game : public HostService {
   // ffa_held_ is the hero pawns it holds friendly fire on, and ffa_failed_ the
   // players it could not seat, so each failure is logged once.
   bool free_for_all_ = false;
+  // addon_ is the running mod's content addon.
+  std::string addon_;
   std::set<uint32_t> ffa_held_;
   std::set<int32_t> ffa_failed_;
   // held_modifiers_ is the modifiers the mod holds, by player slot and

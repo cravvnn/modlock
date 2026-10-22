@@ -1,0 +1,7 @@
+{
+  "slug": "world-panel",
+  "name": "World Panel",
+  "version": "0.1.0",
+  "language": "LANGUAGE_TYPESCRIPT",
+  "map": "dl_midtown"
+}

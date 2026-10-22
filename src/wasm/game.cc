@@ -4,6 +4,7 @@
 #include <array>
 #include <bit>
 #include <cstring>
+#include <deque>
 #include <iostream>
 #include <span>
 #include <type_traits>
@@ -329,16 +330,30 @@ std::optional<gameinterop::EntityValue> Value(const EntityValue& value) {
   return std::nullopt;
 }
 
-// KeyValues converts spawn key values to the world's form. The result borrows
-// the text of pairs.
+// KeyValues converts spawn key values to the world's form, writing addon in
+// place of each {addon} in a text value. The result borrows the text of pairs,
+// and of filled, which holds each text value it rewrote.
 std::expected<std::vector<gameinterop::EntityKeyValue>, std::string> KeyValues(
-    const google::protobuf::RepeatedPtrField<KeyValue>& pairs) {
+    const google::protobuf::RepeatedPtrField<KeyValue>& pairs, std::string_view addon,
+    std::deque<std::string>& filled) {
+  constexpr std::string_view token = "{addon}";
   std::vector<gameinterop::EntityKeyValue> result;
   result.reserve(pairs.size());
   for (const auto& pair : pairs) {
     auto value = Value(pair.value());
     if (!value) {
       return std::unexpected("key value " + pair.key() + " has no value");
+    }
+
+    // Name the mod's content addon in a text value.
+    const auto* text = std::get_if<std::string_view>(&*value);
+    if (text && !addon.empty() && text->find(token) != std::string_view::npos) {
+      auto& rewritten = filled.emplace_back(*text);
+      for (auto at = rewritten.find(token); at != std::string::npos;
+           at = rewritten.find(token, at + addon.size())) {
+        rewritten.replace(at, token.size(), addon);
+      }
+      *value = std::string_view(rewritten);
     }
     result.push_back({.key = pair.key(), .value = *value});
   }
@@ -2865,7 +2880,8 @@ std::expected<EntityResponse, std::string> Game::CreateEntity(const EntityOption
   if (!world) {
     return std::unexpected(world.error());
   }
-  auto key_values = KeyValues(request.key_values());
+  std::deque<std::string> filled;
+  auto key_values = KeyValues(request.key_values(), addon_, filled);
   if (!key_values) {
     return std::unexpected(key_values.error());
   }

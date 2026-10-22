@@ -444,6 +444,7 @@ When the mode plays well, [publish it](#publishing).
 | [`hill`](examples/hill)                 | King of the hill: a ring of world text, team scores, progress bars. |
 | [`drill`](examples/drill)               | An aim drill: target bots, headshots, a length setting, best score. |
 | [`dropper`](examples/dropper)           | Building a spot of solid objects while playing.                     |
+| [`world-panel`](examples/world-panel)   | A board of the mod's own layout, drawn in the world.                |
 | [`bounty`](examples/bounty)             | A Luau free-for-all: a bounty marker, damage hooks, flares, bots.   |
 | [`race`](examples/race)                 | A Go checkpoint race: a marked course, laps, resets, unit tests.    |
 | [`hello-luau`](examples/hello-luau)     | The smallest mod in Luau.                                           |
@@ -486,6 +487,29 @@ build compiles them into the mod's own addon, named `SLUG-VERSION`, so
 ```xml
 <include src="file://{resources}/scripts/{addon}/scoreboard.js" />
 ```
+
+A mod names its layouts the same way. The host writes the addon's name in
+place of `{addon}` in an entity's text key values, so a world panel draws the
+mod's own layout in the world:
+
+```ts
+create('point_clientui_world_panel', {
+  position,
+  keys: {
+    enabled: true,
+    width: 48,
+    height: 24,
+    panel_dpi: 32,
+    opaque: false,
+    orientation: 1,
+    dialog_layout_name: 'file://{resources}/layout/{addon}/board.xml',
+  },
+})
+```
+
+[`world-panel`](examples/world-panel) is the whole mod. A layout that loads a
+script or handles an event runs code in each player's game, and a publishing
+service may hold it for creators it trusts; one that only draws needs no trust.
 
 Ship style sheets and images compiled by Valve's resource compiler, as
 `.vcss_c` and `.vtex_c`. The publishing check refuses a build with client files
