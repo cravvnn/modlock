@@ -12,9 +12,9 @@ import (
 )
 
 // TestContent builds a project's content into its addon's directories with
-// the addon named in its paths, passes the publishing check, refuses a file
-// outside a kind's directory, and removes the content once the project has
-// none.
+// the addon named in its paths, passes the publishing check, tells content
+// that runs code from content that only draws, refuses a file outside a
+// kind's directory, and removes the content once the project has none.
 func TestContent(t *testing.T) {
 	// Lay out a project with a layout that loads its script, and an editor's
 	// hidden file that must stay out.
@@ -63,6 +63,26 @@ func TestContent(t *testing.T) {
 	if err := check.Content(os.DirFS(p.Output()), "parry-1.1.0"); err == nil {
 		t.Error("content under another release's name passed")
 	}
+
+	// The layout and its script run code in players' games; a layout that
+	// handles an event does too, and one that only draws does not.
+	scripted := func(want string) {
+		t.Helper()
+		if err := p.buildContent(); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := check.Scripted(os.DirFS(p.Output())); err != nil || got != want {
+			t.Errorf("scripted %q, %v; want %q", got, err, want)
+		}
+	}
+	scripted("panorama/layout/parry-1.2.0/panel.vxml_c")
+	if err := os.Remove(filepath.Join(dir, ContentDir, "scripts", "panel.js")); err != nil {
+		t.Fatal(err)
+	}
+	write("content/layout/panel.xml", `<root><Panel><Button onactivate="$.Msg('hi')" /></Panel></root>`)
+	scripted("panorama/layout/parry-1.2.0/panel.vxml_c")
+	write("content/layout/panel.xml", `<root><styles><include src="s2r://panorama/styles/hud.vcss_c" /></styles><Panel><Label text="Ready" /></Panel></root>`)
+	scripted("")
 
 	// A file outside a kind's directory fails the build and keeps the last
 	// content.
