@@ -138,6 +138,31 @@ sandbox even where the game is installed.
 | `MODLOCK_HOST`   | You built `modlock-host.exe` yourself. The sandbox reads the interpreters beside it. |
 | `MODLOCK_PROTON` | You want a particular Proton installation.                                           |
 
+### Game files
+
+These commands work on the game's own file formats, with no game or Valve
+tools installed.
+
+| Command                                    | Effect                                                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `modlock panorama compile DIR`             | Compile the Panorama layouts (`.xml`) and scripts (`.js`) under `DIR/panorama/` into `DIR.vpk`. |
+| `modlock panorama decompile FILE`          | Print a compiled layout (`.vxml_c`) as XML, or a compiled script (`.vjs_c`) as its source.      |
+| `modlock vpk list ARCHIVE`                 | List an archive's files and their sizes.                                                        |
+| `modlock vpk unpack ARCHIVE DIR [PATH...]` | Write the archive's files, or those under each `PATH`, into `DIR`.                              |
+| `modlock vpk pack DIR ARCHIVE`             | Pack a directory into an archive; equal directories pack to equal bytes.                        |
+| `modlock kv3 FILE`                         | Print a compiled resource's KeyValues3 data as JSON; `--blocks` lists its blocks.               |
+
+`panorama compile` keeps every other file in `DIR` as it is, so compiled
+resources such as images ship beside the layouts; `-o` names another archive,
+or a directory to write the files into. Style sheets still need Valve's resource
+compiler: ship the `.vcss_c` it writes. `decompile` and `kv3` take `--archive`
+to read `FILE` from inside an archive, including the game's split
+`game/citadel/pak01_dir.vpk`:
+
+```sh
+modlock panorama decompile --archive pak01_dir.vpk panorama/layout/hud.vxml_c
+```
+
 ## Tutorial
 
 Each step adds a few lines to the project `modlock new` wrote, and you can try

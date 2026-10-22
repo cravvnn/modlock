@@ -42,6 +42,9 @@ func main() {
 			devCommand(out),
 			playCommand(out),
 			publishCommand(out),
+			panoramaCommand(out),
+			vpkCommand(out),
+			kv3Command(),
 		},
 	}
 

@@ -7,7 +7,8 @@ import (
 )
 
 // flagsFirst moves a command's flags ahead of its arguments, so
-// "modlock new my-mod --language go" reads as "modlock new --language go my-mod".
+// "modlock new my-mod --language go" reads as "modlock new --language go my-mod",
+// and a subcommand's flags move behind the subcommand's name.
 // The command line stops reading flags at the first argument and would take
 // every later flag as another argument. A "--" keeps what follows as
 // arguments.
@@ -20,14 +21,18 @@ func flagsFirst(commands []*cli.Command, args []string) []string {
 	if at == len(args) {
 		return args
 	}
-	var command *cli.Command
-	for _, c := range commands {
-		if c.HasName(args[at]) {
-			command = c
-		}
-	}
+	command := named(commands, args[at])
 	if command == nil {
 		return args
+	}
+
+	// Descend to the subcommand, such as "panorama compile".
+	for at+1 < len(args) {
+		sub := named(command.Subcommands, args[at+1])
+		if sub == nil {
+			break
+		}
+		command, at = sub, at+1
 	}
 
 	// Sort the command's words into flags, with their values, and arguments.
@@ -51,6 +56,16 @@ func flagsFirst(commands []*cli.Command, args []string) []string {
 		}
 	}
 	return append(append(args[:at+1:at+1], flags...), rest...)
+}
+
+// named returns the command called name, or nil.
+func named(commands []*cli.Command, name string) *cli.Command {
+	for _, c := range commands {
+		if c.HasName(name) {
+			return c
+		}
+	}
+	return nil
 }
 
 // takesValue reports whether the command's flag of this name reads the next

@@ -20,6 +20,8 @@ require (
 	github.com/aperturerobotics/fastjson v0.1.2-0.20260705010846-94f343f5bb34 // indirect
 	github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20261003014807-d46d22154f35 // indirect
 	github.com/aperturerobotics/json-iterator-lite v1.1.0 // indirect
+	github.com/klauspost/compress v1.20.2-0.20261004115517-d189b4c2eb01 // indirect
+	github.com/pierrec/lz4/v4 v4.1.33 // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
