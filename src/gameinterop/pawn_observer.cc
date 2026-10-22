@@ -1725,6 +1725,122 @@ std::expected<void, std::string> PawnObserver::SetEyeAngles(void* pawn,
   return {};
 }
 
+namespace {
+
+// ReadFinite reads the float at an optional offset, or is empty when the
+// offset did not resolve or the value is not finite.
+std::optional<float> ReadFinite(const unsigned char* entity, std::optional<size_t> offset) {
+  // An unresolved offset has no value.
+  if (!offset) {
+    return std::nullopt;
+  }
+
+  // Read the value and keep it when finite.
+  float value = 0;
+  std::memcpy(&value, entity + *offset, sizeof(value));
+  if (!std::isfinite(value)) {
+    return std::nullopt;
+  }
+  return value;
+}
+
+// ReadFiniteVector reads the vector at an optional offset, or is empty when
+// the offset did not resolve or a component is not finite.
+std::optional<std::array<float, 3>> ReadFiniteVector(const unsigned char* entity,
+                                                     std::optional<size_t> offset) {
+  // An unresolved offset has no value.
+  if (!offset) {
+    return std::nullopt;
+  }
+
+  // Read the value and keep it when finite.
+  std::array<float, 3> value{};
+  std::memcpy(value.data(), entity + *offset, sizeof(value));
+  if (!AllFinite(value)) {
+    return std::nullopt;
+  }
+  return value;
+}
+
+// ReadMovementSlotState reads the channel state every ability carries and the
+// mantle, slide, wall jump and zipline state its movement slot carries.
+void ReadMovementSlotState(const AbilityLayout& layout, const unsigned char* entity,
+                           PawnObserver::Ability& ability) {
+  // Read the channel, mantle and slide state.
+  if (layout.channeling) {
+    ability.channeling = entity[*layout.channeling] == 1;
+  }
+  if (ability.slot == kMantleSlot) {
+    ability.mantle_start_time = ReadFinite(entity, layout.mantle_start_time);
+  }
+  if (ability.slot == kSlideSlot && layout.sliding) {
+    ability.sliding = entity[*layout.sliding] == 1;
+  }
+  if (ability.slot != kJumpSlot) {
+    return;
+  }
+
+  // The jump slot carries the wall jump count and the wall and zipline state.
+  if (layout.consecutive_wall_jumps) {
+    int8_t count = 0;
+    std::memcpy(&count, entity + *layout.consecutive_wall_jumps, sizeof(count));
+    if (count >= 0) {
+      ability.consecutive_wall_jumps = count;
+    }
+  }
+  ability.current_wall_normal = ReadFiniteVector(entity, layout.current_wall_normal);
+  ability.wall_contact_position = ReadFiniteVector(entity, layout.wall_contact_position);
+  ability.wall_jump_normal_used = ReadFiniteVector(entity, layout.wall_jump_normal_used);
+  if (layout.wall_jump_facing) {
+    uint16_t facing = 0;
+    std::memcpy(&facing, entity + *layout.wall_jump_facing, sizeof(facing));
+    ability.wall_jump_facing = facing;
+  }
+  ability.last_time_on_zipline = ReadFinite(entity, layout.last_time_on_zipline);
+}
+
+// ReadOwnedAbility reads the ability entity with handle. It fails unless the
+// ability's timers are finite, pawn_handle owns it and it has a subclass.
+std::expected<PawnObserver::Ability, std::string> ReadOwnedAbility(const AbilityLayout& layout,
+                                                                   const unsigned char* entity,
+                                                                   uint32_t handle,
+                                                                   uint32_t pawn_handle) {
+  // Read its owner, identity, slot, upgrades and charges.
+  uint32_t owner = 0;
+  PawnObserver::Ability ability{.handle = handle};
+  std::memcpy(&owner, entity + layout.owner, sizeof(owner));
+  std::memcpy(&ability.subclass_id, entity + layout.subclass, sizeof(ability.subclass_id));
+  std::memcpy(&ability.slot, entity + layout.slot, sizeof(ability.slot));
+  std::memcpy(&ability.upgrade_info, entity + layout.upgrade_info, sizeof(ability.upgrade_info));
+  std::memcpy(&ability.charges, entity + layout.charges, sizeof(ability.charges));
+
+  // Read its timers; each must be finite.
+  std::memcpy(&ability.cooldown_end, entity + layout.cooldown_end, sizeof(ability.cooldown_end));
+  std::memcpy(&ability.cooldown_start, entity + layout.cooldown_start,
+              sizeof(ability.cooldown_start));
+  std::memcpy(&ability.charge_recharge_start, entity + layout.charge_recharge_start,
+              sizeof(ability.charge_recharge_start));
+  std::memcpy(&ability.charge_recharge_end, entity + layout.charge_recharge_end,
+              sizeof(ability.charge_recharge_end));
+  const float timers[] = {ability.cooldown_end, ability.cooldown_start,
+                          ability.charge_recharge_start, ability.charge_recharge_end};
+  if (!AllFinite(timers)) {
+    return std::unexpected("ability timer is not finite");
+  }
+
+  // It must belong to this pawn and have a subclass.
+  if (owner != pawn_handle) {
+    return std::unexpected("ability owner does not match the pawn");
+  }
+  if (!ability.subclass_id) {
+    return std::unexpected("owned ability has no subclass identity");
+  }
+  ReadMovementSlotState(layout, entity, ability);
+  return ability;
+}
+
+}  // namespace
+
 std::expected<std::vector<PawnObserver::Ability>, std::string>
 PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
   // The frame's connection must be unchanged.
@@ -1792,89 +1908,10 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
       return std::unexpected("owned ability has no live instance");
     }
 
-    // Read its owner, identity, slot, upgrades, charges and cooldown.
-    uint32_t owner = 0;
-    Ability ability{.handle = handle};
-    std::memcpy(&owner, entity + layout.owner, sizeof(owner));
-    std::memcpy(&ability.subclass_id, entity + layout.subclass, sizeof(ability.subclass_id));
-    std::memcpy(&ability.slot, entity + layout.slot, sizeof(ability.slot));
-    std::memcpy(&ability.upgrade_info, entity + layout.upgrade_info, sizeof(ability.upgrade_info));
-    std::memcpy(&ability.charges, entity + layout.charges, sizeof(ability.charges));
-    std::memcpy(&ability.cooldown_end, entity + layout.cooldown_end, sizeof(ability.cooldown_end));
-
-    // Read its remaining timers; each must be finite.
-    std::memcpy(&ability.cooldown_start, entity + layout.cooldown_start,
-                sizeof(ability.cooldown_start));
-    std::memcpy(&ability.charge_recharge_start, entity + layout.charge_recharge_start,
-                sizeof(ability.charge_recharge_start));
-    std::memcpy(&ability.charge_recharge_end, entity + layout.charge_recharge_end,
-                sizeof(ability.charge_recharge_end));
-    if (!std::isfinite(ability.cooldown_end) || !std::isfinite(ability.cooldown_start) ||
-        !std::isfinite(ability.charge_recharge_start) ||
-        !std::isfinite(ability.charge_recharge_end)) {
-      return std::unexpected("ability timer is not finite");
-    }
-
-    // It must belong to this pawn and have a subclass.
-    if (owner != frame_pawn_handle_) {
-      return std::unexpected("ability owner does not match the pawn");
-    }
-    if (!ability.subclass_id) {
-      return std::unexpected("owned ability has no subclass identity");
-    }
-
-    // Read the channel, mantle, slide and wall jump state its slot carries.
-    if (layout.channeling) {
-      ability.channeling = entity[*layout.channeling] == 1;
-    }
-    if (ability.slot == kMantleSlot && layout.mantle_start_time) {
-      float start = 0;
-      std::memcpy(&start, entity + *layout.mantle_start_time, sizeof(start));
-      if (std::isfinite(start)) {
-        ability.mantle_start_time = start;
-      }
-    }
-    if (ability.slot == kSlideSlot && layout.sliding) {
-      ability.sliding = entity[*layout.sliding] == 1;
-    }
-    if (ability.slot == kJumpSlot && layout.consecutive_wall_jumps) {
-      int8_t count = 0;
-      std::memcpy(&count, entity + *layout.consecutive_wall_jumps, sizeof(count));
-      if (count >= 0) {
-        ability.consecutive_wall_jumps = count;
-      }
-    }
-
-    // The jump slot also carries wall and zipline state.
-    const auto vector_at =
-        [entity](std::optional<size_t> offset) -> std::optional<std::array<float, 3>> {
-      // Read a finite vector at an optional offset.
-      if (!offset) {
-        return std::nullopt;
-      }
-      std::array<float, 3> value{};
-      std::memcpy(value.data(), entity + *offset, sizeof(value));
-      if (!std::ranges::all_of(value, [](float v) { return std::isfinite(v); })) {
-        return std::nullopt;
-      }
-      return value;
-    };
-    if (ability.slot == kJumpSlot) {
-      ability.current_wall_normal = vector_at(layout.current_wall_normal);
-      ability.wall_contact_position = vector_at(layout.wall_contact_position);
-      ability.wall_jump_normal_used = vector_at(layout.wall_jump_normal_used);
-      if (layout.wall_jump_facing) {
-        uint16_t facing = 0;
-        std::memcpy(&facing, entity + *layout.wall_jump_facing, sizeof(facing));
-        ability.wall_jump_facing = facing;
-      }
-    }
-    if (ability.slot == kJumpSlot && layout.last_time_on_zipline) {
-      float time = 0;
-      std::memcpy(&time, entity + *layout.last_time_on_zipline, sizeof(time));
-      if (std::isfinite(time)) {
-        ability.last_time_on_zipline = time;
-      }
+    // Read it, and check that it belongs to this pawn.
+    auto ability = ReadOwnedAbility(layout, entity, handle, frame_pawn_handle_);
+    if (!ability) {
+      return std::unexpected(ability.error());
     }
 
     // Keep it unless its handle repeats.
@@ -1882,7 +1919,7 @@ PawnObserver::CurrentAbilitiesForSlot(int32_t slot) {
                     [handle](const auto& a) { return a.handle == handle; })) {
       return std::unexpected("duplicate owned ability handle");
     }
-    abilities.push_back(ability);
+    abilities.push_back(*ability);
   }
   return abilities;
 }
