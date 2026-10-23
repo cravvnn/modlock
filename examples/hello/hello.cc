@@ -125,7 +125,7 @@ class HelloPlugin final : public modlock::Plugin {
         // Create the sample's text above the world origin.
         factory_ = std::move(*factory);
         factory_->SetEntitySystem(*entities);
-        modlock::Vec3 origin;
+        modlock::geometry::Vec3 origin;
         origin.set_z(200);
         auto text = factory_->Create("Modlock sample", origin, {}, {});
         if (text) {
