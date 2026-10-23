@@ -222,10 +222,14 @@ using SetUpgradeBits = void (*)(void* ability, uint32_t bits);
 MODLOCK_API std::expected<SetUpgradeBits, std::string> ResolveSetUpgradeBits(
     const ModuleImage& server);
 
-// upgrade carries the initial upgrade bits in its low word; extra is an optional
-// KeyValues3 node merged into the ability's spawn keyvalues.
-using CreateAbility = void* (*)(void* component, void* definition, uint16_t slot, uint64_t upgrade,
-                                bool flag, void* extra);
+// CreateAbility retains the native slot binding while it is held. Explicit
+// main slots 0 to 3 override the allocator's category filter for this creation;
+// other game allocations retain their normal slot selection. extra is an
+// optional KeyValues3 node merged into the ability's spawn keyvalues.
+// upgrade carries the initial upgrade bits in its low word.
+// Creators borrow the server module and must be released before it unloads.
+using CreateAbility = std::function<void*(void* component, void* definition, uint16_t slot,
+                                          uint64_t upgrade, bool flag, void* extra)>;
 MODLOCK_API std::expected<CreateAbility, std::string> ResolveCreateAbility(
     const ModuleImage& server);
 
