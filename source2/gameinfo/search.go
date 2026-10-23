@@ -11,11 +11,11 @@ import (
 // search is where a block goes in the first SearchPaths section.
 type search struct {
 	// insertion is the offset a block goes at: the end of the line before the
-	// stock citadel path, or just inside SearchPaths when that path does not
-	// start its own line.
+	// first Game path and the comments right above it, or just inside
+	// SearchPaths when that path does not start its own line.
 	insertion int
 	// roles are the Mod and Write entries a block names because its paths
-	// would otherwise become the first Game path and take them.
+	// become the first Game path, which would otherwise take them.
 	roles [][2]string
 }
 
@@ -33,26 +33,21 @@ func readSearch(source []byte) (search, error) {
 	}
 	open++
 
-	// Walk its entries for the first Game path, the stock one, and whether
-	// any entry names the Mod and Write paths.
-	var first string
-	firstIndex, stockIndex := -1, -1
+	// Walk its entries for the first Game path and whether any entry names
+	// the Mod and Write paths.
+	first := -1
 	var mod, write bool
 	for index := open + 1; index < len(found); {
 		key := found[index].value
 		if key == "}" {
-			return placement(source, found, open, first, firstIndex, stockIndex, mod, write), nil
+			return placement(source, found, open, first, mod, write), nil
 		}
 		if index+1 >= len(found) || key == "{" || found[index+1].value == "}" || found[index+1].value == "{" {
 			break
 		}
 		kinds := strings.Split(strings.ToLower(key), "+")
-		value := found[index+1].value
-		if slices.Contains(kinds, "game") && first == "" {
-			first, firstIndex = value, index
-		}
-		if slices.Contains(kinds, "game") && stockIndex < 0 && stock(value) {
-			stockIndex = index
+		if slices.Contains(kinds, "game") && first < 0 {
+			first = index
 		}
 		mod = mod || slices.Contains(kinds, "mod")
 		write = write || slices.Contains(kinds, "write")
@@ -66,33 +61,41 @@ func readSearch(source []byte) (search, error) {
 	return search{}, errors.New("gameinfo.gi's SearchPaths section is incomplete")
 }
 
-// placement puts the block on its own line before the stock path when that
-// path starts a line, and names the roles the block would otherwise take.
-func placement(source []byte, found []token, open int, first string, firstIndex, stockIndex int, mod, write bool) search {
-	// Go before the stock path when it starts its own line.
+// placement puts the block on its own line ahead of the first Game path and
+// any other tool's marker comment above it, and names the roles that path
+// held.
+func placement(source []byte, found []token, open, first int, mod, write bool) search {
+	// Go before the first Game path when it starts its own line.
 	out := search{insertion: found[open].end}
-	leading := true
-	if stockIndex >= 0 {
-		if at, ok := lineEndBefore(source, found[stockIndex].start); ok && at > found[open].end {
-			out.insertion = at
-			leading = stockIndex == firstIndex
-		}
+	if first < 0 {
+		return out
+	}
+	if at, ok := lineEndBefore(source, found[first].start); ok && at > found[open].end {
+		out.insertion = commentsAbove(source, at, found[open].end)
 	}
 
-	// A block ahead of every Game path names the roles the first path held.
-	if leading && first != "" && !mod {
-		out.roles = append(out.roles, [2]string{"Mod", first})
+	// The block's paths come first, so it names the roles the first path held.
+	if !mod {
+		out.roles = append(out.roles, [2]string{"Mod", found[first+1].value})
 	}
-	if leading && first != "" && !write {
-		out.roles = append(out.roles, [2]string{"Write", first})
+	if !write {
+		out.roles = append(out.roles, [2]string{"Write", found[first+1].value})
 	}
 	return out
 }
 
-// stock reports whether a Game path names the game's own citadel content.
-func stock(value string) bool {
-	value = strings.TrimSuffix(strings.ToLower(strings.ReplaceAll(value, `\`, "/")), "/")
-	return value == "citadel" || value == "|gameinfo_path|."
+// commentsAbove moves the line end at back over the comment lines directly
+// above it, such as another tool's opening marker, stopping at floor.
+func commentsAbove(source []byte, at, floor int) int {
+	for {
+		start := bytes.LastIndexByte(source[:at], '\n') + 1
+		line := bytes.TrimSpace(source[start:at])
+		previous, ok := lineEndBefore(source, start)
+		if !bytes.HasPrefix(line, []byte("//")) || !ok || previous < floor {
+			return at
+		}
+		at = previous
+	}
 }
 
 // lineEndBefore returns the end of the line before offset, before any

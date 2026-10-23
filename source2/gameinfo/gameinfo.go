@@ -1,8 +1,8 @@
 // Package gameinfo edits the search paths in a Source 2 game's gameinfo.gi,
 // which several programs share: Steam, mod managers and tools that mount
 // content for a while. Each tool's paths sit in a block between its own
-// marker comments, inserted before the game's stock content, and a tool
-// removes exactly the lines it wrote, keeping every other byte of the file.
+// marker comments, and a tool removes exactly the lines it wrote, keeping
+// every other byte of the file.
 package gameinfo
 
 import (
@@ -19,18 +19,12 @@ func markers(name string) (begin, end string) {
 	return "// " + name + " BEGIN", "// " + name + " END"
 }
 
-// Mounted reports whether source holds the block of the tool named name.
-func Mounted(source []byte, name string) bool {
-	begin, _ := markers(name)
-	return bytes.Contains(source, []byte(begin))
-}
-
 // Mount returns source with the block of the tool named name holding paths as
 // Game search paths, replacing the tool's earlier block. The block goes on its
-// own line before the stock citadel path, so other mods outrank it and it
-// outranks stock content. When its paths would come first, the block also
-// names the engine's Mod and Write paths, which the engine would otherwise
-// take from the first Game path.
+// own line ahead of every other Game path and other tools' blocks, so its
+// files win while it is mounted. When no entry names the engine's Mod and
+// Write paths, which the engine would otherwise take from the first Game
+// path, the block names the path that came first before it.
 func Mount(source []byte, name string, paths ...string) ([]byte, error) {
 	// Start from the file without the tool's earlier block.
 	source, err := Unmount(source, name)

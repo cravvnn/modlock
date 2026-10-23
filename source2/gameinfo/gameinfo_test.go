@@ -25,15 +25,15 @@ var stockFile = strings.ReplaceAll(`"GameInfo"
 // TestMount mounts and unmounts a block beside the stock paths and beside
 // another tool's block.
 func TestMount(t *testing.T) {
-	// A block before the stock path names the roles it would take, in the
-	// file's line endings, and its removal restores every byte.
+	// A block ahead of the stock path names the roles it takes from it, in
+	// the file's line endings, and its removal restores every byte.
 	source := []byte(stockFile)
 	mounted, err := Mount(source, "MODLOCK DEV", "citadel/modlock_dev")
 	if err != nil {
 		t.Fatal(err)
 	}
 	want := "\t\t\tGame_Language\t\tcitadel_*LANGUAGE*\r\n\t\t\t// MODLOCK DEV BEGIN\r\n\t\t\tGame\t\t\tcitadel/modlock_dev\r\n\t\t\tMod\t\t\t\"citadel\"\r\n\t\t\tWrite\t\t\t\"citadel\"\r\n\t\t\t// MODLOCK DEV END\r\n\t\t\tGame\t\t\t\tcitadel\r\n"
-	if !bytes.Contains(mounted, []byte(want)) || !Mounted(mounted, "MODLOCK DEV") {
+	if !bytes.Contains(mounted, []byte(want)) {
 		t.Fatalf("mounted:\n%s", mounted)
 	}
 	if again, err := Mount(mounted, "MODLOCK DEV", "citadel/modlock_dev"); err != nil || !bytes.Equal(again, mounted) {
@@ -44,8 +44,7 @@ func TestMount(t *testing.T) {
 	}
 
 	// Beside another tool's block, which already names the roles, a block
-	// goes after it and before the stock path, and each removal keeps the
-	// other block.
+	// goes ahead of its markers, and each removal keeps the other block.
 	other, err := Mount(source, "HYPERLINE PANORAMA", "citadel/hyperline/ab")
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +54,7 @@ func TestMount(t *testing.T) {
 		t.Fatal(err)
 	}
 	hyperline, modlock := bytes.Index(both, []byte("citadel/hyperline/ab")), bytes.Index(both, []byte("citadel/modlock_dev"))
-	if hyperline < 0 || modlock < hyperline || bytes.Count(both, []byte("Mod\t")) != 1 {
+	if modlock < 0 || hyperline < modlock || !bytes.Contains(both, []byte("// MODLOCK DEV END\r\n\t\t\t// HYPERLINE PANORAMA BEGIN")) || bytes.Count(both, []byte("Mod\t")) != 1 {
 		t.Fatalf("both:\n%s", both)
 	}
 	if restored, err := Unmount(both, "MODLOCK DEV"); err != nil || !bytes.Equal(restored, other) {

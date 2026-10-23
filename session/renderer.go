@@ -19,9 +19,6 @@ const (
 	rendererMount = "MODLOCK DEV"
 	// rendererDir is the game-relative directory of the renderer package.
 	rendererDir = "citadel/modlock_dev"
-	// hyperlineMount names the Hyperline desktop's block, whose startup
-	// package also shadows the news layout.
-	hyperlineMount = "HYPERLINE PANORAMA"
 	// newsLayout is the stock layout the package shadows. The game loads it
 	// at startup inside the hideout HUD and keeps it for the whole process,
 	// so a script it includes can draw over the HUD in every match.
@@ -39,30 +36,16 @@ const bootSource = `(function () {
 })()
 `
 
-// errHyperlineMounted reports that the Hyperline desktop's game content is
-// mounted, so the renderer package stands aside rather than shadow the same
-// stock layout.
-var errHyperlineMounted = errors.New("the Hyperline desktop's game content is mounted; close the desktop and restart the game to see mod interfaces in it")
-
 // mountRenderer mounts a package in the Deadlock installation at gameDir that
 // draws the mods' interfaces in the player's game, and returns the call that
 // unmounts it. renderer is the built renderer script. The package shadows the
 // stock news layout, read from the installed game so it follows game updates,
-// with one script added. A game already running loads it at its next start.
-// A block left by a session that did not end cleanly is replaced.
+// with one script added, and outranks every other mounted package while the
+// session runs. A game already running loads it at its next start. A block
+// left by a session that did not end cleanly is replaced.
 func mountRenderer(gameDir string, renderer []byte) (func() error, error) {
-	// Leave the news layout to the Hyperline desktop when it is mounted.
-	citadel := filepath.Join(gameDir, "game", "citadel")
-	info := filepath.Join(citadel, "gameinfo.gi")
-	source, err := os.ReadFile(info)
-	if err != nil {
-		return nil, err
-	}
-	if gameinfo.Mounted(source, hyperlineMount) {
-		return nil, errHyperlineMounted
-	}
-
 	// Build the package from the installed news layout.
+	citadel := filepath.Join(gameDir, "game", "citadel")
 	stock, err := vpk.OpenArchive(filepath.Join(citadel, "pak01_dir.vpk"))
 	if err != nil {
 		return nil, err
@@ -90,6 +73,11 @@ func mountRenderer(gameDir string, renderer []byte) (func() error, error) {
 	}
 
 	// Write the package, then mount it.
+	info := filepath.Join(citadel, "gameinfo.gi")
+	source, err := os.ReadFile(info)
+	if err != nil {
+		return nil, err
+	}
 	var archive bytes.Buffer
 	if err := vpk.Write(&archive, files); err != nil {
 		return nil, err
