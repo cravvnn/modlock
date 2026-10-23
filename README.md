@@ -601,6 +601,7 @@ whose `cancel` you call with a colon. In Python, `modlock.after`,
 | `player.setting`, `setSetting`, `settingOn(player, key)`, `settingNumber(player, key)` | Read or change the player's settings.                           |
 | `player.addMetric(name, value, label?)`                                                | Add to the player's total of a metric.                          |
 | `player.watchMovement(true)`                                                           | Add the hero's movement, landings and wall jumps to each frame. |
+| `setOrbitCamera(player, enabled)`                                                      | Switch the hero to the hideout's zoom camera and HUD, or back.  |
 | `addBot(options)`, `player.removeBot()`                                                | Add or remove a bot player.                                     |
 
 ### Input

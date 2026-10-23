@@ -36,6 +36,7 @@ import { press, tick } from './ui.js'
 
 export { Buttons, Layers } from './bits.js'
 export { after, every, sequence, type Timer } from './timer.js'
+export { setOrbitCamera } from './camera.js'
 export * from './host.gen.js'
 export { players } from './players.js'
 export { type CatalogEntry, Dropper, dropperButtons } from './dropper.js'

@@ -2794,6 +2794,24 @@ function modlock.has(bits: number, bit: number): boolean
 	return bits // bit % 2 == 1
 end
 
+-- setOrbitCamera gives the player's hero the hideout's orbit camera, zoomed
+-- with the wheel, or returns the normal camera. The hideout HUD replaces the
+-- game HUD while it is on. It returns false when the player has no hero or a
+-- call fails.
+--
+-- The pawn's networked m_bInHideoutZone moves its client to the hideout view,
+-- and the wheel zooms only while the pawn holds MODIFIER_STATE_HIDEOUT_ZONE,
+-- since the server ignores orbit_camera_in and orbit_camera_out without it.
+function modlock.setOrbitCamera(player: Player, enabled: boolean): boolean
+	local pawn = player:pawn()
+	if pawn == nil or pawn.entity == 0 then
+		return false
+	end
+	local flag = modlock.writeField(pawn.entity, "CCitadelPlayerPawn", "m_bInHideoutZone", "bool", enabled)
+	local zoom = modlock.holdModifierState(pawn.entity, "MODIFIER_STATE_HIDEOUT_ZONE", enabled)
+	return flag and zoom
+end
+
 -- Service answers the host's calls to one service the mod serves: the
 -- method's name and payload in, the answer out. An error becomes the call's
 -- error.

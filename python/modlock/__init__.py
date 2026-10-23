@@ -3163,6 +3163,24 @@ def players() -> list[Connection]:
     return response["players"]
 
 
+
+def set_orbit_camera(player: Player, enabled: bool) -> bool:
+    """set_orbit_camera gives the player's hero the hideout's orbit camera,
+    zoomed with the wheel, or returns the normal camera. The hideout HUD
+    replaces the game HUD while it is on. It returns False when the player has
+    no hero or a call fails.
+
+    The pawn's networked m_bInHideoutZone moves its client to the hideout
+    view, and the wheel zooms only while the pawn holds
+    MODIFIER_STATE_HIDEOUT_ZONE, since the server ignores orbit_camera_in and
+    orbit_camera_out without it."""
+    pawn = player.pawn()
+    if pawn is None or pawn.entity == 0:
+        return False
+    flag = write_field(pawn.entity, "CCitadelPlayerPawn", "m_bInHideoutZone", "bool", enabled)
+    zoom = hold_modifier_state(pawn.entity, "MODIFIER_STATE_HIDEOUT_ZONE", enabled)
+    return flag and zoom
+
 def serve(service: str) -> Callable[[Service], Service]:
     """serve answers the host's calls to service with the decorated handler,
     replacing its earlier handler."""
