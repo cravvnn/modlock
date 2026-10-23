@@ -160,7 +160,7 @@ func (p *Project) writeScriptcEntry(dir, library string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return errors.Wrap(err, "write the scriptc entry")
 	}
-	entry := fmt.Appendf(nil, scriptcEntry, scriptMain(p.Manifest.GetLanguage()))
+	entry := fmt.Appendf(nil, scriptcEntry, p.scriptEntry())
 	if err := os.WriteFile(filepath.Join(dir, "entry.ts"), entry, 0o644); err != nil {
 		return errors.Wrap(err, "write the scriptc entry")
 	}

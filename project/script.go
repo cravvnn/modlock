@@ -43,6 +43,16 @@ func scriptMain(language manifest.Manifest_Language) string {
 	return "main.ts"
 }
 
+// scriptEntry returns the project's source entry: scriptMain, or its JSX
+// form, such as main.tsx, when the project has that instead.
+func (p *Project) scriptEntry() string {
+	main := scriptMain(p.Manifest.GetLanguage())
+	if _, err := os.Stat(filepath.Join(p.Dir, main+"x")); err == nil {
+		return main + "x"
+	}
+	return main
+}
+
 // buildScript type checks a TypeScript or JavaScript project. A release build
 // of a mod that asks for RUNTIME_WASM compiles it with scriptc; any other
 // build, or a mod scriptc cannot compile, bundles it with the library into
@@ -85,7 +95,7 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 
 	// Bundle the sources and the library into one script.
 	result := api.Build(api.BuildOptions{
-		EntryPoints:     []string{scriptMain(p.Manifest.GetLanguage())},
+		EntryPoints:     []string{p.scriptEntry()},
 		AbsWorkingDir:   p.Dir,
 		Bundle:          true,
 		Format:          api.FormatIIFE,
@@ -140,14 +150,19 @@ func (p *Project) writeBuild(content []byte, runtime manifest.Manifest_Runtime, 
 // installLibrary installs the declarations of the built library in library
 // into the script project in dir, removing any other file there.
 func installLibrary(library, dir string) error {
-	// Gather the declarations and the package that names them.
+	// Gather the declarations, every .d.ts file of the library, and the
+	// package that names them.
 	files := map[string][]byte{"package.json": []byte(libraryPackage)}
-	for _, name := range js.Declarations {
-		content, err := os.ReadFile(filepath.Join(library, name))
+	declarations, err := filepath.Glob(filepath.Join(library, "*.d.ts"))
+	if err != nil {
+		return errors.Wrap(err, "install the modlock library")
+	}
+	for _, path := range declarations {
+		content, err := os.ReadFile(path)
 		if err != nil {
 			return errors.Wrap(err, "install the modlock library")
 		}
-		files[name] = content
+		files[filepath.Base(path)] = content
 	}
 
 	// Write each file that differs, and remove the rest.
