@@ -1044,18 +1044,23 @@ type CameraOptions struct {
 	unknownFields []byte
 	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
 	// Context names a group of operations, which ClearCamera removes together.
+	// Operations on one param in one context run in order, each after the one
+	// before it ends, so a mod sends a whole sequence at once.
 	Context *string `protobuf:"bytes,2,opt,name=context,proto3,oneof" json:"context,omitempty"`
 	// Param is the camera value the operation moves.
 	Param CameraParam `protobuf:"varint,3,opt,name=param,proto3" json:"param,omitempty"`
-	// Motion is how it moves.
+	// Motion is how it moves. Each motion ends once it reaches its value or
+	// its duration, and the param returns to its usual value unless another
+	// operation follows.
 	Motion *CameraMotion `protobuf:"bytes,4,opt,name=motion,proto3" json:"motion,omitempty"`
 	// Delay starts the operation after this many seconds.
 	Delay *float32 `protobuf:"fixed32,5,opt,name=delay,proto3,oneof" json:"delay,omitempty"`
 	// Relative adds the operation's values to the param's usual value instead
 	// of replacing it.
 	Relative *bool `protobuf:"varint,6,opt,name=relative,proto3,oneof" json:"relative,omitempty"`
-	// Priority decides between operations on one param; the higher wins.
-	// Omitted, 1.
+	// Priority decides between contexts moving one param: a higher operation
+	// takes over from a running lower one, which resumes when it ends, and a
+	// lower one does not show while a higher one runs. Omitted, 1.
 	Priority *uint32 `protobuf:"varint,7,opt,name=priority,proto3,oneof" json:"priority,omitempty"`
 	// Shared lets operations of other contexts move the param at the same time.
 	Shared *bool `protobuf:"varint,8,opt,name=shared,proto3,oneof" json:"shared,omitempty"`

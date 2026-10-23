@@ -1577,6 +1577,8 @@ export interface CameraOptions {
   player?: number
   /**
    * Context names a group of operations, which ClearCamera removes together.
+   * Operations on one param in one context run in order, each after the one
+   * before it ends, so a mod sends a whole sequence at once.
    */
   context?: string
   /**
@@ -1584,7 +1586,9 @@ export interface CameraOptions {
    */
   param?: CameraParam
   /**
-   * Motion is how it moves.
+   * Motion is how it moves. Each motion ends once it reaches its value or
+   * its duration, and the param returns to its usual value unless another
+   * operation follows.
    */
   motion?: CameraMotion
   /**
@@ -1597,8 +1601,9 @@ export interface CameraOptions {
    */
   relative?: boolean
   /**
-   * Priority decides between operations on one param; the higher wins.
-   * Omitted, 1.
+   * Priority decides between contexts moving one param: a higher operation
+   * takes over from a running lower one, which resumes when it ends, and a
+   * lower one does not show while a higher one runs. Omitted, 1.
    */
   priority?: number
   /**

@@ -346,6 +346,13 @@ std::expected<void, std::string> Game::ClearCamera(const players::ClearCameraReq
     message.set_action(engine::CAMERA_ACTION_CLEAR_ALL_OPS);
     message.set_param(engine::CAMERA_PARAM_CLEAR_ALL_OPS);
   }
+
+  // Name the player's hero; the client drops a message that names none.
+  auto sample = Live(request.player());
+  if (!sample) {
+    return std::unexpected(sample.error());
+  }
+  message.set_target_pawn(NetworkedHandle(sample->pawn_handle));
   return (*messages)->CameraController(request.player(), message);
 }
 

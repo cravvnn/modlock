@@ -866,18 +866,23 @@ export type CameraLag = {
 -- CameraOptions adds one operation to a player's camera.
 export type CameraOptions = {
 	-- context names a group of operations, which ClearCamera removes together.
+	-- Operations on one param in one context run in order, each after the one
+	-- before it ends, so a mod sends a whole sequence at once.
 	context: string?,
 	-- param is the camera value the operation moves.
 	param: CameraParam,
-	-- motion is how it moves.
+	-- motion is how it moves. Each motion ends once it reaches its value or
+	-- its duration, and the param returns to its usual value unless another
+	-- operation follows.
 	motion: CameraMotion,
 	-- delay starts the operation after this many seconds.
 	delay: number?,
 	-- relative adds the operation's values to the param's usual value instead
 	-- of replacing it.
 	relative: boolean?,
-	-- priority decides between operations on one param; the higher wins.
-	-- Omitted, 1.
+	-- priority decides between contexts moving one param: a higher operation
+	-- takes over from a running lower one, which resumes when it ends, and a
+	-- lower one does not show while a higher one runs. Omitted, 1.
 	priority: number?,
 	-- shared lets operations of other contexts move the param at the same time.
 	shared: boolean?,
