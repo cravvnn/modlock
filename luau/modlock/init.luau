@@ -968,14 +968,19 @@ export type Player = {
 	-- spectate moves the player to the spectators, without a hero. The player
 	-- watches until a hero selection seats them again.
 	spectate: (self: Player) -> boolean,
-	-- watch points the player's camera at a hero, through the hero's own view,
-	-- as the game's spectator camera follows it. A spectator watches through
+	-- watch points the player's camera at a hero, through the hero's own view
+	-- or chasing it, as the game's spectator camera follows it. A spectator watches through
 	-- their spectator camera, once it exists. A player with a hero watches
 	-- while the hero stays where it stands, keeping its level, souls and items,
 	-- until Unwatch returns them to it.
-	watch: (self: Player, target: number) -> boolean,
-	-- unwatch returns a player watching from their hero back to it. Stopping
-	-- the mod returns every such player.
+	watch: (self: Player, target: number, chase: boolean?) -> boolean,
+	-- freeCamera lets the player fly their camera from a position, with the
+	-- movement keys and the mouse, as the game's roaming spectator camera does.
+	-- A player with a hero leaves it where it stands, as Watch does, until
+	-- Unwatch returns them to it; Watch follows a hero again.
+	freeCamera: (self: Player, position: Vector, facing: Angles) -> boolean,
+	-- unwatch returns a player watching or flying the free camera from their
+	-- hero back to it. Stopping the mod returns every such player.
 	unwatch: (self: Player) -> boolean,
 	-- respawn revives the player's dead hero.
 	respawn: (self: Player) -> boolean,
@@ -1156,17 +1161,25 @@ function Player.spectate(self: Player): boolean
 	return call("Spectate", "PlayerRequest", { player = self }) ~= nil
 end
 
--- watch points the player's camera at a hero, through the hero's own view,
--- as the game's spectator camera follows it. A spectator watches through
+-- watch points the player's camera at a hero, through the hero's own view
+-- or chasing it, as the game's spectator camera follows it. A spectator watches through
 -- their spectator camera, once it exists. A player with a hero watches
 -- while the hero stays where it stands, keeping its level, souls and items,
 -- until Unwatch returns them to it.
-function Player.watch(self: Player, target: number): boolean
-	return call("Watch", "WatchRequest", { player = self, target = target }) ~= nil
+function Player.watch(self: Player, target: number, chase: boolean?): boolean
+	return call("Watch", "WatchRequest", { player = self, target = target, chase = chase }) ~= nil
 end
 
--- unwatch returns a player watching from their hero back to it. Stopping
--- the mod returns every such player.
+-- freeCamera lets the player fly their camera from a position, with the
+-- movement keys and the mouse, as the game's roaming spectator camera does.
+-- A player with a hero leaves it where it stands, as Watch does, until
+-- Unwatch returns them to it; Watch follows a hero again.
+function Player.freeCamera(self: Player, position: Vector, facing: Angles): boolean
+	return call("FreeCamera", "FreeCameraRequest", { player = self, position = position, facing = facing }) ~= nil
+end
+
+-- unwatch returns a player watching or flying the free camera from their
+-- hero back to it. Stopping the mod returns every such player.
 function Player.unwatch(self: Player): boolean
 	return call("Unwatch", "PlayerRequest", { player = self }) ~= nil
 end
@@ -2137,6 +2150,12 @@ schema.HeroResponse = {
 schema.WatchRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "target", kind = "uint32" },
+	{ number = 3, name = "chase", kind = "bool", optional = true },
+}
+schema.FreeCameraRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
 }
 schema.FreezeRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },

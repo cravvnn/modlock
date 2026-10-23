@@ -145,8 +145,8 @@ class HostService {
     return std::unexpected("this host does not support Spectate");
   }
 
-  // Watch points the player's camera at a hero, through the hero's own view,
-  // as the game's spectator camera follows it. A spectator watches through
+  // Watch points the player's camera at a hero, through the hero's own view
+  // or chasing it, as the game's spectator camera follows it. A spectator watches through
   // their spectator camera, once it exists. A player with a hero watches
   // while the hero stays where it stands, keeping its level, souls and items,
   // until Unwatch returns them to it.
@@ -154,8 +154,17 @@ class HostService {
     return std::unexpected("this host does not support Watch");
   }
 
-  // Unwatch returns a player watching from their hero back to it. Stopping
-  // the mod returns every such player.
+  // FreeCamera lets the player fly their camera from a position, with the
+  // movement keys and the mouse, as the game's roaming spectator camera does.
+  // A player with a hero leaves it where it stands, as Watch does, until
+  // Unwatch returns them to it; Watch follows a hero again.
+  virtual std::expected<void, std::string> FreeCamera(
+      const players::FreeCameraRequest& /*request*/) {
+    return std::unexpected("this host does not support FreeCamera");
+  }
+
+  // Unwatch returns a player watching or flying the free camera from their
+  // hero back to it. Stopping the mod returns every such player.
   virtual std::expected<void, std::string> Unwatch(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Unwatch");
   }
@@ -856,6 +865,14 @@ class HostService {
              return detail::Fail("the Watch request is malformed");
            }
            return detail::Answer(host.Watch(request));
+         }},
+        {"FreeCamera",
+         [](HostService& host, const std::string& bytes) {
+           players::FreeCameraRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the FreeCamera request is malformed");
+           }
+           return detail::Answer(host.FreeCamera(request));
          }},
         {"Unwatch",
          [](HostService& host, const std::string& bytes) {

@@ -5,13 +5,15 @@
 #include <span>
 #include <utility>
 
+#include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/native_memory.h"
 #include "wasm/game.h"
 #include "wasm/game_internal.h"
 
 namespace modlock::wasm {
 
-std::expected<players::HeroResponse, std::string> Game::SelectHero(const players::SelectHeroRequest& request) {
+std::expected<players::HeroResponse, std::string> Game::SelectHero(
+    const players::SelectHeroRequest& request) {
   // Resolve the hero and the selection service.
   auto heroes = services_.Heroes();
   if (!heroes) {
@@ -59,18 +61,18 @@ std::expected<void, std::string> Game::Spectate(const players::PlayerRequest& re
                                 **selection);
 }
 
-std::expected<void, std::string> Game::Watch(const players::WatchRequest& request) {
-  // Find the camera's observer services, which aim it.
-  if (auto target = Entity(request.target()); !target) {
-    return std::unexpected(target.error());
-  }
+// The observer modes of ObserverMode_t that a camera here uses.
+constexpr uint8_t kObserveInEye = 2;
+constexpr uint8_t kObserveChase = 3;
+constexpr uint8_t kObserveRoaming = 4;
 
+std::expected<void*, std::string> Game::ObserveFrom(int32_t slot, uint8_t mode, uint32_t target) {
   // Find the camera pawn of the player's slot.
   auto selection = services_.Selection();
   if (!selection) {
     return std::unexpected(selection.error());
   }
-  auto pawn = observer_.CameraPawnForSlot(request.player(), **selection);
+  auto pawn = observer_.CameraPawnForSlot(slot, **selection);
   if (!pawn) {
     return std::unexpected(pawn.error());
   }
@@ -97,16 +99,44 @@ std::expected<void, std::string> Game::Watch(const players::WatchRequest& reques
     return std::unexpected(mode_field.error());
   }
 
-  // Follow the target in its own view, OBS_MODE_IN_EYE, and replicate it.
-  const uint32_t handle = request.target();
-  const uint8_t in_eye = 2;
-  if (!gameinterop::WriteNative(observer + target_field->offset, &handle, sizeof(handle)) ||
-      !gameinterop::WriteNative(observer + mode_field->offset, &in_eye, sizeof(in_eye))) {
+  // Set the mode and target, and replicate them.
+  if (!gameinterop::WriteNative(observer + target_field->offset, &target, sizeof(target)) ||
+      !gameinterop::WriteNative(observer + mode_field->offset, &mode, sizeof(mode))) {
     return std::unexpected("cannot aim the spectator's camera");
   }
   if (!gameinterop::NotifyEntityStateChanged(*pawn)) {
     return std::unexpected("cannot replicate the spectator's camera");
   }
+  return *pawn;
+}
+
+std::expected<void, std::string> Game::Watch(const players::WatchRequest& request) {
+  // Follow the target in its own view or from behind it.
+  if (auto target = Entity(request.target()); !target) {
+    return std::unexpected(target.error());
+  }
+  const auto mode = request.chase() ? kObserveChase : kObserveInEye;
+  if (auto camera = ObserveFrom(request.player(), mode, request.target()); !camera) {
+    return std::unexpected(camera.error());
+  }
+  return {};
+}
+
+std::expected<void, std::string> Game::FreeCamera(const players::FreeCameraRequest& request) {
+  // Resolve the teleport that also turns the client's camera.
+  auto teleport = services_.Teleport();
+  if (!teleport) {
+    return std::unexpected(teleport.error());
+  }
+
+  // Roam with no target, then place the camera at the requested pose.
+  auto camera = ObserveFrom(request.player(), kObserveRoaming, gameinterop::kInvalidEHandleIndex);
+  if (!camera) {
+    return std::unexpected(camera.error());
+  }
+  const auto position = Floats(request.position());
+  const auto facing = Floats(request.facing());
+  (*teleport)(nullptr, *camera, position.data(), facing.data());
   return {};
 }
 
@@ -229,7 +259,8 @@ std::expected<float, std::string> Game::LatchTime() {
   return (*clock)->GameTime(now->current_time, now->interval).value_or(now->current_time);
 }
 
-std::expected<void, std::string> Game::RefreshAbility(const abilities::RefreshAbilityRequest& request) {
+std::expected<void, std::string> Game::RefreshAbility(
+    const abilities::RefreshAbilityRequest& request) {
   // Find the player's ability and clear its cooldown.
   auto ability = OwnedAbility(request.player(), request.ability());
   if (!ability) {
@@ -240,7 +271,8 @@ std::expected<void, std::string> Game::RefreshAbility(const abilities::RefreshAb
   return observer_.ApplyAbilityTimers(request.player(), std::span(&*ability, 1));
 }
 
-std::expected<abilities::AbilitiesResponse, std::string> Game::Abilities(const players::PlayerRequest& request) {
+std::expected<abilities::AbilitiesResponse, std::string> Game::Abilities(
+    const players::PlayerRequest& request) {
   // Resolve the ability table and the player's live abilities.
   const auto slot = request.player();
   auto definitions = services_.Abilities();
@@ -385,7 +417,8 @@ std::expected<void, std::string> Game::GiveItem(const abilities::GiveItemRequest
   return {};
 }
 
-std::expected<void, std::string> Game::ReplaceAbility(const abilities::ReplaceAbilityRequest& request) {
+std::expected<void, std::string> Game::ReplaceAbility(
+    const abilities::ReplaceAbilityRequest& request) {
   // Check the slot and resolve the ability tables.
   if (request.index() > UINT16_MAX) {
     return std::unexpected("the ability slot is out of range");

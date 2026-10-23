@@ -818,6 +818,11 @@ export interface WatchRequest {
    * reports it.
    */
   target?: number
+  /**
+   * Chase follows from behind the hero, as the game's chase camera does,
+   * instead of through its eyes.
+   */
+  chase?: boolean
 }
 
 export const WatchRequest: MessageType<WatchRequest> =
@@ -826,6 +831,7 @@ export const WatchRequest: MessageType<WatchRequest> =
     () => [
       [1, 'player', 5],
       [2, 'target', 13],
+      [3, 'chase', 8, 4],
     ],
     {
       decode: (r: BinaryReader, end: number, m: WatchRequest): WatchRequest => {
@@ -838,6 +844,9 @@ export const WatchRequest: MessageType<WatchRequest> =
               break
             case 2:
               m.target = r.uint32()
+              break
+            case 3:
+              m.chase = r.bool()
               break
             default:
               r.skip(t)
@@ -853,6 +862,77 @@ export const WatchRequest: MessageType<WatchRequest> =
         {
           const v = m.target
           if (v) w.uint32(16).uint32(v)
+        }
+        {
+          const v = m.chase
+          if (v != null) w.uint32(24).bool(v)
+        }
+      },
+    },
+  )
+
+/**
+ * FreeCameraRequest names a player and where their free camera starts.
+ *
+ * @generated from message modlock.wasm.players.FreeCameraRequest
+ */
+export interface FreeCameraRequest {
+  player?: number
+  /**
+   * Position is where the camera starts.
+   */
+  position?: Vec3
+  /**
+   * Facing is where the camera looks when it starts.
+   */
+  facing?: EulerAngles
+}
+
+export const FreeCameraRequest: MessageType<FreeCameraRequest> =
+  /* @__PURE__ */ createMessageType<FreeCameraRequest>(
+    'modlock.wasm.players.FreeCameraRequest',
+    () => [
+      [1, 'player', 5],
+      [2, 'position', 11, 0, Vec3.codec],
+      [3, 'facing', 11, 0, EulerAngles.codec],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: FreeCameraRequest,
+      ): FreeCameraRequest => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.player = r.int32()
+              break
+            case 2:
+              m.position = Vec3.decode(r, r.delimited(), m.position ?? {})
+              break
+            case 3:
+              m.facing = EulerAngles.decode(r, r.delimited(), m.facing ?? {})
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: FreeCameraRequest, w: Writer): void => {
+        {
+          const v = m.player
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.position
+          if (v != null) Vec3.writeField(w, 2, v)
+        }
+        {
+          const v = m.facing
+          if (v != null) EulerAngles.writeField(w, 3, v)
         }
       },
     },

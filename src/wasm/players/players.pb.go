@@ -524,6 +524,9 @@ type WatchRequest struct {
 	// Target is the entity handle of the hero to follow, as Pawn.entity
 	// reports it.
 	Target uint32 `protobuf:"varint,2,opt,name=target,proto3" json:"target,omitempty"`
+	// Chase follows from behind the hero, as the game's chase camera does,
+	// instead of through its eyes.
+	Chase *bool `protobuf:"varint,3,opt,name=chase,proto3,oneof" json:"chase,omitempty"`
 }
 
 func (x *WatchRequest) Reset() {
@@ -544,6 +547,50 @@ func (x *WatchRequest) GetTarget() uint32 {
 		return x.Target
 	}
 	return 0
+}
+
+func (x *WatchRequest) GetChase() bool {
+	if x != nil && x.Chase != nil {
+		return *x.Chase
+	}
+	return false
+}
+
+// FreeCameraRequest names a player and where their free camera starts.
+type FreeCameraRequest struct {
+	unknownFields []byte
+	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	// Position is where the camera starts.
+	Position *geometry.Vec3 `protobuf:"bytes,2,opt,name=position,proto3" json:"position,omitempty"`
+	// Facing is where the camera looks when it starts.
+	Facing *geometry.EulerAngles `protobuf:"bytes,3,opt,name=facing,proto3" json:"facing,omitempty"`
+}
+
+func (x *FreeCameraRequest) Reset() {
+	*x = FreeCameraRequest{}
+}
+
+func (*FreeCameraRequest) ProtoMessage() {}
+
+func (x *FreeCameraRequest) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *FreeCameraRequest) GetPosition() *geometry.Vec3 {
+	if x != nil {
+		return x.Position
+	}
+	return nil
+}
+
+func (x *FreeCameraRequest) GetFacing() *geometry.EulerAngles {
+	if x != nil {
+		return x.Facing
+	}
+	return nil
 }
 
 // FreezeRequest holds or releases one player's hero.
@@ -1299,6 +1346,7 @@ func (m *WatchRequest) CloneVT() *WatchRequest {
 	r := new(WatchRequest)
 	r.Player = m.Player
 	r.Target = m.Target
+	r.Chase = protobuf_go_lite.ClonePtr(m.Chase)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -1306,6 +1354,24 @@ func (m *WatchRequest) CloneVT() *WatchRequest {
 }
 
 func (m *WatchRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *FreeCameraRequest) CloneVT() *FreeCameraRequest {
+	if m == nil {
+		return (*FreeCameraRequest)(nil)
+	}
+	r := new(FreeCameraRequest)
+	r.Player = m.Player
+	r.Position = protobuf_go_lite.CloneVTValue(m.Position)
+	r.Facing = protobuf_go_lite.CloneVTValue(m.Facing)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *FreeCameraRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -1902,11 +1968,40 @@ func (this *WatchRequest) EqualVT(that *WatchRequest) bool {
 	if this.Target != that.Target {
 		return false
 	}
+	if !protobuf_go_lite.EqualPtr(this.Chase, that.Chase) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
 func (this *WatchRequest) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*WatchRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *FreeCameraRequest) EqualVT(that *FreeCameraRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Position, that.Position) {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Facing, that.Facing) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *FreeCameraRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*FreeCameraRequest)
 	if !ok {
 		return false
 	}
@@ -3055,6 +3150,11 @@ func (x *WatchRequest) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("target")
 		s.WriteUint32(x.Target)
 	}
+	if x.Chase != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("chase")
+		s.WriteBool(*x.Chase)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -3078,12 +3178,86 @@ func (x *WatchRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "target":
 			s.AddField("target")
 			x.Target = s.ReadUint32()
+		case "chase":
+			s.AddField("chase")
+			if s.ReadNil() {
+				x.Chase = nil
+				return
+			}
+			t := s.ReadBool()
+			x.Chase = &t
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the WatchRequest from JSON.
 func (x *WatchRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the FreeCameraRequest message to JSON.
+func (x *FreeCameraRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Position != nil || s.HasField("position") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("position")
+		x.Position.MarshalProtoJSON(s.WithField("position"))
+	}
+	if x.Facing != nil || s.HasField("facing") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("facing")
+		x.Facing.MarshalProtoJSON(s.WithField("facing"))
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the FreeCameraRequest to JSON.
+func (x *FreeCameraRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the FreeCameraRequest message from JSON.
+func (x *FreeCameraRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "position":
+			if s.ReadNil() {
+				x.Position = nil
+				return
+			}
+			x.Position = &geometry.Vec3{}
+			x.Position.UnmarshalProtoJSON(s.WithField("position", true))
+		case "facing":
+			if s.ReadNil() {
+				x.Facing = nil
+				return
+			}
+			x.Facing = &geometry.EulerAngles{}
+			x.Facing.UnmarshalProtoJSON(s.WithField("facing", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the FreeCameraRequest from JSON.
+func (x *FreeCameraRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -4602,10 +4776,72 @@ func (m *WatchRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.Chase != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.Chase)
+		i--
+		dAtA[i] = 0x18
+	}
 	if m.Target != 0 {
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Target))
 		i--
 		dAtA[i] = 0x10
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FreeCameraRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FreeCameraRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *FreeCameraRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Facing != nil {
+		size, err := m.Facing.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Position != nil {
+		size, err := m.Position.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
 	}
 	if m.Player != 0 {
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
@@ -5471,6 +5707,26 @@ func (m *WatchRequest) SizeVT() (n int) {
 	_ = l
 	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
 	n += protobuf_go_lite.SizeVarintNonZero(1, m.Target)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.Chase)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *FreeCameraRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	if m.Position != nil {
+		l = m.Position.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	if m.Facing != nil {
+		l = m.Facing.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -5969,10 +6225,36 @@ func (x *WatchRequest) MarshalProtoText() string {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "target")
 		protobuf_go_lite.TextWriteUint(&sb, x.Target)
 	}
+	if x.Chase != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "chase")
+		protobuf_go_lite.TextWriteBool(&sb, *x.Chase)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *WatchRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *FreeCameraRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "FreeCameraRequest")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Position != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "position")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Position)
+	}
+	if x.Facing != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "facing")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Facing)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *FreeCameraRequest) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -7191,6 +7473,99 @@ func (m *WatchRequest) UnmarshalVT(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Chase", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.Chase = &b
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *FreeCameraRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FreeCameraRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FreeCameraRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Position == nil {
+				m.Position = &geometry.Vec3{}
+			}
+			if err := m.Position.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Facing", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Facing == nil {
+				m.Facing = &geometry.EulerAngles{}
+			}
+			if err := m.Facing.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

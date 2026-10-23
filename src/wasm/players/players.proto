@@ -162,6 +162,21 @@ message WatchRequest {
   // Target is the entity handle of the hero to follow, as Pawn.entity
   // reports it.
   uint32 target = 2;
+
+  // Chase follows from behind the hero, as the game's chase camera does,
+  // instead of through its eyes.
+  optional bool chase = 3;
+}
+
+// FreeCameraRequest names a player and where their free camera starts.
+message FreeCameraRequest {
+  int32 player = 1;
+
+  // Position is where the camera starts.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is where the camera looks when it starts.
+  modlock.geometry.EulerAngles facing = 3;
 }
 
 // FreezeRequest holds or releases one player's hero.

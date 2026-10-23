@@ -78,6 +78,10 @@ class EquipmentTarget;
 struct EquipmentTargetDefaultTypeInternal;
 MODLOCK_API extern EquipmentTargetDefaultTypeInternal _EquipmentTarget_default_instance_;
 MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull EquipmentTarget_class_data_;
+class FreeCameraRequest;
+struct FreeCameraRequestDefaultTypeInternal;
+MODLOCK_API extern FreeCameraRequestDefaultTypeInternal _FreeCameraRequest_default_instance_;
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull FreeCameraRequest_class_data_;
 class FreezeRequest;
 struct FreezeRequestDefaultTypeInternal;
 MODLOCK_API extern FreezeRequestDefaultTypeInternal _FreezeRequest_default_instance_;
@@ -311,6 +315,7 @@ class MODLOCK_API WatchRequest final : public ::google::protobuf::Message
   enum : int {
     kPlayerFieldNumber = 1,
     kTargetFieldNumber = 2,
+    kChaseFieldNumber = 3,
   };
   // int32 player = 1;
   void clear_player() ;
@@ -332,11 +337,22 @@ class MODLOCK_API WatchRequest final : public ::google::protobuf::Message
   void _internal_set_target(::uint32_t value);
 
   public:
+  // optional bool chase = 3;
+  bool has_chase() const;
+  void clear_chase() ;
+  bool chase() const;
+  void set_chase(bool value);
+
+  private:
+  bool _internal_chase() const;
+  void _internal_set_chase(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:modlock.wasm.players.WatchRequest)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<1, 2,
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
                                    0, 0,
                                    2>
       _table_;
@@ -360,6 +376,7 @@ class MODLOCK_API WatchRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::int32_t player_;
     ::uint32_t target_;
+    bool chase_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -424,7 +441,7 @@ class MODLOCK_API TimerTarget final : public ::google::protobuf::Message
     return *reinterpret_cast<const TimerTarget*>(
         &_TimerTarget_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 20;
+  static constexpr int kIndexInFileMessages = 21;
   friend void swap(TimerTarget& a, TimerTarget& b) { a.Swap(&b); }
   inline void Swap(TimerTarget* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -678,7 +695,7 @@ class MODLOCK_API StartingSoulsRequest final : public ::google::protobuf::Messag
     return *reinterpret_cast<const StartingSoulsRequest*>(
         &_StartingSoulsRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 13;
+  static constexpr int kIndexInFileMessages = 14;
   friend void swap(StartingSoulsRequest& a, StartingSoulsRequest& b) { a.Swap(&b); }
   inline void Swap(StartingSoulsRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -880,7 +897,7 @@ class MODLOCK_API SetStaminaRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const SetStaminaRequest*>(
         &_SetStaminaRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 16;
+  static constexpr int kIndexInFileMessages = 17;
   friend void swap(SetStaminaRequest& a, SetStaminaRequest& b) { a.Swap(&b); }
   inline void Swap(SetStaminaRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1812,7 +1829,7 @@ class MODLOCK_API ResetHeroRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const ResetHeroRequest*>(
         &_ResetHeroRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 14;
+  static constexpr int kIndexInFileMessages = 15;
   friend void swap(ResetHeroRequest& a, ResetHeroRequest& b) { a.Swap(&b); }
   inline void Swap(ResetHeroRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2394,7 +2411,7 @@ class MODLOCK_API HealRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const HealRequest*>(
         &_HealRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 15;
+  static constexpr int kIndexInFileMessages = 16;
   friend void swap(HealRequest& a, HealRequest& b) { a.Swap(&b); }
   inline void Swap(HealRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2596,7 +2613,7 @@ class MODLOCK_API FreezeRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const FreezeRequest*>(
         &_FreezeRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 11;
+  static constexpr int kIndexInFileMessages = 12;
   friend void swap(FreezeRequest& a, FreezeRequest& b) { a.Swap(&b); }
   inline void Swap(FreezeRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2799,7 +2816,7 @@ class MODLOCK_API EquipmentTarget final : public ::google::protobuf::Message
     return *reinterpret_cast<const EquipmentTarget*>(
         &_EquipmentTarget_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 19;
+  static constexpr int kIndexInFileMessages = 20;
   friend void swap(EquipmentTarget& a, EquipmentTarget& b) { a.Swap(&b); }
   inline void Swap(EquipmentTarget* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3269,7 +3286,7 @@ class MODLOCK_API BotResponse final : public ::google::protobuf::Message
     return *reinterpret_cast<const BotResponse*>(
         &_BotResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 22;
+  static constexpr int kIndexInFileMessages = 23;
   friend void swap(BotResponse& a, BotResponse& b) { a.Swap(&b); }
   inline void Swap(BotResponse* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -3459,7 +3476,7 @@ class MODLOCK_API AdjustSoulsRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const AdjustSoulsRequest*>(
         &_AdjustSoulsRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 12;
+  static constexpr int kIndexInFileMessages = 13;
   friend void swap(AdjustSoulsRequest& a, AdjustSoulsRequest& b) { a.Swap(&b); }
   inline void Swap(AdjustSoulsRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -4471,7 +4488,7 @@ class MODLOCK_API HeroTarget final : public ::google::protobuf::Message
     return *reinterpret_cast<const HeroTarget*>(
         &_HeroTarget_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 18;
+  static constexpr int kIndexInFileMessages = 19;
   friend void swap(HeroTarget& a, HeroTarget& b) { a.Swap(&b); }
   inline void Swap(HeroTarget* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -4770,6 +4787,230 @@ class MODLOCK_API HeroTarget final : public ::google::protobuf::Message
 MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull HeroTarget_class_data_;
 // -------------------------------------------------------------------
 
+class MODLOCK_API FreeCameraRequest final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:modlock.wasm.players.FreeCameraRequest) */ {
+ public:
+  inline FreeCameraRequest() : FreeCameraRequest(nullptr) {}
+  ~FreeCameraRequest() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(FreeCameraRequest* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(FreeCameraRequest));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR FreeCameraRequest(::google::protobuf::internal::ConstantInitialized);
+
+  inline FreeCameraRequest(const FreeCameraRequest& from) : FreeCameraRequest(nullptr, from) {}
+  inline FreeCameraRequest(FreeCameraRequest&& from) noexcept
+      : FreeCameraRequest(nullptr, ::std::move(from)) {}
+  inline FreeCameraRequest& operator=(const FreeCameraRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline FreeCameraRequest& operator=(FreeCameraRequest&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const FreeCameraRequest& default_instance() {
+    return *reinterpret_cast<const FreeCameraRequest*>(
+        &_FreeCameraRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 11;
+  friend void swap(FreeCameraRequest& a, FreeCameraRequest& b) { a.Swap(&b); }
+  inline void Swap(FreeCameraRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(FreeCameraRequest* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  FreeCameraRequest* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<FreeCameraRequest>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const FreeCameraRequest& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const FreeCameraRequest& from) { FreeCameraRequest::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(FreeCameraRequest* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "modlock.wasm.players.FreeCameraRequest"; }
+
+  explicit FreeCameraRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  FreeCameraRequest(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const FreeCameraRequest& from);
+  FreeCameraRequest(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, FreeCameraRequest&& from) noexcept
+      : FreeCameraRequest(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kPositionFieldNumber = 2,
+    kFacingFieldNumber = 3,
+    kPlayerFieldNumber = 1,
+  };
+  // .modlock.geometry.Vec3 position = 2;
+  bool has_position() const;
+  void clear_position() ;
+  const ::modlock::geometry::Vec3& position() const;
+  [[nodiscard]] ::modlock::geometry::Vec3* PROTOBUF_NULLABLE release_position();
+  ::modlock::geometry::Vec3* PROTOBUF_NONNULL mutable_position();
+  void set_allocated_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value);
+  ::modlock::geometry::Vec3* PROTOBUF_NULLABLE unsafe_arena_release_position();
+
+  private:
+  const ::modlock::geometry::Vec3& _internal_position() const;
+  ::modlock::geometry::Vec3* PROTOBUF_NONNULL _internal_mutable_position();
+
+  public:
+  // .modlock.geometry.EulerAngles facing = 3;
+  bool has_facing() const;
+  void clear_facing() ;
+  const ::modlock::geometry::EulerAngles& facing() const;
+  [[nodiscard]] ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE release_facing();
+  ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL mutable_facing();
+  void set_allocated_facing(::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_facing(::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE value);
+  ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE unsafe_arena_release_facing();
+
+  private:
+  const ::modlock::geometry::EulerAngles& _internal_facing() const;
+  ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL _internal_mutable_facing();
+
+  public:
+  // int32 player = 1;
+  void clear_player() ;
+  ::int32_t player() const;
+  void set_player(::int32_t value);
+
+  private:
+  ::int32_t _internal_player() const;
+  void _internal_set_player(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:modlock.wasm.players.FreeCameraRequest)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<2, 3,
+                                   2, 0,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const FreeCameraRequest& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::modlock::geometry::Vec3* PROTOBUF_NULLABLE position_;
+    ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE facing_;
+    ::int32_t player_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_github_2ecom_2fparalin_2fmodlock_2fsrc_2fwasm_2fplayers_2fplayers_2eproto;
+};
+
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull FreeCameraRequest_class_data_;
+// -------------------------------------------------------------------
+
 class MODLOCK_API BotOptions final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:modlock.wasm.players.BotOptions) */ {
  public:
@@ -4830,7 +5071,7 @@ class MODLOCK_API BotOptions final : public ::google::protobuf::Message
     kHeroId = 4,
     HERO_NOT_SET = 0,
   };
-  static constexpr int kIndexInFileMessages = 21;
+  static constexpr int kIndexInFileMessages = 22;
   friend void swap(BotOptions& a, BotOptions& b) { a.Swap(&b); }
   inline void Swap(BotOptions* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -5096,7 +5337,7 @@ class MODLOCK_API RestoreHeroRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const RestoreHeroRequest*>(
         &_RestoreHeroRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 17;
+  static constexpr int kIndexInFileMessages = 18;
   friend void swap(RestoreHeroRequest& a, RestoreHeroRequest& b) { a.Swap(&b); }
   inline void Swap(RestoreHeroRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -7284,6 +7525,250 @@ inline ::uint32_t WatchRequest::_internal_target() const {
 inline void WatchRequest::_internal_set_target(::uint32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.target_ = value;
+}
+
+// optional bool chase = 3;
+inline bool WatchRequest::has_chase() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  return value;
+}
+inline void WatchRequest::clear_chase() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.chase_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline bool WatchRequest::chase() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.players.WatchRequest.chase)
+  return _internal_chase();
+}
+inline void WatchRequest::set_chase(bool value) {
+  _internal_set_chase(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.players.WatchRequest.chase)
+}
+inline bool WatchRequest::_internal_chase() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.chase_;
+}
+inline void WatchRequest::_internal_set_chase(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.chase_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// FreeCameraRequest
+
+// int32 player = 1;
+inline void FreeCameraRequest::clear_player() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000004U);
+}
+inline ::int32_t FreeCameraRequest::player() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.players.FreeCameraRequest.player)
+  return _internal_player();
+}
+inline void FreeCameraRequest::set_player(::int32_t value) {
+  _internal_set_player(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.players.FreeCameraRequest.player)
+}
+inline ::int32_t FreeCameraRequest::_internal_player() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.player_;
+}
+inline void FreeCameraRequest::_internal_set_player(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_ = value;
+}
+
+// .modlock.geometry.Vec3 position = 2;
+inline bool FreeCameraRequest::has_position() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000001U);
+  PROTOBUF_ASSUME(!value || _impl_.position_ != nullptr);
+  return value;
+}
+inline const ::modlock::geometry::Vec3& FreeCameraRequest::_internal_position() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::modlock::geometry::Vec3* p = _impl_.position_;
+  return p != nullptr ? *p : reinterpret_cast<const ::modlock::geometry::Vec3&>(::modlock::geometry::_Vec3_default_instance_);
+}
+inline const ::modlock::geometry::Vec3& FreeCameraRequest::position() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.wasm.players.FreeCameraRequest.position)
+  return _internal_position();
+}
+inline void FreeCameraRequest::unsafe_arena_set_allocated_position(
+    ::modlock::geometry::Vec3* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.position_);
+  }
+  _impl_.position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.players.FreeCameraRequest.position)
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE FreeCameraRequest::release_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::modlock::geometry::Vec3* released = _impl_.position_;
+  _impl_.position_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE FreeCameraRequest::unsafe_arena_release_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.wasm.players.FreeCameraRequest.position)
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::modlock::geometry::Vec3* temp = _impl_.position_;
+  _impl_.position_ = nullptr;
+  return temp;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL FreeCameraRequest::_internal_mutable_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.position_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::modlock::geometry::Vec3>(GetArena());
+    _impl_.position_ = reinterpret_cast<::modlock::geometry::Vec3*>(p);
+  }
+  return _impl_.position_;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL FreeCameraRequest::mutable_position()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ::modlock::geometry::Vec3* _msg = _internal_mutable_position();
+  // @@protoc_insertion_point(field_mutable:modlock.wasm.players.FreeCameraRequest.position)
+  return _msg;
+}
+inline void FreeCameraRequest::set_allocated_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.position_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = reinterpret_cast<::google::protobuf::Message*>(value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  }
+
+  _impl_.position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
+  // @@protoc_insertion_point(field_set_allocated:modlock.wasm.players.FreeCameraRequest.position)
+}
+
+// .modlock.geometry.EulerAngles facing = 3;
+inline bool FreeCameraRequest::has_facing() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  PROTOBUF_ASSUME(!value || _impl_.facing_ != nullptr);
+  return value;
+}
+inline const ::modlock::geometry::EulerAngles& FreeCameraRequest::_internal_facing() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::modlock::geometry::EulerAngles* p = _impl_.facing_;
+  return p != nullptr ? *p : reinterpret_cast<const ::modlock::geometry::EulerAngles&>(::modlock::geometry::_EulerAngles_default_instance_);
+}
+inline const ::modlock::geometry::EulerAngles& FreeCameraRequest::facing() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.wasm.players.FreeCameraRequest.facing)
+  return _internal_facing();
+}
+inline void FreeCameraRequest::unsafe_arena_set_allocated_facing(
+    ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.facing_);
+  }
+  _impl_.facing_ = reinterpret_cast<::modlock::geometry::EulerAngles*>(value);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.players.FreeCameraRequest.facing)
+}
+inline ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE FreeCameraRequest::release_facing() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::modlock::geometry::EulerAngles* released = _impl_.facing_;
+  _impl_.facing_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE FreeCameraRequest::unsafe_arena_release_facing() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.wasm.players.FreeCameraRequest.facing)
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::modlock::geometry::EulerAngles* temp = _impl_.facing_;
+  _impl_.facing_ = nullptr;
+  return temp;
+}
+inline ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL FreeCameraRequest::_internal_mutable_facing() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.facing_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::modlock::geometry::EulerAngles>(GetArena());
+    _impl_.facing_ = reinterpret_cast<::modlock::geometry::EulerAngles*>(p);
+  }
+  return _impl_.facing_;
+}
+inline ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL FreeCameraRequest::mutable_facing()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ::modlock::geometry::EulerAngles* _msg = _internal_mutable_facing();
+  // @@protoc_insertion_point(field_mutable:modlock.wasm.players.FreeCameraRequest.facing)
+  return _msg;
+}
+inline void FreeCameraRequest::set_allocated_facing(::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.facing_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = reinterpret_cast<::google::protobuf::Message*>(value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  }
+
+  _impl_.facing_ = reinterpret_cast<::modlock::geometry::EulerAngles*>(value);
+  // @@protoc_insertion_point(field_set_allocated:modlock.wasm.players.FreeCameraRequest.facing)
 }
 
 // -------------------------------------------------------------------

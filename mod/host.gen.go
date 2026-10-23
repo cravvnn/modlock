@@ -467,17 +467,25 @@ func (p Player) Spectate() error {
 	return invoke("Spectate", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
-// Watch points the player's camera at a hero, through the hero's own view,
-// as the game's spectator camera follows it. A spectator watches through
+// Watch points the player's camera at a hero, through the hero's own view
+// or chasing it, as the game's spectator camera follows it. A spectator watches through
 // their spectator camera, once it exists. A player with a hero watches
 // while the hero stays where it stands, keeping its level, souls and items,
 // until Unwatch returns them to it.
-func (p Player) Watch(target uint32) error {
-	return invoke("Watch", &playerspb.WatchRequest{Player: p.Slot, Target: target}, nil)
+func (p Player) Watch(target uint32, chase *bool) error {
+	return invoke("Watch", &playerspb.WatchRequest{Player: p.Slot, Target: target, Chase: chase}, nil)
 }
 
-// Unwatch returns a player watching from their hero back to it. Stopping
-// the mod returns every such player.
+// FreeCamera lets the player fly their camera from a position, with the
+// movement keys and the mouse, as the game's roaming spectator camera does.
+// A player with a hero leaves it where it stands, as Watch does, until
+// Unwatch returns them to it; Watch follows a hero again.
+func (p Player) FreeCamera(position *Vector, facing *Angles) error {
+	return invoke("FreeCamera", &playerspb.FreeCameraRequest{Player: p.Slot, Position: position, Facing: facing}, nil)
+}
+
+// Unwatch returns a player watching or flying the free camera from their
+// hero back to it. Stopping the mod returns every such player.
 func (p Player) Unwatch() error {
 	return invoke("Unwatch", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }

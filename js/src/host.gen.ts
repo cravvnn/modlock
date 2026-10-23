@@ -1628,19 +1628,29 @@ export class Player {
   }
 
   /**
-   * watch points the player's camera at a hero, through the hero's own view,
-   * as the game's spectator camera follows it. A spectator watches through
+   * watch points the player's camera at a hero, through the hero's own view
+   * or chasing it, as the game's spectator camera follows it. A spectator watches through
    * their spectator camera, once it exists. A player with a hero watches
    * while the hero stays where it stands, keeping its level, souls and items,
    * until Unwatch returns them to it.
    */
-  watch(target: number): boolean {
-    return call('Watch', playersPb.WatchRequest.toBinary({ player: this.slot, target })) !== undefined
+  watch(target: number, chase?: boolean): boolean {
+    return call('Watch', playersPb.WatchRequest.toBinary({ player: this.slot, target, chase })) !== undefined
   }
 
   /**
-   * unwatch returns a player watching from their hero back to it. Stopping
-   * the mod returns every such player.
+   * freeCamera lets the player fly their camera from a position, with the
+   * movement keys and the mouse, as the game's roaming spectator camera does.
+   * A player with a hero leaves it where it stands, as Watch does, until
+   * Unwatch returns them to it; Watch follows a hero again.
+   */
+  freeCamera(position: Vector, facing: Angles): boolean {
+    return call('FreeCamera', playersPb.FreeCameraRequest.toBinary({ player: this.slot, position, facing })) !== undefined
+  }
+
+  /**
+   * unwatch returns a player watching or flying the free camera from their
+   * hero back to it. Stopping the mod returns every such player.
    */
   unwatch(): boolean {
     return call('Unwatch', playersPb.PlayerRequest.toBinary({ player: this.slot })) !== undefined
