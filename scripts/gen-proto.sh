@@ -22,28 +22,31 @@ GOFLAGS=-mod=mod go mod vendor
 trap 'rm -rf vendor' EXIT
 
 aptre() {
-  GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate --rpc none "$@"
+  GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate "$@"
 }
 
 # The mod boundary, its geometry and the host's control stream serve the host
 # in C++ and the tools and mod libraries in Go and TypeScript.
-aptre --language cpp --language go --language ts \
+aptre --rpc none --language cpp --language go --language ts \
   --targets './src/geometry/*.proto' --targets './src/wasm/*.proto' --targets './src/wasm/*/*.proto' \
   --targets './src/host_app/control/*.proto' "$@"
 
 # The game's own messages, camera paths and signatures serve only the host.
-aptre --language cpp \
+aptre --rpc none --language cpp \
   --targets './src/camera/*.proto' --targets './src/gameinterop/engine/*.proto' \
   --targets './src/gameinterop/signatures/*.proto'
 
 # The publishing messages and the command line's events serve the command line
 # and the programs that read its --json output; the spot document serves the
 # mod libraries.
-aptre --language go --language ts \
+aptre --rpc none --language go --language ts \
   --targets './publish/*.proto' --targets './cli/*.proto' --targets './mod/spot/*.proto'
 
+# The daemon's service serves the modlock processes on one PC.
+aptre --rpc starpc --language go --targets './daemon/*.proto'
+
 # The game dump serves the host that writes it and the generators that read it.
-aptre --language cpp --language go --targets './src/host_app/dump/*.proto'
+aptre --rpc none --language cpp --language go --targets './src/host_app/dump/*.proto'
 
 python3 scripts/restore-proto-exports.py
 

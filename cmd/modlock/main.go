@@ -56,6 +56,7 @@ func main() {
 			kv3Command(),
 			updateCommand(out),
 			configCommand(out),
+			daemonCommand(out),
 		},
 	}
 

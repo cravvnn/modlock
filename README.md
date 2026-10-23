@@ -137,6 +137,7 @@ prints its address.
 | `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                 |
 | `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.  |
 | `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.   |
+| `modlock daemon`        | `status` shows the background process that holds this PC's mod store; `stop` ends it.    |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:
 

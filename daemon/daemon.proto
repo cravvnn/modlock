@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package modlock.daemon;
+
+option go_package = "github.com/paralin/modlock/daemon;daemon";
+
+// Daemon is the service a modlock daemon serves the modlock processes on its
+// PC over its local socket.
+service Daemon {
+  // GetStatus returns which daemon is running.
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+
+  // Stop makes the daemon close its socket and exit, so a client of another
+  // release can start its own.
+  rpc Stop(StopRequest) returns (StopResponse);
+}
+
+// GetStatusRequest asks for the daemon's status.
+message GetStatusRequest {}
+
+// GetStatusResponse describes the running daemon.
+message GetStatusResponse {
+  // pid is the daemon's process ID.
+  uint32 pid = 1;
+  // version is the modlock release the daemon belongs to, such as v0.1.10.
+  string version = 2;
+  // started_unix_ms is when the daemon started, in Unix milliseconds.
+  int64 started_unix_ms = 3;
+  // clients counts the connected modlock processes, this one included.
+  uint32 clients = 4;
+}
+
+// StopRequest asks the daemon to exit.
+message StopRequest {}
+
+// StopResponse confirms that the daemon is stopping.
+message StopResponse {}

@@ -82,8 +82,9 @@ func explainInstall(err error, exe string) error {
 // releases itself, or the settings, MODLOCK_NO_UPDATE_CHECK or CI turn the
 // check off.
 func checkForUpdate(ctx context.Context, out *printer, command string) {
-	// Skip the check where it is off or would repeat the command.
-	if command == "update" || command == "upgrade" || command == "config" {
+	// Skip the check where it is off, would repeat the command, or runs in
+	// the background.
+	if command == "update" || command == "upgrade" || command == "config" || command == "daemon" {
 		return
 	}
 	if os.Getenv("MODLOCK_NO_UPDATE_CHECK") != "" || os.Getenv("CI") != "" {
