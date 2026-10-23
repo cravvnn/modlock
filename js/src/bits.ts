@@ -6,10 +6,12 @@ export const Buttons = {
   attack: 1n,
   /** use is the interact key. */
   use: 1n << 5n,
-  /** melee is the light melee button. */
-  melee: 1n << 11n,
+  /** altFire is the zoom and alternate fire button, right mouse by default. */
+  altFire: 1n << 11n,
   /** reload is the reload key. */
   reload: 1n << 13n,
+  /** melee is the light melee key, Q by default. */
+  melee: 1n << 32n,
   /** ability1 to ability3 are the hero's first three ability keys. */
   ability1: 1n << 33n,
   ability2: 1n << 34n,

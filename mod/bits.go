@@ -6,10 +6,13 @@ const (
 	ButtonAttack uint64 = 1
 	// ButtonUse is the interact key.
 	ButtonUse uint64 = 1 << 5
-	// ButtonMelee is the light melee button.
-	ButtonMelee uint64 = 1 << 11
+	// ButtonAltFire is the zoom and alternate fire button, right mouse by
+	// default.
+	ButtonAltFire uint64 = 1 << 11
 	// ButtonReload is the reload key.
 	ButtonReload uint64 = 1 << 13
+	// ButtonMelee is the light melee key, Q by default.
+	ButtonMelee uint64 = 1 << 32
 	// ButtonAbility1 to ButtonAbility3 are the hero's first three ability
 	// keys.
 	ButtonAbility1 uint64 = 1 << 33
