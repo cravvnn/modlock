@@ -19,8 +19,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// previewPort is the default loopback port of the preview page.
-const previewPort = 4321
+// previewPort is the default loopback port of the preview page. Hyperline's
+// desktop holds 4321 while it runs, so a creator can run both.
+const previewPort = 4322
 
 // devCommand runs a mod in a local server and, with --watch, reloads it on
 // each save. It serves the preview page, which draws the mod's interface.
@@ -124,8 +125,9 @@ func devCommand(out *printer) *cli.Command {
 
 // servePreview serves the preview page on the loopback port until ctx ends,
 // for the mod built in built that rebuilds on each save when watch is true,
-// passing its input to input. The page is optional: when it cannot start,
-// the mod runs without it.
+// passing its input to input. Another program on the port moves the page to a
+// free one. The page is optional: when it cannot start, the mod runs without
+// it.
 func servePreview(ctx context.Context, out *printer, port int, built string, watch bool, input preview.Input) {
 	// Find the page's files in the library.
 	library, err := js.Library(ctx)
@@ -135,9 +137,12 @@ func servePreview(ctx context.Context, out *printer, port int, built string, wat
 	}
 	page := preview.New(filepath.Join(library, js.Preview), built, watch, input)
 
-	// Listen on loopback, and follow the command line's events.
-	address := net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
-	listener, err := net.Listen("tcp", address)
+	// Listen on loopback, on a free port when another program holds this one,
+	// and follow the command line's events.
+	listener, err := net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(port)))
+	if err != nil {
+		listener, err = net.Listen("tcp", "127.0.0.1:0")
+	}
 	if err != nil {
 		out.mark("!", yellow, "the preview page is off: "+err.Error())
 		return
@@ -146,5 +151,5 @@ func servePreview(ctx context.Context, out *printer, port int, built string, wat
 	server := &http.Server{Handler: page, ReadHeaderTimeout: 10 * time.Second}
 	context.AfterFunc(ctx, func() { _ = server.Close() })
 	go func() { _ = server.Serve(listener) }()
-	out.field("preview", "http://"+address+"/")
+	out.field("preview", "http://"+listener.Addr().String()+"/")
 }
