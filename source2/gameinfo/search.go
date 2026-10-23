@@ -33,10 +33,10 @@ func readSearch(source []byte) (search, error) {
 	}
 	open++
 
-	// Walk its entries for the first Game path and whether any entry names
-	// the Mod and Write paths.
+	// Walk its entries for the first Game path and the paths the first Mod
+	// and Write entries name.
 	first := -1
-	var mod, write bool
+	var mod, write string
 	for index := open + 1; index < len(found); {
 		key := found[index].value
 		if key == "}" {
@@ -49,8 +49,12 @@ func readSearch(source []byte) (search, error) {
 		if slices.Contains(kinds, "game") && first < 0 {
 			first = index
 		}
-		mod = mod || slices.Contains(kinds, "mod")
-		write = write || slices.Contains(kinds, "write")
+		if slices.Contains(kinds, "mod") && mod == "" {
+			mod = found[index+1].value
+		}
+		if slices.Contains(kinds, "write") && write == "" {
+			write = found[index+1].value
+		}
 
 		// Skip a trailing [condition].
 		index += 2
@@ -62,9 +66,11 @@ func readSearch(source []byte) (search, error) {
 }
 
 // placement puts the block on its own line ahead of the first Game path and
-// any other tool's marker comment above it, and names the roles that path
-// held.
-func placement(source []byte, found []token, open, first int, mod, write bool) search {
+// any other tool's marker comment above it. The block always names the Mod
+// and Write paths, as the file names them or else as the first Game path held
+// them: another tool's block that names them may be removed while this one
+// stays, and a block without them would hand them to its own paths.
+func placement(source []byte, found []token, open, first int, mod, write string) search {
 	// Go before the first Game path when it starts its own line.
 	out := search{insertion: found[open].end}
 	if first < 0 {
@@ -74,13 +80,14 @@ func placement(source []byte, found []token, open, first int, mod, write bool) s
 		out.insertion = commentsAbove(source, at, found[open].end)
 	}
 
-	// The block's paths come first, so it names the roles the first path held.
-	if !mod {
-		out.roles = append(out.roles, [2]string{"Mod", found[first+1].value})
+	// Name the roles the block's paths would otherwise take.
+	if mod == "" {
+		mod = found[first+1].value
 	}
-	if !write {
-		out.roles = append(out.roles, [2]string{"Write", found[first+1].value})
+	if write == "" {
+		write = found[first+1].value
 	}
+	out.roles = [][2]string{{"Mod", mod}, {"Write", write}}
 	return out
 }
 

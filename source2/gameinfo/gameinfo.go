@@ -22,9 +22,9 @@ func markers(name string) (begin, end string) {
 // Mount returns source with the block of the tool named name holding paths as
 // Game search paths, replacing the tool's earlier block. The block goes on its
 // own line ahead of every other Game path and other tools' blocks, so its
-// files win while it is mounted. When no entry names the engine's Mod and
-// Write paths, which the engine would otherwise take from the first Game
-// path, the block names the path that came first before it.
+// files win while it is mounted. The block also names the engine's Mod and
+// Write paths, which the engine would otherwise take from its first path:
+// the ones the file already names, or else the Game path that came first.
 func Mount(source []byte, name string, paths ...string) ([]byte, error) {
 	// Start from the file without the tool's earlier block.
 	source, err := Unmount(source, name)

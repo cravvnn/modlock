@@ -43,8 +43,9 @@ func TestMount(t *testing.T) {
 		t.Fatalf("unmount left:\n%s\n%v", restored, err)
 	}
 
-	// Beside another tool's block, which already names the roles, a block
-	// goes ahead of its markers, and each removal keeps the other block.
+	// Beside another tool's block, a block goes ahead of its markers and
+	// names the same roles, so either block can leave first, and each
+	// removal keeps the other block.
 	other, err := Mount(source, "HYPERLINE PANORAMA", "citadel/hyperline/ab")
 	if err != nil {
 		t.Fatal(err)
@@ -54,7 +55,7 @@ func TestMount(t *testing.T) {
 		t.Fatal(err)
 	}
 	hyperline, modlock := bytes.Index(both, []byte("citadel/hyperline/ab")), bytes.Index(both, []byte("citadel/modlock_dev"))
-	if modlock < 0 || hyperline < modlock || !bytes.Contains(both, []byte("// MODLOCK DEV END\r\n\t\t\t// HYPERLINE PANORAMA BEGIN")) || bytes.Count(both, []byte("Mod\t")) != 1 {
+	if modlock < 0 || hyperline < modlock || !bytes.Contains(both, []byte("// MODLOCK DEV END\r\n\t\t\t// HYPERLINE PANORAMA BEGIN")) || bytes.Count(both, []byte("Mod\t\t\t\"citadel\"")) != 2 {
 		t.Fatalf("both:\n%s", both)
 	}
 	if restored, err := Unmount(both, "MODLOCK DEV"); err != nil || !bytes.Equal(restored, other) {
