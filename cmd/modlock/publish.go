@@ -7,10 +7,9 @@ import (
 	"github.com/aperturerobotics/cli"
 	"github.com/paralin/modlock/check"
 	"github.com/paralin/modlock/project"
-	"github.com/paralin/modlock/proto/modlock/publish"
-	"github.com/pkg/errors"
-
+	"github.com/paralin/modlock/publish"
 	modpublish "github.com/paralin/modlock/publish"
+	"github.com/pkg/errors"
 )
 
 // publishCommand builds, checks and publishes a mod.

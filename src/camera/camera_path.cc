@@ -21,7 +21,7 @@ bool Finite(double value) noexcept {
 }
 
 // ChannelValues extracts one channel from every key in path order.
-std::vector<double> ChannelValues(const modlock::CameraPath& path, int channel) {
+std::vector<double> ChannelValues(const CameraPath& path, int channel) {
   std::vector<double> values;
   values.reserve(static_cast<std::size_t>(path.keys_size()));
   for (const auto& key : path.keys()) {
@@ -163,7 +163,7 @@ std::vector<double> MonotoneTangents(const std::vector<double>& times,
 // SampleChannel evaluates one channel at time. Monotone selects PCHIP; the
 // position channels use unbounded Hermite tangents instead.
 double SampleChannel(const std::vector<double>& times, const std::vector<double>& values,
-                     double time, modlock::Interpolation interpolation, bool monotone) {
+                     double time, Interpolation interpolation, bool monotone) {
   // Before the first key and after the last, hold the end value.
   if (time <= times.front() || times.size() == 1) {
     return values.front();
@@ -176,12 +176,12 @@ double SampleChannel(const std::vector<double>& times, const std::vector<double>
   std::size_t left =
       static_cast<std::size_t>(std::upper_bound(times.begin(), times.end(), time) - times.begin()) -
       1;
-  if (interpolation == modlock::INTERPOLATION_STEP) {
+  if (interpolation == INTERPOLATION_STEP) {
     return values[left];
   }
   double span = times[left + 1] - times[left];
   double fraction = (time - times[left]) / span;
-  if (interpolation == modlock::INTERPOLATION_LINEAR || times.size() == 2) {
+  if (interpolation == INTERPOLATION_LINEAR || times.size() == 2) {
     return (1 - fraction) * values[left] + fraction * values[left + 1];
   }
 
@@ -221,7 +221,7 @@ double SampleChannel(const std::vector<double>& times, const std::vector<double>
 
 }  // namespace
 
-std::expected<void, std::string> ValidatePath(const modlock::CameraPath& path) {
+std::expected<void, std::string> ValidatePath(const CameraPath& path) {
   const double previous_time = -std::numeric_limits<double>::infinity();
   double last_time = previous_time;
   for (int i = 0; i < path.keys_size(); ++i) {
@@ -253,7 +253,7 @@ std::expected<void, std::string> ValidatePath(const modlock::CameraPath& path) {
   return {};
 }
 
-std::expected<modlock::CameraPose, std::string> EvaluatePath(const modlock::CameraPath& path,
+std::expected<CameraPose, std::string> EvaluatePath(const CameraPath& path,
                                                              double time) {
   // Refuse an empty or invalid path, or a nonfinite time.
   if (path.keys_size() == 0) {
@@ -274,14 +274,14 @@ std::expected<modlock::CameraPose, std::string> EvaluatePath(const modlock::Came
   }
 
   // Unspecified matches the authored default: shortest-path rotation.
-  const bool shortest = path.rotation_mode() != modlock::ROTATION_MODE_UNWRAPPED;
+  const bool shortest = path.rotation_mode() != ROTATION_MODE_UNWRAPPED;
 
   // Each channel names its field and how it interpolates.
   struct Channel {
     int field;
     bool monotone;
     bool wrap;
-    modlock::Interpolation interpolation;
+    Interpolation interpolation;
   };
 
   // Position, angles and aspect ratio.
@@ -296,7 +296,7 @@ std::expected<modlock::CameraPose, std::string> EvaluatePath(const modlock::Came
   }};
 
   // Sample each channel into the pose.
-  modlock::CameraPose result;
+  CameraPose result;
   for (const auto& channel : channels) {
     std::vector<double> values = ChannelValues(path, channel.field);
     if (channel.wrap) {
@@ -331,7 +331,7 @@ std::expected<modlock::CameraPose, std::string> EvaluatePath(const modlock::Came
   return result;
 }
 
-void IntegrateFlight(modlock::CameraPose& pose, const FlightInput& input, double dt, double speed,
+void IntegrateFlight(CameraPose& pose, const FlightInput& input, double dt, double speed,
                      double sensitivity, bool invert_y) {
   // Discard a backlog step and cap the rest.
   if (!Finite(dt) || dt < 0 || dt > .1) {

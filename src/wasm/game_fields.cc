@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -52,26 +54,26 @@ std::expected<ListHeader, std::string> ReadList(const unsigned char* address) {
 }
 
 // Size returns the bytes a field type occupies in the entity.
-size_t Size(FieldType type) {
+size_t Size(fields::FieldType type) {
   switch (type) {
-    case FIELD_TYPE_BOOL:
-    case FIELD_TYPE_INT8:
-    case FIELD_TYPE_UINT8:
+    case fields::FIELD_TYPE_BOOL:
+    case fields::FIELD_TYPE_INT8:
+    case fields::FIELD_TYPE_UINT8:
       return 1;
-    case FIELD_TYPE_INT16:
-    case FIELD_TYPE_UINT16:
+    case fields::FIELD_TYPE_INT16:
+    case fields::FIELD_TYPE_UINT16:
       return 2;
-    case FIELD_TYPE_INT32:
-    case FIELD_TYPE_UINT32:
-    case FIELD_TYPE_FLOAT32:
-    case FIELD_TYPE_HANDLE:
+    case fields::FIELD_TYPE_INT32:
+    case fields::FIELD_TYPE_UINT32:
+    case fields::FIELD_TYPE_FLOAT32:
+    case fields::FIELD_TYPE_HANDLE:
       return 4;
-    case FIELD_TYPE_INT64:
-    case FIELD_TYPE_UINT64:
-    case FIELD_TYPE_FLOAT64:
-    case FIELD_TYPE_STRING:
+    case fields::FIELD_TYPE_INT64:
+    case fields::FIELD_TYPE_UINT64:
+    case fields::FIELD_TYPE_FLOAT64:
+    case fields::FIELD_TYPE_STRING:
       return 8;
-    case FIELD_TYPE_VECTOR:
+    case fields::FIELD_TYPE_VECTOR:
       return 12;
     default:
       return 0;
@@ -79,58 +81,58 @@ size_t Size(FieldType type) {
 }
 
 // Decode converts the bytes of one field to its value.
-std::expected<FieldValue, std::string> Decode(FieldType type, const unsigned char* bytes) {
+std::expected<fields::FieldValue, std::string> Decode(fields::FieldType type, const unsigned char* bytes) {
   // Copy a scalar of type T out of the field's bytes.
   auto as = [bytes]<typename T>(T) {
     T value;
     std::memcpy(&value, bytes, sizeof(value));
     return value;
   };
-  FieldValue value;
+  fields::FieldValue value;
   switch (type) {
-    case FIELD_TYPE_BOOL:
+    case fields::FIELD_TYPE_BOOL:
       value.set_boolean(bytes[0] != 0);
       break;
-    case FIELD_TYPE_INT8:
+    case fields::FIELD_TYPE_INT8:
       value.set_number(as(int8_t{}));
       break;
-    case FIELD_TYPE_INT16:
+    case fields::FIELD_TYPE_INT16:
       value.set_number(as(int16_t{}));
       break;
-    case FIELD_TYPE_INT32:
+    case fields::FIELD_TYPE_INT32:
       value.set_number(as(int32_t{}));
       break;
-    case FIELD_TYPE_UINT8:
+    case fields::FIELD_TYPE_UINT8:
       value.set_number(as(uint8_t{}));
       break;
-    case FIELD_TYPE_UINT16:
+    case fields::FIELD_TYPE_UINT16:
       value.set_number(as(uint16_t{}));
       break;
-    case FIELD_TYPE_UINT32:
+    case fields::FIELD_TYPE_UINT32:
       value.set_number(as(uint32_t{}));
       break;
-    case FIELD_TYPE_INT64:
-    case FIELD_TYPE_UINT64:
+    case fields::FIELD_TYPE_INT64:
+    case fields::FIELD_TYPE_UINT64:
       // An unsigned value travels as the signed integer of the same bits.
       value.set_integer(as(int64_t{}));
       break;
-    case FIELD_TYPE_FLOAT32:
+    case fields::FIELD_TYPE_FLOAT32:
       value.set_number(as(float{}));
       break;
-    case FIELD_TYPE_FLOAT64:
+    case fields::FIELD_TYPE_FLOAT64:
       value.set_number(as(double{}));
       break;
-    case FIELD_TYPE_VECTOR: {
+    case fields::FIELD_TYPE_VECTOR: {
       const auto vector = as(std::array<float, 3>{});
       value.mutable_vector()->set_x(vector[0]);
       value.mutable_vector()->set_y(vector[1]);
       value.mutable_vector()->set_z(vector[2]);
       break;
     }
-    case FIELD_TYPE_HANDLE:
+    case fields::FIELD_TYPE_HANDLE:
       value.set_number(as(uint32_t{}));
       break;
-    case FIELD_TYPE_STRING: {
+    case fields::FIELD_TYPE_STRING: {
       // The field points to the characters; an empty pointer is empty text.
       const auto* text = as(static_cast<const char*>(nullptr));
       if (text == nullptr) {
@@ -155,8 +157,8 @@ std::expected<FieldValue, std::string> Decode(FieldType type, const unsigned cha
 // Encode converts a value to the bytes of one field of type. The value must
 // take the form the type reads as. Text is not written, since its field
 // points to memory the game owns.
-std::expected<std::array<unsigned char, 12>, std::string> Encode(FieldType type,
-                                                                 const FieldValue& value) {
+std::expected<std::array<unsigned char, 12>, std::string> Encode(fields::FieldType type,
+                                                                 const fields::FieldValue& value) {
   // Copy a scalar of type T into the field's bytes.
   std::array<unsigned char, 12> bytes{};
   auto put = [&bytes]<typename T>(T scalar) {
@@ -164,7 +166,7 @@ std::expected<std::array<unsigned char, 12>, std::string> Encode(FieldType type,
   };
 
   // Check that the value takes the form the field type reads as.
-  auto expect = [&value](FieldValue::ValueCase form) -> std::expected<void, std::string> {
+  auto expect = [&value](fields::FieldValue::ValueCase form) -> std::expected<void, std::string> {
     if (value.value_case() != form) {
       return std::unexpected("the value does not fit the field type");
     }
@@ -175,56 +177,56 @@ std::expected<std::array<unsigned char, 12>, std::string> Encode(FieldType type,
   std::expected<void, std::string> fits;
   const double number = value.number();
   switch (type) {
-    case FIELD_TYPE_BOOL:
-      fits = expect(FieldValue::kBoolean);
+    case fields::FIELD_TYPE_BOOL:
+      fits = expect(fields::FieldValue::kBoolean);
       bytes[0] = value.boolean() ? 1 : 0;
       break;
-    case FIELD_TYPE_INT8:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_INT8:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<int8_t>(number));
       break;
-    case FIELD_TYPE_INT16:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_INT16:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<int16_t>(number));
       break;
-    case FIELD_TYPE_INT32:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_INT32:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<int32_t>(number));
       break;
-    case FIELD_TYPE_UINT8:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_UINT8:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<uint8_t>(number));
       break;
-    case FIELD_TYPE_UINT16:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_UINT16:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<uint16_t>(number));
       break;
-    case FIELD_TYPE_UINT32:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_UINT32:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<uint32_t>(number));
       break;
-    case FIELD_TYPE_INT64:
-    case FIELD_TYPE_UINT64:
-      fits = expect(FieldValue::kInteger);
+    case fields::FIELD_TYPE_INT64:
+    case fields::FIELD_TYPE_UINT64:
+      fits = expect(fields::FieldValue::kInteger);
       put(value.integer());
       break;
-    case FIELD_TYPE_FLOAT32:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_FLOAT32:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<float>(number));
       break;
-    case FIELD_TYPE_FLOAT64:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_FLOAT64:
+      fits = expect(fields::FieldValue::kNumber);
       put(number);
       break;
-    case FIELD_TYPE_VECTOR:
-      fits = expect(FieldValue::kVector);
+    case fields::FIELD_TYPE_VECTOR:
+      fits = expect(fields::FieldValue::kVector);
       put(Floats(value.vector()));
       break;
-    case FIELD_TYPE_HANDLE:
-      fits = expect(FieldValue::kNumber);
+    case fields::FIELD_TYPE_HANDLE:
+      fits = expect(fields::FieldValue::kNumber);
       put(static_cast<uint32_t>(number));
       break;
-    case FIELD_TYPE_STRING:
+    case fields::FIELD_TYPE_STRING:
       return std::unexpected("text fields cannot be written");
     default:
       return std::unexpected("the field type is unknown");
@@ -274,8 +276,8 @@ std::expected<unsigned char*, std::string> Game::FieldAddress(void* entity,
 }
 
 std::expected<void, std::string> Game::StoreField(void* entity, const std::string& class_name,
-                                                  const std::string& field, FieldType type,
-                                                  const FieldValue& value) {
+                                                  const std::string& field, fields::FieldType type,
+                                                  const fields::FieldValue& value) {
   // Encode the value and find the field it goes to.
   auto bytes = Encode(type, value);
   if (!bytes) {
@@ -293,7 +295,7 @@ std::expected<void, std::string> Game::StoreField(void* entity, const std::strin
   return {};
 }
 
-std::expected<FieldResponse, std::string> Game::ReadField(const ReadFieldRequest& request) {
+std::expected<fields::FieldResponse, std::string> Game::ReadField(const fields::ReadFieldRequest& request) {
   // Find the entity and the field's address.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -318,12 +320,12 @@ std::expected<FieldResponse, std::string> Game::ReadField(const ReadFieldRequest
   if (!value) {
     return std::unexpected(value.error());
   }
-  FieldResponse response;
+  fields::FieldResponse response;
   *response.mutable_value() = std::move(*value);
   return response;
 }
 
-std::expected<void, std::string> Game::WriteField(const WriteFieldRequest& request) {
+std::expected<void, std::string> Game::WriteField(const fields::WriteFieldRequest& request) {
   // Find the entity and store the value in its field.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -342,7 +344,7 @@ std::expected<void, std::string> Game::WriteField(const WriteFieldRequest& reque
   return {};
 }
 
-std::expected<FieldListResponse, std::string> Game::ReadFieldList(const ReadFieldRequest& request) {
+std::expected<fields::FieldListResponse, std::string> Game::ReadFieldList(const fields::ReadFieldRequest& request) {
   // Find the entity, the list field's address and its header.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -366,7 +368,7 @@ std::expected<FieldListResponse, std::string> Game::ReadFieldList(const ReadFiel
   if (!bytes.empty() && !gameinterop::ReadNative(list->elements, bytes.data(), bytes.size())) {
     return std::unexpected("cannot read " + request.class_name() + "." + request.field());
   }
-  FieldListResponse response;
+  fields::FieldListResponse response;
   for (size_t at = 0; at < bytes.size(); at += stride) {
     auto value = Decode(request.type(), &bytes[at]);
     if (!value) {
@@ -377,7 +379,7 @@ std::expected<FieldListResponse, std::string> Game::ReadFieldList(const ReadFiel
   return response;
 }
 
-std::expected<void, std::string> Game::WriteFieldList(const WriteFieldListRequest& request) {
+std::expected<void, std::string> Game::WriteFieldList(const fields::WriteFieldListRequest& request) {
   // Find the entity and encode every value.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -440,7 +442,7 @@ std::expected<void, std::string> Game::WriteFieldList(const WriteFieldListReques
   return {};
 }
 
-std::expected<EntityClassResponse, std::string> Game::EntityClass(const EntityRequest& request) {
+std::expected<entities::EntityClassResponse, std::string> Game::EntityClass(const entities::EntityRequest& request) {
   // Find the entity and its schema class.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -452,15 +454,15 @@ std::expected<EntityClassResponse, std::string> Game::EntityClass(const EntityRe
   }
 
   // Answer the class and designer names.
-  EntityClassResponse response;
+  entities::EntityClassResponse response;
   auto* name = response.mutable_name();
   name->set_class_name(std::string(gameinterop::SchemaClassNameOf(*schema)));
   name->set_designer_name(std::string(DesignerName(*entity)));
   return response;
 }
 
-std::expected<ActiveResponse, std::string> Game::ModifierState(
-    const ModifierStateRequest& request) {
+std::expected<abilities::ActiveResponse, std::string> Game::ModifierState(
+    const abilities::ModifierStateRequest& request) {
   // Find the entity and the mask word that holds the state.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -470,7 +472,7 @@ std::expected<ActiveResponse, std::string> Game::ModifierState(
   if (!word) {
     return std::unexpected(word.error());
   }
-  ActiveResponse response;
+  abilities::ActiveResponse response;
   if (!*word) {
     return response;
   }
@@ -487,7 +489,7 @@ std::expected<ActiveResponse, std::string> Game::ModifierState(
   return response;
 }
 
-std::expected<void, std::string> Game::HoldModifierState(const HoldModifierStateRequest& request) {
+std::expected<void, std::string> Game::HoldModifierState(const abilities::HoldModifierStateRequest& request) {
   // Releasing a hold clears the state the hold set.
   auto hold = std::pair(request.entity(), request.state());
   if (request.has_active() && !request.active()) {
@@ -505,7 +507,7 @@ std::expected<void, std::string> Game::HoldModifierState(const HoldModifierState
   return {};
 }
 
-std::expected<void, std::string> Game::SetFreeForAll(const SetFreeForAllRequest& request) {
+std::expected<void, std::string> Game::SetFreeForAll(const match::SetFreeForAllRequest& request) {
   if (free_for_all_ == request.enabled()) {
     return {};
   }

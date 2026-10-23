@@ -1,0 +1,666 @@
+syntax = "proto3";
+
+package modlock.wasm;
+
+option go_package = "github.com/paralin/modlock/src/wasm;wasm";
+
+import "github.com/paralin/modlock/src/wasm/abilities/abilities.proto";
+import "github.com/paralin/modlock/src/wasm/combat/combat.proto";
+import "github.com/paralin/modlock/src/wasm/effects/effects.proto";
+import "github.com/paralin/modlock/src/wasm/entities/entities.proto";
+import "github.com/paralin/modlock/src/wasm/fields/fields.proto";
+import "github.com/paralin/modlock/src/wasm/input/input.proto";
+import "github.com/paralin/modlock/src/wasm/match/match.proto";
+import "github.com/paralin/modlock/src/wasm/metrics/metrics.proto";
+import "github.com/paralin/modlock/src/wasm/movement/movement.proto";
+import "github.com/paralin/modlock/src/wasm/npcs/npcs.proto";
+import "github.com/paralin/modlock/src/wasm/objects/objects.proto";
+import "github.com/paralin/modlock/src/wasm/players/players.proto";
+import "github.com/paralin/modlock/src/wasm/settings/settings.proto";
+import "github.com/paralin/modlock/src/wasm/ui/ui.proto";
+
+// The two services below declare the whole boundary between the game and a
+// mod. cmd/modlock-sdkgen generates each language's mod library and the
+// host's dispatch from them, following these conventions:
+//
+//   - A request's first field named player, object, npc or pickup makes the
+//     call a method of that class, and the method name drops the class's
+//     noun: MoveObject becomes WorldObject.move.
+//   - A request named *Options is one options argument. Any other request's
+//     fields are positional arguments in declaration order.
+//   - A field marked optional, or repeated, may be omitted. A host treats an
+//     omitted field as its comment says.
+//   - A response with one field returns that field's value. Empty returns
+//     whether the call succeeded.
+//   - Enum values become lowerCamel names without the enum's prefix.
+//   - A message holding only a oneof is a union of its cases' types.
+//
+// A published mod keeps working on a newer host: the wire names each method
+// and leaves the rest to the messages, whose field numbers stay stable.
+
+// Call is one method call across the boundary: a mod calling the game
+// through modlock.host_call, or the game delivering an event through the
+// mod's modlock_event export.
+message Call {
+  // Method names the method, such as "Chat".
+  string method = 1;
+
+  // Request is the method's encoded request.
+  bytes request = 2;
+}
+
+// Reply answers one Call.
+message Reply {
+  // Error describes why the call failed, or is empty on success.
+  string error = 1;
+
+  // Response is the method's encoded response.
+  bytes response = 2;
+}
+
+// Empty is a request or response without fields.
+message Empty {}
+
+// Host is the game a mod calls into. A call that fails logs why on the host
+// and returns the language's empty value, so a mod can retry on a later
+// frame instead of stopping.
+service Host {
+  // Log writes one line to the server log under the mod's name.
+  rpc Log(LogRequest) returns (Empty);
+
+  // ServerCommand runs one line at the server console, as if typed there. A
+  // line that sets a variable may set a development-only or cheat-protected
+  // one.
+  rpc ServerCommand(ServerCommandRequest) returns (Empty);
+
+  // Chat sends a server chat line to the player.
+  rpc Chat(modlock.wasm.effects.ChatRequest) returns (Empty);
+
+  // CenterText shows text in the middle of the player's screen until it is
+  // replaced. Empty text clears it.
+  rpc CenterText(modlock.wasm.effects.CenterTextRequest) returns (Empty);
+
+  // Announce shows a game announcement with a title to the player.
+  rpc Announce(modlock.wasm.effects.AnnounceRequest) returns (Empty);
+
+  // Precache loads heroes and resources with the next world. Call it during
+  // start, before the first world loads.
+  rpc Precache(PrecacheOptions) returns (Empty);
+
+  // Players lists the occupied player slots in slot order. The libraries
+  // answer from the last PlayersChanged instead, once one arrived.
+  rpc Players(Empty) returns (modlock.wasm.players.PlayersResponse);
+
+  // Pawn returns the player's hero this frame, or nothing without one.
+  rpc Pawn(modlock.wasm.players.PlayerRequest) returns (modlock.wasm.players.PawnResponse);
+
+  // PlayerSetting returns the player's value of a setting the manifest
+  // declares: the value they chose, or the setting's default. A bot has the
+  // defaults.
+  rpc PlayerSetting(modlock.wasm.settings.PlayerSettingRequest) returns (modlock.wasm.settings.SettingResponse);
+
+  // SetPlayerSetting changes the player's value of a setting the manifest
+  // declares. The value follows the player to later games and other mods'
+  // servers of the same mod; a bot keeps the defaults.
+  rpc SetPlayerSetting(modlock.wasm.settings.SetPlayerSettingRequest) returns (Empty);
+
+  // AddMetric adds to the player's total of a metric the manifest declares.
+  // The host keeps each player's totals in memory and hands them on once,
+  // when the player leaves or the mod stops; a bot keeps none.
+  rpc AddMetric(modlock.wasm.metrics.AddMetricRequest) returns (Empty);
+
+  // HoldReload keeps the running build through a reload while held is true,
+  // such as while a player is partway through something a new build would
+  // lose. A reload that arrives meanwhile waits, and the newest one applies
+  // on the first frame after the mod releases the hold. A new build starts
+  // without a hold.
+  rpc HoldReload(modlock.wasm.abilities.HoldReloadRequest) returns (Empty);
+
+  // SelectHero gives the player a hero on a team, 2 or 3, and returns the
+  // hero's identifier as Pawn.hero reports it. The hero appears on a later
+  // frame.
+  rpc SelectHero(modlock.wasm.players.SelectHeroRequest) returns (modlock.wasm.players.HeroResponse);
+
+  // Spectate moves the player to the spectators, without a hero. The player
+  // watches until a hero selection seats them again.
+  rpc Spectate(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // Watch points the player's camera at a hero, through the hero's own view,
+  // as the game's spectator camera follows it. A spectator watches through
+  // their spectator camera, once it exists. A player with a hero watches
+  // while the hero stays where it stands, keeping its level, souls and items,
+  // until Unwatch returns them to it.
+  rpc Watch(modlock.wasm.players.WatchRequest) returns (Empty);
+
+  // Unwatch returns a player watching from their hero back to it. Stopping
+  // the mod returns every such player.
+  rpc Unwatch(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // Respawn revives the player's dead hero.
+  rpc Respawn(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // ClearItems removes every item the player's hero owns.
+  rpc ClearItems(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // Freeze holds the player's hero in place, without input or damage, until
+  // it is released. Stopping the mod releases it.
+  rpc Freeze(modlock.wasm.players.FreezeRequest) returns (Empty);
+
+  // RestoreStamina refills the player's stamina.
+  rpc RestoreStamina(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // SetStamina sets the player's stamina, as Pawn.stamina reads it. The game
+  // regenerates it as usual afterwards.
+  rpc SetStamina(modlock.wasm.players.SetStaminaRequest) returns (Empty);
+
+  // RefreshAbility ends the cooldown of the hero's ability named ability,
+  // such as citadel_ability_melee_parry.
+  rpc RefreshAbility(modlock.wasm.abilities.RefreshAbilityRequest) returns (Empty);
+
+  // Abilities lists the abilities of the player's hero in the hero's order,
+  // or none without a live hero.
+  rpc Abilities(modlock.wasm.players.PlayerRequest) returns (modlock.wasm.abilities.AbilitiesResponse);
+
+  // SetAbility changes the upgrades, charges or timers of one of the hero's
+  // abilities. An omitted option stays as it is.
+  rpc SetAbility(modlock.wasm.abilities.AbilityOptions) returns (Empty);
+
+  // GiveItem gives the hero an item, enabled and free. A hero that owns it
+  // keeps its one copy.
+  rpc GiveItem(modlock.wasm.abilities.GiveItemRequest) returns (Empty);
+
+  // ReplaceAbility puts the ability named ability, untrained, in the hero's
+  // ability slot index, as Ability.slot, removing the ability there.
+  rpc ReplaceAbility(modlock.wasm.abilities.ReplaceAbilityRequest) returns (Empty);
+
+  // HoldModifier keeps an ability's modifier, named "<ability>/<modifier>",
+  // on the hero with no expiry, giving it back whenever the game removes it
+  // or the hero returns. The hero must own the ability or item. Every hero
+  // that gains the modifier from the same ability keeps it until the hold
+  // ends. Releasing leaves the hero's current modifier until it dies.
+  rpc HoldModifier(modlock.wasm.abilities.HoldModifierRequest) returns (Empty);
+
+  // GiveModifier gives the hero an ability's modifier, named
+  // "<ability>/<modifier>", for seconds, as if the hero's own ability applied
+  // it; a hero without that ability applies it with its first ability. The
+  // game may end it sooner, as invisibility ends on a shot.
+  rpc GiveModifier(modlock.wasm.abilities.GiveModifierRequest) returns (Empty);
+
+  // Teleport moves the player's hero and turns it and the camera. With a
+  // velocity it also sets the hero's motion, as a launch, and the camera
+  // follows the hero.
+  rpc Teleport(modlock.wasm.movement.TeleportRequest) returns (Empty);
+
+  // MovePlayer carries the player's hero to a position as continuous motion,
+  // as a recording plays back. Unlike Teleport it keeps the hero's animated
+  // model drawn when repeated every tick, and leaves the camera alone.
+  rpc MovePlayer(modlock.wasm.movement.MovePlayerRequest) returns (Empty);
+
+  // Steer replays a recorded movement command on the player's hero, usually a
+  // bot: the game runs the command's buttons and axes, so the hero crouches,
+  // slides, jumps and mantles with its own animation, and the step then ends
+  // on the recorded pose. The steering stays until the next Steer replaces
+  // it, its presses counting once; a Steer without one releases the hero.
+  rpc Steer(modlock.wasm.movement.SteerRequest) returns (Empty);
+
+  // Drive gives a bot the controls a player has, where it looks, the
+  // movement axes and the buttons, as its input on every tick until the next
+  // Drive replaces it. The game runs that input as a player's own, so the
+  // hero accelerates, turns, jumps, dashes, slides and casts with its own
+  // movement and animation; the bot's own brain no longer moves it. Presses
+  // count once. A Drive without a command returns the bot to its brain.
+  rpc Drive(modlock.wasm.movement.DriveRequest) returns (Empty);
+
+  // AdjustSouls gives the player delta souls, or takes them when delta is
+  // negative. A spend larger than the player's souls fails and spends
+  // nothing. Silent skips the pickup's sound and number.
+  rpc AdjustSouls(modlock.wasm.players.AdjustSoulsRequest) returns (Empty);
+
+  // StartingSouls sets the souls the player's hero spawns with.
+  rpc StartingSouls(modlock.wasm.players.StartingSoulsRequest) returns (Empty);
+
+  // ResetHero rebuilds the player's hero as it first spawned, without items,
+  // ability upgrades, levels or ability points, holding souls.
+  rpc ResetHero(modlock.wasm.players.ResetHeroRequest) returns (Empty);
+
+  // Heal restores health to the player's hero, up to its maximum.
+  rpc Heal(modlock.wasm.players.HealRequest) returns (Empty);
+
+  // Sound plays a game sound event, such as Damage.Send.Crit, on the
+  // player's hero.
+  rpc Sound(modlock.wasm.effects.SoundRequest) returns (Empty);
+
+  // RestoreHero gives the player's live hero target over the next few
+  // seconds: the build first, then health, stamina and pose once it settles,
+  // then charges and cooldowns. A Restored event reports when the result has
+  // held for a second, or why it could not. A new call replaces the running
+  // one.
+  rpc RestoreHero(modlock.wasm.players.RestoreHeroRequest) returns (Empty);
+
+  // ScreenEffect plays a full-screen effect on the player's view. Effects of
+  // one kind stack. The player's hero must be alive.
+  rpc ScreenEffect(modlock.wasm.effects.ScreenEffectRequest) returns (Empty);
+
+  // ClearScreenEffect ends every running instance of effect on the player's
+  // view.
+  rpc ClearScreenEffect(modlock.wasm.effects.ClearScreenEffectRequest) returns (Empty);
+
+  // ReadField reads one schema field of a live entity, such as the int32
+  // m_iHealth of CBaseEntity. The host finds the field by name, so it
+  // survives game updates that move it, and refuses an entity that is not of
+  // the named class or a subclass. The match's state, such as the gold of each
+  // team or the winning team, is a field of CCitadelGameRules, which the
+  // citadel_gamerules entity reads.
+  rpc ReadField(modlock.wasm.fields.ReadFieldRequest) returns (modlock.wasm.fields.FieldResponse);
+
+  // WriteField writes one schema field of a live entity and sends the change
+  // to the players. The value takes the form ReadField returns for the type;
+  // text fields cannot be written. A write to the match's state sends all of
+  // it, so players already in the match see the change.
+  rpc WriteField(modlock.wasm.fields.WriteFieldRequest) returns (Empty);
+
+  // ReadFieldList reads a field that holds a list, such as the m_vecBannedHeroes
+  // of CCitadelGameRules. The type is the type of one element: a number, a
+  // handle, a boolean or a vector. A list of structures cannot be read.
+  rpc ReadFieldList(modlock.wasm.fields.ReadFieldRequest) returns (modlock.wasm.fields.FieldListResponse);
+
+  // WriteFieldList replaces the elements of a list field and sends the change
+  // to the players, growing the list when it holds fewer elements than the
+  // new ones.
+  rpc WriteFieldList(modlock.wasm.fields.WriteFieldListRequest) returns (Empty);
+
+  // EntityClass returns a live entity's schema class, such as
+  // CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
+  rpc EntityClass(modlock.wasm.entities.EntityRequest) returns (modlock.wasm.entities.EntityClassResponse);
+
+  // ModifierState reports whether an entity has a modifier state, such as
+  // MODIFIER_STATE_PARRY_ACTIVE.
+  rpc ModifierState(modlock.wasm.abilities.ModifierStateRequest) returns (modlock.wasm.abilities.ActiveResponse);
+
+  // HoldModifierState holds a modifier state, such as
+  // MODIFIER_STATE_FRIENDLY_FIRE_ENABLED, on an entity while the mod runs, or
+  // releases the hold. The hold ends with the entity.
+  rpc HoldModifierState(modlock.wasm.abilities.HoldModifierStateRequest) returns (Empty);
+
+  // SetFreeForAll turns free-for-all on or off for the running mod, over the
+  // Manifest's free_for_all default. While on, the host seats each new player
+  // on the smaller team and opens the hero picker with no team screen, holds
+  // friendly fire on every hero, and ignores changeteam commands. Turning it
+  // off releases the friendly fire holds; players keep their teams.
+  rpc SetFreeForAll(modlock.wasm.match.SetFreeForAllRequest) returns (Empty);
+
+  // CreateModel places a model in the world, solid when the options ask.
+  // The world removes it when the world ends; stopping the mod removes it
+  // too.
+  rpc CreateModel(modlock.wasm.objects.ModelOptions) returns (modlock.wasm.objects.ObjectResponse);
+
+  // CreateText places text that floats in the world.
+  rpc CreateText(modlock.wasm.objects.TextOptions) returns (modlock.wasm.objects.ObjectResponse);
+
+  // CreateParticle starts a particle effect. Removing the object stops it;
+  // moving it moves the effect.
+  rpc CreateParticle(modlock.wasm.objects.ParticleOptions) returns (modlock.wasm.objects.ObjectResponse);
+
+  // CreateFog fills a box with tinted fog whose density fades across the
+  // box's boundary. Removing the object clears it; moving it moves the box.
+  rpc CreateFog(modlock.wasm.objects.FogOptions) returns (modlock.wasm.objects.ObjectResponse);
+
+  // MoveObject places the object at position, turning it to facing.
+  rpc MoveObject(modlock.wasm.objects.MoveObjectRequest) returns (Empty);
+
+  // SetText replaces a text object's words.
+  rpc SetText(modlock.wasm.objects.SetTextRequest) returns (Empty);
+
+  // SetObjectHidden hides the object from one player or shows it again.
+  // Other players still see it. A player who leaves sees every object when
+  // they return.
+  rpc SetObjectHidden(modlock.wasm.objects.SetObjectHiddenRequest) returns (Empty);
+
+  // RemoveObject takes the object out of the world.
+  rpc RemoveObject(modlock.wasm.objects.ObjectRequest) returns (Empty);
+
+  // ObjectEntity returns the entity handle of a model, as traces report it.
+  rpc ObjectEntity(modlock.wasm.objects.ObjectRequest) returns (modlock.wasm.entities.EntityResponse);
+
+  // AddBot adds a bot player and returns it. The bot leaves when the world
+  // ends or the mod stops.
+  rpc AddBot(modlock.wasm.players.BotOptions) returns (modlock.wasm.players.BotResponse);
+
+  // RemoveBot removes a bot the mod added.
+  rpc RemoveBot(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // BlockInput withholds buttons from every player's hero until called
+  // again. Stopping the mod releases them.
+  rpc BlockInput(modlock.wasm.input.InputRequest) returns (Empty);
+
+  // BlockPlayerInput withholds buttons from the player's hero until called
+  // again, on top of the block on everyone. Zero releases the player.
+  rpc BlockPlayerInput(modlock.wasm.input.PlayerInputRequest) returns (Empty);
+
+  // Press presses buttons at the player's next input, even through a block.
+  // A bot presses them as a player would.
+  rpc Press(modlock.wasm.input.PlayerInputRequest) returns (Empty);
+
+  // WatchInput replaces the buttons whose presses and releases arrive as
+  // Input events. Watching does not withhold a press; block it with
+  // BlockInput.
+  rpc WatchInput(modlock.wasm.input.InputRequest) returns (Empty);
+
+  // RemapInput makes the from buttons act as the to buttons for every
+  // player's hero until called again; from reads as up. With repeat, a held
+  // from button uses the to ability again as soon as it is ready. A zero from
+  // stops remapping, and stopping the mod does too. BlockInput applies after
+  // the remap.
+  rpc RemapInput(modlock.wasm.input.RemapInputRequest) returns (Empty);
+
+  // Ui changes the interface the mod shows the player. The host keeps each
+  // player's tree until the mod stops or the player leaves.
+  rpc Ui(modlock.wasm.ui.UiRequest) returns (Empty);
+
+  // CallService calls method of a service the host provides outside Modlock,
+  // such as a game mode's match, and returns the service's answer. The
+  // service defines the payload's encoding.
+  rpc CallService(ServiceCall) returns (ServiceReply);
+
+  // CreateEntity creates any entity the server knows by its designer name,
+  // such as npc_trooper_boss or prop_dynamic, with spawn key values and fields
+  // written before it spawns. The world removes it when the world ends;
+  // stopping the mod removes it too. It refuses an ability, item or weapon,
+  // which only a hero holds: GiveItem and ReplaceAbility give one.
+  rpc CreateEntity(modlock.wasm.entities.EntityOptions) returns (modlock.wasm.entities.EntityResponse);
+
+  // FireInput sends an input to a live entity, as a map's output would, such
+  // as Skin with the integer 1. The value must have the type the input reads.
+  // It reports false once the entity is gone.
+  rpc FireInput(modlock.wasm.entities.FireInputRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // RemoveEntity takes an entity the mod created out of the world without
+  // rewards. It reports false when the entity was already gone.
+  rpc RemoveEntity(modlock.wasm.entities.EntityRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // ShowEntityOnlyTo sends an entity the mod created only to the players with
+  // the listed server slots; every other client drops it, or never receives
+  // it when the call follows its creation in the same frame. With no players
+  // no client receives it. The list replaces any earlier one. A player who
+  // leaves is taken off every list, so whoever joins in their slot does not
+  // receive the entity. The rule holds for an entity created with
+  // TransmitAlways too, but not for entities parented to it, which need their
+  // own call. Removing the entity, the world ending or the mod stopping drops
+  // the rule.
+  rpc ShowEntityOnlyTo(modlock.wasm.entities.ShowEntityOnlyToRequest) returns (Empty);
+
+  // ShowEntityToAll sends an entity the mod created to every player the game
+  // would send it to again, undoing ShowEntityOnlyTo.
+  rpc ShowEntityToAll(modlock.wasm.entities.EntityRequest) returns (Empty);
+
+  // SpawnNpc adds a unit that is not a player, such as a trooper, as
+  // CreateEntity does, then sets its health and lane. It thinks from the next
+  // frame. The world removes it when the world ends; stopping
+  // the mod removes it too.
+  rpc SpawnNpc(modlock.wasm.npcs.NpcOptions) returns (modlock.wasm.npcs.NpcResponse);
+
+  // ReadNpc returns the unit's state, or nothing once it is gone.
+  rpc ReadNpc(modlock.wasm.npcs.NpcRequest) returns (modlock.wasm.npcs.NpcStateResponse);
+
+  // MoveNpc places the unit and sets its velocity, which drives its walk
+  // animation. It reports false once the unit is gone.
+  rpc MoveNpc(modlock.wasm.npcs.MoveNpcRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // SetNpcHealth sets the unit's health, and its maximum when given. It
+  // reports false once the unit is gone.
+  rpc SetNpcHealth(modlock.wasm.npcs.SetNpcHealthRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // RemoveNpc takes a unit the mod spawned out of the world without rewards.
+  // It reports false when the unit was already gone.
+  rpc RemoveNpc(modlock.wasm.npcs.NpcRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // CreatePickup places an urn, which a hero carries once collected, or a
+  // movement buff. Stopping the mod removes it.
+  rpc CreatePickup(modlock.wasm.entities.CreatePickupRequest) returns (modlock.wasm.entities.PickupResponse);
+
+  // PickupPresent reports whether the pickup still lies in the world,
+  // uncollected.
+  rpc PickupPresent(modlock.wasm.entities.PickupRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // RemovePickup takes the pickup out of the world. It reports false when a
+  // player had collected it.
+  rpc RemovePickup(modlock.wasm.entities.PickupRequest) returns (modlock.wasm.entities.AliveResponse);
+
+  // FindEntities returns the handle of every live entity of a class, such as
+  // zip_line_node.
+  rpc FindEntities(modlock.wasm.entities.FindEntitiesRequest) returns (modlock.wasm.entities.EntitiesResponse);
+
+  // RemoveEntities removes every entity of a class, such as npc_trooper,
+  // without rewards, and returns how many it removed.
+  rpc RemoveEntities(modlock.wasm.entities.RemoveEntitiesRequest) returns (modlock.wasm.entities.CountResponse);
+
+  // ClearMap removes the map's own units and objectives, such as troopers,
+  // guardians and walkers, so a mode can use the map as an arena.
+  rpc ClearMap(Empty) returns (Empty);
+
+  // Damage deals a hit as the game would. The mod's Damage events do not
+  // include its own hits.
+  rpc Damage(modlock.wasm.combat.HitOptions) returns (Empty);
+
+  // Trace returns where a line first hits something, or nothing when it hits
+  // nothing or the world's collision is not ready.
+  rpc Trace(modlock.wasm.combat.TraceOptions) returns (modlock.wasm.combat.TraceResponse);
+
+  // RestoreNpcs replaces the map's lane units and objectives with targets
+  // over the next frames. Units of these classes not in the list are
+  // removed, structures that match are kept, and moving units are spawned
+  // again in place. An NpcsRestored event reports when every target stands
+  // as its own unit, or why not. A new call replaces the running one.
+  rpc RestoreNpcs(modlock.wasm.npcs.RestoreNpcsRequest) returns (Empty);
+
+  // Pause stops or resumes the game clock, as the pause command would.
+  // Stopping the mod resumes it.
+  rpc Pause(modlock.wasm.match.PauseRequest) returns (Empty);
+
+  // MatchClock returns the match time in seconds that the scoreboard shows.
+  rpc MatchClock(Empty) returns (modlock.wasm.match.MatchClockResponse);
+
+  // HoldMatchClock keeps the match time at seconds every frame until called
+  // again; omitted seconds let it run.
+  rpc HoldMatchClock(modlock.wasm.match.HoldMatchClockRequest) returns (Empty);
+
+  // Rift reads the Rift objective's state.
+  rpc Rift(Empty) returns (modlock.wasm.match.RiftResponse);
+
+  // StartRift opens the Rift objective at position now.
+  rpc StartRift(modlock.wasm.match.StartRiftRequest) returns (Empty);
+
+  // MoveEntity places any entity, such as a projectile, and replaces its
+  // facing and motion when given.
+  rpc MoveEntity(modlock.wasm.entities.MoveEntityRequest) returns (Empty);
+
+  // EmitSound plays one game sound on any entity, such as a projectile.
+  rpc EmitSound(modlock.wasm.effects.EmitSoundRequest) returns (Empty);
+
+  // Kill kills a player's hero, crediting no one.
+  rpc Kill(modlock.wasm.players.PlayerRequest) returns (Empty);
+
+  // SetVelocity replaces the motion of a player's hero without moving it.
+  rpc SetVelocity(modlock.wasm.movement.SetVelocityRequest) returns (Empty);
+
+  // Buttons returns the buttons a player holds, as Buttons bits, while the
+  // player is alive or dead.
+  rpc Buttons(modlock.wasm.players.PlayerRequest) returns (modlock.wasm.input.ButtonsResponse);
+
+  // WatchMovement adds a player's hero to the movement samples of each Frame
+  // event on a new tick, or removes it.
+  rpc WatchMovement(modlock.wasm.movement.WatchMovementRequest) returns (Empty);
+
+  // WatchProjectiles reports the projectiles with these designer names, such
+  // as rocket_launcher_rocket_projectile, in Launch and Impact events. A new
+  // call replaces the list; an empty list stops watching.
+  rpc WatchProjectiles(modlock.wasm.combat.ProjectileOptions) returns (Empty);
+}
+
+// Mod is the mod the game delivers events to, one at a time on the server's
+// frame thread.
+service Mod {
+  // Start begins the mod's active lifetime, once, before any other event.
+  rpc Start(StartEvent) returns (StartResult);
+
+  // Frame runs once per server frame while the mod asked for frames.
+  rpc Frame(FrameEvent) returns (Empty);
+
+  // Command offers one command a player typed.
+  rpc Command(CommandEvent) returns (CommandResult);
+
+  // World follows each world load, and start when a world has already
+  // loaded. Objects and bots from an earlier world are gone by then.
+  rpc World(WorldEvent) returns (Empty);
+
+  // UiPress reports a press on a button in a player's interface.
+  rpc UiPress(modlock.wasm.ui.UiPressEvent) returns (Empty);
+
+  // Serve calls a service the mod serves from the host.
+  rpc Serve(ServiceCall) returns (ServiceReply);
+
+  // Damage offers one hit before the game applies it, while the mod asked
+  // for damage. The mod's answer may block the hit or change its amount.
+  rpc Damage(modlock.wasm.combat.DamageEvent) returns (modlock.wasm.combat.DamageResult);
+
+  // Damaged reports one hit the game applied, while the mod asked for
+  // damage reports. Hits arrive before the next frame.
+  rpc Damaged(modlock.wasm.combat.DamagedEvent) returns (Empty);
+
+  // Input reports one player's presses of watched buttons, before the next
+  // frame. A block in place still withholds them from the hero.
+  rpc Input(modlock.wasm.input.InputEvent) returns (Empty);
+
+  // Restored ends one RestoreHero, before the next frame.
+  rpc Restored(modlock.wasm.players.RestoredEvent) returns (Empty);
+
+  // NpcsRestored ends one RestoreNpcs, before the next frame.
+  rpc NpcsRestored(modlock.wasm.npcs.NpcsRestoredEvent) returns (Empty);
+
+  // Launch reports a watched projectile's first frame, before the next frame.
+  rpc Launch(modlock.wasm.combat.LaunchEvent) returns (Empty);
+
+  // Impact reports a watched projectile striking something, inside the
+  // game's impact and after its own explosion. The mod's calls apply before
+  // the game continues.
+  rpc Impact(modlock.wasm.combat.ImpactEvent) returns (Empty);
+
+  // Landed reports a hero landing under the manifest's QuakeWorld movement,
+  // before the next frame.
+  rpc Landed(modlock.wasm.movement.LandedEvent) returns (Empty);
+
+  // SettingChanged reports a player's setting that changed outside the mod,
+  // such as on the player's profile. A mod's own SetPlayerSetting reports
+  // nothing.
+  rpc SettingChanged(modlock.wasm.settings.SettingChangedEvent) returns (Empty);
+
+  // PlayersChanged reports the occupied player slots before the first event
+  // after Start, and again before the next event whenever a player joins,
+  // finishes joining or leaves, so a mod lists players without a call.
+  rpc PlayersChanged(modlock.wasm.players.PlayersChangedEvent) returns (Empty);
+}
+
+// StartEvent describes the server the mod starts in.
+message StartEvent {
+  // Args holds the arguments that follow -- on the host command line.
+  repeated string args = 1;
+
+  // CheckOnly is true when the host checks the mod without starting a game;
+  // every call but Log then fails.
+  bool check_only = 2;
+
+  // Source holds an interpreted mod's entry, which the interpreter module
+  // evaluates during start. It is empty for a compiled mod.
+  bytes source = 3;
+}
+
+// StartResult declares which events the mod consumes.
+message StartResult {
+  // Frames asks for a Frame event every server frame.
+  bool frames = 1;
+
+  // Damage asks for a Damage event before each hit.
+  bool damage = 2;
+
+  // Damaged asks for a Damaged event after each hit.
+  bool damaged = 3;
+}
+
+// FrameEvent identifies one server frame.
+message FrameEvent {
+  // Tick is the server tick, or zero when the clock is unavailable.
+  uint64 tick = 1;
+
+  // TimeSeconds is the game clock at this frame, in seconds.
+  double time_seconds = 2;
+
+  // Movement holds one sample per watched, live hero when this frame starts a
+  // new tick, and is empty otherwise.
+  repeated modlock.wasm.movement.MovementSample movement = 3;
+}
+
+// CommandEvent carries one command line from a player: a chat line that
+// starts with a slash (or ".", "+" or "-"), without that prefix, or a console
+// command the server received.
+message CommandEvent {
+  // Player is the player who typed the command.
+  int32 player = 1;
+
+  // Line is the complete command line, starting with the command name.
+  string line = 2;
+}
+
+// CommandResult answers whether the mod handled a command.
+message CommandResult {
+  // Claimed ends the command's dispatch; the game and later mods do not see
+  // it.
+  bool claimed = 1;
+}
+
+// WorldEvent announces a loaded world.
+message WorldEvent {
+  // Map names the world's map.
+  string map = 1;
+}
+
+// ServiceCall calls one method of a service outside Modlock. A host that
+// embeds Modlock provides services of its own, such as a game mode's match,
+// and a mod may serve one to the host. The service and its caller agree on
+// the payload's encoding.
+message ServiceCall {
+  // Service names the service, such as "arena.match".
+  string service = 1;
+
+  // Method names the method within the service.
+  string method = 2;
+
+  // Payload is the call's argument.
+  bytes payload = 3;
+}
+
+// ServiceReply is a service's answer.
+message ServiceReply {
+  // Payload is the answer.
+  bytes payload = 1;
+}
+
+// LogRequest carries one log line.
+message LogRequest {
+  // Message is the text to log, without a trailing newline.
+  string message = 1;
+}
+
+// ServerCommandRequest carries one server console line.
+message ServerCommandRequest {
+  // Command is the console line, without a trailing newline.
+  string command = 1;
+}
+
+// PrecacheOptions names what the next world loads ahead of use.
+message PrecacheOptions {
+  // Heroes are hero names, such as hero_wraith.
+  repeated string heroes = 1;
+
+  // Resources are model and particle paths, such as models/props/crate.vmdl.
+  repeated string resources = 2;
+}

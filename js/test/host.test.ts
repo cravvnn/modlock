@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 
-import { Call, Reply } from '../../proto/modlock/wasm.pb.js'
+import { Call, Reply } from '../../src/wasm/wasm.pb.js'
 import { bind, call } from '../src/host.js'
 
 /** answer is what the bound transport replies with next. */

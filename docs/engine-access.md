@@ -21,7 +21,7 @@ Portable parsing, callback dispatch, and fixture tests run without game modules.
 `ParseSignature` and `SignatureScan` operate on borrowed byte spans. Every
 game signature is one entry in the game data file
 `data/game_signatures.txtpb`, a protobuf text file of
-`proto/modlock/game_signatures.proto`: a stable id, the modules that carry it,
+`src/gameinterop/signatures/signatures.proto`: a stable id, the modules that carry it,
 the pattern, what the match resolves to, and the native shape. The SDK embeds
 the file as of its build, and `modlock-host` loads the file named by
 `--game-data`, else the copy installed beside it, at start, so a game patch

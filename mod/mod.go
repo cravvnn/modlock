@@ -27,7 +27,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm"
+	"github.com/paralin/modlock/src/wasm/players"
 )
 
 // Service answers calls to one service the mod serves: the method's name and
@@ -317,7 +318,7 @@ func Players() ([]*Connection, error) {
 	if registered.roster != nil {
 		return slices.Clone(registered.roster), nil
 	}
-	response := &wasm.PlayersResponse{}
+	response := &players.PlayersResponse{}
 	if err := invoke("Players", &wasm.Empty{}, response); err != nil {
 		return nil, err
 	}

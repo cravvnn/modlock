@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package modlock.wasm.effects;
+
+option go_package = "github.com/paralin/modlock/src/wasm/effects;effects";
+
+// ChatRequest addresses server chat to one player.
+message ChatRequest {
+  int32 player = 1;
+
+  // Text is the chat line.
+  string text = 2;
+}
+
+// CenterTextRequest replaces one player's center text.
+message CenterTextRequest {
+  int32 player = 1;
+
+  // Text is the text to show; empty text clears it.
+  string text = 2;
+}
+
+// AnnounceRequest addresses a game announcement to one player.
+message AnnounceRequest {
+  int32 player = 1;
+
+  // Title is the announcement's heading.
+  string title = 2;
+
+  // Text is the announcement's body.
+  string text = 3;
+}
+
+// SoundRequest plays one sound on a player's hero.
+message SoundRequest {
+  int32 player = 1;
+
+  // Sound is the game sound event's name, such as Player.ClaimOrb.
+  string sound = 2;
+}
+
+// EmitSoundRequest plays one sound on an entity.
+message EmitSoundRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // Sound is the game sound event's name.
+  string sound = 2;
+}
+
+// ScreenEffect is a stock full-screen view effect.
+enum ScreenEffect {
+  // SCREEN_EFFECT_KILLED is the death treatment.
+  SCREEN_EFFECT_KILLED = 0;
+
+  // SCREEN_EFFECT_BLACK fades the view to black.
+  SCREEN_EFFECT_BLACK = 1;
+
+  // SCREEN_EFFECT_BLINDED is the blind treatment.
+  SCREEN_EFFECT_BLINDED = 2;
+
+  // SCREEN_EFFECT_DARKNESS is Drifter's darkness view.
+  SCREEN_EFFECT_DARKNESS = 3;
+
+  // SCREEN_EFFECT_MATCH_INTRO is the match start treatment.
+  SCREEN_EFFECT_MATCH_INTRO = 4;
+}
+
+// ScreenEffectRequest plays a screen effect on one player's view.
+message ScreenEffectRequest {
+  int32 player = 1;
+
+  // Effect is the effect to play.
+  ScreenEffect effect = 2;
+
+  // Timing is the effect's timing; omitted, the effect's own.
+  optional ScreenTiming timing = 3;
+}
+
+// ScreenTiming is a screen effect's timing in seconds.
+message ScreenTiming {
+  // Delay is the time before the effect starts.
+  optional float delay = 1;
+
+  // FadeIn is the time the effect takes to reach full strength.
+  optional float fade_in = 2;
+
+  // Hold is the time the effect stays at full strength.
+  optional float hold = 3;
+
+  // FadeOut is the time the effect takes to end.
+  optional float fade_out = 4;
+}
+
+// ClearScreenEffectRequest ends a screen effect on one player's view.
+message ClearScreenEffectRequest {
+  int32 player = 1;
+
+  // Effect is the effect to end.
+  ScreenEffect effect = 2;
+}

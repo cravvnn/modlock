@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "modlock/export.h"
-#include "proto/modlock/types.pb.h"
+#include "src/geometry/geometry.pb.h"
 
 namespace modlock::render {
 
@@ -29,7 +29,7 @@ struct ParticleData {
 // Entity references are serial-fenced handles resolved in the current world.
 struct ParticleSettings {
   std::string resource;
-  Vec3 origin;
+  geometry::Vec3 origin;
   std::array<float, 3> angles{};
   bool start_active = true;
   std::optional<ParticleTint> tint;
@@ -42,7 +42,7 @@ struct ParticleSettings {
 // collides through the model's physics shape, scaled with the model.
 struct WorldModelSettings {
   std::string resource;
-  Vec3 origin;
+  geometry::Vec3 origin;
   std::array<float, 3> angles{};
   float scale = 1;
   std::uint32_t color_rgba = UINT32_MAX;
@@ -58,7 +58,7 @@ class MODLOCK_API WorldEffect {
 
   // Move updates the effect origin through the entity's proven Teleport slot,
   // turning it to angles when given.
-  virtual void Move(const modlock::Vec3& origin,
+  virtual void Move(const modlock::geometry::Vec3& origin,
                     const std::optional<std::array<float, 3>>& angles) = 0;
 
   // Handle returns the entity's packed handle while it is live.

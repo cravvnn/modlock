@@ -236,7 +236,7 @@ void ControlLink::Failed(std::string_view mod, std::string_view error) {
   Push(std::move(event));
 }
 
-void ControlLink::Ui(std::string_view mod, int32_t slot, const ui::Change& change) {
+void ControlLink::Ui(std::string_view mod, int32_t slot, const wasm::ui::Change& change) {
   // Report the mod's interface change.
   control::HostEvent event;
   auto* ui = event.mutable_ui();

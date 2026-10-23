@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <iostream>
 #include <span>
 #include <utility>
@@ -9,7 +11,7 @@
 
 namespace modlock::wasm {
 
-std::expected<void, std::string> Game::Damage(const HitOptions& request) {
+std::expected<void, std::string> Game::Damage(const combat::HitOptions& request) {
   // Resolve the damage service and the victim.
   auto damage = services_.Damage();
   if (!damage) {
@@ -58,7 +60,7 @@ std::expected<void, std::string> Game::Damage(const HitOptions& request) {
   return (*damage)->Hit(*victim, *inflictor, *attacker, ability, request.amount(), hit_group);
 }
 
-std::expected<void, std::string> Game::AdjustSouls(const AdjustSoulsRequest& request) {
+std::expected<void, std::string> Game::AdjustSouls(const players::AdjustSoulsRequest& request) {
   // Adjust the live player's souls.
   auto currency = services_.Currency();
   if (!currency) {
@@ -75,7 +77,7 @@ std::expected<void, std::string> Game::AdjustSouls(const AdjustSoulsRequest& req
   return {};
 }
 
-std::expected<void, std::string> Game::StartingSouls(const StartingSoulsRequest& request) {
+std::expected<void, std::string> Game::StartingSouls(const players::StartingSoulsRequest& request) {
   // Set the live player's starting souls.
   auto currency = services_.Currency();
   if (!currency) {
@@ -91,7 +93,7 @@ std::expected<void, std::string> Game::StartingSouls(const StartingSoulsRequest&
   return {};
 }
 
-std::expected<void, std::string> Game::ResetHero(const ResetHeroRequest& request) {
+std::expected<void, std::string> Game::ResetHero(const players::ResetHeroRequest& request) {
   // Reset the live player's hero to fresh starting souls.
   auto currency = services_.Currency();
   if (!currency) {
@@ -111,7 +113,7 @@ std::expected<void, std::string> Game::ResetHero(const ResetHeroRequest& request
   return {};
 }
 
-std::expected<void, std::string> Game::RestoreHero(const RestoreHeroRequest& request) {
+std::expected<void, std::string> Game::RestoreHero(const players::RestoreHeroRequest& request) {
   // Build the restore target from the request.
   const auto& source = request.target();
   RestoreTarget target{
@@ -323,7 +325,7 @@ void Game::TickRestores() {
   }
 }
 
-std::expected<void, std::string> Game::RestoreNpcs(const RestoreNpcsRequest& request) {
+std::expected<void, std::string> Game::RestoreNpcs(const npcs::RestoreNpcsRequest& request) {
   // Describe each NPC to restore.
   std::vector<NpcRestore::Target> targets;
   for (const auto& npc : request.npcs()) {

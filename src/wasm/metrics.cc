@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/metrics.h"
 
 #include <algorithm>
@@ -5,7 +7,7 @@
 
 namespace modlock::wasm {
 
-const Metric* FindMetric(const Manifest& manifest, std::string_view name) {
+const metrics::Metric* FindMetric(const manifest::Manifest& manifest, std::string_view name) {
   for (const auto& metric : manifest.metrics()) {
     if (metric.name() == name) {
       return &metric;
@@ -14,23 +16,23 @@ const Metric* FindMetric(const Manifest& manifest, std::string_view name) {
   return nullptr;
 }
 
-bool Labeled(const Metric& metric, std::string_view label) {
+bool Labeled(const metrics::Metric& metric, std::string_view label) {
   if (metric.labels().empty()) {
     return label.empty();
   }
   return std::ranges::find(metric.labels(), label) != metric.labels().end();
 }
 
-void Tally::Add(const Metric& metric, std::string_view label, double value) {
+void Tally::Add(const metrics::Metric& metric, std::string_view label, double value) {
   auto [total, added] = totals_.try_emplace({metric.name(), std::string(label)}, 0.0);
   switch (metric.kind()) {
-    case Metric::KIND_COUNT:
+    case metrics::Metric::KIND_COUNT:
       total->second += 1;
       break;
-    case Metric::KIND_SUM:
+    case metrics::Metric::KIND_SUM:
       total->second += value;
       break;
-    case Metric::KIND_MAX:
+    case metrics::Metric::KIND_MAX:
       total->second = added ? value : std::max(total->second, value);
       break;
     default:
@@ -38,8 +40,8 @@ void Tally::Add(const Metric& metric, std::string_view label, double value) {
   }
 }
 
-MetricTotals Tally::Totals() const {
-  MetricTotals totals;
+metrics::MetricTotals Tally::Totals() const {
+  metrics::MetricTotals totals;
   for (const auto& [key, value] : totals_) {
     auto& total = *totals.add_totals();
     total.set_name(key.first);

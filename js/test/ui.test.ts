@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 
-import { Face } from '../../proto/modlock/ui.pb.js'
-import { Call, Reply, UiRequest } from '../../proto/modlock/wasm.pb.js'
+import { Face, UiRequest } from '../../src/wasm/ui/ui.pb.js'
+import { Call, Reply } from '../../src/wasm/wasm.pb.js'
 import { bind } from '../src/host.js'
 import { jsx, show } from '../src/index.js'
 

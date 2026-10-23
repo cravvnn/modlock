@@ -5,321 +5,335 @@ package mod
 import (
 	"fmt"
 
-	modlock "github.com/paralin/modlock/proto/modlock"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	geometrypb "github.com/paralin/modlock/src/geometry"
+	wasmpb "github.com/paralin/modlock/src/wasm"
+	abilitiespb "github.com/paralin/modlock/src/wasm/abilities"
+	combatpb "github.com/paralin/modlock/src/wasm/combat"
+	effectspb "github.com/paralin/modlock/src/wasm/effects"
+	entitiespb "github.com/paralin/modlock/src/wasm/entities"
+	fieldspb "github.com/paralin/modlock/src/wasm/fields"
+	inputpb "github.com/paralin/modlock/src/wasm/input"
+	matchpb "github.com/paralin/modlock/src/wasm/match"
+	metricspb "github.com/paralin/modlock/src/wasm/metrics"
+	movementpb "github.com/paralin/modlock/src/wasm/movement"
+	npcspb "github.com/paralin/modlock/src/wasm/npcs"
+	objectspb "github.com/paralin/modlock/src/wasm/objects"
+	playerspb "github.com/paralin/modlock/src/wasm/players"
+	settingspb "github.com/paralin/modlock/src/wasm/settings"
+	uipb "github.com/paralin/modlock/src/wasm/ui"
 )
 
 // Vector is a position or direction in the world, in game units.
-type Vector = modlock.Vec3
+type Vector = geometrypb.Vec3
 
 // Angles is a rotation in degrees.
-type Angles = modlock.EulerAngles
-
-// MovementAction is a movement fact the game announced for a hero.
-type MovementAction = wasm.MovementAction
-
-// The values of MovementAction.
-const (
-	MovementActionLanded          = wasm.MovementAction_MOVEMENT_ACTION_LANDED
-	MovementActionZiplineAttached = wasm.MovementAction_MOVEMENT_ACTION_ZIPLINE_ATTACHED
-	MovementActionGroundDash      = wasm.MovementAction_MOVEMENT_ACTION_GROUND_DASH
-	MovementActionSlide           = wasm.MovementAction_MOVEMENT_ACTION_SLIDE
-	MovementActionBouncePad       = wasm.MovementAction_MOVEMENT_ACTION_BOUNCE_PAD
-	MovementActionDashJump        = wasm.MovementAction_MOVEMENT_ACTION_DASH_JUMP
-	MovementActionAirJump         = wasm.MovementAction_MOVEMENT_ACTION_AIR_JUMP
-	MovementActionWallJump        = wasm.MovementAction_MOVEMENT_ACTION_WALL_JUMP
-	MovementActionAirDash         = wasm.MovementAction_MOVEMENT_ACTION_AIR_DASH
-	MovementActionMeleeStarted    = wasm.MovementAction_MOVEMENT_ACTION_MELEE_STARTED
-	// AbilityExecuted is any ability the hero cast.
-	MovementActionAbilityExecuted = wasm.MovementAction_MOVEMENT_ACTION_ABILITY_EXECUTED
-)
+type Angles = geometrypb.EulerAngles
 
 // ScreenEffect is a stock full-screen view effect.
-type ScreenEffect = wasm.ScreenEffect
+type ScreenEffect = effectspb.ScreenEffect
 
 // The values of ScreenEffect.
 const (
 	// ScreenEffectKilled is the death treatment.
-	ScreenEffectKilled = wasm.ScreenEffect_SCREEN_EFFECT_KILLED
+	ScreenEffectKilled = effectspb.ScreenEffect_SCREEN_EFFECT_KILLED
 	// ScreenEffectBlack fades the view to black.
-	ScreenEffectBlack = wasm.ScreenEffect_SCREEN_EFFECT_BLACK
+	ScreenEffectBlack = effectspb.ScreenEffect_SCREEN_EFFECT_BLACK
 	// ScreenEffectBlinded is the blind treatment.
-	ScreenEffectBlinded = wasm.ScreenEffect_SCREEN_EFFECT_BLINDED
+	ScreenEffectBlinded = effectspb.ScreenEffect_SCREEN_EFFECT_BLINDED
 	// ScreenEffectDarkness is Drifter's darkness view.
-	ScreenEffectDarkness = wasm.ScreenEffect_SCREEN_EFFECT_DARKNESS
+	ScreenEffectDarkness = effectspb.ScreenEffect_SCREEN_EFFECT_DARKNESS
 	// ScreenEffectMatchIntro is the match start treatment.
-	ScreenEffectMatchIntro = wasm.ScreenEffect_SCREEN_EFFECT_MATCH_INTRO
+	ScreenEffectMatchIntro = effectspb.ScreenEffect_SCREEN_EFFECT_MATCH_INTRO
 )
 
 // FieldType is how ReadField and WriteField interpret a field's storage.
-type FieldType = wasm.FieldType
+type FieldType = fieldspb.FieldType
 
 // The values of FieldType.
 const (
 	// FieldTypeBool is one byte read as a boolean.
-	FieldTypeBool = wasm.FieldType_FIELD_TYPE_BOOL
+	FieldTypeBool = fieldspb.FieldType_FIELD_TYPE_BOOL
 	// FieldTypeInt8 through FIELD_TYPE_UINT32 are integers read as numbers.
-	FieldTypeInt8   = wasm.FieldType_FIELD_TYPE_INT8
-	FieldTypeInt16  = wasm.FieldType_FIELD_TYPE_INT16
-	FieldTypeInt32  = wasm.FieldType_FIELD_TYPE_INT32
-	FieldTypeUint8  = wasm.FieldType_FIELD_TYPE_UINT8
-	FieldTypeUint16 = wasm.FieldType_FIELD_TYPE_UINT16
-	FieldTypeUint32 = wasm.FieldType_FIELD_TYPE_UINT32
+	FieldTypeInt8   = fieldspb.FieldType_FIELD_TYPE_INT8
+	FieldTypeInt16  = fieldspb.FieldType_FIELD_TYPE_INT16
+	FieldTypeInt32  = fieldspb.FieldType_FIELD_TYPE_INT32
+	FieldTypeUint8  = fieldspb.FieldType_FIELD_TYPE_UINT8
+	FieldTypeUint16 = fieldspb.FieldType_FIELD_TYPE_UINT16
+	FieldTypeUint32 = fieldspb.FieldType_FIELD_TYPE_UINT32
 	// FieldTypeInt64 and FIELD_TYPE_UINT64 are 64-bit integers.
-	FieldTypeInt64  = wasm.FieldType_FIELD_TYPE_INT64
-	FieldTypeUint64 = wasm.FieldType_FIELD_TYPE_UINT64
+	FieldTypeInt64  = fieldspb.FieldType_FIELD_TYPE_INT64
+	FieldTypeUint64 = fieldspb.FieldType_FIELD_TYPE_UINT64
 	// FieldTypeFloat32 and FIELD_TYPE_FLOAT64 are floating point numbers.
-	FieldTypeFloat32 = wasm.FieldType_FIELD_TYPE_FLOAT32
-	FieldTypeFloat64 = wasm.FieldType_FIELD_TYPE_FLOAT64
+	FieldTypeFloat32 = fieldspb.FieldType_FIELD_TYPE_FLOAT32
+	FieldTypeFloat64 = fieldspb.FieldType_FIELD_TYPE_FLOAT64
 	// FieldTypeVector is three floats, such as a position or angles.
-	FieldTypeVector = wasm.FieldType_FIELD_TYPE_VECTOR
+	FieldTypeVector = fieldspb.FieldType_FIELD_TYPE_VECTOR
 	// FieldTypeHandle is an entity handle, read as a number.
-	FieldTypeHandle = wasm.FieldType_FIELD_TYPE_HANDLE
+	FieldTypeHandle = fieldspb.FieldType_FIELD_TYPE_HANDLE
 	// FieldTypeString is a string the field points to.
-	FieldTypeString = wasm.FieldType_FIELD_TYPE_STRING
+	FieldTypeString = fieldspb.FieldType_FIELD_TYPE_STRING
 )
 
 // PickupKind is a kind of item players collect by walking over it.
-type PickupKind = wasm.PickupKind
+type PickupKind = entitiespb.PickupKind
 
 // The values of PickupKind.
 const (
 	// PickupKindUrn is the soul urn, which its carrier delivers.
-	PickupKindUrn = wasm.PickupKind_PICKUP_KIND_URN
+	PickupKindUrn = entitiespb.PickupKind_PICKUP_KIND_URN
 	// PickupKindMovementBuff is the movement speed buff.
-	PickupKindMovementBuff = wasm.PickupKind_PICKUP_KIND_MOVEMENT_BUFF
+	PickupKindMovementBuff = entitiespb.PickupKind_PICKUP_KIND_MOVEMENT_BUFF
 )
 
-// StartEvent describes the server the mod starts in.
-type StartEvent = wasm.StartEvent
+// MovementAction is a movement fact the game announced for a hero.
+type MovementAction = movementpb.MovementAction
 
-// StartResult declares which events the mod consumes.
-type StartResult = wasm.StartResult
+// The values of MovementAction.
+const (
+	MovementActionLanded          = movementpb.MovementAction_MOVEMENT_ACTION_LANDED
+	MovementActionZiplineAttached = movementpb.MovementAction_MOVEMENT_ACTION_ZIPLINE_ATTACHED
+	MovementActionGroundDash      = movementpb.MovementAction_MOVEMENT_ACTION_GROUND_DASH
+	MovementActionSlide           = movementpb.MovementAction_MOVEMENT_ACTION_SLIDE
+	MovementActionBouncePad       = movementpb.MovementAction_MOVEMENT_ACTION_BOUNCE_PAD
+	MovementActionDashJump        = movementpb.MovementAction_MOVEMENT_ACTION_DASH_JUMP
+	MovementActionAirJump         = movementpb.MovementAction_MOVEMENT_ACTION_AIR_JUMP
+	MovementActionWallJump        = movementpb.MovementAction_MOVEMENT_ACTION_WALL_JUMP
+	MovementActionAirDash         = movementpb.MovementAction_MOVEMENT_ACTION_AIR_DASH
+	MovementActionMeleeStarted    = movementpb.MovementAction_MOVEMENT_ACTION_MELEE_STARTED
+	// AbilityExecuted is any ability the hero cast.
+	MovementActionAbilityExecuted = movementpb.MovementAction_MOVEMENT_ACTION_ABILITY_EXECUTED
+)
 
-// FrameEvent identifies one server frame.
-type FrameEvent = wasm.FrameEvent
+// Ability is one ability a hero owns.
+type Ability = abilitiespb.Ability
+
+// AbilityOptions changes one ability of a player's hero.
+type AbilityOptions = abilitiespb.AbilityOptions
+
+// DamageEvent is one hit before the game applies it. Handles are zero when
+// the game names no such entity.
+type DamageEvent = combatpb.DamageEvent
+
+// DamageResult answers a DamageEvent. An empty result lets the hit through.
+type DamageResult = combatpb.DamageResult
+
+// DamagedEvent reports one hit the game applied.
+type DamagedEvent = combatpb.DamagedEvent
+
+// LaunchEvent is a watched projectile's first frame.
+type LaunchEvent = combatpb.LaunchEvent
+
+// ImpactEvent is a watched projectile striking something.
+type ImpactEvent = combatpb.ImpactEvent
+
+// ProjectileOptions selects the projectiles a mod watches.
+type ProjectileOptions = combatpb.ProjectileOptions
+
+// HitOptions describes damage the mod deals.
+type HitOptions = combatpb.HitOptions
+
+// TraceOptions describes a line to test against the world. Layers are bits
+// of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
+// 18 player and 19 NPC.
+type TraceOptions = combatpb.TraceOptions
+
+// TraceHit is where a traced line first hit something.
+type TraceHit = combatpb.TraceHit
+
+// ScreenTiming is a screen effect's timing in seconds.
+type ScreenTiming = effectspb.ScreenTiming
+
+// FieldWrite writes one schema field of an entity the host creates.
+type FieldWrite = fieldspb.FieldWrite
+
+// EntityClassName names one entity's class two ways.
+type EntityClassName = entitiespb.EntityClassName
+
+// EntityOptions describes an entity to create.
+type EntityOptions = entitiespb.EntityOptions
+
+// KeyValue is one spawn key value.
+type KeyValue = entitiespb.KeyValue
+
+// InputEvent is one player's watched buttons that went down or up.
+type InputEvent = inputpb.InputEvent
+
+// RiftState is the Rift objective's timing as the game holds it. Times are
+// game times in seconds, or zero when unset.
+type RiftState = matchpb.RiftState
 
 // MovementSample is one watched hero's movement on one tick, as the game keeps
 // it. A hero whose position, velocity or ground the game does not provide has
 // no sample; another field the game did not provide is absent or zero.
-type MovementSample = wasm.MovementSample
+type MovementSample = movementpb.MovementSample
 
 // MovementCommand is the movement a player commanded over one tick. The
 // server runs a player's commands as they arrive, so a tick may run several
 // or none: every press among them is kept once, and a tick that ran none
 // holds the last buttons without pressing them again.
-type MovementCommand = wasm.MovementCommand
+type MovementCommand = movementpb.MovementCommand
+
+// LandedEvent is one hero landing.
+type LandedEvent = movementpb.LandedEvent
+
+// Steering is one recorded movement command and the pose its step ends on.
+type Steering = movementpb.Steering
+
+// DriveCommand is a player's controls for one tick and the ticks after it.
+type DriveCommand = movementpb.DriveCommand
+
+// NpcsRestoredEvent reports how a RestoreNpcs ended.
+type NpcsRestoredEvent = npcspb.NpcsRestoredEvent
+
+// NpcOptions describes a unit that is not a player, such as a trooper.
+type NpcOptions = npcspb.NpcOptions
+
+// NpcState is a unit's state this frame.
+type NpcState = npcspb.NpcState
+
+// NpcTarget is one unit or objective RestoreNpcs places, as replays record
+// it.
+type NpcTarget = npcspb.NpcTarget
+
+// ModelOptions describes a model placed in the world.
+type ModelOptions = objectspb.ModelOptions
+
+// TextOptions describes text that floats in the world.
+type TextOptions = objectspb.TextOptions
+
+// ParticleOptions describes a particle effect.
+type ParticleOptions = objectspb.ParticleOptions
+
+// ParticlePoint places one control point of a particle effect.
+type ParticlePoint = objectspb.ParticlePoint
+
+// FogOptions describes an oriented box of tinted fog.
+type FogOptions = objectspb.FogOptions
+
+// RestoredEvent reports how a RestoreHero ended.
+type RestoredEvent = playerspb.RestoredEvent
+
+// PlayersChangedEvent holds every occupied player slot, as Players lists them.
+type PlayersChangedEvent = playerspb.PlayersChangedEvent
+
+// Connection is one occupied player slot.
+type Connection = playerspb.Connection
+
+// Pawn is one player's hero this frame.
+type Pawn = playerspb.Pawn
+
+// Score is one player's scoreboard counters since the match began, as the
+// game counts them.
+type Score = playerspb.Score
+
+// HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
+// hero's own.
+type HeroTarget = playerspb.HeroTarget
+
+// EquipmentTarget is one ability or item a HeroTarget gives the hero.
+type EquipmentTarget = playerspb.EquipmentTarget
+
+// TimerTarget sets one owned ability's or item's charges and cooldowns.
+// Times are seconds from the moment the host writes them; an omitted start
+// and end mean no timer.
+type TimerTarget = playerspb.TimerTarget
+
+// BotOptions describes a bot player.
+type BotOptions = playerspb.BotOptions
+
+// BotOptionsHeroName sets BotOptions.Hero to HeroName.
+type BotOptionsHeroName = playerspb.BotOptions_HeroName
+
+// BotOptionsHeroId sets BotOptions.Hero to HeroId.
+type BotOptionsHeroId = playerspb.BotOptions_HeroId
+
+// SettingChangedEvent is one player's new value of one setting.
+type SettingChangedEvent = settingspb.SettingChangedEvent
+
+// UiPressEvent reports a press on a button in a player's interface.
+type UiPressEvent = uipb.UiPressEvent
+
+// StartEvent describes the server the mod starts in.
+type StartEvent = wasmpb.StartEvent
+
+// StartResult declares which events the mod consumes.
+type StartResult = wasmpb.StartResult
+
+// FrameEvent identifies one server frame.
+type FrameEvent = wasmpb.FrameEvent
 
 // CommandEvent carries one command line from a player: a chat line that
 // starts with a slash (or ".", "+" or "-"), without that prefix, or a console
 // command the server received.
-type CommandEvent = wasm.CommandEvent
+type CommandEvent = wasmpb.CommandEvent
 
 // CommandResult answers whether the mod handled a command.
-type CommandResult = wasm.CommandResult
+type CommandResult = wasmpb.CommandResult
 
 // WorldEvent announces a loaded world.
-type WorldEvent = wasm.WorldEvent
-
-// UiPressEvent reports a press on a button in a player's interface.
-type UiPressEvent = wasm.UiPressEvent
+type WorldEvent = wasmpb.WorldEvent
 
 // ServiceCall calls one method of a service outside Modlock. A host that
 // embeds Modlock provides services of its own, such as a game mode's match,
 // and a mod may serve one to the host. The service and its caller agree on
 // the payload's encoding.
-type ServiceCall = wasm.ServiceCall
+type ServiceCall = wasmpb.ServiceCall
 
 // ServiceReply is a service's answer.
-type ServiceReply = wasm.ServiceReply
-
-// DamageEvent is one hit before the game applies it. Handles are zero when
-// the game names no such entity.
-type DamageEvent = wasm.DamageEvent
-
-// DamageResult answers a DamageEvent. An empty result lets the hit through.
-type DamageResult = wasm.DamageResult
-
-// DamagedEvent reports one hit the game applied.
-type DamagedEvent = wasm.DamagedEvent
-
-// InputEvent is one player's watched buttons that went down or up.
-type InputEvent = wasm.InputEvent
-
-// RestoredEvent reports how a RestoreHero ended.
-type RestoredEvent = wasm.RestoredEvent
-
-// NpcsRestoredEvent reports how a RestoreNpcs ended.
-type NpcsRestoredEvent = wasm.NpcsRestoredEvent
-
-// LaunchEvent is a watched projectile's first frame.
-type LaunchEvent = wasm.LaunchEvent
-
-// ImpactEvent is a watched projectile striking something.
-type ImpactEvent = wasm.ImpactEvent
-
-// LandedEvent is one hero landing.
-type LandedEvent = wasm.LandedEvent
-
-// SettingChangedEvent is one player's new value of one setting.
-type SettingChangedEvent = wasm.SettingChangedEvent
-
-// PlayersChangedEvent holds every occupied player slot, as Players lists them.
-type PlayersChangedEvent = wasm.PlayersChangedEvent
+type ServiceReply = wasmpb.ServiceReply
 
 // PrecacheOptions names what the next world loads ahead of use.
-type PrecacheOptions = wasm.PrecacheOptions
-
-// Connection is one occupied player slot.
-type Connection = wasm.Connection
-
-// Pawn is one player's hero this frame.
-type Pawn = wasm.Pawn
-
-// Score is one player's scoreboard counters since the match began, as the
-// game counts them.
-type Score = wasm.Score
-
-// Ability is one ability a hero owns.
-type Ability = wasm.Ability
-
-// AbilityOptions changes one ability of a player's hero.
-type AbilityOptions = wasm.AbilityOptions
-
-// Steering is one recorded movement command and the pose its step ends on.
-type Steering = wasm.Steering
-
-// DriveCommand is a player's controls for one tick and the ticks after it.
-type DriveCommand = wasm.DriveCommand
-
-// ProjectileOptions selects the projectiles a mod watches.
-type ProjectileOptions = wasm.ProjectileOptions
-
-// HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
-// hero's own.
-type HeroTarget = wasm.HeroTarget
-
-// EquipmentTarget is one ability or item a HeroTarget gives the hero.
-type EquipmentTarget = wasm.EquipmentTarget
-
-// TimerTarget sets one owned ability's or item's charges and cooldowns.
-// Times are seconds from the moment the host writes them; an omitted start
-// and end mean no timer.
-type TimerTarget = wasm.TimerTarget
-
-// ScreenTiming is a screen effect's timing in seconds.
-type ScreenTiming = wasm.ScreenTiming
-
-// ModelOptions describes a model placed in the world.
-type ModelOptions = wasm.ModelOptions
-
-// TextOptions describes text that floats in the world.
-type TextOptions = wasm.TextOptions
-
-// ParticleOptions describes a particle effect.
-type ParticleOptions = wasm.ParticleOptions
-
-// ParticlePoint places one control point of a particle effect.
-type ParticlePoint = wasm.ParticlePoint
-
-// FogOptions describes an oriented box of tinted fog.
-type FogOptions = wasm.FogOptions
-
-// EntityClassName names one entity's class two ways.
-type EntityClassName = wasm.EntityClassName
-
-// BotOptions describes a bot player.
-type BotOptions = wasm.BotOptions
-
-// BotOptionsHeroName sets BotOptions.Hero to HeroName.
-type BotOptionsHeroName = wasm.BotOptions_HeroName
-
-// BotOptionsHeroId sets BotOptions.Hero to HeroId.
-type BotOptionsHeroId = wasm.BotOptions_HeroId
-
-// EntityOptions describes an entity to create.
-type EntityOptions = wasm.EntityOptions
-
-// KeyValue is one spawn key value.
-type KeyValue = wasm.KeyValue
-
-// NpcOptions describes a unit that is not a player, such as a trooper.
-type NpcOptions = wasm.NpcOptions
-
-// FieldWrite writes one schema field of an entity the host creates.
-type FieldWrite = wasm.FieldWrite
-
-// NpcState is a unit's state this frame.
-type NpcState = wasm.NpcState
-
-// HitOptions describes damage the mod deals.
-type HitOptions = wasm.HitOptions
-
-// TraceOptions describes a line to test against the world. Layers are bits
-// of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
-// 18 player and 19 NPC.
-type TraceOptions = wasm.TraceOptions
-
-// TraceHit is where a traced line first hit something.
-type TraceHit = wasm.TraceHit
-
-// NpcTarget is one unit or objective RestoreNpcs places, as replays record
-// it.
-type NpcTarget = wasm.NpcTarget
-
-// RiftState is the Rift objective's timing as the game holds it. Times are
-// game times in seconds, or zero when unset.
-type RiftState = wasm.RiftState
+type PrecacheOptions = wasmpb.PrecacheOptions
 
 // toFieldValue encodes value as a FieldValue.
-func toFieldValue(value any) (*wasm.FieldValue, error) {
+func toFieldValue(value any) (*fieldspb.FieldValue, error) {
 	switch value := value.(type) {
 	case bool:
-		return &wasm.FieldValue{Value: &wasm.FieldValue_Boolean{Boolean: value}}, nil
+		return &fieldspb.FieldValue{Value: &fieldspb.FieldValue_Boolean{Boolean: value}}, nil
 	case float64:
-		return &wasm.FieldValue{Value: &wasm.FieldValue_Number{Number: value}}, nil
+		return &fieldspb.FieldValue{Value: &fieldspb.FieldValue_Number{Number: value}}, nil
 	case int64:
-		return &wasm.FieldValue{Value: &wasm.FieldValue_Integer{Integer: value}}, nil
+		return &fieldspb.FieldValue{Value: &fieldspb.FieldValue_Integer{Integer: value}}, nil
 	case string:
-		return &wasm.FieldValue{Value: &wasm.FieldValue_Text{Text: value}}, nil
+		return &fieldspb.FieldValue{Value: &fieldspb.FieldValue_Text{Text: value}}, nil
 	case *Vector:
-		return &wasm.FieldValue{Value: &wasm.FieldValue_Vector{Vector: value}}, nil
+		return &fieldspb.FieldValue{Value: &fieldspb.FieldValue_Vector{Vector: value}}, nil
 	}
 	return nil, fmt.Errorf("a FieldValue is a bool, float64, int64, string or *Vector, not %T", value)
 }
 
 // fromFieldValue decodes a FieldValue as its case's value, or nil.
-func fromFieldValue(message *wasm.FieldValue) any {
+func fromFieldValue(message *fieldspb.FieldValue) any {
 	switch value := message.GetValue().(type) {
-	case *wasm.FieldValue_Boolean:
+	case *fieldspb.FieldValue_Boolean:
 		return value.Boolean
-	case *wasm.FieldValue_Number:
+	case *fieldspb.FieldValue_Number:
 		return value.Number
-	case *wasm.FieldValue_Integer:
+	case *fieldspb.FieldValue_Integer:
 		return value.Integer
-	case *wasm.FieldValue_Text:
+	case *fieldspb.FieldValue_Text:
 		return value.Text
-	case *wasm.FieldValue_Vector:
+	case *fieldspb.FieldValue_Vector:
 		return value.Vector
 	}
 	return nil
 }
 
 // toEntityValue encodes value as a EntityValue.
-func toEntityValue(value any) (*wasm.EntityValue, error) {
+func toEntityValue(value any) (*entitiespb.EntityValue, error) {
 	switch value := value.(type) {
 	case bool:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Boolean{Boolean: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Boolean{Boolean: value}}, nil
 	case int32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Integer{Integer: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Integer{Integer: value}}, nil
 	case float32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Number{Number: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Number{Number: value}}, nil
 	case string:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Text{Text: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Text{Text: value}}, nil
 	case *Vector:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Vector{Vector: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Vector{Vector: value}}, nil
 	case uint32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Color{Color: value}}, nil
+		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Color{Color: value}}, nil
 	}
 	return nil, fmt.Errorf("a EntityValue is a bool, int32, float32, string, *Vector or uint32, not %T", value)
 }
@@ -350,30 +364,30 @@ type Pickup struct {
 
 // logLine writes one line to the server log under the mod's name.
 func logLine(message string) error {
-	return invoke("Log", &wasm.LogRequest{Message: message}, nil)
+	return invoke("Log", &wasmpb.LogRequest{Message: message}, nil)
 }
 
 // ServerCommand runs one line at the server console, as if typed there. A
 // line that sets a variable may set a development-only or cheat-protected
 // one.
 func ServerCommand(command string) error {
-	return invoke("ServerCommand", &wasm.ServerCommandRequest{Command: command}, nil)
+	return invoke("ServerCommand", &wasmpb.ServerCommandRequest{Command: command}, nil)
 }
 
 // Chat sends a server chat line to the player.
 func (p Player) Chat(text string) error {
-	return invoke("Chat", &wasm.ChatRequest{Player: p.Slot, Text: text}, nil)
+	return invoke("Chat", &effectspb.ChatRequest{Player: p.Slot, Text: text}, nil)
 }
 
 // CenterText shows text in the middle of the player's screen until it is
 // replaced. Empty text clears it.
 func (p Player) CenterText(text string) error {
-	return invoke("CenterText", &wasm.CenterTextRequest{Player: p.Slot, Text: text}, nil)
+	return invoke("CenterText", &effectspb.CenterTextRequest{Player: p.Slot, Text: text}, nil)
 }
 
 // Announce shows a game announcement with a title to the player.
 func (p Player) Announce(title, text string) error {
-	return invoke("Announce", &wasm.AnnounceRequest{Player: p.Slot, Title: title, Text: text}, nil)
+	return invoke("Announce", &effectspb.AnnounceRequest{Player: p.Slot, Title: title, Text: text}, nil)
 }
 
 // Precache loads heroes and resources with the next world. Call it during
@@ -384,8 +398,8 @@ func Precache(options *PrecacheOptions) error {
 
 // Pawn returns the player's hero this frame, or nothing without one.
 func (p Player) Pawn() (*Pawn, error) {
-	request := &wasm.PlayerRequest{Player: p.Slot}
-	response := &wasm.PawnResponse{}
+	request := &playerspb.PlayerRequest{Player: p.Slot}
+	response := &playerspb.PawnResponse{}
 	if err := invoke("Pawn", request, response); err != nil {
 		return nil, err
 	}
@@ -396,8 +410,8 @@ func (p Player) Pawn() (*Pawn, error) {
 // declares: the value they chose, or the setting's default. A bot has the
 // defaults.
 func (p Player) Setting(key string) (string, error) {
-	request := &wasm.PlayerSettingRequest{Player: p.Slot, Key: key}
-	response := &wasm.SettingResponse{}
+	request := &settingspb.PlayerSettingRequest{Player: p.Slot, Key: key}
+	response := &settingspb.SettingResponse{}
 	if err := invoke("PlayerSetting", request, response); err != nil {
 		return "", err
 	}
@@ -408,14 +422,14 @@ func (p Player) Setting(key string) (string, error) {
 // declares. The value follows the player to later games and other mods'
 // servers of the same mod; a bot keeps the defaults.
 func (p Player) SetSetting(key, value string) error {
-	return invoke("SetPlayerSetting", &wasm.SetPlayerSettingRequest{Player: p.Slot, Key: key, Value: value}, nil)
+	return invoke("SetPlayerSetting", &settingspb.SetPlayerSettingRequest{Player: p.Slot, Key: key, Value: value}, nil)
 }
 
 // AddMetric adds to the player's total of a metric the manifest declares.
 // The host keeps each player's totals in memory and hands them on once,
 // when the player leaves or the mod stops; a bot keeps none.
 func (p Player) AddMetric(name string, value float64, label *string) error {
-	return invoke("AddMetric", &wasm.AddMetricRequest{Player: p.Slot, Name: name, Value: value, Label: label}, nil)
+	return invoke("AddMetric", &metricspb.AddMetricRequest{Player: p.Slot, Name: name, Value: value, Label: label}, nil)
 }
 
 // HoldReload keeps the running build through a reload while held is true,
@@ -424,23 +438,23 @@ func (p Player) AddMetric(name string, value float64, label *string) error {
 // on the first frame after the mod releases the hold. A new build starts
 // without a hold.
 func HoldReload(held bool) error {
-	return invoke("HoldReload", &wasm.HoldReloadRequest{Held: held}, nil)
+	return invoke("HoldReload", &abilitiespb.HoldReloadRequest{Held: held}, nil)
 }
 
 // SelectHero gives the player a hero on a team, 2 or 3, and returns the
 // hero's identifier as Pawn.hero reports it. The hero appears on a later
 // frame.
 func (p Player) SelectHero(hero any, team int32) (uint32, error) {
-	request := &wasm.SelectHeroRequest{Player: p.Slot, Team: team}
+	request := &playerspb.SelectHeroRequest{Player: p.Slot, Team: team}
 	switch hero := hero.(type) {
 	case string:
-		request.Hero = &wasm.SelectHeroRequest_HeroName{HeroName: hero}
+		request.Hero = &playerspb.SelectHeroRequest_HeroName{HeroName: hero}
 	case uint32:
-		request.Hero = &wasm.SelectHeroRequest_HeroId{HeroId: hero}
+		request.Hero = &playerspb.SelectHeroRequest_HeroId{HeroId: hero}
 	default:
 		return 0, fmt.Errorf("hero is a string or uint32, not %T", hero)
 	}
-	response := &wasm.HeroResponse{}
+	response := &playerspb.HeroResponse{}
 	if err := invoke("SelectHero", request, response); err != nil {
 		return 0, err
 	}
@@ -450,7 +464,7 @@ func (p Player) SelectHero(hero any, team int32) (uint32, error) {
 // Spectate moves the player to the spectators, without a hero. The player
 // watches until a hero selection seats them again.
 func (p Player) Spectate() error {
-	return invoke("Spectate", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("Spectate", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // Watch points the player's camera at a hero, through the hero's own view,
@@ -459,53 +473,53 @@ func (p Player) Spectate() error {
 // while the hero stays where it stands, keeping its level, souls and items,
 // until Unwatch returns them to it.
 func (p Player) Watch(target uint32) error {
-	return invoke("Watch", &wasm.WatchRequest{Player: p.Slot, Target: target}, nil)
+	return invoke("Watch", &playerspb.WatchRequest{Player: p.Slot, Target: target}, nil)
 }
 
 // Unwatch returns a player watching from their hero back to it. Stopping
 // the mod returns every such player.
 func (p Player) Unwatch() error {
-	return invoke("Unwatch", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("Unwatch", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // Respawn revives the player's dead hero.
 func (p Player) Respawn() error {
-	return invoke("Respawn", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("Respawn", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // ClearItems removes every item the player's hero owns.
 func (p Player) ClearItems() error {
-	return invoke("ClearItems", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("ClearItems", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // Freeze holds the player's hero in place, without input or damage, until
 // it is released. Stopping the mod releases it.
 func (p Player) Freeze(frozen *bool) error {
-	return invoke("Freeze", &wasm.FreezeRequest{Player: p.Slot, Frozen: frozen}, nil)
+	return invoke("Freeze", &playerspb.FreezeRequest{Player: p.Slot, Frozen: frozen}, nil)
 }
 
 // RestoreStamina refills the player's stamina.
 func (p Player) RestoreStamina() error {
-	return invoke("RestoreStamina", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("RestoreStamina", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // SetStamina sets the player's stamina, as Pawn.stamina reads it. The game
 // regenerates it as usual afterwards.
 func (p Player) SetStamina(stamina float32) error {
-	return invoke("SetStamina", &wasm.SetStaminaRequest{Player: p.Slot, Stamina: stamina}, nil)
+	return invoke("SetStamina", &playerspb.SetStaminaRequest{Player: p.Slot, Stamina: stamina}, nil)
 }
 
 // RefreshAbility ends the cooldown of the hero's ability named ability,
 // such as citadel_ability_melee_parry.
 func (p Player) RefreshAbility(ability string) error {
-	return invoke("RefreshAbility", &wasm.RefreshAbilityRequest{Player: p.Slot, Ability: ability}, nil)
+	return invoke("RefreshAbility", &abilitiespb.RefreshAbilityRequest{Player: p.Slot, Ability: ability}, nil)
 }
 
 // Abilities lists the abilities of the player's hero in the hero's order,
 // or none without a live hero.
 func (p Player) Abilities() ([]*Ability, error) {
-	request := &wasm.PlayerRequest{Player: p.Slot}
-	response := &wasm.AbilitiesResponse{}
+	request := &playerspb.PlayerRequest{Player: p.Slot}
+	response := &abilitiespb.AbilitiesResponse{}
 	if err := invoke("Abilities", request, response); err != nil {
 		return nil, err
 	}
@@ -526,13 +540,13 @@ func (p Player) SetAbility(options *AbilityOptions) error {
 // GiveItem gives the hero an item, enabled and free. A hero that owns it
 // keeps its one copy.
 func (p Player) GiveItem(item string) error {
-	return invoke("GiveItem", &wasm.GiveItemRequest{Player: p.Slot, Item: item}, nil)
+	return invoke("GiveItem", &abilitiespb.GiveItemRequest{Player: p.Slot, Item: item}, nil)
 }
 
 // ReplaceAbility puts the ability named ability, untrained, in the hero's
 // ability slot index, as Ability.slot, removing the ability there.
 func (p Player) ReplaceAbility(index uint32, ability string) error {
-	return invoke("ReplaceAbility", &wasm.ReplaceAbilityRequest{Player: p.Slot, Index: index, Ability: ability}, nil)
+	return invoke("ReplaceAbility", &abilitiespb.ReplaceAbilityRequest{Player: p.Slot, Index: index, Ability: ability}, nil)
 }
 
 // HoldModifier keeps an ability's modifier, named "<ability>/<modifier>",
@@ -541,7 +555,7 @@ func (p Player) ReplaceAbility(index uint32, ability string) error {
 // that gains the modifier from the same ability keeps it until the hold
 // ends. Releasing leaves the hero's current modifier until it dies.
 func (p Player) HoldModifier(modifier string, active *bool) error {
-	return invoke("HoldModifier", &wasm.HoldModifierRequest{Player: p.Slot, Modifier: modifier, Active: active}, nil)
+	return invoke("HoldModifier", &abilitiespb.HoldModifierRequest{Player: p.Slot, Modifier: modifier, Active: active}, nil)
 }
 
 // GiveModifier gives the hero an ability's modifier, named
@@ -549,21 +563,21 @@ func (p Player) HoldModifier(modifier string, active *bool) error {
 // it; a hero without that ability applies it with its first ability. The
 // game may end it sooner, as invisibility ends on a shot.
 func (p Player) GiveModifier(modifier string, seconds float32) error {
-	return invoke("GiveModifier", &wasm.GiveModifierRequest{Player: p.Slot, Modifier: modifier, Seconds: seconds}, nil)
+	return invoke("GiveModifier", &abilitiespb.GiveModifierRequest{Player: p.Slot, Modifier: modifier, Seconds: seconds}, nil)
 }
 
 // Teleport moves the player's hero and turns it and the camera. With a
 // velocity it also sets the hero's motion, as a launch, and the camera
 // follows the hero.
 func (p Player) Teleport(position *Vector, facing *Angles, velocity *Vector) error {
-	return invoke("Teleport", &wasm.TeleportRequest{Player: p.Slot, Position: position, Facing: facing, Velocity: velocity}, nil)
+	return invoke("Teleport", &movementpb.TeleportRequest{Player: p.Slot, Position: position, Facing: facing, Velocity: velocity}, nil)
 }
 
 // Move carries the player's hero to a position as continuous motion,
 // as a recording plays back. Unlike Teleport it keeps the hero's animated
 // model drawn when repeated every tick, and leaves the camera alone.
 func (p Player) Move(position *Vector, facing *Angles, velocity *Vector) error {
-	return invoke("MovePlayer", &wasm.MovePlayerRequest{Player: p.Slot, Position: position, Facing: facing, Velocity: velocity}, nil)
+	return invoke("MovePlayer", &movementpb.MovePlayerRequest{Player: p.Slot, Position: position, Facing: facing, Velocity: velocity}, nil)
 }
 
 // Steer replays a recorded movement command on the player's hero, usually a
@@ -572,7 +586,7 @@ func (p Player) Move(position *Vector, facing *Angles, velocity *Vector) error {
 // on the recorded pose. The steering stays until the next Steer replaces
 // it, its presses counting once; a Steer without one releases the hero.
 func (p Player) Steer(steering *Steering) error {
-	return invoke("Steer", &wasm.SteerRequest{Player: p.Slot, Steering: steering}, nil)
+	return invoke("Steer", &movementpb.SteerRequest{Player: p.Slot, Steering: steering}, nil)
 }
 
 // Drive gives a bot the controls a player has, where it looks, the
@@ -582,36 +596,36 @@ func (p Player) Steer(steering *Steering) error {
 // movement and animation; the bot's own brain no longer moves it. Presses
 // count once. A Drive without a command returns the bot to its brain.
 func (p Player) Drive(command *DriveCommand) error {
-	return invoke("Drive", &wasm.DriveRequest{Player: p.Slot, Command: command}, nil)
+	return invoke("Drive", &movementpb.DriveRequest{Player: p.Slot, Command: command}, nil)
 }
 
 // AdjustSouls gives the player delta souls, or takes them when delta is
 // negative. A spend larger than the player's souls fails and spends
 // nothing. Silent skips the pickup's sound and number.
 func (p Player) AdjustSouls(delta int32, silent *bool) error {
-	return invoke("AdjustSouls", &wasm.AdjustSoulsRequest{Player: p.Slot, Delta: delta, Silent: silent}, nil)
+	return invoke("AdjustSouls", &playerspb.AdjustSoulsRequest{Player: p.Slot, Delta: delta, Silent: silent}, nil)
 }
 
 // StartingSouls sets the souls the player's hero spawns with.
 func (p Player) StartingSouls(souls int32) error {
-	return invoke("StartingSouls", &wasm.StartingSoulsRequest{Player: p.Slot, Souls: souls}, nil)
+	return invoke("StartingSouls", &playerspb.StartingSoulsRequest{Player: p.Slot, Souls: souls}, nil)
 }
 
 // ResetHero rebuilds the player's hero as it first spawned, without items,
 // ability upgrades, levels or ability points, holding souls.
 func (p Player) ResetHero(souls int32) error {
-	return invoke("ResetHero", &wasm.ResetHeroRequest{Player: p.Slot, Souls: souls}, nil)
+	return invoke("ResetHero", &playerspb.ResetHeroRequest{Player: p.Slot, Souls: souls}, nil)
 }
 
 // Heal restores health to the player's hero, up to its maximum.
 func (p Player) Heal(amount int32) error {
-	return invoke("Heal", &wasm.HealRequest{Player: p.Slot, Amount: amount}, nil)
+	return invoke("Heal", &playerspb.HealRequest{Player: p.Slot, Amount: amount}, nil)
 }
 
 // Sound plays a game sound event, such as Damage.Send.Crit, on the
 // player's hero.
 func (p Player) Sound(sound string) error {
-	return invoke("Sound", &wasm.SoundRequest{Player: p.Slot, Sound: sound}, nil)
+	return invoke("Sound", &effectspb.SoundRequest{Player: p.Slot, Sound: sound}, nil)
 }
 
 // RestoreHero gives the player's live hero target over the next few
@@ -620,19 +634,19 @@ func (p Player) Sound(sound string) error {
 // held for a second, or why it could not. A new call replaces the running
 // one.
 func (p Player) RestoreHero(target *HeroTarget) error {
-	return invoke("RestoreHero", &wasm.RestoreHeroRequest{Player: p.Slot, Target: target}, nil)
+	return invoke("RestoreHero", &playerspb.RestoreHeroRequest{Player: p.Slot, Target: target}, nil)
 }
 
 // ScreenEffect plays a full-screen effect on the player's view. Effects of
 // one kind stack. The player's hero must be alive.
 func (p Player) ScreenEffect(effect ScreenEffect, timing *ScreenTiming) error {
-	return invoke("ScreenEffect", &wasm.ScreenEffectRequest{Player: p.Slot, Effect: effect, Timing: timing}, nil)
+	return invoke("ScreenEffect", &effectspb.ScreenEffectRequest{Player: p.Slot, Effect: effect, Timing: timing}, nil)
 }
 
 // ClearScreenEffect ends every running instance of effect on the player's
 // view.
 func (p Player) ClearScreenEffect(effect ScreenEffect) error {
-	return invoke("ClearScreenEffect", &wasm.ClearScreenEffectRequest{Player: p.Slot, Effect: effect}, nil)
+	return invoke("ClearScreenEffect", &effectspb.ClearScreenEffectRequest{Player: p.Slot, Effect: effect}, nil)
 }
 
 // ReadField reads one schema field of a live entity, such as the int32
@@ -642,8 +656,8 @@ func (p Player) ClearScreenEffect(effect ScreenEffect) error {
 // team or the winning team, is a field of CCitadelGameRules, which the
 // citadel_gamerules entity reads.
 func ReadField(entity uint32, className, field string, kind FieldType) (any, error) {
-	request := &wasm.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
-	response := &wasm.FieldResponse{}
+	request := &fieldspb.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	response := &fieldspb.FieldResponse{}
 	if err := invoke("ReadField", request, response); err != nil {
 		return nil, err
 	}
@@ -655,7 +669,7 @@ func ReadField(entity uint32, className, field string, kind FieldType) (any, err
 // text fields cannot be written. A write to the match's state sends all of
 // it, so players already in the match see the change.
 func WriteField(entity uint32, className, field string, kind FieldType, value any) error {
-	request := &wasm.WriteFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	request := &fieldspb.WriteFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
 	encoded, err := toFieldValue(value)
 	if err != nil {
 		return err
@@ -668,8 +682,8 @@ func WriteField(entity uint32, className, field string, kind FieldType, value an
 // of CCitadelGameRules. The type is the type of one element: a number, a
 // handle, a boolean or a vector. A list of structures cannot be read.
 func ReadFieldList(entity uint32, className, field string, kind FieldType) ([]any, error) {
-	request := &wasm.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
-	response := &wasm.FieldListResponse{}
+	request := &fieldspb.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	response := &fieldspb.FieldListResponse{}
 	if err := invoke("ReadFieldList", request, response); err != nil {
 		return nil, err
 	}
@@ -684,7 +698,7 @@ func ReadFieldList(entity uint32, className, field string, kind FieldType) ([]an
 // to the players, growing the list when it holds fewer elements than the
 // new ones.
 func WriteFieldList(entity uint32, className, field string, kind FieldType, values []any) error {
-	request := &wasm.WriteFieldListRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
+	request := &fieldspb.WriteFieldListRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
 	for _, value := range values {
 		encoded, err := toFieldValue(value)
 		if err != nil {
@@ -698,8 +712,8 @@ func WriteFieldList(entity uint32, className, field string, kind FieldType, valu
 // EntityClass returns a live entity's schema class, such as
 // CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
 func EntityClass(entity uint32) (*EntityClassName, error) {
-	request := &wasm.EntityRequest{Entity: entity}
-	response := &wasm.EntityClassResponse{}
+	request := &entitiespb.EntityRequest{Entity: entity}
+	response := &entitiespb.EntityClassResponse{}
 	if err := invoke("EntityClass", request, response); err != nil {
 		return nil, err
 	}
@@ -709,8 +723,8 @@ func EntityClass(entity uint32) (*EntityClassName, error) {
 // ModifierState reports whether an entity has a modifier state, such as
 // MODIFIER_STATE_PARRY_ACTIVE.
 func ModifierState(entity uint32, state string) (bool, error) {
-	request := &wasm.ModifierStateRequest{Entity: entity, State: state}
-	response := &wasm.ActiveResponse{}
+	request := &abilitiespb.ModifierStateRequest{Entity: entity, State: state}
+	response := &abilitiespb.ActiveResponse{}
 	if err := invoke("ModifierState", request, response); err != nil {
 		return false, err
 	}
@@ -721,7 +735,7 @@ func ModifierState(entity uint32, state string) (bool, error) {
 // MODIFIER_STATE_FRIENDLY_FIRE_ENABLED, on an entity while the mod runs, or
 // releases the hold. The hold ends with the entity.
 func HoldModifierState(entity uint32, state string, active *bool) error {
-	return invoke("HoldModifierState", &wasm.HoldModifierStateRequest{Entity: entity, State: state, Active: active}, nil)
+	return invoke("HoldModifierState", &abilitiespb.HoldModifierStateRequest{Entity: entity, State: state, Active: active}, nil)
 }
 
 // SetFreeForAll turns free-for-all on or off for the running mod, over the
@@ -730,14 +744,14 @@ func HoldModifierState(entity uint32, state string, active *bool) error {
 // friendly fire on every hero, and ignores changeteam commands. Turning it
 // off releases the friendly fire holds; players keep their teams.
 func SetFreeForAll(enabled bool) error {
-	return invoke("SetFreeForAll", &wasm.SetFreeForAllRequest{Enabled: enabled}, nil)
+	return invoke("SetFreeForAll", &matchpb.SetFreeForAllRequest{Enabled: enabled}, nil)
 }
 
 // CreateModel places a model in the world, solid when the options ask.
 // The world removes it when the world ends; stopping the mod removes it
 // too.
 func CreateModel(options *ModelOptions) (WorldObject, error) {
-	response := &wasm.ObjectResponse{}
+	response := &objectspb.ObjectResponse{}
 	if err := invoke("CreateModel", options, response); err != nil {
 		return WorldObject{}, err
 	}
@@ -746,7 +760,7 @@ func CreateModel(options *ModelOptions) (WorldObject, error) {
 
 // CreateText places text that floats in the world.
 func CreateText(options *TextOptions) (WorldObject, error) {
-	response := &wasm.ObjectResponse{}
+	response := &objectspb.ObjectResponse{}
 	if err := invoke("CreateText", options, response); err != nil {
 		return WorldObject{}, err
 	}
@@ -756,7 +770,7 @@ func CreateText(options *TextOptions) (WorldObject, error) {
 // CreateParticle starts a particle effect. Removing the object stops it;
 // moving it moves the effect.
 func CreateParticle(options *ParticleOptions) (WorldObject, error) {
-	response := &wasm.ObjectResponse{}
+	response := &objectspb.ObjectResponse{}
 	if err := invoke("CreateParticle", options, response); err != nil {
 		return WorldObject{}, err
 	}
@@ -766,7 +780,7 @@ func CreateParticle(options *ParticleOptions) (WorldObject, error) {
 // CreateFog fills a box with tinted fog whose density fades across the
 // box's boundary. Removing the object clears it; moving it moves the box.
 func CreateFog(options *FogOptions) (WorldObject, error) {
-	response := &wasm.ObjectResponse{}
+	response := &objectspb.ObjectResponse{}
 	if err := invoke("CreateFog", options, response); err != nil {
 		return WorldObject{}, err
 	}
@@ -775,30 +789,30 @@ func CreateFog(options *FogOptions) (WorldObject, error) {
 
 // Move places the object at position, turning it to facing.
 func (w WorldObject) Move(position *Vector, facing *Angles) error {
-	return invoke("MoveObject", &wasm.MoveObjectRequest{Object: w.ID, Position: position, Facing: facing}, nil)
+	return invoke("MoveObject", &objectspb.MoveObjectRequest{Object: w.ID, Position: position, Facing: facing}, nil)
 }
 
 // SetText replaces a text object's words.
 func (w WorldObject) SetText(text string) error {
-	return invoke("SetText", &wasm.SetTextRequest{Object: w.ID, Text: text}, nil)
+	return invoke("SetText", &objectspb.SetTextRequest{Object: w.ID, Text: text}, nil)
 }
 
 // SetHidden hides the object from one player or shows it again.
 // Other players still see it. A player who leaves sees every object when
 // they return.
 func (w WorldObject) SetHidden(player Player, hidden bool) error {
-	return invoke("SetObjectHidden", &wasm.SetObjectHiddenRequest{Object: w.ID, Player: player.Slot, Hidden: hidden}, nil)
+	return invoke("SetObjectHidden", &objectspb.SetObjectHiddenRequest{Object: w.ID, Player: player.Slot, Hidden: hidden}, nil)
 }
 
 // Remove takes the object out of the world.
 func (w WorldObject) Remove() error {
-	return invoke("RemoveObject", &wasm.ObjectRequest{Object: w.ID}, nil)
+	return invoke("RemoveObject", &objectspb.ObjectRequest{Object: w.ID}, nil)
 }
 
 // Entity returns the entity handle of a model, as traces report it.
 func (w WorldObject) Entity() (uint32, error) {
-	request := &wasm.ObjectRequest{Object: w.ID}
-	response := &wasm.EntityResponse{}
+	request := &objectspb.ObjectRequest{Object: w.ID}
+	response := &entitiespb.EntityResponse{}
 	if err := invoke("ObjectEntity", request, response); err != nil {
 		return 0, err
 	}
@@ -808,7 +822,7 @@ func (w WorldObject) Entity() (uint32, error) {
 // AddBot adds a bot player and returns it. The bot leaves when the world
 // ends or the mod stops.
 func AddBot(options *BotOptions) (Player, error) {
-	response := &wasm.BotResponse{}
+	response := &playerspb.BotResponse{}
 	if err := invoke("AddBot", options, response); err != nil {
 		return Player{}, err
 	}
@@ -817,32 +831,32 @@ func AddBot(options *BotOptions) (Player, error) {
 
 // RemoveBot removes a bot the mod added.
 func (p Player) RemoveBot() error {
-	return invoke("RemoveBot", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("RemoveBot", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // BlockInput withholds buttons from every player's hero until called
 // again. Stopping the mod releases them.
 func BlockInput(buttons uint64) error {
-	return invoke("BlockInput", &wasm.InputRequest{Buttons: buttons}, nil)
+	return invoke("BlockInput", &inputpb.InputRequest{Buttons: buttons}, nil)
 }
 
 // BlockInput withholds buttons from the player's hero until called
 // again, on top of the block on everyone. Zero releases the player.
 func (p Player) BlockInput(buttons uint64) error {
-	return invoke("BlockPlayerInput", &wasm.PlayerInputRequest{Player: p.Slot, Buttons: buttons}, nil)
+	return invoke("BlockPlayerInput", &inputpb.PlayerInputRequest{Player: p.Slot, Buttons: buttons}, nil)
 }
 
 // Press presses buttons at the player's next input, even through a block.
 // A bot presses them as a player would.
 func (p Player) Press(buttons uint64) error {
-	return invoke("Press", &wasm.PlayerInputRequest{Player: p.Slot, Buttons: buttons}, nil)
+	return invoke("Press", &inputpb.PlayerInputRequest{Player: p.Slot, Buttons: buttons}, nil)
 }
 
 // WatchInput replaces the buttons whose presses and releases arrive as
 // Input events. Watching does not withhold a press; block it with
 // BlockInput.
 func WatchInput(buttons uint64) error {
-	return invoke("WatchInput", &wasm.InputRequest{Buttons: buttons}, nil)
+	return invoke("WatchInput", &inputpb.InputRequest{Buttons: buttons}, nil)
 }
 
 // RemapInput makes the from buttons act as the to buttons for every
@@ -851,15 +865,15 @@ func WatchInput(buttons uint64) error {
 // stops remapping, and stopping the mod does too. BlockInput applies after
 // the remap.
 func RemapInput(from, to uint64, repeat *bool) error {
-	return invoke("RemapInput", &wasm.RemapInputRequest{From: from, To: to, Repeat: repeat}, nil)
+	return invoke("RemapInput", &inputpb.RemapInputRequest{From: from, To: to, Repeat: repeat}, nil)
 }
 
 // CallService calls method of a service the host provides outside Modlock,
 // such as a game mode's match, and returns the service's answer. The
 // service defines the payload's encoding.
 func CallService(service, method string, payload []byte) ([]byte, error) {
-	request := &wasm.ServiceCall{Service: service, Method: method, Payload: payload}
-	response := &wasm.ServiceReply{}
+	request := &wasmpb.ServiceCall{Service: service, Method: method, Payload: payload}
+	response := &wasmpb.ServiceReply{}
 	if err := invoke("CallService", request, response); err != nil {
 		return nil, err
 	}
@@ -872,7 +886,7 @@ func CallService(service, method string, payload []byte) ([]byte, error) {
 // stopping the mod removes it too. It refuses an ability, item or weapon,
 // which only a hero holds: GiveItem and ReplaceAbility give one.
 func CreateEntity(options *EntityOptions) (uint32, error) {
-	response := &wasm.EntityResponse{}
+	response := &entitiespb.EntityResponse{}
 	if err := invoke("CreateEntity", options, response); err != nil {
 		return 0, err
 	}
@@ -883,7 +897,7 @@ func CreateEntity(options *EntityOptions) (uint32, error) {
 // as Skin with the integer 1. The value must have the type the input reads.
 // It reports false once the entity is gone.
 func FireInput(entity uint32, input string, value any, activator *uint32) (bool, error) {
-	request := &wasm.FireInputRequest{Entity: entity, Input: input, Activator: activator}
+	request := &entitiespb.FireInputRequest{Entity: entity, Input: input, Activator: activator}
 	if value != nil {
 		encoded, err := toEntityValue(value)
 		if err != nil {
@@ -891,7 +905,7 @@ func FireInput(entity uint32, input string, value any, activator *uint32) (bool,
 		}
 		request.Value = encoded
 	}
-	response := &wasm.AliveResponse{}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("FireInput", request, response); err != nil {
 		return false, err
 	}
@@ -901,8 +915,8 @@ func FireInput(entity uint32, input string, value any, activator *uint32) (bool,
 // RemoveEntity takes an entity the mod created out of the world without
 // rewards. It reports false when the entity was already gone.
 func RemoveEntity(entity uint32) (bool, error) {
-	request := &wasm.EntityRequest{Entity: entity}
-	response := &wasm.AliveResponse{}
+	request := &entitiespb.EntityRequest{Entity: entity}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("RemoveEntity", request, response); err != nil {
 		return false, err
 	}
@@ -919,13 +933,13 @@ func RemoveEntity(entity uint32) (bool, error) {
 // own call. Removing the entity, the world ending or the mod stopping drops
 // the rule.
 func ShowEntityOnlyTo(entity uint32, players []int32) error {
-	return invoke("ShowEntityOnlyTo", &wasm.ShowEntityOnlyToRequest{Entity: entity, Players: players}, nil)
+	return invoke("ShowEntityOnlyTo", &entitiespb.ShowEntityOnlyToRequest{Entity: entity, Players: players}, nil)
 }
 
 // ShowEntityToAll sends an entity the mod created to every player the game
 // would send it to again, undoing ShowEntityOnlyTo.
 func ShowEntityToAll(entity uint32) error {
-	return invoke("ShowEntityToAll", &wasm.EntityRequest{Entity: entity}, nil)
+	return invoke("ShowEntityToAll", &entitiespb.EntityRequest{Entity: entity}, nil)
 }
 
 // SpawnNpc adds a unit that is not a player, such as a trooper, as
@@ -933,7 +947,7 @@ func ShowEntityToAll(entity uint32) error {
 // frame. The world removes it when the world ends; stopping
 // the mod removes it too.
 func SpawnNpc(options *NpcOptions) (Npc, error) {
-	response := &wasm.NpcResponse{}
+	response := &npcspb.NpcResponse{}
 	if err := invoke("SpawnNpc", options, response); err != nil {
 		return Npc{}, err
 	}
@@ -942,8 +956,8 @@ func SpawnNpc(options *NpcOptions) (Npc, error) {
 
 // Read returns the unit's state, or nothing once it is gone.
 func (n Npc) Read() (*NpcState, error) {
-	request := &wasm.NpcRequest{Npc: n.Entity}
-	response := &wasm.NpcStateResponse{}
+	request := &npcspb.NpcRequest{Npc: n.Entity}
+	response := &npcspb.NpcStateResponse{}
 	if err := invoke("ReadNpc", request, response); err != nil {
 		return nil, err
 	}
@@ -953,8 +967,8 @@ func (n Npc) Read() (*NpcState, error) {
 // Move places the unit and sets its velocity, which drives its walk
 // animation. It reports false once the unit is gone.
 func (n Npc) Move(position *Vector, facing *Angles, velocity *Vector) (bool, error) {
-	request := &wasm.MoveNpcRequest{Npc: n.Entity, Position: position, Facing: facing, Velocity: velocity}
-	response := &wasm.AliveResponse{}
+	request := &npcspb.MoveNpcRequest{Npc: n.Entity, Position: position, Facing: facing, Velocity: velocity}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("MoveNpc", request, response); err != nil {
 		return false, err
 	}
@@ -964,8 +978,8 @@ func (n Npc) Move(position *Vector, facing *Angles, velocity *Vector) (bool, err
 // SetHealth sets the unit's health, and its maximum when given. It
 // reports false once the unit is gone.
 func (n Npc) SetHealth(health int32, maxHealth *int32) (bool, error) {
-	request := &wasm.SetNpcHealthRequest{Npc: n.Entity, Health: health, MaxHealth: maxHealth}
-	response := &wasm.AliveResponse{}
+	request := &npcspb.SetNpcHealthRequest{Npc: n.Entity, Health: health, MaxHealth: maxHealth}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("SetNpcHealth", request, response); err != nil {
 		return false, err
 	}
@@ -975,8 +989,8 @@ func (n Npc) SetHealth(health int32, maxHealth *int32) (bool, error) {
 // Remove takes a unit the mod spawned out of the world without rewards.
 // It reports false when the unit was already gone.
 func (n Npc) Remove() (bool, error) {
-	request := &wasm.NpcRequest{Npc: n.Entity}
-	response := &wasm.AliveResponse{}
+	request := &npcspb.NpcRequest{Npc: n.Entity}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("RemoveNpc", request, response); err != nil {
 		return false, err
 	}
@@ -986,8 +1000,8 @@ func (n Npc) Remove() (bool, error) {
 // CreatePickup places an urn, which a hero carries once collected, or a
 // movement buff. Stopping the mod removes it.
 func CreatePickup(kind PickupKind, position *Vector) (Pickup, error) {
-	request := &wasm.CreatePickupRequest{Kind: kind, Position: position}
-	response := &wasm.PickupResponse{}
+	request := &entitiespb.CreatePickupRequest{Kind: kind, Position: position}
+	response := &entitiespb.PickupResponse{}
 	if err := invoke("CreatePickup", request, response); err != nil {
 		return Pickup{}, err
 	}
@@ -997,8 +1011,8 @@ func CreatePickup(kind PickupKind, position *Vector) (Pickup, error) {
 // Present reports whether the pickup still lies in the world,
 // uncollected.
 func (p Pickup) Present() (bool, error) {
-	request := &wasm.PickupRequest{Pickup: p.Entity}
-	response := &wasm.AliveResponse{}
+	request := &entitiespb.PickupRequest{Pickup: p.Entity}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("PickupPresent", request, response); err != nil {
 		return false, err
 	}
@@ -1008,8 +1022,8 @@ func (p Pickup) Present() (bool, error) {
 // Remove takes the pickup out of the world. It reports false when a
 // player had collected it.
 func (p Pickup) Remove() (bool, error) {
-	request := &wasm.PickupRequest{Pickup: p.Entity}
-	response := &wasm.AliveResponse{}
+	request := &entitiespb.PickupRequest{Pickup: p.Entity}
+	response := &entitiespb.AliveResponse{}
 	if err := invoke("RemovePickup", request, response); err != nil {
 		return false, err
 	}
@@ -1019,8 +1033,8 @@ func (p Pickup) Remove() (bool, error) {
 // FindEntities returns the handle of every live entity of a class, such as
 // zip_line_node.
 func FindEntities(className string) ([]uint32, error) {
-	request := &wasm.FindEntitiesRequest{ClassName: className}
-	response := &wasm.EntitiesResponse{}
+	request := &entitiespb.FindEntitiesRequest{ClassName: className}
+	response := &entitiespb.EntitiesResponse{}
 	if err := invoke("FindEntities", request, response); err != nil {
 		return nil, err
 	}
@@ -1030,8 +1044,8 @@ func FindEntities(className string) ([]uint32, error) {
 // RemoveEntities removes every entity of a class, such as npc_trooper,
 // without rewards, and returns how many it removed.
 func RemoveEntities(className string) (int32, error) {
-	request := &wasm.RemoveEntitiesRequest{ClassName: className}
-	response := &wasm.CountResponse{}
+	request := &entitiespb.RemoveEntitiesRequest{ClassName: className}
+	response := &entitiespb.CountResponse{}
 	if err := invoke("RemoveEntities", request, response); err != nil {
 		return 0, err
 	}
@@ -1041,7 +1055,7 @@ func RemoveEntities(className string) (int32, error) {
 // ClearMap removes the map's own units and objectives, such as troopers,
 // guardians and walkers, so a mode can use the map as an arena.
 func ClearMap() error {
-	return invoke("ClearMap", &wasm.Empty{}, nil)
+	return invoke("ClearMap", &wasmpb.Empty{}, nil)
 }
 
 // Damage deals a hit as the game would. The mod's Damage events do not
@@ -1053,7 +1067,7 @@ func Damage(options *HitOptions) error {
 // Trace returns where a line first hits something, or nothing when it hits
 // nothing or the world's collision is not ready.
 func Trace(options *TraceOptions) (*TraceHit, error) {
-	response := &wasm.TraceResponse{}
+	response := &combatpb.TraceResponse{}
 	if err := invoke("Trace", options, response); err != nil {
 		return nil, err
 	}
@@ -1066,19 +1080,19 @@ func Trace(options *TraceOptions) (*TraceHit, error) {
 // again in place. An NpcsRestored event reports when every target stands
 // as its own unit, or why not. A new call replaces the running one.
 func RestoreNpcs(npcs []*NpcTarget) error {
-	return invoke("RestoreNpcs", &wasm.RestoreNpcsRequest{Npcs: npcs}, nil)
+	return invoke("RestoreNpcs", &npcspb.RestoreNpcsRequest{Npcs: npcs}, nil)
 }
 
 // Pause stops or resumes the game clock, as the pause command would.
 // Stopping the mod resumes it.
 func Pause(paused bool) error {
-	return invoke("Pause", &wasm.PauseRequest{Paused: paused}, nil)
+	return invoke("Pause", &matchpb.PauseRequest{Paused: paused}, nil)
 }
 
 // MatchClock returns the match time in seconds that the scoreboard shows.
 func MatchClock() (float32, error) {
-	response := &wasm.MatchClockResponse{}
-	if err := invoke("MatchClock", &wasm.Empty{}, response); err != nil {
+	response := &matchpb.MatchClockResponse{}
+	if err := invoke("MatchClock", &wasmpb.Empty{}, response); err != nil {
 		return 0, err
 	}
 	return response.GetSeconds(), nil
@@ -1087,13 +1101,13 @@ func MatchClock() (float32, error) {
 // HoldMatchClock keeps the match time at seconds every frame until called
 // again; omitted seconds let it run.
 func HoldMatchClock(seconds *float32) error {
-	return invoke("HoldMatchClock", &wasm.HoldMatchClockRequest{Seconds: seconds}, nil)
+	return invoke("HoldMatchClock", &matchpb.HoldMatchClockRequest{Seconds: seconds}, nil)
 }
 
 // Rift reads the Rift objective's state.
 func Rift() (*RiftState, error) {
-	response := &wasm.RiftResponse{}
-	if err := invoke("Rift", &wasm.Empty{}, response); err != nil {
+	response := &matchpb.RiftResponse{}
+	if err := invoke("Rift", &wasmpb.Empty{}, response); err != nil {
 		return nil, err
 	}
 	return response.GetState(), nil
@@ -1101,35 +1115,35 @@ func Rift() (*RiftState, error) {
 
 // StartRift opens the Rift objective at position now.
 func StartRift(position *Vector) error {
-	return invoke("StartRift", &wasm.StartRiftRequest{Position: position}, nil)
+	return invoke("StartRift", &matchpb.StartRiftRequest{Position: position}, nil)
 }
 
 // MoveEntity places any entity, such as a projectile, and replaces its
 // facing and motion when given.
 func MoveEntity(entity uint32, position *Vector, facing *Angles, velocity *Vector) error {
-	return invoke("MoveEntity", &wasm.MoveEntityRequest{Entity: entity, Position: position, Facing: facing, Velocity: velocity}, nil)
+	return invoke("MoveEntity", &entitiespb.MoveEntityRequest{Entity: entity, Position: position, Facing: facing, Velocity: velocity}, nil)
 }
 
 // EmitSound plays one game sound on any entity, such as a projectile.
 func EmitSound(entity uint32, sound string) error {
-	return invoke("EmitSound", &wasm.EmitSoundRequest{Entity: entity, Sound: sound}, nil)
+	return invoke("EmitSound", &effectspb.EmitSoundRequest{Entity: entity, Sound: sound}, nil)
 }
 
 // Kill kills a player's hero, crediting no one.
 func (p Player) Kill() error {
-	return invoke("Kill", &wasm.PlayerRequest{Player: p.Slot}, nil)
+	return invoke("Kill", &playerspb.PlayerRequest{Player: p.Slot}, nil)
 }
 
 // SetVelocity replaces the motion of a player's hero without moving it.
 func (p Player) SetVelocity(velocity *Vector) error {
-	return invoke("SetVelocity", &wasm.SetVelocityRequest{Player: p.Slot, Velocity: velocity}, nil)
+	return invoke("SetVelocity", &movementpb.SetVelocityRequest{Player: p.Slot, Velocity: velocity}, nil)
 }
 
 // Buttons returns the buttons a player holds, as Buttons bits, while the
 // player is alive or dead.
 func (p Player) Buttons() (uint64, error) {
-	request := &wasm.PlayerRequest{Player: p.Slot}
-	response := &wasm.ButtonsResponse{}
+	request := &playerspb.PlayerRequest{Player: p.Slot}
+	response := &inputpb.ButtonsResponse{}
 	if err := invoke("Buttons", request, response); err != nil {
 		return 0, err
 	}
@@ -1139,7 +1153,7 @@ func (p Player) Buttons() (uint64, error) {
 // WatchMovement adds a player's hero to the movement samples of each Frame
 // event on a new tick, or removes it.
 func (p Player) WatchMovement(watch bool) error {
-	return invoke("WatchMovement", &wasm.WatchMovementRequest{Player: p.Slot, Watch: watch}, nil)
+	return invoke("WatchMovement", &movementpb.WatchMovementRequest{Player: p.Slot, Watch: watch}, nil)
 }
 
 // WatchProjectiles reports the projectiles with these designer names, such
@@ -1197,104 +1211,104 @@ type modHandlers interface {
 }
 
 // serveMod runs call on handlers and returns its reply.
-func serveMod(handlers modHandlers, call *wasm.Call) *wasm.Reply {
+func serveMod(handlers modHandlers, call *wasmpb.Call) *wasmpb.Reply {
 	switch call.GetMethod() {
 	case "Start":
 		event := &StartEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(handlers.Start(event))
 	case "Frame":
 		event := &FrameEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Frame(event))
 	case "Command":
 		event := &CommandEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(handlers.Command(event))
 	case "World":
 		event := &WorldEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.World(event))
 	case "UiPress":
 		event := &UiPressEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.UiPress(event))
 	case "Serve":
 		event := &ServiceCall{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(handlers.Serve(event))
 	case "Damage":
 		event := &DamageEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(handlers.Damage(event))
 	case "Damaged":
 		event := &DamagedEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Damaged(event))
 	case "Input":
 		event := &InputEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Input(event))
 	case "Restored":
 		event := &RestoredEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Restored(event))
 	case "NpcsRestored":
 		event := &NpcsRestoredEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.NpcsRestored(event))
 	case "Launch":
 		event := &LaunchEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Launch(event))
 	case "Impact":
 		event := &ImpactEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Impact(event))
 	case "Landed":
 		event := &LandedEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.Landed(event))
 	case "SettingChanged":
 		event := &SettingChangedEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.SettingChanged(event))
 	case "PlayersChanged":
 		event := &PlayersChangedEvent{}
 		if err := event.UnmarshalVT(call.GetRequest()); err != nil {
-			return &wasm.Reply{Error: err.Error()}
+			return &wasmpb.Reply{Error: err.Error()}
 		}
 		return answer(nil, handlers.PlayersChanged(event))
 	}
-	return &wasm.Reply{Error: "the mod has no method " + call.GetMethod()}
+	return &wasmpb.Reply{Error: "the mod has no method " + call.GetMethod()}
 }

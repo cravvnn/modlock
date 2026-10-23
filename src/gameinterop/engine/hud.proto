@@ -1,0 +1,72 @@
+syntax = "proto2";
+
+package modlock.gameinterop.engine;
+
+option go_package = "github.com/paralin/modlock/src/gameinterop/engine;engine";
+
+// HudTextMessage matches native CUserMessageTextMsg, message 124.
+message HudTextMessage {
+  // Dest selects the native print destination; 4 is HUD_PRINTCENTER.
+  optional uint32 dest = 1;
+
+  // Param contains the text followed by any native format substitutions.
+  repeated string param = 2;
+}
+
+// HudAnnouncement matches Deadlock CCitadelUserMsg_HudGameAnnouncement, message 363.
+message HudAnnouncement {
+  // TitleLocstring is the announcement title or localization token.
+  optional string title_locstring = 1;
+
+  // DescriptionLocstring is the announcement description or localization token.
+  optional string description_locstring = 2;
+
+  // Classname adds existing native announcement style classes.
+  repeated string classname = 3;
+
+  // DialogVariableName identifies an optional localized substitution.
+  repeated string dialog_variable_name = 4;
+
+  // DialogVariableLocstring supplies the localized substitution.
+  repeated string dialog_variable_locstring = 5;
+}
+
+// ScreenEffectState matches Deadlock PostProcessingGameStates.
+enum ScreenEffectState {
+  // SCREEN_EFFECT_STATE_KILLED is the stock death treatment.
+  SCREEN_EFFECT_STATE_KILLED = 0;
+  // SCREEN_EFFECT_STATE_BLACK fades the view to black.
+  SCREEN_EFFECT_STATE_BLACK = 1;
+  // SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM is the Doorman hotel treatment.
+  SCREEN_EFFECT_STATE_DOORMAN_HOTEL_VICTIM = 2;
+  // SCREEN_EFFECT_STATE_BLINDED is the stock blind treatment.
+  SCREEN_EFFECT_STATE_BLINDED = 3;
+  // SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER is Drifter's darkness view.
+  SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER = 4;
+  // SCREEN_EFFECT_STATE_MATCH_INTRO is the match start treatment.
+  SCREEN_EFFECT_STATE_MATCH_INTRO = 5;
+}
+
+// ScreenEffect matches Deadlock CCitadelUserMsg_PostProcessingAnim, message 332.
+// The client ignores the message unless entindex_owner names a live entity.
+// Each state keeps a list of running instances, so effects of one state stack.
+message ScreenEffect {
+  // EntindexOwner is the entity the effect belongs to, normally the
+  // recipient's pawn.
+  optional int32 entindex_owner = 1 [default = -1];
+
+  // ClearAllStates ends every running instance of state instead of starting one.
+  optional bool clear_all_states = 2;
+
+  // State selects the stock post-processing resource.
+  optional ScreenEffectState state = 3;
+
+  // Delay, FadeInTime, HoldTime and FadeOutTime are seconds, applied in order.
+  optional float delay = 4;
+  optional float fade_in_time = 5;
+  optional float hold_time = 6;
+  optional float fade_out_time = 7;
+
+  // Scale weights the effect; the client stores it with each instance.
+  optional float scale = 8;
+}

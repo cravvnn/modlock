@@ -5,16 +5,14 @@
 #include <vector>
 
 #include "modlock/export.h"
-#include "proto/modlock/types.pb.h"
+#include "modlock/stamina_evidence.h"
+#include "src/geometry/geometry.pb.h"
 
 namespace modlock {
 
-class Vec3;
-class EulerAngles;
-
 // PluginInterfaceVersion is the ABI contract this header declares. A plugin
 // built against a different value is rejected at registration.
-inline constexpr uint32_t PluginInterfaceVersion = 6;
+inline constexpr uint32_t PluginInterfaceVersion = 7;
 
 // PawnSample is one pawn position observed at a host tick, in world units.
 struct PawnSample {
@@ -44,11 +42,11 @@ class MODLOCK_API PawnControl {
   virtual ~PawnControl() = default;
 
   // TeleportToPosition moves one pawn when the game interop surface permits it.
-  virtual bool TeleportToPosition(int32_t slot, const Vec3& position) = 0;
+  virtual bool TeleportToPosition(int32_t slot, const geometry::Vec3& position) = 0;
 
   // ResetToPose begins a fresh attempt at rest and sets the owning client's view.
   // Unsupported hosts refuse the reset instead of silently dropping the view.
-  virtual bool ResetToPose(int32_t, const Vec3&, const EulerAngles&) { return false; }
+  virtual bool ResetToPose(int32_t, const geometry::Vec3&, const geometry::EulerAngles&) { return false; }
 };
 
 // TickContext carries the server clock, observed pawn positions, and an

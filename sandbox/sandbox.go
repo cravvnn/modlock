@@ -9,9 +9,15 @@ import (
 	"time"
 
 	"github.com/paralin/modlock/metrics"
-	"github.com/paralin/modlock/proto/modlock/control"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/settings"
+	"github.com/paralin/modlock/src/host_app/control"
+	"github.com/paralin/modlock/src/wasm"
+	"github.com/paralin/modlock/src/wasm/effects"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
+	metricspb "github.com/paralin/modlock/src/wasm/metrics"
+	"github.com/paralin/modlock/src/wasm/players"
+	settingspb "github.com/paralin/modlock/src/wasm/settings"
+	"github.com/paralin/modlock/src/wasm/ui"
 	"github.com/pkg/errors"
 	"github.com/tetratelabs/wazero"
 )
@@ -20,7 +26,7 @@ import (
 const frameInterval = time.Second / 60
 
 // player is the stand-in player every sandbox holds.
-var player = &wasm.Connection{
+var player = &players.Connection{
 	Player:     0,
 	SteamId:    76561197960265728,
 	Name:       "Player",
@@ -122,7 +128,7 @@ func (s *Sandbox) Press(ctx context.Context, mod string, slot int32, node string
 	err := s.do(ctx, func(ctx context.Context) {
 		for _, running := range s.mods {
 			if running.name == mod {
-				pressed = s.deliver(ctx, running, "UiPress", &wasm.UiPressEvent{Player: slot, Node: node}, nil)
+				pressed = s.deliver(ctx, running, "UiPress", &ui.UiPressEvent{Player: slot, Node: node}, nil)
 			}
 		}
 	})
@@ -249,7 +255,7 @@ func (s *Sandbox) start(ctx context.Context, name string, build *Build) (*Mod, *
 	wants := &wasm.StartResult{}
 	err = mod.Deliver(ctx, "Start", &wasm.StartEvent{Args: s.config.Args, Source: source}, wants)
 	if err == nil {
-		_ = mod.Deliver(ctx, "PlayersChanged", &wasm.PlayersChangedEvent{Players: []*wasm.Connection{player}}, nil)
+		_ = mod.Deliver(ctx, "PlayersChanged", &players.PlayersChangedEvent{Players: []*players.Connection{player}}, nil)
 	}
 	if err == nil && s.config.Map != "" {
 		err = mod.Deliver(ctx, "World", &wasm.WorldEvent{Map: s.config.Map}, nil)
@@ -266,7 +272,7 @@ func (s *Sandbox) start(ctx context.Context, name string, build *Build) (*Mod, *
 func (s *Sandbox) module(ctx context.Context, build *Build) ([]byte, []byte, error) {
 	// A WebAssembly mod is its own module.
 	runtime := build.Manifest.GetRuntime()
-	if runtime == wasm.Manifest_RUNTIME_WASM {
+	if runtime == manifestpb.Manifest_RUNTIME_WASM {
 		return build.Entry, nil, nil
 	}
 
@@ -351,7 +357,7 @@ func (s *Sandbox) deliver(ctx context.Context, mod *running, method string, requ
 // stand-in player, keeps the player's settings, refuses service calls as a
 // host without extensions does, and answers the rest empty, as for a player
 // without a hero.
-func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
+func (s *Sandbox) answer(manifest *manifestpb.Manifest, call *wasm.Call) *wasm.Reply {
 	// Decode the requests the sandbox reports.
 	mod := manifest.GetSlug()
 	switch call.GetMethod() {
@@ -361,17 +367,17 @@ func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
 			s.log(mod, request.GetMessage())
 		}
 	case "Chat":
-		request := &wasm.ChatRequest{}
+		request := &effects.ChatRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.message(mod, request.GetPlayer(), control.MessageKind_MESSAGE_KIND_CHAT, "", request.GetText())
 		}
 	case "CenterText":
-		request := &wasm.CenterTextRequest{}
+		request := &effects.CenterTextRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.message(mod, request.GetPlayer(), control.MessageKind_MESSAGE_KIND_CENTER, "", request.GetText())
 		}
 	case "Announce":
-		request := &wasm.AnnounceRequest{}
+		request := &effects.AnnounceRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.message(mod, request.GetPlayer(), control.MessageKind_MESSAGE_KIND_ANNOUNCEMENT, request.GetTitle(), request.GetText())
 		}
@@ -381,7 +387,7 @@ func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
 			s.log(mod, "server command: "+request.GetCommand())
 		}
 	case "Ui":
-		request := &wasm.UiRequest{}
+		request := &ui.UiRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.event(&control.HostEvent{Body: &control.HostEvent_Ui{Ui: &control.UiChanged{
 				Mod:    mod,
@@ -390,21 +396,21 @@ func (s *Sandbox) answer(manifest *wasm.Manifest, call *wasm.Call) *wasm.Reply {
 			}}})
 		}
 	case "Players":
-		response, _ := (&wasm.PlayersResponse{Players: []*wasm.Connection{player}}).MarshalVT()
+		response, _ := (&players.PlayersResponse{Players: []*players.Connection{player}}).MarshalVT()
 		return &wasm.Reply{Response: response}
 	case "PlayerSetting":
-		request := &wasm.PlayerSettingRequest{}
+		request := &settingspb.PlayerSettingRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
-			response, _ := (&wasm.SettingResponse{Value: s.setting(manifest, request.GetPlayer(), request.GetKey())}).MarshalVT()
+			response, _ := (&settingspb.SettingResponse{Value: s.setting(manifest, request.GetPlayer(), request.GetKey())}).MarshalVT()
 			return &wasm.Reply{Response: response}
 		}
 	case "SetPlayerSetting":
-		request := &wasm.SetPlayerSettingRequest{}
+		request := &settingspb.SetPlayerSettingRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.setSetting(manifest, request.GetPlayer(), request.GetKey(), request.GetValue())
 		}
 	case "AddMetric":
-		request := &wasm.AddMetricRequest{}
+		request := &metricspb.AddMetricRequest{}
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.addMetric(manifest, request)
 		}
@@ -431,7 +437,7 @@ func (s *Sandbox) message(mod string, slot int32, kind control.MessageKind, titl
 // setting returns the player's value of a setting manifest declares: the
 // kept value while the setting accepts it, or its default. An undeclared
 // setting reads empty.
-func (s *Sandbox) setting(manifest *wasm.Manifest, slot int32, key string) string {
+func (s *Sandbox) setting(manifest *manifestpb.Manifest, slot int32, key string) string {
 	declared := settings.Find(manifest, key)
 	if declared == nil {
 		return ""
@@ -448,7 +454,7 @@ func (s *Sandbox) setting(manifest *wasm.Manifest, slot int32, key string) strin
 
 // setSetting keeps the player's new value of a setting manifest declares,
 // logging a value the setting refuses.
-func (s *Sandbox) setSetting(manifest *wasm.Manifest, slot int32, key, value string) {
+func (s *Sandbox) setSetting(manifest *manifestpb.Manifest, slot int32, key, value string) {
 	// Accept only a value of a declared setting.
 	mod := manifest.GetSlug()
 	declared := settings.Find(manifest, key)
@@ -473,7 +479,7 @@ func (s *Sandbox) setSetting(manifest *wasm.Manifest, slot int32, key, value str
 
 // addMetric adds to the stand-in player's total of a metric manifest
 // declares, logging a call the declaration refuses.
-func (s *Sandbox) addMetric(manifest *wasm.Manifest, request *wasm.AddMetricRequest) {
+func (s *Sandbox) addMetric(manifest *manifestpb.Manifest, request *metricspb.AddMetricRequest) {
 	// Count only a declared metric and label.
 	mod := manifest.GetSlug()
 	declared := metrics.Find(manifest, request.GetName())

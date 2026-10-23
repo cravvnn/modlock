@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paralin/modlock/proto/modlock/control"
+	"github.com/paralin/modlock/src/host_app/control"
 )
 
 // TestSandbox runs a Go mod that answers /hello: the stand-in player joins,

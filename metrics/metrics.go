@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
+	metricspb "github.com/paralin/modlock/src/wasm/metrics"
 	"github.com/pkg/errors"
 )
 
@@ -28,7 +29,7 @@ var (
 )
 
 // Find returns the metric named name that manifest declares, or nil.
-func Find(manifest *wasm.Manifest, name string) *wasm.Metric {
+func Find(manifest *manifestpb.Manifest, name string) *metricspb.Metric {
 	for _, metric := range manifest.GetMetrics() {
 		if metric.GetName() == name {
 			return metric
@@ -39,7 +40,7 @@ func Find(manifest *wasm.Manifest, name string) *wasm.Metric {
 
 // Labeled reports whether a call may label metric with label: one of its
 // labels, or empty for a metric without labels.
-func Labeled(metric *wasm.Metric, label string) bool {
+func Labeled(metric *metricspb.Metric, label string) bool {
 	if len(metric.GetLabels()) == 0 {
 		return label == ""
 	}
@@ -47,7 +48,7 @@ func Labeled(metric *wasm.Metric, label string) bool {
 }
 
 // Validate checks the metrics manifest declares.
-func Validate(manifest *wasm.Manifest) error {
+func Validate(manifest *manifestpb.Manifest) error {
 	metrics := manifest.GetMetrics()
 	if len(metrics) > limit {
 		return errors.Errorf("mod.json declares more than %d metrics", limit)
@@ -56,7 +57,7 @@ func Validate(manifest *wasm.Manifest) error {
 		if err := validate(metric); err != nil {
 			return err
 		}
-		if slices.ContainsFunc(metrics[:i], func(m *wasm.Metric) bool { return m.GetName() == metric.GetName() }) {
+		if slices.ContainsFunc(metrics[:i], func(m *metricspb.Metric) bool { return m.GetName() == metric.GetName() }) {
 			return errors.Errorf("mod.json declares metric %q twice", metric.GetName())
 		}
 	}
@@ -64,14 +65,14 @@ func Validate(manifest *wasm.Manifest) error {
 }
 
 // validate checks one declared metric.
-func validate(metric *wasm.Metric) error {
+func validate(metric *metricspb.Metric) error {
 	// Check the name the code adds to and how the metric combines values.
 	name := metric.GetName()
 	if !namePattern.MatchString(name) {
 		return errors.Errorf("metric %q name must be up to 64 letters, digits, underscores and dots, starting with a letter or underscore", name)
 	}
 	switch metric.GetKind() {
-	case wasm.Metric_KIND_COUNT, wasm.Metric_KIND_SUM, wasm.Metric_KIND_MAX:
+	case metricspb.Metric_KIND_COUNT, metricspb.Metric_KIND_SUM, metricspb.Metric_KIND_MAX:
 	default:
 		return errors.Errorf("metric %q kind must be KIND_COUNT, KIND_SUM or KIND_MAX", name)
 	}
@@ -103,7 +104,7 @@ type key struct {
 }
 
 // Add adds value to metric's total under label.
-func (t *Tally) Add(metric *wasm.Metric, label string, value float64) {
+func (t *Tally) Add(metric *metricspb.Metric, label string, value float64) {
 	// Combine value with the total by the metric's kind.
 	if t.totals == nil {
 		t.totals = map[key]float64{}
@@ -111,11 +112,11 @@ func (t *Tally) Add(metric *wasm.Metric, label string, value float64) {
 	k := key{metric.GetName(), label}
 	total, found := t.totals[k]
 	switch metric.GetKind() {
-	case wasm.Metric_KIND_COUNT:
+	case metricspb.Metric_KIND_COUNT:
 		total++
-	case wasm.Metric_KIND_SUM:
+	case metricspb.Metric_KIND_SUM:
 		total += value
-	case wasm.Metric_KIND_MAX:
+	case metricspb.Metric_KIND_MAX:
 		if !found || value > total {
 			total = value
 		}
@@ -124,7 +125,7 @@ func (t *Tally) Add(metric *wasm.Metric, label string, value float64) {
 }
 
 // Totals returns the totals in name and label order.
-func (t *Tally) Totals() *wasm.MetricTotals {
+func (t *Tally) Totals() *metricspb.MetricTotals {
 	// List the totals in a stable order, so one session reads the same way
 	// each time.
 	keys := make([]key, 0, len(t.totals))
@@ -134,9 +135,9 @@ func (t *Tally) Totals() *wasm.MetricTotals {
 	slices.SortFunc(keys, func(a, b key) int {
 		return strings.Compare(a.name+"\x00"+a.label, b.name+"\x00"+b.label)
 	})
-	totals := &wasm.MetricTotals{}
+	totals := &metricspb.MetricTotals{}
 	for _, k := range keys {
-		totals.Totals = append(totals.Totals, &wasm.MetricTotal{Name: k.name, Label: k.label, Value: t.totals[k]})
+		totals.Totals = append(totals.Totals, &metricspb.MetricTotal{Name: k.name, Label: k.label, Value: t.totals[k]})
 	}
 	return totals
 }

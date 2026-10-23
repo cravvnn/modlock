@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/paralin/modlock/proto/modlock/control"
-	"github.com/paralin/modlock/proto/modlock/ui"
+	"github.com/paralin/modlock/src/host_app/control"
+	"github.com/paralin/modlock/src/wasm/ui"
 )
 
 // RelayAgent marks the game's own HTML panels in their User-Agent. Requiring

@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package modlock.wasm.settings;
+
+option go_package = "github.com/paralin/modlock/src/wasm/settings;settings";
+
+// SettingChangedEvent is one player's new value of one setting.
+message SettingChangedEvent {
+  // Player is the player's server slot.
+  int32 player = 1;
+
+  // Key names the setting.
+  string key = 2;
+
+  // Value is the new value.
+  string value = 3;
+}
+
+// PlayerSettingRequest names one of a player's settings.
+message PlayerSettingRequest {
+  // Player is the player's server slot.
+  int32 player = 1;
+
+  // Key names a setting the manifest declares.
+  string key = 2;
+}
+
+// SettingResponse holds a setting's value.
+message SettingResponse {
+  // Value is the value as text: a choice's value, "true" or "false", or a
+  // number.
+  string value = 1;
+}
+
+// SetPlayerSettingRequest changes one of a player's settings.
+message SetPlayerSettingRequest {
+  // Player is the player's server slot.
+  int32 player = 1;
+
+  // Key names a setting the manifest declares.
+  string key = 2;
+
+  // Value is one of the setting's values, as SettingResponse holds it.
+  string value = 3;
+}
+
+// Setting is one choice a player makes about a mod, such as a HUD layout.
+// Each value is text: a choice's value, "true" or "false", or a number.
+message Setting {
+  // Kind is the kind of value a setting holds.
+  enum Kind {
+    // KIND_UNKNOWN is an unset or unsupported kind.
+    KIND_UNKNOWN = 0;
+
+    // KIND_CHOICE is one of the setting's choices.
+    KIND_CHOICE = 1;
+
+    // KIND_SWITCH is on or off.
+    KIND_SWITCH = 2;
+
+    // KIND_NUMBER is a number from min to max, on a step from min when step
+    // is above zero.
+    KIND_NUMBER = 3;
+  }
+
+  // Key names the setting in the mod's code: up to 64 letters, digits and
+  // underscores, not starting with a digit.
+  string key = 1;
+
+  // Label names the setting to players.
+  string label = 2;
+
+  Kind kind = 3;
+
+  // Choices are a choice setting's values, in the order players see them.
+  repeated SettingChoice choices = 4;
+
+  // Min, max and step bound a number setting.
+  double min = 5;
+  double max = 6;
+  double step = 7;
+
+  // Default is the value a player starts with. Empty means the first choice,
+  // off, or min.
+  string default_value = 8 [json_name = "default"];
+}
+
+// SettingChoice is one value of a choice setting.
+message SettingChoice {
+  // Value is the value the mod reads: letters, digits, dots, underscores
+  // and hyphens.
+  string value = 1;
+
+  // Label names the choice to players; empty shows the value.
+  string label = 2;
+}
+
+// StoredSettings is the file a host without a settings service keeps
+// players' settings in.
+message StoredSettings {
+  repeated StoredSetting values = 1;
+}
+
+// StoredSetting is one player's value of one mod's setting.
+message StoredSetting {
+  string mod = 1;
+  uint64 steam_id = 2;
+  string key = 3;
+  string value = 4;
+}

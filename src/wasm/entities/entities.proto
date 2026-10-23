@@ -1,0 +1,188 @@
+syntax = "proto3";
+
+package modlock.wasm.entities;
+
+option go_package = "github.com/paralin/modlock/src/wasm/entities;entities";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+import "github.com/paralin/modlock/src/wasm/fields/fields.proto";
+
+// MoveEntityRequest places one entity.
+message MoveEntityRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // Position is the entity's new origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing replaces the entity's angles when present.
+  optional modlock.geometry.EulerAngles facing = 3;
+
+  // Velocity replaces the entity's motion when present.
+  optional modlock.geometry.Vec3 velocity = 4;
+}
+
+// EntityRequest addresses one live entity.
+message EntityRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+}
+
+// EntityClassResponse names a live entity's class.
+message EntityClassResponse {
+  EntityClassName name = 1;
+}
+
+// EntityClassName names one entity's class two ways.
+message EntityClassName {
+  // ClassName is the server schema class, such as CCitadelPlayerPawn.
+  string class_name = 1;
+
+  // DesignerName is the name maps and spawns use, such as npc_trooper.
+  string designer_name = 2;
+}
+
+// EntityResponse holds one entity handle.
+message EntityResponse {
+  uint32 entity = 1;
+}
+
+// EntityOptions describes an entity to create.
+message EntityOptions {
+  // DesignerName is the entity's designer name, such as npc_trooper_boss.
+  string designer_name = 1;
+
+  // Subclass names the entity's game data entry, such as npc_boss_tier1 for
+  // the lane Guardian, for an entity that reads one while spawning. An NPC
+  // needs one.
+  string subclass = 2;
+
+  // Team is the entity's team number; 4 is neutral.
+  int32 team = 3;
+
+  // Position is the entity's origin.
+  modlock.geometry.Vec3 position = 4;
+
+  // Facing is where the entity faces.
+  optional modlock.geometry.EulerAngles facing = 5;
+
+  // KeyValues are the entity's spawn key values, as a map sets them, such as
+  // model or rendercolor.
+  repeated KeyValue key_values = 6;
+
+  // Fields are schema fields the host writes after it creates the entity and
+  // before the entity spawns. A write that fails cancels the creation.
+  repeated modlock.wasm.fields.FieldWrite fields = 7;
+
+  // TransmitAlways sends the entity to every client, past the game's own
+  // rule, which never sends one without a model, such as a
+  // point_clientui_dialog.
+  optional bool transmit_always = 8;
+}
+
+// KeyValue is one spawn key value.
+message KeyValue {
+  // Key is the key value's name, such as skin.
+  string key = 1;
+
+  // Value is the key value's value.
+  EntityValue value = 2;
+}
+
+// EntityValue is a value a map gives an entity: a spawn key value or an
+// input's parameter. An input reads its parameter as the type it takes, such
+// as an integer for Skin or a color, as 0xRRGGBBAA, for Color, and does not
+// convert text.
+message EntityValue {
+  oneof value {
+    bool boolean = 1;
+    int32 integer = 2;
+    float number = 3;
+    string text = 4;
+    modlock.geometry.Vec3 vector = 5;
+    fixed32 color = 6;
+  }
+}
+
+// ShowEntityOnlyToRequest names the only players who receive an entity.
+message ShowEntityOnlyToRequest {
+  // Entity is the handle of an entity the mod created.
+  uint32 entity = 1;
+
+  // Players are the server slots of the players who receive it.
+  repeated int32 players = 2;
+}
+
+// FireInputRequest sends one input to an entity.
+message FireInputRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // Input is the input's name, such as Skin or Kill.
+  string input = 2;
+
+  // Value is the input's parameter, absent for an input that takes none.
+  optional EntityValue value = 3;
+
+  // Activator is the handle of the entity that caused the input, such as a
+  // player's hero. Inputs that act on one player, such as
+  // LocalPlayerAddCSSClass, act on the activator's player.
+  optional uint32 activator = 4;
+}
+
+// AliveResponse reports whether a unit or pickup was still in the world.
+message AliveResponse {
+  bool alive = 1;
+}
+
+// PickupKind is a kind of item players collect by walking over it.
+enum PickupKind {
+  // PICKUP_KIND_URN is the soul urn, which its carrier delivers.
+  PICKUP_KIND_URN = 0;
+
+  // PICKUP_KIND_MOVEMENT_BUFF is the movement speed buff.
+  PICKUP_KIND_MOVEMENT_BUFF = 1;
+}
+
+// CreatePickupRequest places one pickup.
+message CreatePickupRequest {
+  // Kind is the pickup.
+  PickupKind kind = 1;
+
+  // Position is where the pickup rests.
+  modlock.geometry.Vec3 position = 2;
+}
+
+// PickupResponse holds the pickup CreatePickup placed.
+message PickupResponse {
+  uint32 pickup = 1;
+}
+
+// PickupRequest addresses one pickup the mod placed.
+message PickupRequest {
+  // Pickup is the pickup's entity handle.
+  uint32 pickup = 1;
+}
+
+// FindEntitiesRequest names the entity class to find.
+message FindEntitiesRequest {
+  // ClassName is the exact entity class, such as zip_line_node.
+  string class_name = 1;
+}
+
+// RemoveEntitiesRequest names the entity class to remove.
+message RemoveEntitiesRequest {
+  // ClassName is the exact entity class, such as npc_trooper.
+  string class_name = 1;
+}
+
+// EntitiesResponse lists entities by handle.
+message EntitiesResponse {
+  // Entities are the entity handles.
+  repeated uint32 entities = 1;
+}
+
+// CountResponse holds how many entities a call changed.
+message CountResponse {
+  int32 count = 1;
+}

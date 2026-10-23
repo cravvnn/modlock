@@ -3,30 +3,31 @@ package metrics
 import (
 	"testing"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
+	"github.com/paralin/modlock/src/wasm/metrics"
 )
 
 // TestValidate checks which declarations a build accepts.
 func TestValidate(t *testing.T) {
 	// Accept well-formed metrics and refuse each kind of bad one.
-	good := &wasm.Manifest{Metrics: []*wasm.Metric{
-		{Name: "hud.opened", Kind: wasm.Metric_KIND_COUNT, Labels: []string{"classic", "compact"}},
-		{Name: "best_combo", Kind: wasm.Metric_KIND_MAX},
+	good := &manifest.Manifest{Metrics: []*metrics.Metric{
+		{Name: "hud.opened", Kind: metrics.Metric_KIND_COUNT, Labels: []string{"classic", "compact"}},
+		{Name: "best_combo", Kind: metrics.Metric_KIND_MAX},
 	}}
 	if err := Validate(good); err != nil {
 		t.Fatalf("Validate(good) = %v", err)
 	}
-	for name, metric := range map[string]*wasm.Metric{
-		"name":  {Name: "9lives", Kind: wasm.Metric_KIND_SUM},
+	for name, metric := range map[string]*metrics.Metric{
+		"name":  {Name: "9lives", Kind: metrics.Metric_KIND_SUM},
 		"kind":  {Name: "runs"},
-		"label": {Name: "runs", Kind: wasm.Metric_KIND_SUM, Labels: []string{"two words"}},
-		"twice": {Name: "runs", Kind: wasm.Metric_KIND_SUM, Labels: []string{"a", "a"}},
+		"label": {Name: "runs", Kind: metrics.Metric_KIND_SUM, Labels: []string{"two words"}},
+		"twice": {Name: "runs", Kind: metrics.Metric_KIND_SUM, Labels: []string{"a", "a"}},
 	} {
-		if Validate(&wasm.Manifest{Metrics: []*wasm.Metric{metric}}) == nil {
+		if Validate(&manifest.Manifest{Metrics: []*metrics.Metric{metric}}) == nil {
 			t.Errorf("Validate accepted a bad %s", name)
 		}
 	}
-	twice := &wasm.Manifest{Metrics: []*wasm.Metric{good.Metrics[1], good.Metrics[1]}}
+	twice := &manifest.Manifest{Metrics: []*metrics.Metric{good.Metrics[1], good.Metrics[1]}}
 	if Validate(twice) == nil {
 		t.Error("Validate accepted a metric declared twice")
 	}
@@ -35,9 +36,9 @@ func TestValidate(t *testing.T) {
 // TestTally checks how each kind combines its values.
 func TestTally(t *testing.T) {
 	// Declare one metric of each kind and check the labels they take.
-	opened := &wasm.Metric{Name: "hud.opened", Kind: wasm.Metric_KIND_COUNT, Labels: []string{"compact"}}
-	damage := &wasm.Metric{Name: "damage", Kind: wasm.Metric_KIND_SUM}
-	combo := &wasm.Metric{Name: "best_combo", Kind: wasm.Metric_KIND_MAX}
+	opened := &metrics.Metric{Name: "hud.opened", Kind: metrics.Metric_KIND_COUNT, Labels: []string{"compact"}}
+	damage := &metrics.Metric{Name: "damage", Kind: metrics.Metric_KIND_SUM}
+	combo := &metrics.Metric{Name: "best_combo", Kind: metrics.Metric_KIND_MAX}
 	if !Labeled(opened, "compact") || Labeled(opened, "") || !Labeled(damage, "") || Labeled(damage, "compact") {
 		t.Fatal("Labeled does not follow the declared labels")
 	}

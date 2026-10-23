@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package modlock.wasm.objects;
+
+option go_package = "github.com/paralin/modlock/src/wasm/objects;objects";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// ModelOptions describes a model placed in the world.
+message ModelOptions {
+  // Resource is the model's path, which the mod precached.
+  string resource = 1;
+
+  // Position is the model's origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is the model's rotation.
+  optional modlock.geometry.EulerAngles facing = 3;
+
+  // Scale multiplies the model's size; the default is 1.
+  optional float scale = 4;
+
+  // Color tints the model as 0xRRGGBBAA.
+  optional fixed32 color = 5;
+
+  // Glow outlines the model through walls.
+  optional bool glow = 6;
+
+  // Solid makes heroes and traces collide with the model's physics shape,
+  // scaled with the model. Without it, everything passes through.
+  optional bool solid = 7;
+}
+
+// TextOptions describes text that floats in the world.
+message TextOptions {
+  // Text is the words to show; a newline starts a second line.
+  string text = 1;
+
+  // Position is the text's origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is the text's rotation when it does not face the camera.
+  optional modlock.geometry.EulerAngles facing = 3;
+
+  // FontSize is the text's size; the default is 100.
+  optional float font_size = 4;
+
+  // Color is the text's color as 0xRRGGBBAA; the default is white.
+  optional fixed32 color = 5;
+
+  // FaceCamera turns the text toward each viewer.
+  optional bool face_camera = 6;
+
+  // Scale multiplies the text's size in the world; the default is 1.
+  optional float scale = 7;
+}
+
+// ParticleOptions describes a particle effect.
+message ParticleOptions {
+  // Resource is the particle system's path, which the mod precached, such
+  // as particles/abilities/assassinate_laser_targetting.vpcf.
+  string resource = 1;
+
+  // Position is the effect's origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is the effect's rotation.
+  optional modlock.geometry.EulerAngles facing = 3;
+
+  // Color tints the effect as 0xRRGGBBAA.
+  optional fixed32 color = 4;
+
+  // TintPoint is the control point the color sets.
+  optional int32 tint_point = 5;
+
+  // Point sets one control point to a position, such as a beam's far end.
+  optional ParticlePoint point = 6;
+
+  // Parent is the handle of an entity the effect follows, such as a hero's.
+  optional uint32 parent = 7;
+}
+
+// ParticlePoint places one control point of a particle effect.
+message ParticlePoint {
+  // Index is the control point's number.
+  int32 index = 1;
+
+  // Position is the control point's value.
+  modlock.geometry.Vec3 position = 2;
+}
+
+// FogOptions describes an oriented box of tinted fog.
+message FogOptions {
+  // Position is the box's origin.
+  modlock.geometry.Vec3 position = 1;
+
+  // Facing is the box's rotation.
+  optional modlock.geometry.EulerAngles facing = 2;
+
+  // Mins is the box's lower corner, relative to position.
+  modlock.geometry.Vec3 mins = 3;
+
+  // Maxs is the box's upper corner, relative to position.
+  modlock.geometry.Vec3 maxs = 4;
+
+  // Strength is the fog's density.
+  float strength = 5;
+
+  // Color tints the fog as 0xRRGGBBAA; alpha is ignored.
+  fixed32 color = 6;
+}
+
+// ObjectResponse holds the object a Create call placed.
+message ObjectResponse {
+  uint32 object = 1;
+}
+
+// ObjectRequest addresses one object the mod created.
+message ObjectRequest {
+  // Object identifies the object among the mod's objects.
+  uint32 object = 1;
+}
+
+// MoveObjectRequest moves one object the mod created.
+message MoveObjectRequest {
+  uint32 object = 1;
+
+  // Position is the object's new origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is the object's new rotation, kept when omitted.
+  optional modlock.geometry.EulerAngles facing = 3;
+}
+
+// SetTextRequest replaces a text object's words.
+message SetTextRequest {
+  uint32 object = 1;
+
+  // Text is the new words.
+  string text = 2;
+}
+
+// SetObjectHiddenRequest hides one object from one player or shows it again.
+message SetObjectHiddenRequest {
+  uint32 object = 1;
+
+  // Player is the server slot of the player who stops or resumes seeing it.
+  int32 player = 2;
+
+  // Hidden is true to hide the object and false to show it.
+  bool hidden = 3;
+}

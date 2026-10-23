@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -12,7 +14,7 @@ namespace modlock::wasm {
 namespace {
 
 // Remap moves the state of remap's from buttons to its to buttons.
-void Remap(const RemapInputRequest& remap, gameinterop::AbilityInputHook::Input& input) {
+void Remap(const input::RemapInputRequest& remap, gameinterop::AbilityInputHook::Input& input) {
   if (remap.from() == 0) {
     return;
   }
@@ -220,7 +222,7 @@ void GameServices::Withhold(gameinterop::TransmitSet& set) {
 void GameServices::Impact(void* entity, const gameinterop::TraceResult& contact,
                           const gameinterop::ProjectileImpactHook::NativeImpact& native) {
   // Collect the games that watch this projectile.
-  std::vector<std::pair<Game*, ImpactEvent>> watching;
+  std::vector<std::pair<Game*, combat::ImpactEvent>> watching;
   bool keep = false;
   for (auto* game : games_) {
     auto event = game->Watching(entity, contact);
@@ -386,7 +388,7 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
   return step_ && step_(call);
 }
 
-std::optional<MovementCommand> GameServices::Command(const void* pawn) {
+std::optional<movement::MovementCommand> GameServices::Command(const void* pawn) {
   // Find the pawn's command for this tick.
   const auto found = commands_.find(pawn);
   if (found == commands_.end()) {

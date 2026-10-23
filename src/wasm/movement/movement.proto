@@ -1,0 +1,207 @@
+syntax = "proto3";
+
+package modlock.wasm.movement;
+
+option go_package = "github.com/paralin/modlock/src/wasm/movement;movement";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// MovementAction is a movement fact the game announced for a hero.
+enum MovementAction {
+  MOVEMENT_ACTION_UNKNOWN = 0;
+  MOVEMENT_ACTION_LANDED = 1;
+  MOVEMENT_ACTION_ZIPLINE_ATTACHED = 2;
+  MOVEMENT_ACTION_GROUND_DASH = 3;
+  MOVEMENT_ACTION_SLIDE = 4;
+  MOVEMENT_ACTION_BOUNCE_PAD = 5;
+  MOVEMENT_ACTION_DASH_JUMP = 6;
+  MOVEMENT_ACTION_AIR_JUMP = 7;
+  MOVEMENT_ACTION_WALL_JUMP = 8;
+  MOVEMENT_ACTION_AIR_DASH = 9;
+  MOVEMENT_ACTION_MELEE_STARTED = 10;
+  // AbilityExecuted is any ability the hero cast.
+  MOVEMENT_ACTION_ABILITY_EXECUTED = 11;
+}
+
+// MovementSample is one watched hero's movement on one tick, as the game keeps
+// it. A hero whose position, velocity or ground the game does not provide has
+// no sample; another field the game did not provide is absent or zero.
+message MovementSample {
+  // Player is the hero's player slot.
+  int32 player = 1;
+
+  // Pawn is the hero's entity handle.
+  uint32 pawn = 2;
+
+  // Position is the hero's origin, at its feet.
+  modlock.geometry.Vec3 position = 3;
+
+  // Velocity is the hero's motion in units per second.
+  modlock.geometry.Vec3 velocity = 4;
+
+  // Grounded is true while the hero stands on something. Sliding, Mantling,
+  // Climbing and Dashing are the game's movement states.
+  bool grounded = 6;
+  bool sliding = 7;
+  bool mantling = 8;
+  bool climbing = 9;
+  bool dashing = 10;
+
+  // JumpAbility is the hero's jump ability, and WallJumps the game's count of
+  // consecutive wall jumps on it.
+  uint32 jump_ability = 11;
+  int32 wall_jumps = 12;
+
+  // MantleAbility is the hero's mantle ability, and MantleStart the game time
+  // its latest mantle began.
+  uint32 mantle_ability = 13;
+  float mantle_start = 14;
+
+  // WallContact is where the hero was when the jump ability last found a wall
+  // to jump off; it holds still once no wall qualifies.
+  modlock.geometry.Vec3 wall_contact = 15;
+
+  // WallNormal is the last wall touched, never cleared.
+  modlock.geometry.Vec3 wall_normal = 16;
+
+  // WallJumpNormal is the normal the latest wall jump used.
+  modlock.geometry.Vec3 wall_jump_normal = 17;
+
+  // WallJumpFacing is the game's EWallJumpFacing, zero when not on a wall.
+  uint32 wall_jump_facing = 18;
+
+  // ZiplineTime is the game time the hero last rode a zipline; it advances on
+  // every tick of a ride.
+  optional float zipline_time = 19;
+
+  // Actions are the movement facts the game announced since the last tick.
+  repeated MovementAction actions = 20;
+
+  // Casts are the abilities the hero cast since the last tick, one per
+  // MOVEMENT_ACTION_ABILITY_EXECUTED, by entity handle as Ability.entity
+  // reports it; Abilities names each one's slot.
+  repeated uint32 casts = 21;
+
+  // Command is the movement the hero's player commanded since the last
+  // sample, absent before the game ran any of it.
+  optional MovementCommand command = 22;
+}
+
+// MovementCommand is the movement a player commanded over one tick. The
+// server runs a player's commands as they arrive, so a tick may run several
+// or none: every press among them is kept once, and a tick that ran none
+// holds the last buttons without pressing them again.
+message MovementCommand {
+  // Held, Changed and Scroll are the game's InButtonState masks as Buttons
+  // bits: the buttons down, the buttons that went down or up, and the
+  // presses of scroll-wheel buttons.
+  uint64 held = 1;
+  uint64 changed = 2;
+  uint64 scroll = 3;
+
+  // Forward, Left and Up are the movement axes, from -1 to 1.
+  float forward = 4;
+  float left = 5;
+  float up = 6;
+
+  // Grounded is true when the hero stood on something as the tick began.
+  bool grounded = 7;
+}
+
+// LandedEvent is one hero landing.
+message LandedEvent {
+  // Player is the slot of the player who landed.
+  int32 player = 1;
+
+  // On is the slot of the player landed on, or -1 for the world.
+  int32 on = 2;
+
+  // Speed is the downward speed just before landing, in units per second.
+  float speed = 3;
+}
+
+// TeleportRequest places one player's hero.
+message TeleportRequest {
+  int32 player = 1;
+
+  // Position is the hero's new origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is where the hero and camera face afterwards.
+  modlock.geometry.EulerAngles facing = 3;
+
+  // Velocity replaces the hero's motion when present.
+  optional modlock.geometry.Vec3 velocity = 4;
+}
+
+// MovePlayerRequest moves one player's hero a step.
+message MovePlayerRequest {
+  int32 player = 1;
+
+  // Position is the hero's new origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is where the hero aims; the body turns only by its yaw.
+  modlock.geometry.EulerAngles facing = 3;
+
+  // Velocity is the hero's motion, which drives its run animation.
+  optional modlock.geometry.Vec3 velocity = 4;
+}
+
+// SteerRequest replays one movement command on a player's hero, or releases
+// the hero without one.
+message SteerRequest {
+  int32 player = 1;
+  optional Steering steering = 2;
+}
+
+// Steering is one recorded movement command and the pose its step ends on.
+message Steering {
+  MovementCommand command = 1;
+
+  // Position, Velocity and Grounded are the pose the step ends on.
+  modlock.geometry.Vec3 position = 2;
+  modlock.geometry.Vec3 velocity = 3;
+  bool grounded = 4;
+
+  // Facing is where the command looks, which aims the hero and its animation.
+  modlock.geometry.EulerAngles facing = 5;
+}
+
+// DriveRequest drives one bot, or releases it without a command.
+message DriveRequest {
+  int32 player = 1;
+  optional DriveCommand command = 2;
+}
+
+// DriveCommand is a player's controls for one tick and the ticks after it.
+message DriveCommand {
+  // Facing is where the hero looks and aims; its yaw turns the body, as the
+  // camera turns a player's hero.
+  modlock.geometry.EulerAngles facing = 1;
+
+  // Forward and Left are the movement axes, from -1 to 1, relative to the
+  // facing's yaw.
+  float forward = 2;
+  float left = 3;
+
+  // Held holds down these buttons on every tick.
+  uint64 held = 4;
+
+  // Pressed presses these buttons on the next tick only, as a tap.
+  uint64 pressed = 5;
+}
+
+// SetVelocityRequest replaces one hero's motion.
+message SetVelocityRequest {
+  int32 player = 1;
+
+  // Velocity is the hero's new motion in units per second.
+  modlock.geometry.Vec3 velocity = 2;
+}
+
+// WatchMovementRequest starts or stops one player's movement samples.
+message WatchMovementRequest {
+  int32 player = 1;
+  bool watch = 2;
+}

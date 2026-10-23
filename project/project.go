@@ -12,7 +12,7 @@ import (
 
 	"github.com/aperturerobotics/protobuf-go-lite/json"
 	"github.com/paralin/modlock/check"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -27,7 +27,7 @@ type Project struct {
 	// Dir is the project directory.
 	Dir string
 	// Manifest is the project's mod.json.
-	Manifest *wasm.Manifest
+	Manifest *manifestpb.Manifest
 }
 
 // Open reads the project in dir.
@@ -49,19 +49,19 @@ func Open(dir string) (*Project, error) {
 	if err := check.Version(manifest.GetVersion()); err != nil {
 		return nil, err
 	}
-	if manifest.GetLanguage() == wasm.Manifest_LANGUAGE_UNKNOWN {
+	if manifest.GetLanguage() == manifestpb.Manifest_LANGUAGE_UNKNOWN {
 		return nil, errors.New("mod.json names no language")
 	}
 	return &Project{Dir: dir, Manifest: manifest}, nil
 }
 
 // ReadManifest reads the mod.json in dir, a project or a built mod.
-func ReadManifest(dir string) (*wasm.Manifest, error) {
+func ReadManifest(dir string) (*manifestpb.Manifest, error) {
 	data, err := os.ReadFile(filepath.Join(dir, ManifestFile))
 	if err != nil {
 		return nil, errors.Wrap(err, "read mod.json")
 	}
-	manifest := &wasm.Manifest{}
+	manifest := &manifestpb.Manifest{}
 	if err := manifest.UnmarshalJSON(data); err != nil {
 		return nil, errors.Wrap(err, "parse mod.json")
 	}
@@ -75,7 +75,7 @@ func (p *Project) Output() string {
 
 // WriteManifest writes manifest to path as indented JSON, one field per line,
 // with enums by name. It replaces path whole.
-func WriteManifest(path string, manifest *wasm.Manifest) error {
+func WriteManifest(path string, manifest *manifestpb.Manifest) error {
 	data, err := json.MarshalerConfig{}.Marshal(manifest)
 	if err != nil {
 		return errors.Wrap(err, "encode mod.json")

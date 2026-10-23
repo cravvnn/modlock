@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/aperturerobotics/cli"
+	modcli "github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/js"
 	"github.com/paralin/modlock/preview"
 	"github.com/paralin/modlock/project"
-	modcli "github.com/paralin/modlock/proto/modlock/cli"
 	"github.com/paralin/modlock/sandbox"
 	"github.com/pkg/errors"
 )

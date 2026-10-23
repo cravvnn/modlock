@@ -5,41 +5,42 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
+	"github.com/paralin/modlock/src/wasm/settings"
 )
 
 // TestValidate accepts declarations players can choose from and refuses the
 // rest with the reason.
 func TestValidate(t *testing.T) {
-	layout := func() *wasm.Setting {
-		return &wasm.Setting{
+	layout := func() *settings.Setting {
+		return &settings.Setting{
 			Key:     "layout",
 			Label:   "Layout",
-			Kind:    wasm.Setting_KIND_CHOICE,
-			Choices: []*wasm.SettingChoice{{Value: "corner"}, {Value: "center"}},
+			Kind:    settings.Setting_KIND_CHOICE,
+			Choices: []*settings.SettingChoice{{Value: "corner"}, {Value: "center"}},
 		}
 	}
 	for name, test := range map[string]struct {
-		edit func(*wasm.Setting)
+		edit func(*settings.Setting)
 		fail string
 	}{
-		"valid":       {func(*wasm.Setting) {}, ""},
-		"default":     {func(s *wasm.Setting) { s.DefaultValue = "center" }, ""},
-		"bad default": {func(s *wasm.Setting) { s.DefaultValue = "top" }, "default"},
-		"bad key":     {func(s *wasm.Setting) { s.Key = "2d" }, "key"},
-		"no label":    {func(s *wasm.Setting) { s.Label = "" }, "label"},
-		"no kind":     {func(s *wasm.Setting) { s.Kind = wasm.Setting_KIND_UNKNOWN }, "kind"},
-		"twice":       {func(s *wasm.Setting) { s.Choices[1].Value = "corner" }, "twice"},
-		"bounds":      {func(s *wasm.Setting) { s.Kind, s.Min, s.Max = wasm.Setting_KIND_NUMBER, 2, 1 }, "min"},
+		"valid":       {func(*settings.Setting) {}, ""},
+		"default":     {func(s *settings.Setting) { s.DefaultValue = "center" }, ""},
+		"bad default": {func(s *settings.Setting) { s.DefaultValue = "top" }, "default"},
+		"bad key":     {func(s *settings.Setting) { s.Key = "2d" }, "key"},
+		"no label":    {func(s *settings.Setting) { s.Label = "" }, "label"},
+		"no kind":     {func(s *settings.Setting) { s.Kind = settings.Setting_KIND_UNKNOWN }, "kind"},
+		"twice":       {func(s *settings.Setting) { s.Choices[1].Value = "corner" }, "twice"},
+		"bounds":      {func(s *settings.Setting) { s.Kind, s.Min, s.Max = settings.Setting_KIND_NUMBER, 2, 1 }, "min"},
 	} {
 		setting := layout()
 		test.edit(setting)
-		err := Validate(&wasm.Manifest{Settings: []*wasm.Setting{setting}})
+		err := Validate(&manifest.Manifest{Settings: []*settings.Setting{setting}})
 		if test.fail == "" && err != nil || test.fail != "" && (err == nil || !strings.Contains(err.Error(), test.fail)) {
 			t.Errorf("%s: got %v, want %q", name, err, test.fail)
 		}
 	}
-	if err := Validate(&wasm.Manifest{Settings: []*wasm.Setting{layout(), layout()}}); err == nil {
+	if err := Validate(&manifest.Manifest{Settings: []*settings.Setting{layout(), layout()}}); err == nil {
 		t.Error("accepted a setting declared twice")
 	}
 }

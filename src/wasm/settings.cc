@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/settings.h"
 
 #include <array>
@@ -16,7 +18,7 @@ std::string NumberText(double number) {
 
 }  // namespace
 
-const Setting* FindSetting(const Manifest& manifest, std::string_view key) {
+const settings::Setting* FindSetting(const manifest::Manifest& manifest, std::string_view key) {
   for (const auto& setting : manifest.settings()) {
     if (setting.key() == key) {
       return &setting;
@@ -25,21 +27,21 @@ const Setting* FindSetting(const Manifest& manifest, std::string_view key) {
   return nullptr;
 }
 
-std::optional<std::string> Canonical(const Setting& setting, std::string_view value) {
+std::optional<std::string> Canonical(const settings::Setting& setting, std::string_view value) {
   switch (setting.kind()) {
-    case Setting::KIND_CHOICE:
+    case settings::Setting::KIND_CHOICE:
       for (const auto& choice : setting.choices()) {
         if (choice.value() == value) {
           return std::string(value);
         }
       }
       return std::nullopt;
-    case Setting::KIND_SWITCH:
+    case settings::Setting::KIND_SWITCH:
       if (value == "true" || value == "false") {
         return std::string(value);
       }
       return std::nullopt;
-    case Setting::KIND_NUMBER: {
+    case settings::Setting::KIND_NUMBER: {
       // Accept a number within the bounds and on a step.
       double number = 0;
       const auto* end = value.data() + value.size();
@@ -61,16 +63,16 @@ std::optional<std::string> Canonical(const Setting& setting, std::string_view va
   }
 }
 
-std::string DefaultValue(const Setting& setting) {
+std::string DefaultValue(const settings::Setting& setting) {
   if (auto value = Canonical(setting, setting.default_value())) {
     return *value;
   }
   switch (setting.kind()) {
-    case Setting::KIND_CHOICE:
+    case settings::Setting::KIND_CHOICE:
       return setting.choices().empty() ? std::string() : setting.choices(0).value();
-    case Setting::KIND_SWITCH:
+    case settings::Setting::KIND_SWITCH:
       return "false";
-    case Setting::KIND_NUMBER:
+    case settings::Setting::KIND_NUMBER:
       return NumberText(setting.min());
     default:
       return {};

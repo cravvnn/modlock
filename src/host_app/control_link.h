@@ -15,7 +15,7 @@
 #include "modlock/engine_host.h"
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/wasm_host.h"
-#include "proto/modlock/control/control.pb.h"
+#include "src/host_app/control/control.pb.h"
 
 namespace modlock::host_app {
 
@@ -47,7 +47,7 @@ class ControlLink final : public WasmHostObserver, public gameinterop::Connectio
   void Started(std::string_view mod, bool reloaded) override;
   void Logged(std::string_view mod, std::string_view text) override;
   void Failed(std::string_view mod, std::string_view error) override;
-  void Ui(std::string_view mod, int32_t slot, const ui::Change& change) override;
+  void Ui(std::string_view mod, int32_t slot, const wasm::ui::Change& change) override;
   void OnConnected(int32_t slot, uint64_t xuid, bool bot, const char* name) override;
   void OnDisconnecting(int32_t slot, uint64_t xuid) override;
 

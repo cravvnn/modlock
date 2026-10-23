@@ -50,46 +50,6 @@ def _with(options: Any, name: str, value: Any) -> dict[str, Any]:
     return request
 
 
-# MovementAction is a movement fact the game announced for a hero.
-type MovementAction = Literal[
-    "landed",
-    "zipline_attached",
-    "ground_dash",
-    "slide",
-    "bounce_pad",
-    "dash_jump",
-    "air_jump",
-    "wall_jump",
-    "air_dash",
-    "melee_started",
-    "ability_executed",
-]
-_MovementAction: dict[Any, Any] = {
-    1: "landed",
-    "landed": 1,
-    2: "zipline_attached",
-    "zipline_attached": 2,
-    3: "ground_dash",
-    "ground_dash": 3,
-    4: "slide",
-    "slide": 4,
-    5: "bounce_pad",
-    "bounce_pad": 5,
-    6: "dash_jump",
-    "dash_jump": 6,
-    7: "air_jump",
-    "air_jump": 7,
-    8: "wall_jump",
-    "wall_jump": 8,
-    9: "air_dash",
-    "air_dash": 9,
-    10: "melee_started",
-    "melee_started": 10,
-    11: "ability_executed",
-    "ability_executed": 11,
-}
-
-
 # ScreenEffect is a stock full-screen view effect.
 type ScreenEffect = Literal["killed", "black", "blinded", "darkness", "match_intro"]
 _ScreenEffect: dict[Any, Any] = {
@@ -165,43 +125,386 @@ _PickupKind: dict[Any, Any] = {
 }
 
 
+# MovementAction is a movement fact the game announced for a hero.
+type MovementAction = Literal[
+    "landed",
+    "zipline_attached",
+    "ground_dash",
+    "slide",
+    "bounce_pad",
+    "dash_jump",
+    "air_jump",
+    "wall_jump",
+    "air_dash",
+    "melee_started",
+    "ability_executed",
+]
+_MovementAction: dict[Any, Any] = {
+    1: "landed",
+    "landed": 1,
+    2: "zipline_attached",
+    "zipline_attached": 2,
+    3: "ground_dash",
+    "ground_dash": 3,
+    4: "slide",
+    "slide": 4,
+    5: "bounce_pad",
+    "bounce_pad": 5,
+    6: "dash_jump",
+    "dash_jump": 6,
+    7: "air_jump",
+    "air_jump": 7,
+    8: "wall_jump",
+    "wall_jump": 8,
+    9: "air_dash",
+    "air_dash": 9,
+    10: "melee_started",
+    "melee_started": 10,
+    11: "ability_executed",
+    "ability_executed": 11,
+}
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
-class StartEvent:
-    """StartEvent describes the server the mod starts in."""
+class Ability:
+    """Ability is one ability a hero owns."""
 
-    # args holds the arguments that follow -- on the host command line.
-    args: list[str] = dataclasses.field(default_factory=lambda: list[str]())
-    # check_only is true when the host checks the mod without starting a game;
-    # every call but Log then fails.
-    check_only: bool = False
-    # source holds an interpreted mod's entry, which the interpreter module
-    # evaluates during start. It is empty for a compiled mod.
-    source: bytes = b""
+    # name is the ability's name, such as citadel_ability_hornet_snipe.
+    name: str = ""
+    # slot is the ability's place on the hero: 0 to 3 are the ability keys.
+    slot: int = 0
+    # entity is the ability's entity handle, as DamageEvent.ability reports
+    # it.
+    entity: int = 0
+    # upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
+    # its upgrades.
+    upgrades: int = 0
+    # charges is the charges the ability holds.
+    charges: int = 0
+    # cooldown_end is the game time its cooldown ends, or zero without one.
+    cooldown_end: float = 0.0
+    # id identifies the ability's definition, as replays record it.
+    id: int = 0
+    # state is the packed upgrade word; its high half is upgrades.
+    state: int = 0
+    # cooldown_start is the game time its cooldown began.
+    cooldown_start: float = 0.0
+    # recharge_start is the game time its next charge began recovering.
+    recharge_start: float = 0.0
+    # recharge_end is the game time its next charge returns, or zero without
+    # one.
+    recharge_end: float = 0.0
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class StartResult:
-    """StartResult declares which events the mod consumes."""
+class AbilityOptions:
+    """AbilityOptions changes one ability of a player's hero."""
 
-    # frames asks for a Frame event every server frame.
-    frames: bool = False
-    # damage asks for a damage event before each hit.
-    damage: bool = False
-    # damaged asks for a damaged event after each hit.
-    damaged: bool = False
+    # ability is the ability's name.
+    ability: str = ""
+    # upgrades replaces the bought tiers, as ability.upgrades: 0b1111 unlocks
+    # it with all three upgrades.
+    upgrades: int | None = None
+    # charges replaces the charges the ability holds, keeping its timers.
+    charges: int | None = None
+    # cooldown_end replaces the game time its cooldown ends.
+    cooldown_end: float | None = None
+    # recharge_end replaces the game time its next charge returns.
+    recharge_end: float | None = None
+    # max_charges replaces the most charges the ability can hold, from 1 to 100;
+    # 0 returns it to the game's own. The server applies it, so the hero's
+    # screen can still show the game's maximum. charges above the new maximum
+    # are not removed; set them with charges.
+    max_charges: int | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class FrameEvent:
-    """FrameEvent identifies one server frame."""
+class DamageEvent:
+    """DamageEvent is one hit before the game applies it. Handles are zero when
+    the game names no such entity.
+    """
 
-    # tick is the server tick, or zero when the clock is unavailable.
-    tick: int = 0
-    # time_seconds is the game clock at this frame, in seconds.
-    time_seconds: float = 0.0
-    # movement holds one sample per watched, live hero when this frame starts a
-    # new tick, and is empty otherwise.
-    movement: list[MovementSample] = dataclasses.field(default_factory=lambda: list[MovementSample]())
+    # victim is the entity taking the hit.
+    victim: int = 0
+    # attacker is the entity credited with the hit. Zero makes the hit a
+    # hazard, such as poison gas, which credits no one and ignores the
+    # inflictor and hit group.
+    attacker: int = 0
+    # inflictor is what delivered the hit, such as a projectile.
+    inflictor: int = 0
+    # ability is the ability that dealt the hit.
+    ability: int = 0
+    # flags are the game's damage flags.
+    flags: int = 0
+    # hit_group is the body part hit; 1 is the head and -1 means none.
+    hit_group: int = 0
+    # amount is the hit's damage before resistances.
+    amount: float = 0.0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class DamageResult:
+    """DamageResult answers a DamageEvent. An empty result lets the hit through."""
+
+    # block cancels the hit's health loss, force, effects and procs.
+    block: bool | None = None
+    # amount replaces the hit's damage when present.
+    amount: float | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class DamagedEvent:
+    """DamagedEvent reports one hit the game applied."""
+
+    # victim is the entity that took the hit.
+    victim: int = 0
+    # attacker is the entity credited with the hit, or zero for a hazard.
+    attacker: int = 0
+    # ability is the ability that dealt the hit.
+    ability: int = 0
+    # health_lost is the health the hit removed, after resistances.
+    health_lost: int = 0
+    # health_before is the victim's health before the hit; a hit that removes
+    # all of it kills.
+    health_before: int = 0
+    # dealt is the hit's damage after resistances, before the victim's health
+    # capped it.
+    dealt: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class LaunchEvent:
+    """LaunchEvent is a watched projectile's first frame."""
+
+    # entity is the projectile's entity handle.
+    entity: int = 0
+    # name is the projectile's designer name.
+    name: str = ""
+    # owner is the entity that fired it, or zero.
+    owner: int = 0
+    # player is the slot of the player whose hero fired it, or -1.
+    player: Player
+    # position is where the projectile is.
+    position: Vector
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class ImpactEvent:
+    """ImpactEvent is a watched projectile striking something."""
+
+    # entity is the projectile's entity handle.
+    entity: int = 0
+    # name is the projectile's designer name.
+    name: str = ""
+    # owner is the entity that fired it, or zero.
+    owner: int = 0
+    # player is the slot of the player whose hero fired it, or -1.
+    player: Player
+    # start and end are the projectile's movement this frame, which ended in
+    # the strike.
+    start: Vector
+    end: Vector
+    # position is where it struck.
+    position: Vector
+    # hit is the entity struck, or zero for the world.
+    hit: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class ProjectileOptions:
+    """ProjectileOptions selects the projectiles a mod watches."""
+
+    # names lists designer names, such as rocket_launcher_rocket_projectile.
+    names: list[str] = dataclasses.field(default_factory=lambda: list[str]())
+    # keep_momentum gives each live hero back the motion it had before a
+    # watched projectile's explosion, so the mod's Impact handler sets the
+    # push.
+    keep_momentum: bool | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class HitOptions:
+    """HitOptions describes damage the mod deals."""
+
+    # victim is the hero or unit to hurt. The world, props and buildings are
+    # refused: the client crashes on their damage events.
+    victim: int = 0
+    # attacker is the entity credited with the hit. Without one the hit is a
+    # hazard, such as poison gas, which credits no one and ignores the
+    # inflictor and hit group.
+    attacker: int | None = None
+    # inflictor is what delivered the hit; the default is the attacker.
+    inflictor: int | None = None
+    # amount is the damage before resistances.
+    amount: float = 0.0
+    # hit_group is the body part hit; 1 is the head. The default is the game's
+    # choice.
+    hit_group: int | None = None
+    # ability is the entity handle of the ability that dealt the hit, as
+    # ability.entity reports it.
+    ability: int | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class TraceOptions:
+    """TraceOptions describes a line to test against the world. Layers are bits
+    of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
+    18 player and 19 NPC.
+    """
+
+    # start is where the line begins.
+    start: Vector
+    # end is where the line ends.
+    end: Vector
+    # layers selects what the line can hit; the default is solid and
+    # hitboxes.
+    layers: int | None = None
+    # exclude removes things in these layers from the hits.
+    exclude: int | None = None
+    # ignore lists entity handles the line passes through.
+    ignore: list[int] = dataclasses.field(default_factory=lambda: list[int]())
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class TraceHit:
+    """TraceHit is where a traced line first hit something."""
+
+    # position is the hit point.
+    position: Vector
+    # normal is the surface's direction at the hit point.
+    normal: Vector
+    # start_solid is true when the line began inside something solid.
+    start_solid: bool = False
+    # entity is the entity hit, or zero for the world.
+    entity: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class ScreenTiming:
+    """ScreenTiming is a screen effect's timing in seconds."""
+
+    # delay is the time before the effect starts.
+    delay: float | None = None
+    # fade_in is the time the effect takes to reach full strength.
+    fade_in: float | None = None
+    # hold is the time the effect stays at full strength.
+    hold: float | None = None
+    # fade_out is the time the effect takes to end.
+    fade_out: float | None = None
+
+
+# FieldValue is one field's value. The host accepts any numeric case for a
+# numeric type and answers with the case its type reads as: a boolean, a
+# number for a type of 32 bits or less and a handle, an integer for a 64-bit
+# type, a vector or text.
+type FieldValue = bool | float | int | str | Vector
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class FieldWrite:
+    """FieldWrite writes one schema field of an entity the host creates."""
+
+    # class_name is the server class that declares the field, or a subclass.
+    class_name: str = ""
+    # field is the field's schema name, such as m_iLane. A dotted path, such as
+    # m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+    field: str = ""
+    # type is how to write the field.
+    type: FieldType
+    # value is the field's value.
+    value: FieldValue | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class EntityClassName:
+    """EntityClassName names one entity's class two ways."""
+
+    # class_name is the server schema class, such as CCitadelPlayerPawn.
+    class_name: str = ""
+    # designer_name is the name maps and spawns use, such as npc_trooper.
+    designer_name: str = ""
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class EntityOptions:
+    """EntityOptions describes an entity to create."""
+
+    # designer_name is the entity's designer name, such as npc_trooper_boss.
+    designer_name: str = ""
+    # subclass names the entity's game data entry, such as npc_boss_tier1 for
+    # the lane Guardian, for an entity that reads one while spawning. An NPC
+    # needs one.
+    subclass: str = ""
+    # team is the entity's team number; 4 is neutral.
+    team: int = 0
+    # position is the entity's origin.
+    position: Vector
+    # facing is where the entity faces.
+    facing: Angles | None = None
+    # key_values are the entity's spawn key values, as a map sets them, such as
+    # model or rendercolor.
+    key_values: list[KeyValue] = dataclasses.field(default_factory=lambda: list[KeyValue]())
+    # fields are schema fields the host writes after it creates the entity and
+    # before the entity spawns. A write that fails cancels the creation.
+    fields: list[FieldWrite] = dataclasses.field(default_factory=lambda: list[FieldWrite]())
+    # transmit_always sends the entity to every client, past the game's own
+    # rule, which never sends one without a model, such as a
+    # point_clientui_dialog.
+    transmit_always: bool | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class KeyValue:
+    """KeyValue is one spawn key value."""
+
+    # key is the key value's name, such as skin.
+    key: str = ""
+    # value is the key value's value.
+    value: EntityValue
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class EntityValue:
+    """EntityValue is a value a map gives an entity: a spawn key value or an
+    input's parameter. An input reads its parameter as the type it takes, such
+    as an integer for Skin or a color, as 0xRRGGBBAA, for Color, and does not
+    convert text.
+    """
+
+    boolean: bool | None = None
+    integer: int | None = None
+    number: float | None = None
+    text: str | None = None
+    vector: Vector | None = None
+    color: int | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class InputEvent:
+    """InputEvent is one player's watched buttons that went down or up."""
+
+    # player is the player who pressed.
+    player: Player
+    # pressed holds one bit per button that went down.
+    pressed: int = 0
+    # released holds one bit per button that went up.
+    released: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class RiftState:
+    """RiftState is the Rift objective's timing as the game holds it. Times are
+    game times in seconds, or zero when unset.
+    """
+
+    # scoring_team is the team holding the Rift, or zero.
+    scoring_team: int = 0
+    scoring_time: float = 0.0
+    cash_in_started: float = 0.0
+    give_up_time: float = 0.0
+    # next_spawn is when the Rift next opens.
+    next_spawn: float = 0.0
+    spawn_window: float = 0.0
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -280,194 +583,6 @@ class MovementCommand:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class CommandEvent:
-    """CommandEvent carries one command line from a player: a chat line that
-    starts with a slash (or ".", "+" or "-"), without that prefix, or a console
-    command the server received.
-    """
-
-    # player is the player who typed the command.
-    player: Player
-    # line is the complete command line, starting with the command name.
-    line: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class CommandResult:
-    """CommandResult answers whether the mod handled a command."""
-
-    # claimed ends the command's dispatch; the game and later mods do not see
-    # it.
-    claimed: bool = False
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class WorldEvent:
-    """WorldEvent announces a loaded world."""
-
-    # map names the world's map.
-    map: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class UiPressEvent:
-    """UiPressEvent reports a press on a button in a player's interface."""
-
-    # player is the player who pressed.
-    player: Player
-    # node is the id of the pressed button.
-    node: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class ServiceCall:
-    """ServiceCall calls one method of a service outside Modlock. A host that
-    embeds Modlock provides services of its own, such as a game mode's match,
-    and a mod may serve one to the host. The service and its caller agree on
-    the payload's encoding.
-    """
-
-    # service names the service, such as "arena.match".
-    service: str = ""
-    # method names the method within the service.
-    method: str = ""
-    # payload is the call's argument.
-    payload: bytes = b""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class ServiceReply:
-    """ServiceReply is a service's answer."""
-
-    # payload is the answer.
-    payload: bytes = b""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class DamageEvent:
-    """DamageEvent is one hit before the game applies it. Handles are zero when
-    the game names no such entity.
-    """
-
-    # victim is the entity taking the hit.
-    victim: int = 0
-    # attacker is the entity credited with the hit. Zero makes the hit a
-    # hazard, such as poison gas, which credits no one and ignores the
-    # inflictor and hit group.
-    attacker: int = 0
-    # inflictor is what delivered the hit, such as a projectile.
-    inflictor: int = 0
-    # ability is the ability that dealt the hit.
-    ability: int = 0
-    # flags are the game's damage flags.
-    flags: int = 0
-    # hit_group is the body part hit; 1 is the head and -1 means none.
-    hit_group: int = 0
-    # amount is the hit's damage before resistances.
-    amount: float = 0.0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class DamageResult:
-    """DamageResult answers a DamageEvent. An empty result lets the hit through."""
-
-    # block cancels the hit's health loss, force, effects and procs.
-    block: bool | None = None
-    # amount replaces the hit's damage when present.
-    amount: float | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class DamagedEvent:
-    """DamagedEvent reports one hit the game applied."""
-
-    # victim is the entity that took the hit.
-    victim: int = 0
-    # attacker is the entity credited with the hit, or zero for a hazard.
-    attacker: int = 0
-    # ability is the ability that dealt the hit.
-    ability: int = 0
-    # health_lost is the health the hit removed, after resistances.
-    health_lost: int = 0
-    # health_before is the victim's health before the hit; a hit that removes
-    # all of it kills.
-    health_before: int = 0
-    # dealt is the hit's damage after resistances, before the victim's health
-    # capped it.
-    dealt: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class InputEvent:
-    """InputEvent is one player's watched buttons that went down or up."""
-
-    # player is the player who pressed.
-    player: Player
-    # pressed holds one bit per button that went down.
-    pressed: int = 0
-    # released holds one bit per button that went up.
-    released: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class RestoredEvent:
-    """RestoredEvent reports how a RestoreHero ended."""
-
-    # player is the player whose hero was restored.
-    player: Player
-    # error describes why the hero does not match its target, or is empty when
-    # it held the target for a second.
-    error: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class NpcsRestoredEvent:
-    """NpcsRestoredEvent reports how a RestoreNpcs ended."""
-
-    # error describes the unit that does not match its target, or is empty
-    # when every target was found in place.
-    error: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class LaunchEvent:
-    """LaunchEvent is a watched projectile's first frame."""
-
-    # entity is the projectile's entity handle.
-    entity: int = 0
-    # name is the projectile's designer name.
-    name: str = ""
-    # owner is the entity that fired it, or zero.
-    owner: int = 0
-    # player is the slot of the player whose hero fired it, or -1.
-    player: Player
-    # position is where the projectile is.
-    position: Vector
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class ImpactEvent:
-    """ImpactEvent is a watched projectile striking something."""
-
-    # entity is the projectile's entity handle.
-    entity: int = 0
-    # name is the projectile's designer name.
-    name: str = ""
-    # owner is the entity that fired it, or zero.
-    owner: int = 0
-    # player is the slot of the player whose hero fired it, or -1.
-    player: Player
-    # start and end are the projectile's movement this frame, which ended in
-    # the strike.
-    start: Vector
-    end: Vector
-    # position is where it struck.
-    position: Vector
-    # hit is the entity struck, or zero for the world.
-    hit: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
 class LandedEvent:
     """LandedEvent is one hero landing."""
 
@@ -477,167 +592,6 @@ class LandedEvent:
     on: int = 0
     # speed is the downward speed just before landing, in units per second.
     speed: float = 0.0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class SettingChangedEvent:
-    """SettingChangedEvent is one player's new value of one setting."""
-
-    # player is the player's server slot.
-    player: Player
-    # key names the setting.
-    key: str = ""
-    # value is the new value.
-    value: str = ""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class PlayersChangedEvent:
-    """PlayersChangedEvent holds every occupied player slot, as Players lists them."""
-
-    players: list[Connection] = dataclasses.field(default_factory=lambda: list[Connection]())
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class PrecacheOptions:
-    """PrecacheOptions names what the next world loads ahead of use."""
-
-    # heroes are hero names, such as hero_wraith.
-    heroes: list[str] = dataclasses.field(default_factory=lambda: list[str]())
-    # resources are model and particle paths, such as models/props/crate.vmdl.
-    resources: list[str] = dataclasses.field(default_factory=lambda: list[str]())
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class Connection:
-    """Connection is one occupied player slot."""
-
-    # player is the connection's server slot.
-    player: Player
-    # steam_id identifies a human's account, or is zero for a bot.
-    steam_id: int = 0
-    # name is the player's name.
-    name: str = ""
-    # bot is true for a bot player.
-    bot: bool = False
-    # ready is true once a human has finished joining; bots are always ready.
-    ready: bool = False
-    # generation changes each time a new connection takes the slot.
-    generation: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class Pawn:
-    """Pawn is one player's hero this frame."""
-
-    # entity is the hero's entity handle, which ReadField reads.
-    entity: int = 0
-    # hero identifies the hero, as SelectHero returns it.
-    hero: int = 0
-    # team is the hero's team number.
-    team: int = 0
-    # health is the hero's health; zero or less is dead.
-    health: int = 0
-    # max_health is the hero's networked maximum health.
-    max_health: int = 0
-    # position is the hero's origin, at its feet.
-    position: Vector
-    # eye_angles is where the hero aims.
-    eye_angles: Angles
-    # camera_angles is where the player's camera looks.
-    camera_angles: Angles
-    # stamina is the hero's stamina, absent until it has spawned fully.
-    stamina: float | None = None
-    # max_stamina is the hero's maximum stamina, present with stamina.
-    max_stamina: float | None = None
-    # generation is the connection generation the hero belongs to.
-    generation: int = 0
-    # souls is the souls the player holds.
-    souls: int = 0
-    # eye_position is where the hero's view starts, for aiming traces.
-    eye_position: Vector
-    # velocity is the hero's motion in units per second.
-    velocity: Vector
-    # carrying_urn is whether the hero carries the soul urn, absent when the
-    # game's modifier states cannot be read.
-    carrying_urn: bool | None = None
-    # score is the player's scoreboard, absent when the game's scoreboard
-    # cannot be read.
-    score: Score | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class Score:
-    """Score is one player's scoreboard counters since the match began, as the
-    game counts them.
-    """
-
-    kills: int = 0
-    deaths: int = 0
-    assists: int = 0
-    # last_hits counts enemy troopers and neutrals the player finished.
-    last_hits: int = 0
-    # denies counts allied troopers the player finished before an enemy could.
-    denies: int = 0
-    # hero_damage is the damage the player dealt to enemy heroes.
-    hero_damage: int = 0
-    # hero_healing is the healing the player gave other heroes.
-    hero_healing: int = 0
-    # net_worth is the souls the player has earned, spent or not.
-    net_worth: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class Ability:
-    """Ability is one ability a hero owns."""
-
-    # name is the ability's name, such as citadel_ability_hornet_snipe.
-    name: str = ""
-    # slot is the ability's place on the hero: 0 to 3 are the ability keys.
-    slot: int = 0
-    # entity is the ability's entity handle, as DamageEvent.ability reports
-    # it.
-    entity: int = 0
-    # upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
-    # its upgrades.
-    upgrades: int = 0
-    # charges is the charges the ability holds.
-    charges: int = 0
-    # cooldown_end is the game time its cooldown ends, or zero without one.
-    cooldown_end: float = 0.0
-    # id identifies the ability's definition, as replays record it.
-    id: int = 0
-    # state is the packed upgrade word; its high half is upgrades.
-    state: int = 0
-    # cooldown_start is the game time its cooldown began.
-    cooldown_start: float = 0.0
-    # recharge_start is the game time its next charge began recovering.
-    recharge_start: float = 0.0
-    # recharge_end is the game time its next charge returns, or zero without
-    # one.
-    recharge_end: float = 0.0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class AbilityOptions:
-    """AbilityOptions changes one ability of a player's hero."""
-
-    # ability is the ability's name.
-    ability: str = ""
-    # upgrades replaces the bought tiers, as ability.upgrades: 0b1111 unlocks
-    # it with all three upgrades.
-    upgrades: int | None = None
-    # charges replaces the charges the ability holds, keeping its timers.
-    charges: int | None = None
-    # cooldown_end replaces the game time its cooldown ends.
-    cooldown_end: float | None = None
-    # recharge_end replaces the game time its next charge returns.
-    recharge_end: float | None = None
-    # max_charges replaces the most charges the ability can hold, from 1 to 100;
-    # 0 returns it to the game's own. The server applies it, so the hero's
-    # screen can still show the game's maximum. charges above the new maximum
-    # are not removed; set them with charges.
-    max_charges: int | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -671,102 +625,85 @@ class DriveCommand:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class ProjectileOptions:
-    """ProjectileOptions selects the projectiles a mod watches."""
+class NpcsRestoredEvent:
+    """NpcsRestoredEvent reports how a RestoreNpcs ended."""
 
-    # names lists designer names, such as rocket_launcher_rocket_projectile.
-    names: list[str] = dataclasses.field(default_factory=lambda: list[str]())
-    # keep_momentum gives each live hero back the motion it had before a
-    # watched projectile's explosion, so the mod's Impact handler sets the
-    # push.
-    keep_momentum: bool | None = None
+    # error describes the unit that does not match its target, or is empty
+    # when every target was found in place.
+    error: str = ""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class HeroTarget:
-    """HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
-    hero's own.
-    """
+class NpcOptions:
+    """NpcOptions describes a unit that is not a player, such as a trooper."""
 
-    # position is the hero's origin.
+    # class_name is the unit's entity class, such as npc_trooper or
+    # npc_trooper_boss.
+    class_name: str = ""
+    # unit names the unit's game data entry, such as trooper_melee, or is empty
+    # for a unit that needs none.
+    unit: str = ""
+    # team is the unit's team number; 4 is neutral.
+    team: int = 0
+    # position is the unit's origin, at its feet.
     position: Vector
-    # facing is where the camera faces; a bot's hero faces it.
-    facing: Angles
-    # fresh gives full health and stamina and readies every ability, in place
-    # of health, max health, upgrade bonuses and timers. A bot's ability
-    # upgrades may grow while the restore runs.
-    fresh: bool | None = None
-    # level sets the hero's level.
-    level: int | None = None
-    # health and max_health set the hero's health and its base maximum. Both
-    # are required unless the target is fresh.
+    # facing is where the unit faces.
+    facing: Angles | None = None
+    # health is the unit's health; the default is the unit's own.
     health: int | None = None
+    # max_health is the unit's maximum health; the default is health.
     max_health: int | None = None
-    # upgrade_bonuses are the three stat bonuses purchases add, as replays
-    # record them.
-    upgrade_bonuses: list[float] = dataclasses.field(default_factory=lambda: list[float]())
-    # abilities sets the hero's abilities in their slots.
-    abilities: list[EquipmentTarget] = dataclasses.field(default_factory=lambda: list[EquipmentTarget]())
-    # items lists the items that replace the hero's when replace_items is set.
-    items: list[EquipmentTarget] = dataclasses.field(default_factory=lambda: list[EquipmentTarget]())
-    # replace_items replaces every item the hero owns with items; an empty list
-    # removes them.
-    replace_items: bool | None = None
-    # timers sets the charges and cooldowns of owned abilities and items.
-    timers: list[TimerTarget] = dataclasses.field(default_factory=lambda: list[TimerTarget]())
+    # lane is the lane the unit walks. A unit whose class walks none, unlike a
+    # trooper, refuses it.
+    lane: int | None = None
+    # fields are schema fields the host writes after it creates the unit and
+    # before the unit spawns, such as m_iInitialTeamNum, which the game reads
+    # only while spawning. A write that fails cancels the spawn.
+    fields: list[FieldWrite] = dataclasses.field(default_factory=lambda: list[FieldWrite]())
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class EquipmentTarget:
-    """EquipmentTarget is one ability or item a HeroTarget gives the hero."""
+class NpcState:
+    """NpcState is a unit's state this frame."""
 
-    # id identifies the definition, as Ability.id.
-    id: int = 0
-    # slot is its place on the hero, as Ability.slot; abilities need one, and
-    # an item without one goes where the game puts it.
-    slot: int | None = None
-    # state is the packed upgrade word, as Ability.state.
-    state: int = 0
+    # position is the unit's origin.
+    position: Vector
+    # facing is where the unit faces.
+    facing: Angles
+    # health is the unit's health.
+    health: int = 0
+    # max_health is the unit's maximum health.
+    max_health: int = 0
+    # team is the unit's team number.
+    team: int = 0
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class TimerTarget:
-    """TimerTarget sets one owned ability's or item's charges and cooldowns.
-    Times are seconds from the moment the host writes them; an omitted start
-    and end mean no timer.
+class NpcTarget:
+    """NpcTarget is one unit or objective RestoreNpcs places, as replays record
+    it.
     """
 
-    # id identifies the ability, as Ability.id.
+    # class_name is the unit's entity class: npc_trooper, npc_trooper_neutral,
+    # npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
+    # npc_base_defense_sentry, npc_super_neutral or
+    # npc_neutral_sinners_sacrifice.
+    class_name: str = ""
+    # id identifies the unit's game data entry.
     id: int = 0
-    # charges is the charges it holds.
-    charges: int = 0
-    # cooldown_start and cooldown_end bound its cooldown.
-    cooldown_start: float | None = None
-    cooldown_end: float | None = None
-    # recharge_start and recharge_end bound the recovery of its next charge.
-    recharge_start: float | None = None
-    recharge_end: float | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class ScreenTiming:
-    """ScreenTiming is a screen effect's timing in seconds."""
-
-    # delay is the time before the effect starts.
-    delay: float | None = None
-    # fade_in is the time the effect takes to reach full strength.
-    fade_in: float | None = None
-    # hold is the time the effect stays at full strength.
-    hold: float | None = None
-    # fade_out is the time the effect takes to end.
-    fade_out: float | None = None
-
-
-# FieldValue is one field's value. The host accepts any numeric case for a
-# numeric type and answers with the case its type reads as: a boolean, a
-# number for a type of 32 bits or less and a handle, an integer for a 64-bit
-# type, a vector or text.
-type FieldValue = bool | float | int | str | Vector
+    # team is the unit's team number; 4 is neutral.
+    team: int = 0
+    # position is the unit's origin, at its feet.
+    position: Vector
+    # facing is where the unit faces.
+    facing: Angles
+    # velocity is the unit's motion in units per second.
+    velocity: Vector | None = None
+    # health and max_health are the unit's health.
+    health: int = 0
+    max_health: int = 0
+    # lane is the lane a trooper walks; troopers need one.
+    lane: int | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -860,13 +797,166 @@ class FogOptions:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class EntityClassName:
-    """EntityClassName names one entity's class two ways."""
+class RestoredEvent:
+    """RestoredEvent reports how a RestoreHero ended."""
 
-    # class_name is the server schema class, such as CCitadelPlayerPawn.
-    class_name: str = ""
-    # designer_name is the name maps and spawns use, such as npc_trooper.
-    designer_name: str = ""
+    # player is the player whose hero was restored.
+    player: Player
+    # error describes why the hero does not match its target, or is empty when
+    # it held the target for a second.
+    error: str = ""
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class PlayersChangedEvent:
+    """PlayersChangedEvent holds every occupied player slot, as Players lists them."""
+
+    players: list[Connection] = dataclasses.field(default_factory=lambda: list[Connection]())
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class Connection:
+    """Connection is one occupied player slot."""
+
+    # player is the connection's server slot.
+    player: Player
+    # steam_id identifies a human's account, or is zero for a bot.
+    steam_id: int = 0
+    # name is the player's name.
+    name: str = ""
+    # bot is true for a bot player.
+    bot: bool = False
+    # ready is true once a human has finished joining; bots are always ready.
+    ready: bool = False
+    # generation changes each time a new connection takes the slot.
+    generation: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class Pawn:
+    """Pawn is one player's hero this frame."""
+
+    # entity is the hero's entity handle, which ReadField reads.
+    entity: int = 0
+    # hero identifies the hero, as SelectHero returns it.
+    hero: int = 0
+    # team is the hero's team number.
+    team: int = 0
+    # health is the hero's health; zero or less is dead.
+    health: int = 0
+    # max_health is the hero's networked maximum health.
+    max_health: int = 0
+    # position is the hero's origin, at its feet.
+    position: Vector
+    # eye_angles is where the hero aims.
+    eye_angles: Angles
+    # camera_angles is where the player's camera looks.
+    camera_angles: Angles
+    # stamina is the hero's stamina, absent until it has spawned fully.
+    stamina: float | None = None
+    # max_stamina is the hero's maximum stamina, present with stamina.
+    max_stamina: float | None = None
+    # generation is the connection generation the hero belongs to.
+    generation: int = 0
+    # souls is the souls the player holds.
+    souls: int = 0
+    # eye_position is where the hero's view starts, for aiming traces.
+    eye_position: Vector
+    # velocity is the hero's motion in units per second.
+    velocity: Vector
+    # carrying_urn is whether the hero carries the soul urn, absent when the
+    # game's modifier states cannot be read.
+    carrying_urn: bool | None = None
+    # score is the player's scoreboard, absent when the game's scoreboard
+    # cannot be read.
+    score: Score | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class Score:
+    """Score is one player's scoreboard counters since the match began, as the
+    game counts them.
+    """
+
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+    # last_hits counts enemy troopers and neutrals the player finished.
+    last_hits: int = 0
+    # denies counts allied troopers the player finished before an enemy could.
+    denies: int = 0
+    # hero_damage is the damage the player dealt to enemy heroes.
+    hero_damage: int = 0
+    # hero_healing is the healing the player gave other heroes.
+    hero_healing: int = 0
+    # net_worth is the souls the player has earned, spent or not.
+    net_worth: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class HeroTarget:
+    """HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
+    hero's own.
+    """
+
+    # position is the hero's origin.
+    position: Vector
+    # facing is where the camera faces; a bot's hero faces it.
+    facing: Angles
+    # fresh gives full health and stamina and readies every ability, in place
+    # of health, max health, upgrade bonuses and timers. A bot's ability
+    # upgrades may grow while the restore runs.
+    fresh: bool | None = None
+    # level sets the hero's level.
+    level: int | None = None
+    # health and max_health set the hero's health and its base maximum. Both
+    # are required unless the target is fresh.
+    health: int | None = None
+    max_health: int | None = None
+    # upgrade_bonuses are the three stat bonuses purchases add, as replays
+    # record them.
+    upgrade_bonuses: list[float] = dataclasses.field(default_factory=lambda: list[float]())
+    # abilities sets the hero's abilities in their slots.
+    abilities: list[EquipmentTarget] = dataclasses.field(default_factory=lambda: list[EquipmentTarget]())
+    # items lists the items that replace the hero's when replace_items is set.
+    items: list[EquipmentTarget] = dataclasses.field(default_factory=lambda: list[EquipmentTarget]())
+    # replace_items replaces every item the hero owns with items; an empty list
+    # removes them.
+    replace_items: bool | None = None
+    # timers sets the charges and cooldowns of owned abilities and items.
+    timers: list[TimerTarget] = dataclasses.field(default_factory=lambda: list[TimerTarget]())
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class EquipmentTarget:
+    """EquipmentTarget is one ability or item a HeroTarget gives the hero."""
+
+    # id identifies the definition, as Ability.id.
+    id: int = 0
+    # slot is its place on the hero, as Ability.slot; abilities need one, and
+    # an item without one goes where the game puts it.
+    slot: int | None = None
+    # state is the packed upgrade word, as Ability.state.
+    state: int = 0
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class TimerTarget:
+    """TimerTarget sets one owned ability's or item's charges and cooldowns.
+    Times are seconds from the moment the host writes them; an omitted start
+    and end mean no timer.
+    """
+
+    # id identifies the ability, as Ability.id.
+    id: int = 0
+    # charges is the charges it holds.
+    charges: int = 0
+    # cooldown_start and cooldown_end bound its cooldown.
+    cooldown_start: float | None = None
+    cooldown_end: float | None = None
+    # recharge_start and recharge_end bound the recovery of its next charge.
+    recharge_start: float | None = None
+    recharge_end: float | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -885,218 +975,128 @@ class BotOptions:
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class EntityOptions:
-    """EntityOptions describes an entity to create."""
+class SettingChangedEvent:
+    """SettingChangedEvent is one player's new value of one setting."""
 
-    # designer_name is the entity's designer name, such as npc_trooper_boss.
-    designer_name: str = ""
-    # subclass names the entity's game data entry, such as npc_boss_tier1 for
-    # the lane Guardian, for an entity that reads one while spawning. An NPC
-    # needs one.
-    subclass: str = ""
-    # team is the entity's team number; 4 is neutral.
-    team: int = 0
-    # position is the entity's origin.
-    position: Vector
-    # facing is where the entity faces.
-    facing: Angles | None = None
-    # key_values are the entity's spawn key values, as a map sets them, such as
-    # model or rendercolor.
-    key_values: list[KeyValue] = dataclasses.field(default_factory=lambda: list[KeyValue]())
-    # fields are schema fields the host writes after it creates the entity and
-    # before the entity spawns. A write that fails cancels the creation.
-    fields: list[FieldWrite] = dataclasses.field(default_factory=lambda: list[FieldWrite]())
-    # transmit_always sends the entity to every client, past the game's own
-    # rule, which never sends one without a model, such as a
-    # point_clientui_dialog.
-    transmit_always: bool | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class KeyValue:
-    """KeyValue is one spawn key value."""
-
-    # key is the key value's name, such as skin.
+    # player is the player's server slot.
+    player: Player
+    # key names the setting.
     key: str = ""
-    # value is the key value's value.
-    value: EntityValue
+    # value is the new value.
+    value: str = ""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class EntityValue:
-    """EntityValue is a value a map gives an entity: a spawn key value or an
-    input's parameter. An input reads its parameter as the type it takes, such
-    as an integer for Skin or a color, as 0xRRGGBBAA, for Color, and does not
-    convert text.
+class UiPressEvent:
+    """UiPressEvent reports a press on a button in a player's interface."""
+
+    # player is the player who pressed.
+    player: Player
+    # node is the id of the pressed button.
+    node: str = ""
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class StartEvent:
+    """StartEvent describes the server the mod starts in."""
+
+    # args holds the arguments that follow -- on the host command line.
+    args: list[str] = dataclasses.field(default_factory=lambda: list[str]())
+    # check_only is true when the host checks the mod without starting a game;
+    # every call but Log then fails.
+    check_only: bool = False
+    # source holds an interpreted mod's entry, which the interpreter module
+    # evaluates during start. It is empty for a compiled mod.
+    source: bytes = b""
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class StartResult:
+    """StartResult declares which events the mod consumes."""
+
+    # frames asks for a Frame event every server frame.
+    frames: bool = False
+    # damage asks for a damage event before each hit.
+    damage: bool = False
+    # damaged asks for a damaged event after each hit.
+    damaged: bool = False
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class FrameEvent:
+    """FrameEvent identifies one server frame."""
+
+    # tick is the server tick, or zero when the clock is unavailable.
+    tick: int = 0
+    # time_seconds is the game clock at this frame, in seconds.
+    time_seconds: float = 0.0
+    # movement holds one sample per watched, live hero when this frame starts a
+    # new tick, and is empty otherwise.
+    movement: list[MovementSample] = dataclasses.field(default_factory=lambda: list[MovementSample]())
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CommandEvent:
+    """CommandEvent carries one command line from a player: a chat line that
+    starts with a slash (or ".", "+" or "-"), without that prefix, or a console
+    command the server received.
     """
 
-    boolean: bool | None = None
-    integer: int | None = None
-    number: float | None = None
-    text: str | None = None
-    vector: Vector | None = None
-    color: int | None = None
+    # player is the player who typed the command.
+    player: Player
+    # line is the complete command line, starting with the command name.
+    line: str = ""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class NpcOptions:
-    """NpcOptions describes a unit that is not a player, such as a trooper."""
+class CommandResult:
+    """CommandResult answers whether the mod handled a command."""
 
-    # class_name is the unit's entity class, such as npc_trooper or
-    # npc_trooper_boss.
-    class_name: str = ""
-    # unit names the unit's game data entry, such as trooper_melee, or is empty
-    # for a unit that needs none.
-    unit: str = ""
-    # team is the unit's team number; 4 is neutral.
-    team: int = 0
-    # position is the unit's origin, at its feet.
-    position: Vector
-    # facing is where the unit faces.
-    facing: Angles | None = None
-    # health is the unit's health; the default is the unit's own.
-    health: int | None = None
-    # max_health is the unit's maximum health; the default is health.
-    max_health: int | None = None
-    # lane is the lane the unit walks. A unit whose class walks none, unlike a
-    # trooper, refuses it.
-    lane: int | None = None
-    # fields are schema fields the host writes after it creates the unit and
-    # before the unit spawns, such as m_iInitialTeamNum, which the game reads
-    # only while spawning. A write that fails cancels the spawn.
-    fields: list[FieldWrite] = dataclasses.field(default_factory=lambda: list[FieldWrite]())
+    # claimed ends the command's dispatch; the game and later mods do not see
+    # it.
+    claimed: bool = False
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class FieldWrite:
-    """FieldWrite writes one schema field of an entity the host creates."""
+class WorldEvent:
+    """WorldEvent announces a loaded world."""
 
-    # class_name is the server class that declares the field, or a subclass.
-    class_name: str = ""
-    # field is the field's schema name, such as m_iLane. A dotted path, such as
-    # m_Collision.m_CollisionGroup, names a field inside an embedded structure.
-    field: str = ""
-    # type is how to write the field.
-    type: FieldType
-    # value is the field's value.
-    value: FieldValue | None = None
+    # map names the world's map.
+    map: str = ""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class NpcState:
-    """NpcState is a unit's state this frame."""
-
-    # position is the unit's origin.
-    position: Vector
-    # facing is where the unit faces.
-    facing: Angles
-    # health is the unit's health.
-    health: int = 0
-    # max_health is the unit's maximum health.
-    max_health: int = 0
-    # team is the unit's team number.
-    team: int = 0
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class HitOptions:
-    """HitOptions describes damage the mod deals."""
-
-    # victim is the hero or unit to hurt. The world, props and buildings are
-    # refused: the client crashes on their damage events.
-    victim: int = 0
-    # attacker is the entity credited with the hit. Without one the hit is a
-    # hazard, such as poison gas, which credits no one and ignores the
-    # inflictor and hit group.
-    attacker: int | None = None
-    # inflictor is what delivered the hit; the default is the attacker.
-    inflictor: int | None = None
-    # amount is the damage before resistances.
-    amount: float = 0.0
-    # hit_group is the body part hit; 1 is the head. The default is the game's
-    # choice.
-    hit_group: int | None = None
-    # ability is the entity handle of the ability that dealt the hit, as
-    # ability.entity reports it.
-    ability: int | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class TraceOptions:
-    """TraceOptions describes a line to test against the world. Layers are bits
-    of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
-    18 player and 19 NPC.
+class ServiceCall:
+    """ServiceCall calls one method of a service outside Modlock. A host that
+    embeds Modlock provides services of its own, such as a game mode's match,
+    and a mod may serve one to the host. The service and its caller agree on
+    the payload's encoding.
     """
 
-    # start is where the line begins.
-    start: Vector
-    # end is where the line ends.
-    end: Vector
-    # layers selects what the line can hit; the default is solid and
-    # hitboxes.
-    layers: int | None = None
-    # exclude removes things in these layers from the hits.
-    exclude: int | None = None
-    # ignore lists entity handles the line passes through.
-    ignore: list[int] = dataclasses.field(default_factory=lambda: list[int]())
+    # service names the service, such as "arena.match".
+    service: str = ""
+    # method names the method within the service.
+    method: str = ""
+    # payload is the call's argument.
+    payload: bytes = b""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class TraceHit:
-    """TraceHit is where a traced line first hit something."""
+class ServiceReply:
+    """ServiceReply is a service's answer."""
 
-    # position is the hit point.
-    position: Vector
-    # normal is the surface's direction at the hit point.
-    normal: Vector
-    # start_solid is true when the line began inside something solid.
-    start_solid: bool = False
-    # entity is the entity hit, or zero for the world.
-    entity: int = 0
+    # payload is the answer.
+    payload: bytes = b""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
-class NpcTarget:
-    """NpcTarget is one unit or objective RestoreNpcs places, as replays record
-    it.
-    """
+class PrecacheOptions:
+    """PrecacheOptions names what the next world loads ahead of use."""
 
-    # class_name is the unit's entity class: npc_trooper, npc_trooper_neutral,
-    # npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
-    # npc_base_defense_sentry, npc_super_neutral or
-    # npc_neutral_sinners_sacrifice.
-    class_name: str = ""
-    # id identifies the unit's game data entry.
-    id: int = 0
-    # team is the unit's team number; 4 is neutral.
-    team: int = 0
-    # position is the unit's origin, at its feet.
-    position: Vector
-    # facing is where the unit faces.
-    facing: Angles
-    # velocity is the unit's motion in units per second.
-    velocity: Vector | None = None
-    # health and max_health are the unit's health.
-    health: int = 0
-    max_health: int = 0
-    # lane is the lane a trooper walks; troopers need one.
-    lane: int | None = None
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class RiftState:
-    """RiftState is the Rift objective's timing as the game holds it. Times are
-    game times in seconds, or zero when unset.
-    """
-
-    # scoring_team is the team holding the Rift, or zero.
-    scoring_team: int = 0
-    scoring_time: float = 0.0
-    cash_in_started: float = 0.0
-    give_up_time: float = 0.0
-    # next_spawn is when the Rift next opens.
-    next_spawn: float = 0.0
-    spawn_window: float = 0.0
+    # heroes are hero names, such as hero_wraith.
+    heroes: list[str] = dataclasses.field(default_factory=lambda: list[str]())
+    # resources are model and particle paths, such as models/props/crate.vmdl.
+    resources: list[str] = dataclasses.field(default_factory=lambda: list[str]())
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -1481,6 +1481,105 @@ class Pickup:
 
 # _SCHEMA describes every message the library encodes or decodes.
 _SCHEMA: wire.Schema = {
+    "HoldReloadRequest": (
+        None,
+        [
+            wire.Field(1, "held", "bool"),
+        ],
+    ),
+    "RefreshAbilityRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "ability", "string"),
+        ],
+    ),
+    "AbilitiesResponse": (
+        None,
+        [
+            wire.Field(1, "abilities", "message", repeated=True, message="Ability"),
+        ],
+    ),
+    "Ability": (
+        Ability,
+        [
+            wire.Field(1, "name", "string"),
+            wire.Field(2, "slot", "int32"),
+            wire.Field(3, "entity", "uint32"),
+            wire.Field(4, "upgrades", "uint32"),
+            wire.Field(5, "charges", "int32"),
+            wire.Field(6, "cooldown_end", "float"),
+            wire.Field(7, "id", "uint32"),
+            wire.Field(8, "state", "uint32"),
+            wire.Field(9, "cooldown_start", "float"),
+            wire.Field(10, "recharge_start", "float"),
+            wire.Field(11, "recharge_end", "float"),
+        ],
+    ),
+    "AbilityOptions": (
+        AbilityOptions,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "ability", "string"),
+            wire.Field(3, "upgrades", "uint32", optional=True),
+            wire.Field(4, "charges", "int32", optional=True),
+            wire.Field(5, "cooldown_end", "float", optional=True),
+            wire.Field(6, "recharge_end", "float", optional=True),
+            wire.Field(7, "max_charges", "int32", optional=True),
+        ],
+    ),
+    "GiveItemRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "item", "string"),
+        ],
+    ),
+    "ReplaceAbilityRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "index", "uint32"),
+            wire.Field(3, "ability", "string"),
+        ],
+    ),
+    "HoldModifierRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "modifier", "string"),
+            wire.Field(3, "active", "bool", optional=True),
+        ],
+    ),
+    "GiveModifierRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "modifier", "string"),
+            wire.Field(3, "seconds", "float"),
+        ],
+    ),
+    "ModifierStateRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "state", "string"),
+        ],
+    ),
+    "ActiveResponse": (
+        None,
+        [
+            wire.Field(1, "active", "bool"),
+        ],
+    ),
+    "HoldModifierStateRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "state", "string"),
+            wire.Field(3, "active", "bool", optional=True),
+        ],
+    ),
     "Vec3": (
         Vector,
         [
@@ -1497,43 +1596,441 @@ _SCHEMA: wire.Schema = {
             wire.Field(3, "roll", "double"),
         ],
     ),
-    "Call": (
+    "DamageEvent": (
+        DamageEvent,
+        [
+            wire.Field(1, "victim", "uint32"),
+            wire.Field(2, "attacker", "uint32"),
+            wire.Field(3, "inflictor", "uint32"),
+            wire.Field(4, "ability", "uint32"),
+            wire.Field(5, "flags", "uint64"),
+            wire.Field(6, "hit_group", "int32"),
+            wire.Field(7, "amount", "float"),
+        ],
+    ),
+    "DamageResult": (
+        DamageResult,
+        [
+            wire.Field(1, "block", "bool", optional=True),
+            wire.Field(2, "amount", "float", optional=True),
+        ],
+    ),
+    "DamagedEvent": (
+        DamagedEvent,
+        [
+            wire.Field(1, "victim", "uint32"),
+            wire.Field(2, "attacker", "uint32"),
+            wire.Field(3, "ability", "uint32"),
+            wire.Field(4, "health_lost", "int32"),
+            wire.Field(5, "health_before", "int32"),
+            wire.Field(6, "dealt", "int32"),
+        ],
+    ),
+    "LaunchEvent": (
+        LaunchEvent,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "name", "string"),
+            wire.Field(3, "owner", "uint32"),
+            wire.Field(4, "player", "int32", cls=Player, key="slot"),
+            wire.Field(5, "position", "message", message="Vec3"),
+        ],
+    ),
+    "ImpactEvent": (
+        ImpactEvent,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "name", "string"),
+            wire.Field(3, "owner", "uint32"),
+            wire.Field(4, "player", "int32", cls=Player, key="slot"),
+            wire.Field(5, "start", "message", message="Vec3"),
+            wire.Field(6, "end", "message", message="Vec3"),
+            wire.Field(7, "position", "message", message="Vec3"),
+            wire.Field(8, "hit", "uint32"),
+        ],
+    ),
+    "ProjectileOptions": (
+        ProjectileOptions,
+        [
+            wire.Field(1, "names", "string", repeated=True),
+            wire.Field(2, "keep_momentum", "bool", optional=True),
+        ],
+    ),
+    "HitOptions": (
+        HitOptions,
+        [
+            wire.Field(1, "victim", "uint32"),
+            wire.Field(2, "attacker", "uint32", optional=True),
+            wire.Field(3, "inflictor", "uint32", optional=True),
+            wire.Field(4, "amount", "float"),
+            wire.Field(5, "hit_group", "int32", optional=True),
+            wire.Field(6, "ability", "uint32", optional=True),
+        ],
+    ),
+    "TraceOptions": (
+        TraceOptions,
+        [
+            wire.Field(1, "start", "message", message="Vec3"),
+            wire.Field(2, "end", "message", message="Vec3"),
+            wire.Field(3, "layers", "uint64", optional=True),
+            wire.Field(4, "exclude", "uint64", optional=True),
+            wire.Field(5, "ignore", "uint32", repeated=True),
+        ],
+    ),
+    "TraceResponse": (
         None,
         [
-            wire.Field(1, "method", "string"),
-            wire.Field(2, "request", "bytes"),
+            wire.Field(1, "hit", "message", optional=True, message="TraceHit"),
         ],
     ),
-    "Reply": (
+    "TraceHit": (
+        TraceHit,
+        [
+            wire.Field(1, "position", "message", message="Vec3"),
+            wire.Field(2, "normal", "message", message="Vec3"),
+            wire.Field(3, "start_solid", "bool"),
+            wire.Field(4, "entity", "uint32"),
+        ],
+    ),
+    "ChatRequest": (
         None,
         [
-            wire.Field(1, "error", "string"),
-            wire.Field(2, "response", "bytes"),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "text", "string"),
         ],
     ),
-    "Empty": (None, []),
-    "StartEvent": (
-        StartEvent,
+    "CenterTextRequest": (
+        None,
         [
-            wire.Field(1, "args", "string", repeated=True),
-            wire.Field(2, "check_only", "bool"),
-            wire.Field(3, "source", "bytes"),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "text", "string"),
         ],
     ),
-    "StartResult": (
-        StartResult,
+    "AnnounceRequest": (
+        None,
         [
-            wire.Field(1, "frames", "bool"),
-            wire.Field(2, "damage", "bool"),
-            wire.Field(3, "damaged", "bool"),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "title", "string"),
+            wire.Field(3, "text", "string"),
         ],
     ),
-    "FrameEvent": (
-        FrameEvent,
+    "SoundRequest": (
+        None,
         [
-            wire.Field(1, "tick", "uint64"),
-            wire.Field(2, "time_seconds", "double"),
-            wire.Field(3, "movement", "message", repeated=True, message="MovementSample"),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "sound", "string"),
+        ],
+    ),
+    "EmitSoundRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "sound", "string"),
+        ],
+    ),
+    "ScreenEffectRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "effect", "enum", enum=_ScreenEffect),
+            wire.Field(3, "timing", "message", optional=True, message="ScreenTiming"),
+        ],
+    ),
+    "ScreenTiming": (
+        ScreenTiming,
+        [
+            wire.Field(1, "delay", "float", optional=True),
+            wire.Field(2, "fade_in", "float", optional=True),
+            wire.Field(3, "hold", "float", optional=True),
+            wire.Field(4, "fade_out", "float", optional=True),
+        ],
+    ),
+    "ClearScreenEffectRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "effect", "enum", enum=_ScreenEffect),
+        ],
+    ),
+    "ReadFieldRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "class_name", "string"),
+            wire.Field(3, "field", "string"),
+            wire.Field(4, "type", "enum", enum=_FieldType),
+        ],
+    ),
+    "FieldResponse": (
+        None,
+        [
+            wire.Field(1, "value", "message", message="FieldValue", union="value"),
+        ],
+    ),
+    "FieldValue": (
+        None,
+        [
+            wire.Field(1, "boolean", "bool", oneof="value"),
+            wire.Field(2, "number", "double", oneof="value"),
+            wire.Field(3, "integer", "int64", oneof="value"),
+            wire.Field(4, "text", "string", oneof="value"),
+            wire.Field(5, "vector", "message", oneof="value", message="Vec3"),
+        ],
+    ),
+    "FieldListResponse": (
+        None,
+        [
+            wire.Field(1, "values", "message", repeated=True, message="FieldValue", union="value"),
+        ],
+    ),
+    "WriteFieldListRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "class_name", "string"),
+            wire.Field(3, "field", "string"),
+            wire.Field(4, "type", "enum", enum=_FieldType),
+            wire.Field(5, "values", "message", repeated=True, message="FieldValue", union="value"),
+        ],
+    ),
+    "WriteFieldRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "class_name", "string"),
+            wire.Field(3, "field", "string"),
+            wire.Field(4, "type", "enum", enum=_FieldType),
+            wire.Field(5, "value", "message", message="FieldValue", union="value"),
+        ],
+    ),
+    "FieldWrite": (
+        FieldWrite,
+        [
+            wire.Field(1, "class_name", "string"),
+            wire.Field(2, "field", "string"),
+            wire.Field(3, "type", "enum", enum=_FieldType),
+            wire.Field(4, "value", "message", message="FieldValue", union="value"),
+        ],
+    ),
+    "MoveEntityRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
+        ],
+    ),
+    "EntityRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+        ],
+    ),
+    "EntityClassResponse": (
+        None,
+        [
+            wire.Field(1, "name", "message", optional=True, message="EntityClassName"),
+        ],
+    ),
+    "EntityClassName": (
+        EntityClassName,
+        [
+            wire.Field(1, "class_name", "string"),
+            wire.Field(2, "designer_name", "string"),
+        ],
+    ),
+    "EntityResponse": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+        ],
+    ),
+    "EntityOptions": (
+        EntityOptions,
+        [
+            wire.Field(1, "designer_name", "string"),
+            wire.Field(2, "subclass", "string"),
+            wire.Field(3, "team", "int32"),
+            wire.Field(4, "position", "message", message="Vec3"),
+            wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(6, "key_values", "message", repeated=True, message="KeyValue"),
+            wire.Field(7, "fields", "message", repeated=True, message="FieldWrite"),
+            wire.Field(8, "transmit_always", "bool", optional=True),
+        ],
+    ),
+    "KeyValue": (
+        KeyValue,
+        [
+            wire.Field(1, "key", "string"),
+            wire.Field(2, "value", "message", message="EntityValue"),
+        ],
+    ),
+    "EntityValue": (
+        EntityValue,
+        [
+            wire.Field(1, "boolean", "bool", optional=True),
+            wire.Field(2, "integer", "int32", optional=True),
+            wire.Field(3, "number", "float", optional=True),
+            wire.Field(4, "text", "string", optional=True),
+            wire.Field(5, "vector", "message", optional=True, message="Vec3"),
+            wire.Field(6, "color", "fixed32", optional=True),
+        ],
+    ),
+    "ShowEntityOnlyToRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "players", "int32", repeated=True),
+        ],
+    ),
+    "FireInputRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "input", "string"),
+            wire.Field(3, "value", "message", optional=True, message="EntityValue"),
+            wire.Field(4, "activator", "uint32", optional=True),
+        ],
+    ),
+    "AliveResponse": (
+        None,
+        [
+            wire.Field(1, "alive", "bool"),
+        ],
+    ),
+    "CreatePickupRequest": (
+        None,
+        [
+            wire.Field(1, "kind", "enum", enum=_PickupKind),
+            wire.Field(2, "position", "message", message="Vec3"),
+        ],
+    ),
+    "PickupResponse": (
+        None,
+        [
+            wire.Field(1, "pickup", "uint32", cls=Pickup, key="entity"),
+        ],
+    ),
+    "PickupRequest": (
+        None,
+        [
+            wire.Field(1, "pickup", "uint32", cls=Pickup, key="entity"),
+        ],
+    ),
+    "FindEntitiesRequest": (
+        None,
+        [
+            wire.Field(1, "class_name", "string"),
+        ],
+    ),
+    "RemoveEntitiesRequest": (
+        None,
+        [
+            wire.Field(1, "class_name", "string"),
+        ],
+    ),
+    "EntitiesResponse": (
+        None,
+        [
+            wire.Field(1, "entities", "uint32", repeated=True),
+        ],
+    ),
+    "CountResponse": (
+        None,
+        [
+            wire.Field(1, "count", "int32"),
+        ],
+    ),
+    "InputEvent": (
+        InputEvent,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "pressed", "uint64"),
+            wire.Field(3, "released", "uint64"),
+        ],
+    ),
+    "ButtonsResponse": (
+        None,
+        [
+            wire.Field(1, "buttons", "uint64"),
+        ],
+    ),
+    "InputRequest": (
+        None,
+        [
+            wire.Field(1, "buttons", "uint64"),
+        ],
+    ),
+    "PlayerInputRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "buttons", "uint64"),
+        ],
+    ),
+    "RemapInputRequest": (
+        None,
+        [
+            wire.Field(1, "from_", "uint64"),
+            wire.Field(2, "to", "uint64"),
+            wire.Field(3, "repeat", "bool", optional=True),
+        ],
+    ),
+    "SetFreeForAllRequest": (
+        None,
+        [
+            wire.Field(1, "enabled", "bool"),
+        ],
+    ),
+    "PauseRequest": (
+        None,
+        [
+            wire.Field(1, "paused", "bool"),
+        ],
+    ),
+    "MatchClockResponse": (
+        None,
+        [
+            wire.Field(1, "seconds", "float"),
+        ],
+    ),
+    "HoldMatchClockRequest": (
+        None,
+        [
+            wire.Field(1, "seconds", "float", optional=True),
+        ],
+    ),
+    "RiftResponse": (
+        None,
+        [
+            wire.Field(1, "state", "message", optional=True, message="RiftState"),
+        ],
+    ),
+    "RiftState": (
+        RiftState,
+        [
+            wire.Field(1, "scoring_team", "int32"),
+            wire.Field(2, "scoring_time", "float"),
+            wire.Field(3, "cash_in_started", "float"),
+            wire.Field(4, "give_up_time", "float"),
+            wire.Field(5, "next_spawn", "float"),
+            wire.Field(6, "spawn_window", "float"),
+        ],
+    ),
+    "StartRiftRequest": (
+        None,
+        [
+            wire.Field(1, "position", "message", message="Vec3"),
+        ],
+    ),
+    "AddMetricRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "name", "string"),
+            wire.Field(3, "value", "double"),
+            wire.Field(4, "label", "string", optional=True),
         ],
     ),
     "MovementSample": (
@@ -1574,82 +2071,252 @@ _SCHEMA: wire.Schema = {
             wire.Field(7, "grounded", "bool"),
         ],
     ),
-    "CommandEvent": (
-        CommandEvent,
+    "LandedEvent": (
+        LandedEvent,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "line", "string"),
+            wire.Field(2, "on", "int32"),
+            wire.Field(3, "speed", "float"),
         ],
     ),
-    "CommandResult": (
-        CommandResult,
-        [
-            wire.Field(1, "claimed", "bool"),
-        ],
-    ),
-    "WorldEvent": (
-        WorldEvent,
-        [
-            wire.Field(1, "map", "string"),
-        ],
-    ),
-    "UiPressEvent": (
-        UiPressEvent,
+    "TeleportRequest": (
+        None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "node", "string"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", message="EulerAngles"),
+            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
         ],
     ),
-    "ServiceCall": (
-        ServiceCall,
-        [
-            wire.Field(1, "service", "string"),
-            wire.Field(2, "method", "string"),
-            wire.Field(3, "payload", "bytes"),
-        ],
-    ),
-    "ServiceReply": (
-        ServiceReply,
-        [
-            wire.Field(1, "payload", "bytes"),
-        ],
-    ),
-    "DamageEvent": (
-        DamageEvent,
-        [
-            wire.Field(1, "victim", "uint32"),
-            wire.Field(2, "attacker", "uint32"),
-            wire.Field(3, "inflictor", "uint32"),
-            wire.Field(4, "ability", "uint32"),
-            wire.Field(5, "flags", "uint64"),
-            wire.Field(6, "hit_group", "int32"),
-            wire.Field(7, "amount", "float"),
-        ],
-    ),
-    "DamageResult": (
-        DamageResult,
-        [
-            wire.Field(1, "block", "bool", optional=True),
-            wire.Field(2, "amount", "float", optional=True),
-        ],
-    ),
-    "DamagedEvent": (
-        DamagedEvent,
-        [
-            wire.Field(1, "victim", "uint32"),
-            wire.Field(2, "attacker", "uint32"),
-            wire.Field(3, "ability", "uint32"),
-            wire.Field(4, "health_lost", "int32"),
-            wire.Field(5, "health_before", "int32"),
-            wire.Field(6, "dealt", "int32"),
-        ],
-    ),
-    "InputEvent": (
-        InputEvent,
+    "MovePlayerRequest": (
+        None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "pressed", "uint64"),
-            wire.Field(3, "released", "uint64"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", message="EulerAngles"),
+            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
+        ],
+    ),
+    "SteerRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "steering", "message", optional=True, message="Steering"),
+        ],
+    ),
+    "Steering": (
+        Steering,
+        [
+            wire.Field(1, "command", "message", message="MovementCommand"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "velocity", "message", message="Vec3"),
+            wire.Field(4, "grounded", "bool"),
+            wire.Field(5, "facing", "message", message="EulerAngles"),
+        ],
+    ),
+    "DriveRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "command", "message", optional=True, message="DriveCommand"),
+        ],
+    ),
+    "DriveCommand": (
+        DriveCommand,
+        [
+            wire.Field(1, "facing", "message", message="EulerAngles"),
+            wire.Field(2, "forward", "float"),
+            wire.Field(3, "left", "float"),
+            wire.Field(4, "held", "uint64"),
+            wire.Field(5, "pressed", "uint64"),
+        ],
+    ),
+    "SetVelocityRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "velocity", "message", message="Vec3"),
+        ],
+    ),
+    "WatchMovementRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "watch", "bool"),
+        ],
+    ),
+    "NpcsRestoredEvent": (
+        NpcsRestoredEvent,
+        [
+            wire.Field(1, "error", "string"),
+        ],
+    ),
+    "NpcOptions": (
+        NpcOptions,
+        [
+            wire.Field(1, "class_name", "string"),
+            wire.Field(2, "unit", "string"),
+            wire.Field(3, "team", "int32"),
+            wire.Field(4, "position", "message", message="Vec3"),
+            wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(6, "health", "int32", optional=True),
+            wire.Field(7, "max_health", "int32", optional=True),
+            wire.Field(8, "lane", "uint32", optional=True),
+            wire.Field(9, "fields", "message", repeated=True, message="FieldWrite"),
+        ],
+    ),
+    "NpcResponse": (
+        None,
+        [
+            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+        ],
+    ),
+    "NpcRequest": (
+        None,
+        [
+            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+        ],
+    ),
+    "NpcStateResponse": (
+        None,
+        [
+            wire.Field(1, "state", "message", optional=True, message="NpcState"),
+        ],
+    ),
+    "NpcState": (
+        NpcState,
+        [
+            wire.Field(1, "position", "message", message="Vec3"),
+            wire.Field(2, "facing", "message", message="EulerAngles"),
+            wire.Field(3, "health", "int32"),
+            wire.Field(4, "max_health", "int32"),
+            wire.Field(5, "team", "int32"),
+        ],
+    ),
+    "MoveNpcRequest": (
+        None,
+        [
+            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
+        ],
+    ),
+    "SetNpcHealthRequest": (
+        None,
+        [
+            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+            wire.Field(2, "health", "int32"),
+            wire.Field(3, "max_health", "int32", optional=True),
+        ],
+    ),
+    "RestoreNpcsRequest": (
+        None,
+        [
+            wire.Field(1, "npcs", "message", repeated=True, message="NpcTarget"),
+        ],
+    ),
+    "NpcTarget": (
+        NpcTarget,
+        [
+            wire.Field(1, "class_name", "string"),
+            wire.Field(2, "id", "uint32"),
+            wire.Field(3, "team", "int32"),
+            wire.Field(4, "position", "message", message="Vec3"),
+            wire.Field(5, "facing", "message", message="EulerAngles"),
+            wire.Field(6, "velocity", "message", optional=True, message="Vec3"),
+            wire.Field(7, "health", "int32"),
+            wire.Field(8, "max_health", "int32"),
+            wire.Field(9, "lane", "uint32", optional=True),
+        ],
+    ),
+    "ModelOptions": (
+        ModelOptions,
+        [
+            wire.Field(1, "resource", "string"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(4, "scale", "float", optional=True),
+            wire.Field(5, "color", "fixed32", optional=True),
+            wire.Field(6, "glow", "bool", optional=True),
+            wire.Field(7, "solid", "bool", optional=True),
+        ],
+    ),
+    "TextOptions": (
+        TextOptions,
+        [
+            wire.Field(1, "text", "string"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(4, "font_size", "float", optional=True),
+            wire.Field(5, "color", "fixed32", optional=True),
+            wire.Field(6, "face_camera", "bool", optional=True),
+            wire.Field(7, "scale", "float", optional=True),
+        ],
+    ),
+    "ParticleOptions": (
+        ParticleOptions,
+        [
+            wire.Field(1, "resource", "string"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(4, "color", "fixed32", optional=True),
+            wire.Field(5, "tint_point", "int32", optional=True),
+            wire.Field(6, "point", "message", optional=True, message="ParticlePoint"),
+            wire.Field(7, "parent", "uint32", optional=True),
+        ],
+    ),
+    "ParticlePoint": (
+        ParticlePoint,
+        [
+            wire.Field(1, "index", "int32"),
+            wire.Field(2, "position", "message", message="Vec3"),
+        ],
+    ),
+    "FogOptions": (
+        FogOptions,
+        [
+            wire.Field(1, "position", "message", message="Vec3"),
+            wire.Field(2, "facing", "message", optional=True, message="EulerAngles"),
+            wire.Field(3, "mins", "message", message="Vec3"),
+            wire.Field(4, "maxs", "message", message="Vec3"),
+            wire.Field(5, "strength", "float"),
+            wire.Field(6, "color", "fixed32"),
+        ],
+    ),
+    "ObjectResponse": (
+        None,
+        [
+            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
+        ],
+    ),
+    "ObjectRequest": (
+        None,
+        [
+            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
+        ],
+    ),
+    "MoveObjectRequest": (
+        None,
+        [
+            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
+            wire.Field(2, "position", "message", message="Vec3"),
+            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
+        ],
+    ),
+    "SetTextRequest": (
+        None,
+        [
+            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
+            wire.Field(2, "text", "string"),
+        ],
+    ),
+    "SetObjectHiddenRequest": (
+        None,
+        [
+            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
+            wire.Field(2, "player", "int32", cls=Player, key="slot"),
+            wire.Field(3, "hidden", "bool"),
         ],
     ),
     "RestoredEvent": (
@@ -1659,138 +2326,16 @@ _SCHEMA: wire.Schema = {
             wire.Field(2, "error", "string"),
         ],
     ),
-    "NpcsRestoredEvent": (
-        NpcsRestoredEvent,
-        [
-            wire.Field(1, "error", "string"),
-        ],
-    ),
-    "LaunchEvent": (
-        LaunchEvent,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "name", "string"),
-            wire.Field(3, "owner", "uint32"),
-            wire.Field(4, "player", "int32", cls=Player, key="slot"),
-            wire.Field(5, "position", "message", message="Vec3"),
-        ],
-    ),
-    "ImpactEvent": (
-        ImpactEvent,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "name", "string"),
-            wire.Field(3, "owner", "uint32"),
-            wire.Field(4, "player", "int32", cls=Player, key="slot"),
-            wire.Field(5, "start", "message", message="Vec3"),
-            wire.Field(6, "end", "message", message="Vec3"),
-            wire.Field(7, "position", "message", message="Vec3"),
-            wire.Field(8, "hit", "uint32"),
-        ],
-    ),
-    "LandedEvent": (
-        LandedEvent,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "on", "int32"),
-            wire.Field(3, "speed", "float"),
-        ],
-    ),
-    "SettingChangedEvent": (
-        SettingChangedEvent,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "key", "string"),
-            wire.Field(3, "value", "string"),
-        ],
-    ),
     "PlayersChangedEvent": (
         PlayersChangedEvent,
         [
             wire.Field(1, "players", "message", repeated=True, message="Connection"),
         ],
     ),
-    "LogRequest": (
-        None,
-        [
-            wire.Field(1, "message", "string"),
-        ],
-    ),
-    "ServerCommandRequest": (
-        None,
-        [
-            wire.Field(1, "command", "string"),
-        ],
-    ),
     "PlayerRequest": (
         None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
-        ],
-    ),
-    "PlayerSettingRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "key", "string"),
-        ],
-    ),
-    "SettingResponse": (
-        None,
-        [
-            wire.Field(1, "value", "string"),
-        ],
-    ),
-    "AddMetricRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "name", "string"),
-            wire.Field(3, "value", "double"),
-            wire.Field(4, "label", "string", optional=True),
-        ],
-    ),
-    "HoldReloadRequest": (
-        None,
-        [
-            wire.Field(1, "held", "bool"),
-        ],
-    ),
-    "SetPlayerSettingRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "key", "string"),
-            wire.Field(3, "value", "string"),
-        ],
-    ),
-    "ChatRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "text", "string"),
-        ],
-    ),
-    "CenterTextRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "text", "string"),
-        ],
-    ),
-    "AnnounceRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "title", "string"),
-            wire.Field(3, "text", "string"),
-        ],
-    ),
-    "PrecacheOptions": (
-        PrecacheOptions,
-        [
-            wire.Field(1, "heroes", "string", repeated=True),
-            wire.Field(2, "resources", "string", repeated=True),
         ],
     ),
     "Connection": (
@@ -1873,130 +2418,6 @@ _SCHEMA: wire.Schema = {
             wire.Field(2, "frozen", "bool", optional=True),
         ],
     ),
-    "RefreshAbilityRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "ability", "string"),
-        ],
-    ),
-    "AbilitiesResponse": (
-        None,
-        [
-            wire.Field(1, "abilities", "message", repeated=True, message="Ability"),
-        ],
-    ),
-    "Ability": (
-        Ability,
-        [
-            wire.Field(1, "name", "string"),
-            wire.Field(2, "slot", "int32"),
-            wire.Field(3, "entity", "uint32"),
-            wire.Field(4, "upgrades", "uint32"),
-            wire.Field(5, "charges", "int32"),
-            wire.Field(6, "cooldown_end", "float"),
-            wire.Field(7, "id", "uint32"),
-            wire.Field(8, "state", "uint32"),
-            wire.Field(9, "cooldown_start", "float"),
-            wire.Field(10, "recharge_start", "float"),
-            wire.Field(11, "recharge_end", "float"),
-        ],
-    ),
-    "AbilityOptions": (
-        AbilityOptions,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "ability", "string"),
-            wire.Field(3, "upgrades", "uint32", optional=True),
-            wire.Field(4, "charges", "int32", optional=True),
-            wire.Field(5, "cooldown_end", "float", optional=True),
-            wire.Field(6, "recharge_end", "float", optional=True),
-            wire.Field(7, "max_charges", "int32", optional=True),
-        ],
-    ),
-    "GiveItemRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "item", "string"),
-        ],
-    ),
-    "ReplaceAbilityRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "index", "uint32"),
-            wire.Field(3, "ability", "string"),
-        ],
-    ),
-    "HoldModifierRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "modifier", "string"),
-            wire.Field(3, "active", "bool", optional=True),
-        ],
-    ),
-    "GiveModifierRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "modifier", "string"),
-            wire.Field(3, "seconds", "float"),
-        ],
-    ),
-    "TeleportRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", message="EulerAngles"),
-            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
-        ],
-    ),
-    "MovePlayerRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", message="EulerAngles"),
-            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
-        ],
-    ),
-    "SteerRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "steering", "message", optional=True, message="Steering"),
-        ],
-    ),
-    "Steering": (
-        Steering,
-        [
-            wire.Field(1, "command", "message", message="MovementCommand"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "velocity", "message", message="Vec3"),
-            wire.Field(4, "grounded", "bool"),
-            wire.Field(5, "facing", "message", message="EulerAngles"),
-        ],
-    ),
-    "DriveRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "command", "message", optional=True, message="DriveCommand"),
-        ],
-    ),
-    "DriveCommand": (
-        DriveCommand,
-        [
-            wire.Field(1, "facing", "message", message="EulerAngles"),
-            wire.Field(2, "forward", "float"),
-            wire.Field(3, "left", "float"),
-            wire.Field(4, "held", "uint64"),
-            wire.Field(5, "pressed", "uint64"),
-        ],
-    ),
     "AdjustSoulsRequest": (
         None,
         [
@@ -2031,56 +2452,6 @@ _SCHEMA: wire.Schema = {
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
             wire.Field(2, "stamina", "float"),
-        ],
-    ),
-    "SoundRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "sound", "string"),
-        ],
-    ),
-    "MoveEntityRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
-        ],
-    ),
-    "EmitSoundRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "sound", "string"),
-        ],
-    ),
-    "SetVelocityRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "velocity", "message", message="Vec3"),
-        ],
-    ),
-    "WatchMovementRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "watch", "bool"),
-        ],
-    ),
-    "ButtonsResponse": (
-        None,
-        [
-            wire.Field(1, "buttons", "uint64"),
-        ],
-    ),
-    "ProjectileOptions": (
-        ProjectileOptions,
-        [
-            wire.Field(1, "names", "string", repeated=True),
-            wire.Field(2, "keep_momentum", "bool", optional=True),
         ],
     ),
     "RestoreHeroRequest": (
@@ -2125,222 +2496,6 @@ _SCHEMA: wire.Schema = {
             wire.Field(6, "recharge_end", "float", optional=True),
         ],
     ),
-    "ScreenEffectRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "effect", "enum", enum=_ScreenEffect),
-            wire.Field(3, "timing", "message", optional=True, message="ScreenTiming"),
-        ],
-    ),
-    "ScreenTiming": (
-        ScreenTiming,
-        [
-            wire.Field(1, "delay", "float", optional=True),
-            wire.Field(2, "fade_in", "float", optional=True),
-            wire.Field(3, "hold", "float", optional=True),
-            wire.Field(4, "fade_out", "float", optional=True),
-        ],
-    ),
-    "ClearScreenEffectRequest": (
-        None,
-        [
-            wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "effect", "enum", enum=_ScreenEffect),
-        ],
-    ),
-    "ReadFieldRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "class_name", "string"),
-            wire.Field(3, "field", "string"),
-            wire.Field(4, "type", "enum", enum=_FieldType),
-        ],
-    ),
-    "FieldResponse": (
-        None,
-        [
-            wire.Field(1, "value", "message", message="FieldValue", union="value"),
-        ],
-    ),
-    "FieldValue": (
-        None,
-        [
-            wire.Field(1, "boolean", "bool", oneof="value"),
-            wire.Field(2, "number", "double", oneof="value"),
-            wire.Field(3, "integer", "int64", oneof="value"),
-            wire.Field(4, "text", "string", oneof="value"),
-            wire.Field(5, "vector", "message", oneof="value", message="Vec3"),
-        ],
-    ),
-    "FieldListResponse": (
-        None,
-        [
-            wire.Field(1, "values", "message", repeated=True, message="FieldValue", union="value"),
-        ],
-    ),
-    "WriteFieldListRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "class_name", "string"),
-            wire.Field(3, "field", "string"),
-            wire.Field(4, "type", "enum", enum=_FieldType),
-            wire.Field(5, "values", "message", repeated=True, message="FieldValue", union="value"),
-        ],
-    ),
-    "WriteFieldRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "class_name", "string"),
-            wire.Field(3, "field", "string"),
-            wire.Field(4, "type", "enum", enum=_FieldType),
-            wire.Field(5, "value", "message", message="FieldValue", union="value"),
-        ],
-    ),
-    "ModifierStateRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "state", "string"),
-        ],
-    ),
-    "ActiveResponse": (
-        None,
-        [
-            wire.Field(1, "active", "bool"),
-        ],
-    ),
-    "HoldModifierStateRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "state", "string"),
-            wire.Field(3, "active", "bool", optional=True),
-        ],
-    ),
-    "SetFreeForAllRequest": (
-        None,
-        [
-            wire.Field(1, "enabled", "bool"),
-        ],
-    ),
-    "ModelOptions": (
-        ModelOptions,
-        [
-            wire.Field(1, "resource", "string"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(4, "scale", "float", optional=True),
-            wire.Field(5, "color", "fixed32", optional=True),
-            wire.Field(6, "glow", "bool", optional=True),
-            wire.Field(7, "solid", "bool", optional=True),
-        ],
-    ),
-    "TextOptions": (
-        TextOptions,
-        [
-            wire.Field(1, "text", "string"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(4, "font_size", "float", optional=True),
-            wire.Field(5, "color", "fixed32", optional=True),
-            wire.Field(6, "face_camera", "bool", optional=True),
-            wire.Field(7, "scale", "float", optional=True),
-        ],
-    ),
-    "ParticleOptions": (
-        ParticleOptions,
-        [
-            wire.Field(1, "resource", "string"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(4, "color", "fixed32", optional=True),
-            wire.Field(5, "tint_point", "int32", optional=True),
-            wire.Field(6, "point", "message", optional=True, message="ParticlePoint"),
-            wire.Field(7, "parent", "uint32", optional=True),
-        ],
-    ),
-    "ParticlePoint": (
-        ParticlePoint,
-        [
-            wire.Field(1, "index", "int32"),
-            wire.Field(2, "position", "message", message="Vec3"),
-        ],
-    ),
-    "FogOptions": (
-        FogOptions,
-        [
-            wire.Field(1, "position", "message", message="Vec3"),
-            wire.Field(2, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(3, "mins", "message", message="Vec3"),
-            wire.Field(4, "maxs", "message", message="Vec3"),
-            wire.Field(5, "strength", "float"),
-            wire.Field(6, "color", "fixed32"),
-        ],
-    ),
-    "ObjectResponse": (
-        None,
-        [
-            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
-        ],
-    ),
-    "EntityRequest": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-        ],
-    ),
-    "EntityClassResponse": (
-        None,
-        [
-            wire.Field(1, "name", "message", optional=True, message="EntityClassName"),
-        ],
-    ),
-    "EntityClassName": (
-        EntityClassName,
-        [
-            wire.Field(1, "class_name", "string"),
-            wire.Field(2, "designer_name", "string"),
-        ],
-    ),
-    "EntityResponse": (
-        None,
-        [
-            wire.Field(1, "entity", "uint32"),
-        ],
-    ),
-    "ObjectRequest": (
-        None,
-        [
-            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
-        ],
-    ),
-    "MoveObjectRequest": (
-        None,
-        [
-            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-        ],
-    ),
-    "SetTextRequest": (
-        None,
-        [
-            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
-            wire.Field(2, "text", "string"),
-        ],
-    ),
-    "SetObjectHiddenRequest": (
-        None,
-        [
-            wire.Field(1, "object", "uint32", cls=WorldObject, key="id"),
-            wire.Field(2, "player", "int32", cls=Player, key="slot"),
-            wire.Field(3, "hidden", "bool"),
-        ],
-    ),
     "BotOptions": (
         BotOptions,
         [
@@ -2357,286 +2512,131 @@ _SCHEMA: wire.Schema = {
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
         ],
     ),
-    "InputRequest": (
-        None,
+    "SettingChangedEvent": (
+        SettingChangedEvent,
         [
-            wire.Field(1, "buttons", "uint64"),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "key", "string"),
+            wire.Field(3, "value", "string"),
         ],
     ),
-    "PlayerInputRequest": (
+    "PlayerSettingRequest": (
         None,
         [
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
-            wire.Field(2, "buttons", "uint64"),
+            wire.Field(2, "key", "string"),
         ],
     ),
-    "RemapInputRequest": (
+    "SettingResponse": (
         None,
         [
-            wire.Field(1, "from_", "uint64"),
-            wire.Field(2, "to", "uint64"),
-            wire.Field(3, "repeat", "bool", optional=True),
+            wire.Field(1, "value", "string"),
         ],
     ),
-    "EntityOptions": (
-        EntityOptions,
-        [
-            wire.Field(1, "designer_name", "string"),
-            wire.Field(2, "subclass", "string"),
-            wire.Field(3, "team", "int32"),
-            wire.Field(4, "position", "message", message="Vec3"),
-            wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(6, "key_values", "message", repeated=True, message="KeyValue"),
-            wire.Field(7, "fields", "message", repeated=True, message="FieldWrite"),
-            wire.Field(8, "transmit_always", "bool", optional=True),
-        ],
-    ),
-    "KeyValue": (
-        KeyValue,
-        [
-            wire.Field(1, "key", "string"),
-            wire.Field(2, "value", "message", message="EntityValue"),
-        ],
-    ),
-    "EntityValue": (
-        EntityValue,
-        [
-            wire.Field(1, "boolean", "bool", optional=True),
-            wire.Field(2, "integer", "int32", optional=True),
-            wire.Field(3, "number", "float", optional=True),
-            wire.Field(4, "text", "string", optional=True),
-            wire.Field(5, "vector", "message", optional=True, message="Vec3"),
-            wire.Field(6, "color", "fixed32", optional=True),
-        ],
-    ),
-    "ShowEntityOnlyToRequest": (
+    "SetPlayerSettingRequest": (
         None,
         [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "players", "int32", repeated=True),
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "key", "string"),
+            wire.Field(3, "value", "string"),
         ],
     ),
-    "FireInputRequest": (
+    "UiPressEvent": (
+        UiPressEvent,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "node", "string"),
+        ],
+    ),
+    "Call": (
         None,
         [
-            wire.Field(1, "entity", "uint32"),
-            wire.Field(2, "input", "string"),
-            wire.Field(3, "value", "message", optional=True, message="EntityValue"),
-            wire.Field(4, "activator", "uint32", optional=True),
+            wire.Field(1, "method", "string"),
+            wire.Field(2, "request", "bytes"),
         ],
     ),
-    "NpcOptions": (
-        NpcOptions,
-        [
-            wire.Field(1, "class_name", "string"),
-            wire.Field(2, "unit", "string"),
-            wire.Field(3, "team", "int32"),
-            wire.Field(4, "position", "message", message="Vec3"),
-            wire.Field(5, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(6, "health", "int32", optional=True),
-            wire.Field(7, "max_health", "int32", optional=True),
-            wire.Field(8, "lane", "uint32", optional=True),
-            wire.Field(9, "fields", "message", repeated=True, message="FieldWrite"),
-        ],
-    ),
-    "FieldWrite": (
-        FieldWrite,
-        [
-            wire.Field(1, "class_name", "string"),
-            wire.Field(2, "field", "string"),
-            wire.Field(3, "type", "enum", enum=_FieldType),
-            wire.Field(4, "value", "message", message="FieldValue", union="value"),
-        ],
-    ),
-    "NpcResponse": (
+    "Reply": (
         None,
         [
-            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+            wire.Field(1, "error", "string"),
+            wire.Field(2, "response", "bytes"),
         ],
     ),
-    "NpcRequest": (
+    "Empty": (None, []),
+    "StartEvent": (
+        StartEvent,
+        [
+            wire.Field(1, "args", "string", repeated=True),
+            wire.Field(2, "check_only", "bool"),
+            wire.Field(3, "source", "bytes"),
+        ],
+    ),
+    "StartResult": (
+        StartResult,
+        [
+            wire.Field(1, "frames", "bool"),
+            wire.Field(2, "damage", "bool"),
+            wire.Field(3, "damaged", "bool"),
+        ],
+    ),
+    "FrameEvent": (
+        FrameEvent,
+        [
+            wire.Field(1, "tick", "uint64"),
+            wire.Field(2, "time_seconds", "double"),
+            wire.Field(3, "movement", "message", repeated=True, message="MovementSample"),
+        ],
+    ),
+    "CommandEvent": (
+        CommandEvent,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "line", "string"),
+        ],
+    ),
+    "CommandResult": (
+        CommandResult,
+        [
+            wire.Field(1, "claimed", "bool"),
+        ],
+    ),
+    "WorldEvent": (
+        WorldEvent,
+        [
+            wire.Field(1, "map", "string"),
+        ],
+    ),
+    "ServiceCall": (
+        ServiceCall,
+        [
+            wire.Field(1, "service", "string"),
+            wire.Field(2, "method", "string"),
+            wire.Field(3, "payload", "bytes"),
+        ],
+    ),
+    "ServiceReply": (
+        ServiceReply,
+        [
+            wire.Field(1, "payload", "bytes"),
+        ],
+    ),
+    "LogRequest": (
         None,
         [
-            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
+            wire.Field(1, "message", "string"),
         ],
     ),
-    "NpcStateResponse": (
+    "ServerCommandRequest": (
         None,
         [
-            wire.Field(1, "state", "message", optional=True, message="NpcState"),
+            wire.Field(1, "command", "string"),
         ],
     ),
-    "NpcState": (
-        NpcState,
+    "PrecacheOptions": (
+        PrecacheOptions,
         [
-            wire.Field(1, "position", "message", message="Vec3"),
-            wire.Field(2, "facing", "message", message="EulerAngles"),
-            wire.Field(3, "health", "int32"),
-            wire.Field(4, "max_health", "int32"),
-            wire.Field(5, "team", "int32"),
-        ],
-    ),
-    "MoveNpcRequest": (
-        None,
-        [
-            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
-            wire.Field(2, "position", "message", message="Vec3"),
-            wire.Field(3, "facing", "message", optional=True, message="EulerAngles"),
-            wire.Field(4, "velocity", "message", optional=True, message="Vec3"),
-        ],
-    ),
-    "SetNpcHealthRequest": (
-        None,
-        [
-            wire.Field(1, "npc", "uint32", cls=Npc, key="entity"),
-            wire.Field(2, "health", "int32"),
-            wire.Field(3, "max_health", "int32", optional=True),
-        ],
-    ),
-    "AliveResponse": (
-        None,
-        [
-            wire.Field(1, "alive", "bool"),
-        ],
-    ),
-    "CreatePickupRequest": (
-        None,
-        [
-            wire.Field(1, "kind", "enum", enum=_PickupKind),
-            wire.Field(2, "position", "message", message="Vec3"),
-        ],
-    ),
-    "PickupResponse": (
-        None,
-        [
-            wire.Field(1, "pickup", "uint32", cls=Pickup, key="entity"),
-        ],
-    ),
-    "PickupRequest": (
-        None,
-        [
-            wire.Field(1, "pickup", "uint32", cls=Pickup, key="entity"),
-        ],
-    ),
-    "FindEntitiesRequest": (
-        None,
-        [
-            wire.Field(1, "class_name", "string"),
-        ],
-    ),
-    "RemoveEntitiesRequest": (
-        None,
-        [
-            wire.Field(1, "class_name", "string"),
-        ],
-    ),
-    "EntitiesResponse": (
-        None,
-        [
-            wire.Field(1, "entities", "uint32", repeated=True),
-        ],
-    ),
-    "CountResponse": (
-        None,
-        [
-            wire.Field(1, "count", "int32"),
-        ],
-    ),
-    "HitOptions": (
-        HitOptions,
-        [
-            wire.Field(1, "victim", "uint32"),
-            wire.Field(2, "attacker", "uint32", optional=True),
-            wire.Field(3, "inflictor", "uint32", optional=True),
-            wire.Field(4, "amount", "float"),
-            wire.Field(5, "hit_group", "int32", optional=True),
-            wire.Field(6, "ability", "uint32", optional=True),
-        ],
-    ),
-    "TraceOptions": (
-        TraceOptions,
-        [
-            wire.Field(1, "start", "message", message="Vec3"),
-            wire.Field(2, "end", "message", message="Vec3"),
-            wire.Field(3, "layers", "uint64", optional=True),
-            wire.Field(4, "exclude", "uint64", optional=True),
-            wire.Field(5, "ignore", "uint32", repeated=True),
-        ],
-    ),
-    "TraceResponse": (
-        None,
-        [
-            wire.Field(1, "hit", "message", optional=True, message="TraceHit"),
-        ],
-    ),
-    "TraceHit": (
-        TraceHit,
-        [
-            wire.Field(1, "position", "message", message="Vec3"),
-            wire.Field(2, "normal", "message", message="Vec3"),
-            wire.Field(3, "start_solid", "bool"),
-            wire.Field(4, "entity", "uint32"),
-        ],
-    ),
-    "RestoreNpcsRequest": (
-        None,
-        [
-            wire.Field(1, "npcs", "message", repeated=True, message="NpcTarget"),
-        ],
-    ),
-    "NpcTarget": (
-        NpcTarget,
-        [
-            wire.Field(1, "class_name", "string"),
-            wire.Field(2, "id", "uint32"),
-            wire.Field(3, "team", "int32"),
-            wire.Field(4, "position", "message", message="Vec3"),
-            wire.Field(5, "facing", "message", message="EulerAngles"),
-            wire.Field(6, "velocity", "message", optional=True, message="Vec3"),
-            wire.Field(7, "health", "int32"),
-            wire.Field(8, "max_health", "int32"),
-            wire.Field(9, "lane", "uint32", optional=True),
-        ],
-    ),
-    "PauseRequest": (
-        None,
-        [
-            wire.Field(1, "paused", "bool"),
-        ],
-    ),
-    "MatchClockResponse": (
-        None,
-        [
-            wire.Field(1, "seconds", "float"),
-        ],
-    ),
-    "HoldMatchClockRequest": (
-        None,
-        [
-            wire.Field(1, "seconds", "float", optional=True),
-        ],
-    ),
-    "RiftResponse": (
-        None,
-        [
-            wire.Field(1, "state", "message", optional=True, message="RiftState"),
-        ],
-    ),
-    "RiftState": (
-        RiftState,
-        [
-            wire.Field(1, "scoring_team", "int32"),
-            wire.Field(2, "scoring_time", "float"),
-            wire.Field(3, "cash_in_started", "float"),
-            wire.Field(4, "give_up_time", "float"),
-            wire.Field(5, "next_spawn", "float"),
-            wire.Field(6, "spawn_window", "float"),
-        ],
-    ),
-    "StartRiftRequest": (
-        None,
-        [
-            wire.Field(1, "position", "message", message="Vec3"),
+            wire.Field(1, "heroes", "string", repeated=True),
+            wire.Field(2, "resources", "string", repeated=True),
         ],
     ),
 }

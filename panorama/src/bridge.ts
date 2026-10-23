@@ -3,7 +3,7 @@
 // page from an https origin that reaches the controller and streams each
 // screen into its title in acknowledged parts.
 
-import { Screen } from '../../proto/modlock/ui.pb.js'
+import { Screen } from '../../src/wasm/ui/ui.pb.js'
 
 /** titlePrefix marks a part of a screen in the state page's title. */
 const titlePrefix = 'modlock:snapshot:'

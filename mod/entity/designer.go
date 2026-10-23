@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/paralin/modlock/mod"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/entities"
 )
 
 // Designer is a designer name a mod creates entities of. E is the class that
@@ -69,23 +69,23 @@ func appendKeyValues(values []*mod.KeyValue, keys reflect.Value) []*mod.KeyValue
 // entityValue encodes a key value field's value. An integer is an int32, a
 // color a uint32 holding 0xRRGGBBAA, and angles travel as a vector of pitch,
 // yaw and roll.
-func entityValue(value any) *wasm.EntityValue {
+func entityValue(value any) *entities.EntityValue {
 	switch value := value.(type) {
 	case *bool:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Boolean{Boolean: *value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Boolean{Boolean: *value}}
 	case *int32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Integer{Integer: *value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Integer{Integer: *value}}
 	case *float32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Number{Number: *value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Number{Number: *value}}
 	case *string:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Text{Text: *value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Text{Text: *value}}
 	case *uint32:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Color{Color: *value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Color{Color: *value}}
 	case *mod.Vector:
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Vector{Vector: value}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Vector{Vector: value}}
 	case *mod.Angles:
 		vector := &mod.Vector{X: value.GetPitch(), Y: value.GetYaw(), Z: value.GetRoll()}
-		return &wasm.EntityValue{Value: &wasm.EntityValue_Vector{Vector: vector}}
+		return &entities.EntityValue{Value: &entities.EntityValue_Vector{Vector: vector}}
 	}
 	panic("modlock-entitygen wrote a key value of an unknown type")
 }

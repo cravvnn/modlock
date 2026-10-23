@@ -16,7 +16,7 @@ import {
   type Node,
   type Screen,
   type Style,
-} from '../../proto/modlock/ui.pb.js'
+} from '../../src/wasm/ui/ui.pb.js'
 
 /** Panel is the part of a game panel the drawing uses. */
 export interface Panel {

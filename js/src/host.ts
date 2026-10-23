@@ -2,7 +2,7 @@
 // runtime the mod runs on. Each runtime's entry binds its own transport, so
 // the library itself reads no runtime globals.
 
-import { Call, Reply } from '../../proto/modlock/wasm.pb.js'
+import { Call, Reply } from '../../src/wasm/wasm.pb.js'
 
 /** Transport exchanges an encoded Call for the host's encoded Reply. */
 export type Transport = (call: Uint8Array) => Uint8Array

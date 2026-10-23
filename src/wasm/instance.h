@@ -10,7 +10,7 @@
 #include <string>
 #include <wasmtime.hh>
 
-#include "proto/modlock/wasm.pb.h"
+#include "src/wasm/wasm.pb.h"
 #include "wasm/runtime.h"
 
 namespace modlock::wasm {

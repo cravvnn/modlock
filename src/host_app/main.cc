@@ -100,7 +100,7 @@ class FailureRecorder final : public modlock::WasmHostObserver {
     }
   }
 
-  void Ui(std::string_view, int32_t, const modlock::ui::Change&) override {}
+  void Ui(std::string_view, int32_t, const modlock::wasm::ui::Change&) override {}
 };
 
 // Options holds what the environment and the command line select.

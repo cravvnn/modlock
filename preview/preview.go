@@ -19,7 +19,7 @@ import (
 
 	"github.com/aperturerobotics/go-websocket"
 	"github.com/paralin/modlock/check"
-	"github.com/paralin/modlock/proto/modlock/cli"
+	"github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/session"
 	"github.com/paralin/modlock/source2/panorama"
 )

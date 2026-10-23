@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <algorithm>
 #include <array>
 #include <span>
@@ -9,7 +11,7 @@
 
 namespace modlock::wasm {
 
-std::expected<HeroResponse, std::string> Game::SelectHero(const SelectHeroRequest& request) {
+std::expected<players::HeroResponse, std::string> Game::SelectHero(const players::SelectHeroRequest& request) {
   // Resolve the hero and the selection service.
   auto heroes = services_.Heroes();
   if (!heroes) {
@@ -37,12 +39,12 @@ std::expected<HeroResponse, std::string> Game::SelectHero(const SelectHeroReques
   }
 
   // Answer the hero selected.
-  HeroResponse response;
+  players::HeroResponse response;
   response.set_hero(static_cast<uint32_t>(hero->id));
   return response;
 }
 
-std::expected<void, std::string> Game::Spectate(const PlayerRequest& request) {
+std::expected<void, std::string> Game::Spectate(const players::PlayerRequest& request) {
   // Resolve the selection service and the player in that slot.
   auto selection = services_.Selection();
   if (!selection) {
@@ -57,7 +59,7 @@ std::expected<void, std::string> Game::Spectate(const PlayerRequest& request) {
                                 **selection);
 }
 
-std::expected<void, std::string> Game::Watch(const WatchRequest& request) {
+std::expected<void, std::string> Game::Watch(const players::WatchRequest& request) {
   // Find the camera's observer services, which aim it.
   if (auto target = Entity(request.target()); !target) {
     return std::unexpected(target.error());
@@ -108,7 +110,7 @@ std::expected<void, std::string> Game::Watch(const WatchRequest& request) {
   return {};
 }
 
-std::expected<void, std::string> Game::Unwatch(const PlayerRequest& request) {
+std::expected<void, std::string> Game::Unwatch(const players::PlayerRequest& request) {
   // Return the player's camera to their hero.
   auto selection = services_.Selection();
   if (!selection) {
@@ -131,7 +133,7 @@ std::expected<void, std::string> Game::Unwatch(const PlayerRequest& request) {
   return {};
 }
 
-std::expected<void, std::string> Game::Respawn(const PlayerRequest& request) {
+std::expected<void, std::string> Game::Respawn(const players::PlayerRequest& request) {
   // Resolve the respawn call and the player's live pawn.
   auto respawn = services_.Respawn();
   if (!respawn) {
@@ -144,7 +146,7 @@ std::expected<void, std::string> Game::Respawn(const PlayerRequest& request) {
   return observer_.RespawnPlayer(request.player(), sample->session_generation, *respawn);
 }
 
-std::expected<void, std::string> Game::ClearItems(const PlayerRequest& request) {
+std::expected<void, std::string> Game::ClearItems(const players::PlayerRequest& request) {
   // Resolve the item tables and the player's live pawn.
   auto abilities = services_.Abilities();
   if (!abilities) {
@@ -160,7 +162,7 @@ std::expected<void, std::string> Game::ClearItems(const PlayerRequest& request) 
   return observer_.ReconcileItems(request.player(), {}, **abilities, **items);
 }
 
-std::expected<void, std::string> Game::Freeze(const FreezeRequest& request) {
+std::expected<void, std::string> Game::Freeze(const players::FreezeRequest& request) {
   // Check the player's hero is live, then freeze or release it.
   const auto slot = request.player();
   const bool frozen = !request.has_frozen() || request.frozen();
@@ -180,7 +182,7 @@ std::expected<void, std::string> Game::Freeze(const FreezeRequest& request) {
   return {};
 }
 
-std::expected<void, std::string> Game::RestoreStamina(const PlayerRequest& request) {
+std::expected<void, std::string> Game::RestoreStamina(const players::PlayerRequest& request) {
   auto now = LatchTime();
   if (!now) {
     return std::unexpected(now.error());
@@ -191,7 +193,7 @@ std::expected<void, std::string> Game::RestoreStamina(const PlayerRequest& reque
   return observer_.SetPracticeStamina(request.player(), *now);
 }
 
-std::expected<void, std::string> Game::SetStamina(const SetStaminaRequest& request) {
+std::expected<void, std::string> Game::SetStamina(const players::SetStaminaRequest& request) {
   auto now = LatchTime();
   if (!now) {
     return std::unexpected(now.error());
@@ -227,7 +229,7 @@ std::expected<float, std::string> Game::LatchTime() {
   return (*clock)->GameTime(now->current_time, now->interval).value_or(now->current_time);
 }
 
-std::expected<void, std::string> Game::RefreshAbility(const RefreshAbilityRequest& request) {
+std::expected<void, std::string> Game::RefreshAbility(const abilities::RefreshAbilityRequest& request) {
   // Find the player's ability and clear its cooldown.
   auto ability = OwnedAbility(request.player(), request.ability());
   if (!ability) {
@@ -238,7 +240,7 @@ std::expected<void, std::string> Game::RefreshAbility(const RefreshAbilityReques
   return observer_.ApplyAbilityTimers(request.player(), std::span(&*ability, 1));
 }
 
-std::expected<AbilitiesResponse, std::string> Game::Abilities(const PlayerRequest& request) {
+std::expected<abilities::AbilitiesResponse, std::string> Game::Abilities(const players::PlayerRequest& request) {
   // Resolve the ability table and the player's live abilities.
   const auto slot = request.player();
   auto definitions = services_.Abilities();
@@ -254,7 +256,7 @@ std::expected<AbilitiesResponse, std::string> Game::Abilities(const PlayerReques
   }
 
   // Answer each ability's name, slot and timers.
-  AbilitiesResponse response;
+  abilities::AbilitiesResponse response;
   for (const auto& ability : *abilities) {
     // Name the ability, its slot and its entity.
     auto* out = response.add_abilities();
@@ -277,7 +279,7 @@ std::expected<AbilitiesResponse, std::string> Game::Abilities(const PlayerReques
   return response;
 }
 
-std::expected<void, std::string> Game::SetAbility(const AbilityOptions& request) {
+std::expected<void, std::string> Game::SetAbility(const abilities::AbilityOptions& request) {
   // Find the player's ability.
   auto ability = OwnedAbility(request.player(), request.ability());
   if (!ability) {
@@ -360,7 +362,7 @@ std::expected<void, std::string> Game::LimitCharges(int32_t slot, uint32_t handl
   return charge_limit_->Set(ability, handle, maximum);
 }
 
-std::expected<void, std::string> Game::GiveItem(const GiveItemRequest& request) {
+std::expected<void, std::string> Game::GiveItem(const abilities::GiveItemRequest& request) {
   // Resolve the item tables and the player's live pawn.
   auto definitions = services_.Abilities();
   if (!definitions) {
@@ -383,7 +385,7 @@ std::expected<void, std::string> Game::GiveItem(const GiveItemRequest& request) 
   return {};
 }
 
-std::expected<void, std::string> Game::ReplaceAbility(const ReplaceAbilityRequest& request) {
+std::expected<void, std::string> Game::ReplaceAbility(const abilities::ReplaceAbilityRequest& request) {
   // Check the slot and resolve the ability tables.
   if (request.index() > UINT16_MAX) {
     return std::unexpected("the ability slot is out of range");
@@ -410,7 +412,7 @@ std::expected<void, std::string> Game::ReplaceAbility(const ReplaceAbilityReques
                            *create);
 }
 
-std::expected<void, std::string> Game::HoldModifier(const HoldModifierRequest& request) {
+std::expected<void, std::string> Game::HoldModifier(const abilities::HoldModifierRequest& request) {
   // Releasing a hold drops the slot's claim on the modifier.
   const auto& key = request.modifier();
   if (request.has_active() && !request.active()) {
@@ -450,7 +452,7 @@ std::expected<void, std::string> Game::HoldModifier(const HoldModifierRequest& r
   return renewed;
 }
 
-std::expected<void, std::string> Game::GiveModifier(const GiveModifierRequest& request) {
+std::expected<void, std::string> Game::GiveModifier(const abilities::GiveModifierRequest& request) {
   // Split the modifier's name at its ability.
   const auto& key = request.modifier();
   const auto slash = key.find('/');
@@ -523,7 +525,7 @@ std::expected<gameinterop::PawnObserver::Ability, std::string> Game::OwnedAbilit
   return std::unexpected("the hero has no ability named " + std::string(name));
 }
 
-std::expected<void, std::string> Game::Teleport(const TeleportRequest& request) {
+std::expected<void, std::string> Game::Teleport(const movement::TeleportRequest& request) {
   // Resolve the teleport call and the player's live hero.
   auto teleport = services_.Teleport();
   if (!teleport) {
@@ -548,7 +550,7 @@ std::expected<void, std::string> Game::Teleport(const TeleportRequest& request) 
   return {};
 }
 
-std::expected<void, std::string> Game::MovePlayer(const MovePlayerRequest& request) {
+std::expected<void, std::string> Game::MovePlayer(const movement::MovePlayerRequest& request) {
   // Resolve the motion setters and the player's live hero.
   auto motion = services_.Motion();
   if (!motion) {
@@ -577,7 +579,7 @@ std::expected<void, std::string> Game::MovePlayer(const MovePlayerRequest& reque
   return {};
 }
 
-std::expected<void, std::string> Game::Steer(const SteerRequest& request) {
+std::expected<void, std::string> Game::Steer(const movement::SteerRequest& request) {
   // Without steering, the slot's bot goes back to its own commands.
   const auto slot = request.player();
   if (!request.has_steering()) {
@@ -598,7 +600,7 @@ std::expected<void, std::string> Game::Steer(const SteerRequest& request) {
   return steps;
 }
 
-std::expected<void, std::string> Game::Drive(const DriveRequest& request) {
+std::expected<void, std::string> Game::Drive(const movement::DriveRequest& request) {
   // A request without a command stops the drive.
   const auto slot = request.player();
   if (!request.has_command()) {

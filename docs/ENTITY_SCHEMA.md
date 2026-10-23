@@ -30,7 +30,7 @@ and weapons.
 
 `modlock-host --dump DIRECTORY` starts a dedicated server, reads the game's
 description of itself and quits. It writes four documents, each following
-[`proto/modlock/dump/dump.proto`](../proto/modlock/dump/dump.proto) and sorted
+[`src/host_app/dump/dump.proto`](../src/host_app/dump/dump.proto) and sorted
 by name so two builds diff cleanly. [`data/dump`](../data/dump) holds them for
 the current game build, 6759:
 
@@ -214,7 +214,13 @@ collision group of a model entity's collision property:
 
 ```ts
 writeField(prop, 'CBaseModelEntity', 'm_Collision.m_CollisionGroup', 'uint8', 2)
-writeField(prop, 'CBaseModelEntity', 'm_Collision.m_collisionAttribute.m_nInteractsExclude', 'uint64', 0n)
+writeField(
+  prop,
+  'CBaseModelEntity',
+  'm_Collision.m_collisionAttribute.m_nInteractsExclude',
+  'uint64',
+  0n,
+)
 ```
 
 Each segment names a field of the structure the segment before it holds, and

@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <string_view>
 #include <utility>
 
@@ -69,7 +71,7 @@ void WasmPlugin::ReportPlayers() {
   if (!players) {
     return;
   }
-  wasm::PlayersChangedEvent event;
+  wasm::players::PlayersChangedEvent event;
   *event.mutable_players() = std::move(*players->mutable_players());
   static_cast<void>(mod_.PlayersChanged(event));
 }
@@ -136,7 +138,7 @@ wasm::Reply WasmPlugin::Call(const wasm::Call& call) {
   return reply;
 }
 
-std::expected<void, std::string> WasmPlugin::ApplyUi(const wasm::UiRequest& request) {
+std::expected<void, std::string> WasmPlugin::ApplyUi(const wasm::ui::UiRequest& request) {
   if (auto applied = ui_.Apply(request.player(), request.change()); !applied) {
     return applied;
   }
@@ -210,7 +212,7 @@ void WasmPlugin::SettingChanged(uint64_t steam_id, std::string_view key, std::st
     if (SteamId(slot) != steam_id) {
       continue;
     }
-    wasm::SettingChangedEvent event;
+    wasm::settings::SettingChangedEvent event;
     event.set_player(slot);
     event.set_key(std::string(key));
     event.set_value(*canonical);
@@ -274,7 +276,7 @@ std::expected<void, std::string> PluginGame::Log(const wasm::LogRequest& request
   return {};
 }
 
-std::expected<void, std::string> PluginGame::Ui(const wasm::UiRequest& request) {
+std::expected<void, std::string> PluginGame::Ui(const wasm::ui::UiRequest& request) {
   return plugin_.ApplyUi(request);
 }
 
@@ -283,33 +285,33 @@ std::expected<wasm::ServiceReply, std::string> PluginGame::CallService(
   return plugin_.CallService(request);
 }
 
-std::expected<wasm::SettingResponse, std::string> PluginGame::PlayerSetting(
-    const wasm::PlayerSettingRequest& request) {
+std::expected<wasm::settings::SettingResponse, std::string> PluginGame::PlayerSetting(
+    const wasm::settings::PlayerSettingRequest& request) {
   // Read the setting and wrap it.
   auto value = plugin_.PlayerSetting(request.player(), request.key());
   if (!value) {
     return std::unexpected(value.error());
   }
-  wasm::SettingResponse response;
+  wasm::settings::SettingResponse response;
   response.set_value(std::move(*value));
   return response;
 }
 
 std::expected<void, std::string> PluginGame::SetPlayerSetting(
-    const wasm::SetPlayerSettingRequest& request) {
+    const wasm::settings::SetPlayerSettingRequest& request) {
   return plugin_.SetPlayerSetting(request.player(), request.key(), request.value());
 }
 
-std::expected<void, std::string> PluginGame::AddMetric(const wasm::AddMetricRequest& request) {
+std::expected<void, std::string> PluginGame::AddMetric(const wasm::metrics::AddMetricRequest& request) {
   return plugin_.AddMetric(request.player(), request.name(), request.value(), request.label());
 }
 
-std::expected<void, std::string> PluginGame::HoldReload(const wasm::HoldReloadRequest& request) {
+std::expected<void, std::string> PluginGame::HoldReload(const wasm::abilities::HoldReloadRequest& request) {
   plugin_.Hold(request.held());
   return {};
 }
 
-void PluginGame::Impacted(const wasm::ImpactEvent& event) {
+void PluginGame::Impacted(const wasm::combat::ImpactEvent& event) {
   plugin_.Impacted(event);
 }
 

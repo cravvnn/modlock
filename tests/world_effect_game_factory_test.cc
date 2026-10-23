@@ -120,7 +120,7 @@ class EffectTest : public ::testing::Test {
 
 TEST_F(EffectTest, CreatesMovesAndRemovesOneNativeEffect) {
   // Create an effect at a point.
-  modlock::Vec3 at;
+  modlock::geometry::Vec3 at;
   at.set_x(4);
   at.set_y(5);
   at.set_z(6);
@@ -263,7 +263,7 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   EXPECT_EQ(steps.back(), "execute");
 
   // Moving it teleports.
-  modlock::Vec3 origin;
+  modlock::geometry::Vec3 origin;
   origin.set_x(42);
   model->get()->Move(origin, std::nullopt);
   EXPECT_EQ(steps.back(), "teleport:42");

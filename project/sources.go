@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -67,7 +67,7 @@ func installTree(dir string, library fs.FS) error {
 // writeSources zips the project's sources, then each file of library under
 // the name rename gives it, and writes the built mod for runtime. rename
 // returns "" for a file the mod leaves out.
-func (p *Project) writeSources(runtime wasm.Manifest_Runtime, sources []string, library fs.FS, rename func(string) string) error {
+func (p *Project) writeSources(runtime manifest.Manifest_Runtime, sources []string, library fs.FS, rename func(string) string) error {
 	// Zip the sources, then the library.
 	var archive bytes.Buffer
 	writer := zip.NewWriter(&archive)

@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/npc_restore.h"
 
 #include <format>

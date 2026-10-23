@@ -5,7 +5,7 @@
 #include <cmath>
 
 #include "modlock/gameinterop/entity_abi.h"
-#include "proto/modlock/types.pb.h"
+#include "src/geometry/geometry.pb.h"
 
 namespace modlock::gameinterop {
 namespace {
@@ -15,14 +15,14 @@ bool Finite(const std::array<float, 3>& vector) {
                      [](float value) { return std::isfinite(value); });
 }
 
-std::array<float, 3> Position(const Vec3& position) {
+std::array<float, 3> Position(const geometry::Vec3& position) {
   return {static_cast<float>(position.x()), static_cast<float>(position.y()),
           static_cast<float>(position.z())};
 }
 
 }  // namespace
 
-bool TeleportPawnControl::TeleportToPosition(int32_t slot, const Vec3& position) {
+bool TeleportPawnControl::TeleportToPosition(int32_t slot, const geometry::Vec3& position) {
   // Teleport a live pawn to a finite position.
   const auto target = Position(position);
   if (!Finite(target)) {
@@ -36,8 +36,8 @@ bool TeleportPawnControl::TeleportToPosition(int32_t slot, const Vec3& position)
   return true;
 }
 
-bool TeleportPawnControl::ResetToPose(int32_t slot, const Vec3& position,
-                                      const EulerAngles& angles) {
+bool TeleportPawnControl::ResetToPose(int32_t slot, const geometry::Vec3& position,
+                                      const geometry::EulerAngles& angles) {
   // Reset a live pawn's camera to a finite pose.
   if (!reset_camera_) {
     return false;

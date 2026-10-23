@@ -520,7 +520,7 @@ outside the addon's directories.
 A TypeScript or JavaScript mod imports `modlock` and registers its handlers when
 it loads. `main.ts`, or `main.js`, is the entry, and the types check as you
 type, with no Node.js or npm to install. A JavaScript mod is checked from its
-JSDoc. [`proto/modlock/wasm.proto`](proto/modlock/wasm.proto) documents every
+JSDoc. [`src/wasm/wasm.proto`](src/wasm/wasm.proto) documents every
 call, its arguments and its result.
 
 Every build bundles the mod for QuickJS, which runs any JavaScript and builds in
@@ -786,7 +786,7 @@ Style `panel`, `label`, `image`, `button` and `layout` with `width`,
 `letterSpacing`, `shadow`, `borderWidth` and `borderColor`.
 
 An interface travels as the typed tree in
-[`proto/modlock/ui.proto`](proto/modlock/ui.proto). The player's game draws it
+[`src/wasm/ui/ui.proto`](src/wasm/ui/ui.proto). The player's game draws it
 and runs no mod code, and a button press comes back to its `onPress`. The host
 clears it when the player leaves or the mod stops.
 
@@ -831,7 +831,7 @@ The game draws interfaces with the renderer in [`panorama/`](panorama):
 A spot is a base map and the solid objects players placed on it.
 [`examples/dropper`](examples/dropper) builds one on Midtown: `/build` opens the
 catalog, and every player drops into the same spot. The document in
-[`proto/modlock/spot/spot.proto`](proto/modlock/spot/spot.proto) stores each
+[`mod/spot/spot.proto`](mod/spot/spot.proto) stores each
 model path and builder once, so a few hundred objects fit in a few kilobytes.
 
 ## The manifest
@@ -1138,7 +1138,7 @@ one:
 | `modlock.host_read(ptr, len)`        | mod to host | Copy the host's pending message, a `Call` or a `Reply`, into mod memory.                                                                                                                        |
 | `modlock_event(len) -> i64`          | host to mod | Deliver a `Call` of `len` bytes, which the mod copies with `host_read`. Returns the address and length of the encoded `Reply`, packed as `address << 32 \| length`, or zero for an empty reply. |
 
-The calls are in [`proto/modlock/wasm.proto`](proto/modlock/wasm.proto). A
+The calls are in [`src/wasm/wasm.proto`](src/wasm/wasm.proto). A
 `Call` selects one method of the `Host` service, when a mod calls the game, or
 of the `Mod` service, when the host delivers an event, and carries its encoded
 request. The `Reply` carries the encoded response or an error. A new capability
@@ -1213,7 +1213,7 @@ To build from a source archive without `.git`, pass its commit with
 as it describes itself to `schemas.json` (schema classes and enums),
 `entities.json` (designer names, key values, inputs and outputs) and
 `console.json` (console variables and commands), and quits. The documents
-follow [`proto/modlock/dump/dump.proto`](proto/modlock/dump/dump.proto) and are
+follow [`src/host_app/dump/dump.proto`](src/host_app/dump/dump.proto) and are
 sorted by name, so two builds' dumps diff cleanly. Beside them, `survey.json`
 records what creating each designer name on a dedicated server did: whether
 the entity lived, vanished, was refused or crashed the server, alone and with
@@ -1351,8 +1351,12 @@ resolution, platform boundaries, and hook lifetime.
 
 ## Protocols
 
-Messages live in [`proto/modlock`](proto/modlock) and keep the `modlock` wire
-package. `bun run gen` regenerates all of the Go, TypeScript, Luau, Python, and
+Each concern's messages live in a `.proto` beside the code that implements it,
+in its own package named for its directory: `src/wasm/players/players.proto`
+declares `modlock.wasm.players`, the C++ namespace `modlock::wasm::players`
+and the Go package `github.com/paralin/modlock/src/wasm/players`. The mod
+boundary's calls are in [`src/wasm/wasm.proto`](src/wasm/wasm.proto) and the
+messages they carry in the packages beside it. `bun run gen` regenerates all of the Go, TypeScript, Luau, Python, and
 C++ code with the protobuf toolchain the repository pins.
 
 `modlock build` builds the TypeScript library in [`js/`](js) from the Modlock

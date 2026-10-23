@@ -1,0 +1,42 @@
+syntax = "proto2";
+
+package modlock.gameinterop.engine;
+
+option go_package = "github.com/paralin/modlock/src/gameinterop/engine;engine";
+
+// PlayerChatMessage matches native CUserMessageSayText2, message 118.
+// It carries accepted console chat.
+message PlayerChatMessage {
+  // EntityIndex identifies the sender's native controller; zero is server chat.
+  optional int32 entity_index = 1 [default = -1];
+
+  // Chat distinguishes a player chat line from another text notification.
+  optional bool chat = 2;
+
+  // MessageName selects the native localization template and chat audience.
+  optional string message_name = 3;
+
+  // PlayerName is the first native template parameter, the sender's display name.
+  optional string player_name = 4;
+
+  // Text is the second native template parameter, the accepted chat text.
+  optional string text = 5;
+
+  // Param3 preserves the third native template parameter.
+  optional string param3 = 6;
+
+  // Param4 preserves the fourth native template parameter.
+  optional string param4 = 7;
+}
+
+// ChatMessage matches CCitadelUserMsg_ChatMsg, message 314, from the game chat box.
+message ChatMessage {
+  // PlayerSlot identifies the sender's zero-based client slot.
+  optional int32 player_slot = 1 [default = -1];
+
+  // Text contains the accepted player chat.
+  optional string text = 2;
+
+  // AllChat distinguishes global chat from team chat.
+  optional bool all_chat = 3;
+}

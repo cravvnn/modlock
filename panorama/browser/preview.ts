@@ -2,12 +2,7 @@
 // game would, from the cli.Preview states modlock dev sends on a websocket,
 // and sends its presses and chat commands back as that player's input.
 
-import {
-  type Built,
-  Input,
-  Preview,
-  type Stopped,
-} from '../../proto/modlock/cli/cli.pb.js'
+import { type Built, Input, Preview, type Stopped } from '../../cli/cli.pb.js'
 import { Drawing, type Layouts } from '../src/draw.js'
 import { DomPanel, domPanorama } from './dom.js'
 

@@ -13,8 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paralin/modlock/proto/modlock/publish"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
 )
 
 // TestPublish uploads a mod, its map and its client content with a saved session and reads back
@@ -36,7 +35,7 @@ func TestPublish(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	mod := &Mod{Dir: dir, Manifest: &wasm.Manifest{Slug: "hello", Version: "1.0.0", Entry: "mod.wasm", Map: "hl_court"}, Notes: "Faster rounds"}
+	mod := &Mod{Dir: dir, Manifest: &manifest.Manifest{Slug: "hello", Version: "1.0.0", Entry: "mod.wasm", Map: "hl_court"}, Notes: "Faster rounds"}
 
 	// Serve the release endpoint, recording what each upload carried.
 	var uploaded []string
@@ -53,19 +52,19 @@ func TestPublish(t *testing.T) {
 		uploaded = tarNames(t, r.Body)
 		notes = r.URL.Query().Get("notes")
 		if refuse {
-			data, _ := (&publish.Error{Code: "invalid", Message: "the version 1.0.0 is already published"}).MarshalVT()
+			data, _ := (&Error{Code: "invalid", Message: "the version 1.0.0 is already published"}).MarshalVT()
 			w.WriteHeader(http.StatusConflict)
 			_, _ = w.Write(data)
 			return
 		}
-		data, _ := (&publish.Release{Slug: "hello", Version: "1.0.0", ReviewState: publish.ReviewState_REVIEW_STATE_APPROVED}).MarshalVT()
+		data, _ := (&Release{Slug: "hello", Version: "1.0.0", ReviewState: ReviewState_REVIEW_STATE_APPROVED}).MarshalVT()
 		_, _ = w.Write(data)
 	}))
 	defer service.Close()
 
 	// Save a valid session for the service.
 	sessionFile := filepath.Join(t.TempDir(), "session.json")
-	saved, _ := (&publish.Session{Origin: service.URL, Token: "saved", ExpiresAt: time.Now().Add(time.Hour).UnixMilli()}).MarshalJSON()
+	saved, _ := (&Session{Origin: service.URL, Token: "saved", ExpiresAt: time.Now().Add(time.Hour).UnixMilli()}).MarshalJSON()
 	if err := os.WriteFile(sessionFile, saved, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +75,7 @@ func TestPublish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if release.GetReviewState() != publish.ReviewState_REVIEW_STATE_APPROVED {
+	if release.GetReviewState() != ReviewState_REVIEW_STATE_APPROVED {
 		t.Errorf("review state %v, want approved", release.GetReviewState())
 	}
 	if !slices.Equal(uploaded, []string{"mod.json", "mod.wasm", "maps/hl_court.vpk", "panorama/layout/hello-1.0.0/panel.vxml_c"}) {

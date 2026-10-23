@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "modlock/gameinterop/game_symbols.h"
-#include "proto/modlock/wasm.pb.h"
+#include "src/wasm/manifest/manifest.pb.h"
 
 namespace modlock::wasm {
 
@@ -16,6 +16,6 @@ namespace modlock::wasm {
 // in the returned problems.
 std::expected<std::vector<std::string>, std::string> TuneAbilities(
     const gameinterop::ModuleImage& module, void* schema, const char* module_name,
-    const google::protobuf::RepeatedPtrField<AbilityTuning>& abilities);
+    const google::protobuf::RepeatedPtrField<manifest::AbilityTuning>& abilities);
 
 }  // namespace modlock::wasm

@@ -6,7 +6,7 @@ import {
   CommandResult,
   FrameEvent,
   Reply,
-} from '../../proto/modlock/wasm.pb.js'
+} from '../../src/wasm/wasm.pb.js'
 import { bind, deliver as dispatch } from '../src/host.js'
 import { command, onFrame } from '../src/index.js'
 

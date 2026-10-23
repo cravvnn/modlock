@@ -13,7 +13,7 @@ namespace {
 
 using modlock::wasm::Canonical;
 using modlock::wasm::DefaultValue;
-using modlock::wasm::Setting;
+using modlock::wasm::settings::Setting;
 
 TEST(Settings, AcceptsEachKindsValues) {
   // A choice accepts only its listed values.

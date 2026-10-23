@@ -1,8 +1,10 @@
+//go:build deps_only
+
 #include <algorithm>
 #include <array>
 #include <utility>
 
-#include "proto/modlock/hud.pb.h"
+#include "src/gameinterop/engine/hud.pb.h"
 #include "wasm/game.h"
 #include "wasm/game_internal.h"
 
@@ -11,18 +13,18 @@ namespace modlock::wasm {
 namespace {
 
 // ScreenState returns the game's state for a screen effect.
-std::expected<engine::ScreenEffectState, std::string> ScreenState(ScreenEffect effect) {
+std::expected<gameinterop::engine::ScreenEffectState, std::string> ScreenState(effects::ScreenEffect effect) {
   switch (effect) {
-    case SCREEN_EFFECT_KILLED:
-      return engine::SCREEN_EFFECT_STATE_KILLED;
-    case SCREEN_EFFECT_BLACK:
-      return engine::SCREEN_EFFECT_STATE_BLACK;
-    case SCREEN_EFFECT_BLINDED:
-      return engine::SCREEN_EFFECT_STATE_BLINDED;
-    case SCREEN_EFFECT_DARKNESS:
-      return engine::SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER;
-    case SCREEN_EFFECT_MATCH_INTRO:
-      return engine::SCREEN_EFFECT_STATE_MATCH_INTRO;
+    case effects::SCREEN_EFFECT_KILLED:
+      return gameinterop::engine::SCREEN_EFFECT_STATE_KILLED;
+    case effects::SCREEN_EFFECT_BLACK:
+      return gameinterop::engine::SCREEN_EFFECT_STATE_BLACK;
+    case effects::SCREEN_EFFECT_BLINDED:
+      return gameinterop::engine::SCREEN_EFFECT_STATE_BLINDED;
+    case effects::SCREEN_EFFECT_DARKNESS:
+      return gameinterop::engine::SCREEN_EFFECT_STATE_DRIFTER_DARKNESS_CASTER;
+    case effects::SCREEN_EFFECT_MATCH_INTRO:
+      return gameinterop::engine::SCREEN_EFFECT_STATE_MATCH_INTRO;
     default:
       return std::unexpected("the screen effect is unknown");
   }
@@ -30,7 +32,7 @@ std::expected<engine::ScreenEffectState, std::string> ScreenState(ScreenEffect e
 
 }  // namespace
 
-std::expected<TraceResponse, std::string> Game::Trace(const TraceOptions& request) {
+std::expected<combat::TraceResponse, std::string> Game::Trace(const combat::TraceOptions& request) {
   // Resolve the world's collision.
   auto trace = engine_->Trace();
   if (!trace) {
@@ -61,7 +63,7 @@ std::expected<TraceResponse, std::string> Game::Trace(const TraceOptions& reques
   }
 
   // Report the hit, if any.
-  TraceResponse response;
+  combat::TraceResponse response;
   if (!result->DidHit()) {
     return response;
   }
@@ -73,7 +75,7 @@ std::expected<TraceResponse, std::string> Game::Trace(const TraceOptions& reques
   return response;
 }
 
-std::expected<ObjectResponse, std::string> Game::CreateParticle(const ParticleOptions& request) {
+std::expected<objects::ObjectResponse, std::string> Game::CreateParticle(const objects::ParticleOptions& request) {
   // Resolve the effects service.
   auto effects = services_.Effects();
   if (!effects) {
@@ -107,7 +109,7 @@ std::expected<ObjectResponse, std::string> Game::CreateParticle(const ParticleOp
   return Keep(std::unique_ptr<render::WorldEffect>(std::move(*particle)));
 }
 
-std::expected<ObjectResponse, std::string> Game::CreateFog(const FogOptions& request) {
+std::expected<objects::ObjectResponse, std::string> Game::CreateFog(const objects::FogOptions& request) {
   // kDrawDistance reaches the far edges of the largest map.
   constexpr float kDrawDistance = 16384;
   auto effects = services_.Effects();
@@ -138,7 +140,7 @@ std::expected<ObjectResponse, std::string> Game::CreateFog(const FogOptions& req
   return Keep(std::move(*volume));
 }
 
-std::expected<void, std::string> Game::Heal(const HealRequest& request) {
+std::expected<void, std::string> Game::Heal(const players::HealRequest& request) {
   // Read the live hero.
   auto sample = Live(request.player());
   if (!sample) {
@@ -161,7 +163,7 @@ std::expected<void, std::string> Game::Heal(const HealRequest& request) {
   return {};
 }
 
-std::expected<void, std::string> Game::ScreenEffect(const ScreenEffectRequest& request) {
+std::expected<void, std::string> Game::ScreenEffect(const effects::ScreenEffectRequest& request) {
   // Resolve the messages, the screen's owner and the effect.
   auto messages = services_.Messages();
   if (!messages) {
@@ -185,7 +187,7 @@ std::expected<void, std::string> Game::ScreenEffect(const ScreenEffectRequest& r
                                     .fade_out = timing.fade_out()});
 }
 
-std::expected<void, std::string> Game::ClearScreenEffect(const ClearScreenEffectRequest& request) {
+std::expected<void, std::string> Game::ClearScreenEffect(const effects::ClearScreenEffectRequest& request) {
   // Resolve the messages, the screen's owner and the effect.
   auto messages = services_.Messages();
   if (!messages) {
@@ -212,7 +214,7 @@ std::expected<int32_t, std::string> Game::ScreenOwner(int32_t slot) {
   return static_cast<int32_t>(gameinterop::EntityIndexOf(sample->pawn_handle));
 }
 
-std::expected<void, std::string> Game::Sound(const SoundRequest& request) {
+std::expected<void, std::string> Game::Sound(const effects::SoundRequest& request) {
   // Play the sound on the live player's hero.
   auto sound = services_.Sound();
   if (!sound) {

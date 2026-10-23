@@ -66,8 +66,8 @@ const (
 )
 
 // Scriptc is the directory of the built library that holds the source scriptc
-// compiles: the library under js/src and proto/modlock, as in the Modlock
-// source, and the protobuf runtime under protobuf-es-lite.
+// compiles: the library under js/src and the generated messages it imports,
+// as in the Modlock source, and the protobuf runtime under protobuf-es-lite.
 const Scriptc = "scriptc"
 
 // ScriptcProtobuf is the protobuf runtime's source directory under Scriptc.
@@ -83,8 +83,29 @@ const protobufVersion = "1.2.4"
 // runtime it includes.
 const banner = "/*! Includes protobuf-es-lite under the Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0 */"
 
-// sources are the paths under the Modlock source that Build reads.
-var sources = []string{"js/src", "js/tsconfig.json", "proto/modlock", "panorama/src", "panorama/browser"}
+// sources are the paths under the Modlock source that Build reads. Under the
+// message roots it reads only the generated TypeScript messages.
+var sources = append([]string{"js/src", "js/tsconfig.json", "panorama/src", "panorama/browser"}, messageRoots...)
+
+// messageRoots are the directories whose generated messages the library and
+// renderer import.
+var messageRoots = []string{"src", "cli", "mod/spot"}
+
+// isMessage reports whether name is a generated TypeScript message under one
+// of the message roots.
+func isMessage(name string) bool {
+	return strings.HasSuffix(name, ".pb.ts") && underMessageRoot(name)
+}
+
+// underMessageRoot reports whether name lies under one of the message roots.
+func underMessageRoot(name string) bool {
+	for _, root := range messageRoots {
+		if strings.HasPrefix(name, root+"/") {
+			return true
+		}
+	}
+	return false
+}
 
 // pageFiles are the preview page's files that Build copies as they are, by
 // their names under panorama/browser.
@@ -255,11 +276,11 @@ func walkSources(source string, visit func(name string, data []byte) error) erro
 	root := os.DirFS(source)
 	for _, top := range sources {
 		err := fs.WalkDir(root, top, func(name string, entry fs.DirEntry, err error) error {
-			// Skip directories, tests and the generated Go protobufs.
+			// Skip directories, tests and everything beside the messages.
 			if err != nil || entry.IsDir() {
 				return err
 			}
-			if strings.HasSuffix(name, ".test.ts") || (strings.HasPrefix(name, "proto/") && !strings.HasSuffix(name, ".pb.ts")) {
+			if strings.HasSuffix(name, ".test.ts") || (underMessageRoot(name) && !isMessage(name)) {
 				return nil
 			}
 			data, err := fs.ReadFile(root, name)
@@ -371,7 +392,7 @@ func Build(ctx context.Context, source, out string) error {
 
 	// Keep the library's source and the protobuf runtime's for scriptc.
 	err = walkSources(source, func(name string, data []byte) error {
-		if !strings.HasPrefix(name, "js/src/") && !strings.HasPrefix(name, "proto/") {
+		if !strings.HasPrefix(name, "js/src/") && !isMessage(name) {
 			return nil
 		}
 		return write(filepath.Join(out, Scriptc, filepath.FromSlash(name)), data)

@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package modlock.wasm.abilities;
+
+option go_package = "github.com/paralin/modlock/src/wasm/abilities;abilities";
+
+// HoldReloadRequest holds or releases the mod's running build.
+message HoldReloadRequest {
+  // Held is true to keep the running build through a reload, and false to
+  // let a waiting reload apply.
+  bool held = 1;
+}
+
+// RefreshAbilityRequest names one ability of a player's hero.
+message RefreshAbilityRequest {
+  int32 player = 1;
+
+  // Ability is the ability's name.
+  string ability = 2;
+}
+
+// AbilitiesResponse lists a hero's abilities in the hero's order.
+message AbilitiesResponse {
+  repeated Ability abilities = 1;
+}
+
+// Ability is one ability a hero owns.
+message Ability {
+  // Name is the ability's name, such as citadel_ability_hornet_snipe.
+  string name = 1;
+
+  // Slot is the ability's place on the hero: 0 to 3 are the ability keys.
+  int32 slot = 2;
+
+  // Entity is the ability's entity handle, as DamageEvent.ability reports
+  // it.
+  uint32 entity = 3;
+
+  // Upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
+  // its upgrades.
+  uint32 upgrades = 4;
+
+  // Charges is the charges the ability holds.
+  int32 charges = 5;
+
+  // CooldownEnd is the game time its cooldown ends, or zero without one.
+  float cooldown_end = 6;
+
+  // Id identifies the ability's definition, as replays record it.
+  uint32 id = 7;
+
+  // State is the packed upgrade word; its high half is upgrades.
+  uint32 state = 8;
+
+  // CooldownStart is the game time its cooldown began.
+  float cooldown_start = 9;
+
+  // RechargeStart is the game time its next charge began recovering.
+  float recharge_start = 10;
+
+  // RechargeEnd is the game time its next charge returns, or zero without
+  // one.
+  float recharge_end = 11;
+}
+
+// AbilityOptions changes one ability of a player's hero.
+message AbilityOptions {
+  int32 player = 1;
+
+  // Ability is the ability's name.
+  string ability = 2;
+
+  // Upgrades replaces the bought tiers, as Ability.upgrades: 0b1111 unlocks
+  // it with all three upgrades.
+  optional uint32 upgrades = 3;
+
+  // Charges replaces the charges the ability holds, keeping its timers.
+  optional int32 charges = 4;
+
+  // CooldownEnd replaces the game time its cooldown ends.
+  optional float cooldown_end = 5;
+
+  // RechargeEnd replaces the game time its next charge returns.
+  optional float recharge_end = 6;
+
+  // MaxCharges replaces the most charges the ability can hold, from 1 to 100;
+  // 0 returns it to the game's own. The server applies it, so the hero's
+  // screen can still show the game's maximum. Charges above the new maximum
+  // are not removed; set them with charges.
+  optional int32 max_charges = 7;
+}
+
+// GiveItemRequest gives one player's hero an item.
+message GiveItemRequest {
+  int32 player = 1;
+
+  // Item is the item's name, such as upgrade_fleetfoot_boots.
+  string item = 2;
+}
+
+// ReplaceAbilityRequest puts an ability in one of a player's ability slots.
+message ReplaceAbilityRequest {
+  int32 player = 1;
+
+  // Index is the ability slot, as Ability.slot.
+  uint32 index = 2;
+
+  // Ability is the new ability's name, such as ability_viper_slide.
+  string ability = 3;
+}
+
+// HoldModifierRequest holds or releases an ability's modifier on one
+// player's hero.
+message HoldModifierRequest {
+  int32 player = 1;
+
+  // Modifier names the modifier as "<ability>/<modifier>", such as
+  // upgrade_fleetfoot_boots/modifier_fleetfoot_boots.
+  string modifier = 2;
+
+  // Active holds the modifier when true or omitted; false releases the hold.
+  optional bool active = 3;
+}
+
+// GiveModifierRequest gives one player's living hero an ability's modifier.
+message GiveModifierRequest {
+  int32 player = 1;
+
+  // Modifier names the modifier as "<ability>/<modifier>", such as
+  // ability_smoke_bomb/smokebomb_modifier_invis.
+  string modifier = 2;
+
+  // Seconds is how long the modifier lasts.
+  float seconds = 3;
+}
+
+// ModifierStateRequest asks whether a modifier state is active on an entity.
+message ModifierStateRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // State is the EModifierState name, such as MODIFIER_STATE_PARRY_ACTIVE.
+  string state = 2;
+}
+
+// ActiveResponse reports whether a state is active.
+message ActiveResponse {
+  bool active = 1;
+}
+
+// HoldModifierStateRequest holds one modifier state on an entity, or
+// releases it.
+message HoldModifierStateRequest {
+  // Entity is the entity handle, such as Pawn.entity.
+  uint32 entity = 1;
+
+  // State is the state's name, such as MODIFIER_STATE_ITEMS_DISABLED.
+  string state = 2;
+
+  // Active holds the state when true or omitted; false releases the hold.
+  optional bool active = 3;
+}

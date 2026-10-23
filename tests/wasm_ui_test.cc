@@ -8,8 +8,8 @@
 
 namespace {
 
-using modlock::ui::Change;
-using modlock::ui::Kind;
+using modlock::wasm::ui::Change;
+using modlock::wasm::ui::Kind;
 using modlock::wasm::UiTrees;
 
 // Set returns a change that sets one node.
@@ -26,8 +26,8 @@ Change Set(std::string id, Kind kind, bool reset = false) {
 TEST(UiTrees, TracksButtons) {
   // A button is tracked per slot.
   UiTrees trees;
-  ASSERT_TRUE(trees.Apply(3, Set("ready", modlock::ui::KIND_BUTTON)));
-  ASSERT_TRUE(trees.Apply(3, Set("score", modlock::ui::KIND_LABEL)));
+  ASSERT_TRUE(trees.Apply(3, Set("ready", modlock::wasm::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(3, Set("score", modlock::wasm::ui::KIND_LABEL)));
   EXPECT_TRUE(trees.IsButton(3, "ready"));
   EXPECT_FALSE(trees.IsButton(3, "score"));
   EXPECT_FALSE(trees.IsButton(4, "ready"));
@@ -37,27 +37,27 @@ TEST(UiTrees, TracksButtons) {
   removed.add_removed("ready");
   ASSERT_TRUE(trees.Apply(3, removed));
   EXPECT_FALSE(trees.IsButton(3, "ready"));
-  ASSERT_TRUE(trees.Apply(3, Set("ready", modlock::ui::KIND_BUTTON)));
-  ASSERT_TRUE(trees.Apply(3, Set("", modlock::ui::KIND_PANEL, true)));
+  ASSERT_TRUE(trees.Apply(3, Set("ready", modlock::wasm::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(3, Set("", modlock::wasm::ui::KIND_PANEL, true)));
   EXPECT_FALSE(trees.IsButton(3, "ready"));
 }
 
 TEST(UiTrees, RefusesWhatCannotBeDrawn) {
   // Track a button.
   UiTrees trees;
-  ASSERT_TRUE(trees.Apply(0, Set("ready", modlock::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(0, Set("ready", modlock::wasm::ui::KIND_BUTTON)));
 
   // Images come only from the game, and ids and slots are bounded.
-  auto web = Set("logo", modlock::ui::KIND_IMAGE);
+  auto web = Set("logo", modlock::wasm::ui::KIND_IMAGE);
   web.mutable_set(0)->set_image("https://example.com/logo.png");
   EXPECT_FALSE(trees.Apply(0, web));
   web.mutable_set(0)->set_image("file://{images}/heroes/wraith_card.psd");
   EXPECT_TRUE(trees.Apply(0, web));
-  EXPECT_FALSE(trees.Apply(0, Set(std::string(65, 'x'), modlock::ui::KIND_PANEL)));
-  EXPECT_FALSE(trees.Apply(64, Set("ready", modlock::ui::KIND_BUTTON)));
+  EXPECT_FALSE(trees.Apply(0, Set(std::string(65, 'x'), modlock::wasm::ui::KIND_PANEL)));
+  EXPECT_FALSE(trees.Apply(64, Set("ready", modlock::wasm::ui::KIND_BUTTON)));
 
   // A layout names an .xml file inside the mod's addon and nothing outside it.
-  auto layout = Set("inventory", modlock::ui::KIND_LAYOUT);
+  auto layout = Set("inventory", modlock::wasm::ui::KIND_LAYOUT);
   for (const char* path : {"", "inventory.js", "../hyperline/session.xml", "a//b.xml", "a b.xml"}) {
     layout.mutable_set(0)->set_layout(path);
     EXPECT_FALSE(trees.Apply(0, layout)) << path;
@@ -80,15 +80,15 @@ TEST(UiTrees, RefusesWhatCannotBeDrawn) {
 TEST(UiTrees, ForgetsPlayers) {
   // Two players, and the first departs.
   UiTrees trees;
-  ASSERT_TRUE(trees.Apply(1, Set("a", modlock::ui::KIND_BUTTON)));
-  ASSERT_TRUE(trees.Apply(2, Set("b", modlock::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(1, Set("a", modlock::wasm::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(2, Set("b", modlock::wasm::ui::KIND_BUTTON)));
   EXPECT_TRUE(trees.Drop(1));
   EXPECT_FALSE(trees.Drop(1));
 
   // The departed slot takes only a reset, which ends the departure.
-  EXPECT_FALSE(trees.Apply(1, Set("a", modlock::ui::KIND_BUTTON)));
-  ASSERT_TRUE(trees.Apply(1, Set("a", modlock::ui::KIND_BUTTON, true)));
-  ASSERT_TRUE(trees.Apply(1, Set("c", modlock::ui::KIND_LABEL)));
+  EXPECT_FALSE(trees.Apply(1, Set("a", modlock::wasm::ui::KIND_BUTTON)));
+  ASSERT_TRUE(trees.Apply(1, Set("a", modlock::wasm::ui::KIND_BUTTON, true)));
+  ASSERT_TRUE(trees.Apply(1, Set("c", modlock::wasm::ui::KIND_LABEL)));
   EXPECT_TRUE(trees.Drop(1));
   EXPECT_EQ(trees.Clear(), std::vector<int32_t>{2});
   EXPECT_TRUE(trees.Clear().empty());

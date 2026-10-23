@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/source2/panorama"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +35,7 @@ func Version(version string) error {
 // Addon returns the name of the content addon a release of the mod ships: its
 // slug and version. Panorama keeps each layout it loads for the life of the
 // game, so every release names its own, and a slug belongs to one mod.
-func Addon(manifest *wasm.Manifest) string {
+func Addon(manifest *manifestpb.Manifest) string {
 	return manifest.GetSlug() + "-" + manifest.GetVersion()
 }
 

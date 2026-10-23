@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/paralin/modlock/proto/modlock/dump"
+	"github.com/paralin/modlock/src/host_app/dump"
 	"github.com/pkg/errors"
 )
 

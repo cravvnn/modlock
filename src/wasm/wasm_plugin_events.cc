@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -17,31 +19,31 @@ namespace {
 constexpr size_t kMaxDamaged = 1024;
 
 // MovementActionOf names a movement execution the game announced.
-wasm::MovementAction MovementActionOf(gameinterop::MovementExecution execution) {
+wasm::movement::MovementAction MovementActionOf(gameinterop::MovementExecution execution) {
   using enum gameinterop::MovementExecution;
   switch (execution) {
     case kLandedOnGround:
-      return wasm::MOVEMENT_ACTION_LANDED;
+      return wasm::movement::MOVEMENT_ACTION_LANDED;
     case kAttachedToZipline:
-      return wasm::MOVEMENT_ACTION_ZIPLINE_ATTACHED;
+      return wasm::movement::MOVEMENT_ACTION_ZIPLINE_ATTACHED;
     case kGroundDash:
-      return wasm::MOVEMENT_ACTION_GROUND_DASH;
+      return wasm::movement::MOVEMENT_ACTION_GROUND_DASH;
     case kSlide:
-      return wasm::MOVEMENT_ACTION_SLIDE;
+      return wasm::movement::MOVEMENT_ACTION_SLIDE;
     case kBouncePadActivated:
-      return wasm::MOVEMENT_ACTION_BOUNCE_PAD;
+      return wasm::movement::MOVEMENT_ACTION_BOUNCE_PAD;
     case kDashJump:
-      return wasm::MOVEMENT_ACTION_DASH_JUMP;
+      return wasm::movement::MOVEMENT_ACTION_DASH_JUMP;
     case kAirJump:
-      return wasm::MOVEMENT_ACTION_AIR_JUMP;
+      return wasm::movement::MOVEMENT_ACTION_AIR_JUMP;
     case kWallJump:
-      return wasm::MOVEMENT_ACTION_WALL_JUMP;
+      return wasm::movement::MOVEMENT_ACTION_WALL_JUMP;
     case kAirDash:
-      return wasm::MOVEMENT_ACTION_AIR_DASH;
+      return wasm::movement::MOVEMENT_ACTION_AIR_DASH;
     case kMeleeAttackStarted:
-      return wasm::MOVEMENT_ACTION_MELEE_STARTED;
+      return wasm::movement::MOVEMENT_ACTION_MELEE_STARTED;
   }
-  return wasm::MOVEMENT_ACTION_UNKNOWN;
+  return wasm::movement::MOVEMENT_ACTION_UNKNOWN;
 }
 
 // Departures forwards player departures to a plugin, which owns the
@@ -62,7 +64,7 @@ class Departures final : public gameinterop::ConnectionEventSink {
 
 void WasmPlugin::Move() {
   // Only a running QuakeWorld mod moves players, and only once.
-  if (movement_ || !instance_ || manifest_.movement().model() != wasm::Movement::MODEL_QUAKEWORLD) {
+  if (movement_ || !instance_ || manifest_.movement().model() != wasm::manifest::Movement::MODEL_QUAKEWORLD) {
     return;
   }
 
@@ -108,7 +110,7 @@ void WasmPlugin::Steer() {
     const auto on = landing.on == 0 ? hero_slots_.end() : hero_slots_.find(landing.on);
 
     // Tell the mod, which may stop movement.
-    wasm::LandedEvent event;
+    wasm::movement::LandedEvent event;
     event.set_player(player->second);
     event.set_on(on == hero_slots_.end() ? -1 : on->second);
     event.set_speed(landing.speed);
@@ -219,7 +221,7 @@ bool WasmPlugin::Hit(const gameinterop::DamageContactEvent& contact) {
   adjusted_.reset();
 
   // Describe the hit to the mod.
-  wasm::DamageEvent event;
+  wasm::combat::DamageEvent event;
   event.set_victim(contact.victim_handle);
   event.set_attacker(contact.attacker_handle);
   event.set_inflictor(contact.inflictor_handle == UINT32_MAX ? 0 : contact.inflictor_handle);
@@ -256,7 +258,7 @@ void WasmPlugin::Fought(const gameinterop::CombatEvent& event, bool damaged) {
     facts_.push_back({event.movement->pawn_handle, MovementActionOf(event.movement->execution)});
   }
   if (event.ability) {
-    facts_.push_back({event.ability->caster_handle, wasm::MOVEMENT_ACTION_ABILITY_EXECUTED,
+    facts_.push_back({event.ability->caster_handle, wasm::movement::MOVEMENT_ACTION_ABILITY_EXECUTED,
                       event.ability->ability_handle});
   }
 }
@@ -297,7 +299,7 @@ void WasmPlugin::DeliverDamaged() {
     }
 
     // Tell the mod about each hit.
-    wasm::DamagedEvent event;
+    wasm::combat::DamagedEvent event;
     event.set_victim(hit.victim_handle);
     event.set_attacker(hit.attacker_handle);
     event.set_ability(hit.ability_handle);
@@ -314,7 +316,7 @@ void WasmPlugin::DeliverGameEvents() {
     if (!instance_) {
       return;
     }
-    wasm::InputEvent event;
+    wasm::input::InputEvent event;
     event.set_player(change.slot);
     event.set_pressed(change.pressed);
     event.set_released(change.released);
@@ -331,13 +333,13 @@ void WasmPlugin::DeliverGameEvents() {
     if (!instance_) {
       return;
     }
-    wasm::RestoredEvent event;
+    wasm::players::RestoredEvent event;
     event.set_player(restored.slot);
     event.set_error(restored.error);
     static_cast<void>(mod_.Restored(event));
   }
   if (auto restored = game_.TakeNpcsRestored(); restored && instance_) {
-    wasm::NpcsRestoredEvent event;
+    wasm::npcs::NpcsRestoredEvent event;
     event.set_error(*restored);
     static_cast<void>(mod_.NpcsRestored(event));
   }

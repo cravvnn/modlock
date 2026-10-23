@@ -68,8 +68,8 @@ Recorder g_recorder;
 alignas(16) std::array<void*, 200> g_entity_vtable;
 alignas(16) std::array<void*, 4> g_entity_object;
 void* g_ekv_sentinel = reinterpret_cast<void*>(0x2100);
-modlock::Vec3 g_teleport_position;
-modlock::EulerAngles g_teleport_angles;
+modlock::geometry::Vec3 g_teleport_position;
+modlock::geometry::EulerAngles g_teleport_angles;
 void* g_spawned_identity = nullptr;
 void* g_spawned_ekv = nullptr;
 int g_removed_count = 0;
@@ -217,7 +217,7 @@ TEST_F(WorldTextGameFactoryTest, TryCreateResolvesEveryScannedProbeFromTheImage)
 TEST_F(WorldTextGameFactoryTest, EngineResetInvalidationDoesNotCallUtilRemove) {
   // Create a text.
   auto created =
-      factory_.Create("stale", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+      factory_.Create("stale", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_TRUE(created.has_value()) << created.error();
 
   // An engine reset leaves nothing to remove.
@@ -228,11 +228,11 @@ TEST_F(WorldTextGameFactoryTest, EngineResetInvalidationDoesNotCallUtilRemove) {
 
 TEST_F(WorldTextGameFactoryTest, CreateAppliesKeyValuesAndPoseBeforeQueuedSpawn) {
   // Place the text off the origin, turned.
-  modlock::Vec3 origin;
+  modlock::geometry::Vec3 origin;
   origin.set_x(10);
   origin.set_y(20);
   origin.set_z(30);
-  modlock::EulerAngles angles;
+  modlock::geometry::EulerAngles angles;
   angles.set_yaw(-35.5);
   angles.set_roll(90);
 
@@ -292,16 +292,16 @@ TEST_F(WorldTextGameFactoryTest, TraceDeduplicatesCreateFailuresAndLogsOneSucces
 
   // Two failures log once.
   testing::internal::CaptureStderr();
-  EXPECT_FALSE(broken.Create("text", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{}));
-  EXPECT_FALSE(broken.Create("text", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{}));
+  EXPECT_FALSE(broken.Create("text", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{}));
+  EXPECT_FALSE(broken.Create("text", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{}));
   const std::string failures = testing::internal::GetCapturedStderr();
   EXPECT_EQ(CountOccurrences(failures, "world-text create failed:"), 1u);
 
   // Two successes log once.
   testing::internal::CaptureStderr();
-  auto first = factory_.Create("first", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+  auto first = factory_.Create("first", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   auto second =
-      factory_.Create("second", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+      factory_.Create("second", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_TRUE(first.has_value());
   ASSERT_TRUE(second.has_value());
   const std::string successes = testing::internal::GetCapturedStderr();
@@ -311,7 +311,7 @@ TEST_F(WorldTextGameFactoryTest, TraceDeduplicatesCreateFailuresAndLogsOneSucces
 TEST_F(WorldTextGameFactoryTest, SetMessageChangesTheTextInPlace) {
   // Create a text.
   auto created =
-      factory_.Create("before", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+      factory_.Create("before", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_TRUE(created.has_value());
 
   // Changing the message sends one input.
@@ -324,9 +324,9 @@ TEST_F(WorldTextGameFactoryTest, SetMessageChangesTheTextInPlace) {
 
 TEST_F(WorldTextGameFactoryTest, SetMessageRebuildsWhenTheInputIsRefused) {
   // Create a text above the origin.
-  modlock::Vec3 origin;
+  modlock::geometry::Vec3 origin;
   origin.set_z(5);
-  auto created = factory_.Create("before", origin, modlock::EulerAngles{}, WorldTextStyle{});
+  auto created = factory_.Create("before", origin, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_TRUE(created.has_value());
 
   // The game refuses the new message.
@@ -353,7 +353,7 @@ TEST_F(WorldTextGameFactoryTest, UnresolvedEntitySystemFailsWithANamedError) {
   auto calls = RecordingCalls();
   calls.entity_system = nullptr;
   WorldTextGameFactory broken(calls);
-  auto created = broken.Create("text", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+  auto created = broken.Create("text", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_FALSE(created.has_value());
   EXPECT_NE(created.error().find("creation unresolved"), std::string::npos) << created.error();
 }
@@ -363,7 +363,7 @@ TEST_F(WorldTextGameFactoryTest, UnrecordedKeyValuesSurfaceFailsWithoutSpawning)
   auto calls = RecordingCalls();
   calls.key_values = {};
   WorldTextGameFactory broken(calls);
-  auto created = broken.Create("text", modlock::Vec3{}, modlock::EulerAngles{}, WorldTextStyle{});
+  auto created = broken.Create("text", modlock::geometry::Vec3{}, modlock::geometry::EulerAngles{}, WorldTextStyle{});
   ASSERT_FALSE(created.has_value());
   EXPECT_NE(created.error().find("construction is unresolved"), std::string::npos)
       << created.error();

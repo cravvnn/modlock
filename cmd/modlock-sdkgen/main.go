@@ -1,5 +1,5 @@
 // Command modlock-sdkgen generates each language's mod library and the host's
-// dispatch from the Host and Mod services in proto/modlock/wasm.proto, the
+// dispatch from the Host and Mod services in src/wasm/wasm.proto, the
 // single source of the boundary between the game and a mod. Run it from the
 // repository root:
 //
@@ -37,7 +37,7 @@ import (
 const modulePath = "github.com/paralin/modlock"
 
 // schemaFile is the file that declares the services.
-const schemaFile = modulePath + "/proto/modlock/wasm.proto"
+const schemaFile = modulePath + "/src/wasm/wasm.proto"
 
 // outputs are the generated files and the writer of each, relative to the
 // repository root.

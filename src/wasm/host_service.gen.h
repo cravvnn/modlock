@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "proto/modlock/wasm.pb.h"
+#include "src/wasm/wasm.pb.h"
 
 namespace modlock::wasm {
 
@@ -64,18 +64,19 @@ class HostService {
   }
 
   // Chat sends a server chat line to the player.
-  virtual std::expected<void, std::string> Chat(const ChatRequest& /*request*/) {
+  virtual std::expected<void, std::string> Chat(const effects::ChatRequest& /*request*/) {
     return std::unexpected("this host does not support Chat");
   }
 
   // CenterText shows text in the middle of the player's screen until it is
   // replaced. Empty text clears it.
-  virtual std::expected<void, std::string> CenterText(const CenterTextRequest& /*request*/) {
+  virtual std::expected<void, std::string> CenterText(
+      const effects::CenterTextRequest& /*request*/) {
     return std::unexpected("this host does not support CenterText");
   }
 
   // Announce shows a game announcement with a title to the player.
-  virtual std::expected<void, std::string> Announce(const AnnounceRequest& /*request*/) {
+  virtual std::expected<void, std::string> Announce(const effects::AnnounceRequest& /*request*/) {
     return std::unexpected("this host does not support Announce");
   }
 
@@ -87,20 +88,21 @@ class HostService {
 
   // Players lists the occupied player slots in slot order. The libraries
   // answer from the last PlayersChanged instead, once one arrived.
-  virtual std::expected<PlayersResponse, std::string> Players() {
+  virtual std::expected<players::PlayersResponse, std::string> Players() {
     return std::unexpected("this host does not support Players");
   }
 
   // Pawn returns the player's hero this frame, or nothing without one.
-  virtual std::expected<PawnResponse, std::string> Pawn(const PlayerRequest& /*request*/) {
+  virtual std::expected<players::PawnResponse, std::string> Pawn(
+      const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Pawn");
   }
 
   // PlayerSetting returns the player's value of a setting the manifest
   // declares: the value they chose, or the setting's default. A bot has the
   // defaults.
-  virtual std::expected<SettingResponse, std::string> PlayerSetting(
-      const PlayerSettingRequest& /*request*/) {
+  virtual std::expected<settings::SettingResponse, std::string> PlayerSetting(
+      const settings::PlayerSettingRequest& /*request*/) {
     return std::unexpected("this host does not support PlayerSetting");
   }
 
@@ -108,14 +110,14 @@ class HostService {
   // declares. The value follows the player to later games and other mods'
   // servers of the same mod; a bot keeps the defaults.
   virtual std::expected<void, std::string> SetPlayerSetting(
-      const SetPlayerSettingRequest& /*request*/) {
+      const settings::SetPlayerSettingRequest& /*request*/) {
     return std::unexpected("this host does not support SetPlayerSetting");
   }
 
   // AddMetric adds to the player's total of a metric the manifest declares.
   // The host keeps each player's totals in memory and hands them on once,
   // when the player leaves or the mod stops; a bot keeps none.
-  virtual std::expected<void, std::string> AddMetric(const AddMetricRequest& /*request*/) {
+  virtual std::expected<void, std::string> AddMetric(const metrics::AddMetricRequest& /*request*/) {
     return std::unexpected("this host does not support AddMetric");
   }
 
@@ -124,21 +126,22 @@ class HostService {
   // lose. A reload that arrives meanwhile waits, and the newest one applies
   // on the first frame after the mod releases the hold. A new build starts
   // without a hold.
-  virtual std::expected<void, std::string> HoldReload(const HoldReloadRequest& /*request*/) {
+  virtual std::expected<void, std::string> HoldReload(
+      const abilities::HoldReloadRequest& /*request*/) {
     return std::unexpected("this host does not support HoldReload");
   }
 
   // SelectHero gives the player a hero on a team, 2 or 3, and returns the
   // hero's identifier as Pawn.hero reports it. The hero appears on a later
   // frame.
-  virtual std::expected<HeroResponse, std::string> SelectHero(
-      const SelectHeroRequest& /*request*/) {
+  virtual std::expected<players::HeroResponse, std::string> SelectHero(
+      const players::SelectHeroRequest& /*request*/) {
     return std::unexpected("this host does not support SelectHero");
   }
 
   // Spectate moves the player to the spectators, without a hero. The player
   // watches until a hero selection seats them again.
-  virtual std::expected<void, std::string> Spectate(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> Spectate(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Spectate");
   }
 
@@ -147,73 +150,76 @@ class HostService {
   // their spectator camera, once it exists. A player with a hero watches
   // while the hero stays where it stands, keeping its level, souls and items,
   // until Unwatch returns them to it.
-  virtual std::expected<void, std::string> Watch(const WatchRequest& /*request*/) {
+  virtual std::expected<void, std::string> Watch(const players::WatchRequest& /*request*/) {
     return std::unexpected("this host does not support Watch");
   }
 
   // Unwatch returns a player watching from their hero back to it. Stopping
   // the mod returns every such player.
-  virtual std::expected<void, std::string> Unwatch(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> Unwatch(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Unwatch");
   }
 
   // Respawn revives the player's dead hero.
-  virtual std::expected<void, std::string> Respawn(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> Respawn(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Respawn");
   }
 
   // ClearItems removes every item the player's hero owns.
-  virtual std::expected<void, std::string> ClearItems(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> ClearItems(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support ClearItems");
   }
 
   // Freeze holds the player's hero in place, without input or damage, until
   // it is released. Stopping the mod releases it.
-  virtual std::expected<void, std::string> Freeze(const FreezeRequest& /*request*/) {
+  virtual std::expected<void, std::string> Freeze(const players::FreezeRequest& /*request*/) {
     return std::unexpected("this host does not support Freeze");
   }
 
   // RestoreStamina refills the player's stamina.
-  virtual std::expected<void, std::string> RestoreStamina(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> RestoreStamina(
+      const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support RestoreStamina");
   }
 
   // SetStamina sets the player's stamina, as Pawn.stamina reads it. The game
   // regenerates it as usual afterwards.
-  virtual std::expected<void, std::string> SetStamina(const SetStaminaRequest& /*request*/) {
+  virtual std::expected<void, std::string> SetStamina(
+      const players::SetStaminaRequest& /*request*/) {
     return std::unexpected("this host does not support SetStamina");
   }
 
   // RefreshAbility ends the cooldown of the hero's ability named ability,
   // such as citadel_ability_melee_parry.
   virtual std::expected<void, std::string> RefreshAbility(
-      const RefreshAbilityRequest& /*request*/) {
+      const abilities::RefreshAbilityRequest& /*request*/) {
     return std::unexpected("this host does not support RefreshAbility");
   }
 
   // Abilities lists the abilities of the player's hero in the hero's order,
   // or none without a live hero.
-  virtual std::expected<AbilitiesResponse, std::string> Abilities(
-      const PlayerRequest& /*request*/) {
+  virtual std::expected<abilities::AbilitiesResponse, std::string> Abilities(
+      const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Abilities");
   }
 
   // SetAbility changes the upgrades, charges or timers of one of the hero's
   // abilities. An omitted option stays as it is.
-  virtual std::expected<void, std::string> SetAbility(const AbilityOptions& /*request*/) {
+  virtual std::expected<void, std::string> SetAbility(
+      const abilities::AbilityOptions& /*request*/) {
     return std::unexpected("this host does not support SetAbility");
   }
 
   // GiveItem gives the hero an item, enabled and free. A hero that owns it
   // keeps its one copy.
-  virtual std::expected<void, std::string> GiveItem(const GiveItemRequest& /*request*/) {
+  virtual std::expected<void, std::string> GiveItem(const abilities::GiveItemRequest& /*request*/) {
     return std::unexpected("this host does not support GiveItem");
   }
 
   // ReplaceAbility puts the ability named ability, untrained, in the hero's
   // ability slot index, as Ability.slot, removing the ability there.
   virtual std::expected<void, std::string> ReplaceAbility(
-      const ReplaceAbilityRequest& /*request*/) {
+      const abilities::ReplaceAbilityRequest& /*request*/) {
     return std::unexpected("this host does not support ReplaceAbility");
   }
 
@@ -222,7 +228,8 @@ class HostService {
   // or the hero returns. The hero must own the ability or item. Every hero
   // that gains the modifier from the same ability keeps it until the hold
   // ends. Releasing leaves the hero's current modifier until it dies.
-  virtual std::expected<void, std::string> HoldModifier(const HoldModifierRequest& /*request*/) {
+  virtual std::expected<void, std::string> HoldModifier(
+      const abilities::HoldModifierRequest& /*request*/) {
     return std::unexpected("this host does not support HoldModifier");
   }
 
@@ -230,21 +237,23 @@ class HostService {
   // "<ability>/<modifier>", for seconds, as if the hero's own ability applied
   // it; a hero without that ability applies it with its first ability. The
   // game may end it sooner, as invisibility ends on a shot.
-  virtual std::expected<void, std::string> GiveModifier(const GiveModifierRequest& /*request*/) {
+  virtual std::expected<void, std::string> GiveModifier(
+      const abilities::GiveModifierRequest& /*request*/) {
     return std::unexpected("this host does not support GiveModifier");
   }
 
   // Teleport moves the player's hero and turns it and the camera. With a
   // velocity it also sets the hero's motion, as a launch, and the camera
   // follows the hero.
-  virtual std::expected<void, std::string> Teleport(const TeleportRequest& /*request*/) {
+  virtual std::expected<void, std::string> Teleport(const movement::TeleportRequest& /*request*/) {
     return std::unexpected("this host does not support Teleport");
   }
 
   // MovePlayer carries the player's hero to a position as continuous motion,
   // as a recording plays back. Unlike Teleport it keeps the hero's animated
   // model drawn when repeated every tick, and leaves the camera alone.
-  virtual std::expected<void, std::string> MovePlayer(const MovePlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> MovePlayer(
+      const movement::MovePlayerRequest& /*request*/) {
     return std::unexpected("this host does not support MovePlayer");
   }
 
@@ -253,7 +262,7 @@ class HostService {
   // slides, jumps and mantles with its own animation, and the step then ends
   // on the recorded pose. The steering stays until the next Steer replaces
   // it, its presses counting once; a Steer without one releases the hero.
-  virtual std::expected<void, std::string> Steer(const SteerRequest& /*request*/) {
+  virtual std::expected<void, std::string> Steer(const movement::SteerRequest& /*request*/) {
     return std::unexpected("this host does not support Steer");
   }
 
@@ -263,36 +272,38 @@ class HostService {
   // hero accelerates, turns, jumps, dashes, slides and casts with its own
   // movement and animation; the bot's own brain no longer moves it. Presses
   // count once. A Drive without a command returns the bot to its brain.
-  virtual std::expected<void, std::string> Drive(const DriveRequest& /*request*/) {
+  virtual std::expected<void, std::string> Drive(const movement::DriveRequest& /*request*/) {
     return std::unexpected("this host does not support Drive");
   }
 
   // AdjustSouls gives the player delta souls, or takes them when delta is
   // negative. A spend larger than the player's souls fails and spends
   // nothing. Silent skips the pickup's sound and number.
-  virtual std::expected<void, std::string> AdjustSouls(const AdjustSoulsRequest& /*request*/) {
+  virtual std::expected<void, std::string> AdjustSouls(
+      const players::AdjustSoulsRequest& /*request*/) {
     return std::unexpected("this host does not support AdjustSouls");
   }
 
   // StartingSouls sets the souls the player's hero spawns with.
-  virtual std::expected<void, std::string> StartingSouls(const StartingSoulsRequest& /*request*/) {
+  virtual std::expected<void, std::string> StartingSouls(
+      const players::StartingSoulsRequest& /*request*/) {
     return std::unexpected("this host does not support StartingSouls");
   }
 
   // ResetHero rebuilds the player's hero as it first spawned, without items,
   // ability upgrades, levels or ability points, holding souls.
-  virtual std::expected<void, std::string> ResetHero(const ResetHeroRequest& /*request*/) {
+  virtual std::expected<void, std::string> ResetHero(const players::ResetHeroRequest& /*request*/) {
     return std::unexpected("this host does not support ResetHero");
   }
 
   // Heal restores health to the player's hero, up to its maximum.
-  virtual std::expected<void, std::string> Heal(const HealRequest& /*request*/) {
+  virtual std::expected<void, std::string> Heal(const players::HealRequest& /*request*/) {
     return std::unexpected("this host does not support Heal");
   }
 
   // Sound plays a game sound event, such as Damage.Send.Crit, on the
   // player's hero.
-  virtual std::expected<void, std::string> Sound(const SoundRequest& /*request*/) {
+  virtual std::expected<void, std::string> Sound(const effects::SoundRequest& /*request*/) {
     return std::unexpected("this host does not support Sound");
   }
 
@@ -301,20 +312,22 @@ class HostService {
   // then charges and cooldowns. A Restored event reports when the result has
   // held for a second, or why it could not. A new call replaces the running
   // one.
-  virtual std::expected<void, std::string> RestoreHero(const RestoreHeroRequest& /*request*/) {
+  virtual std::expected<void, std::string> RestoreHero(
+      const players::RestoreHeroRequest& /*request*/) {
     return std::unexpected("this host does not support RestoreHero");
   }
 
   // ScreenEffect plays a full-screen effect on the player's view. Effects of
   // one kind stack. The player's hero must be alive.
-  virtual std::expected<void, std::string> ScreenEffect(const ScreenEffectRequest& /*request*/) {
+  virtual std::expected<void, std::string> ScreenEffect(
+      const effects::ScreenEffectRequest& /*request*/) {
     return std::unexpected("this host does not support ScreenEffect");
   }
 
   // ClearScreenEffect ends every running instance of effect on the player's
   // view.
   virtual std::expected<void, std::string> ClearScreenEffect(
-      const ClearScreenEffectRequest& /*request*/) {
+      const effects::ClearScreenEffectRequest& /*request*/) {
     return std::unexpected("this host does not support ClearScreenEffect");
   }
 
@@ -324,7 +337,8 @@ class HostService {
   // the named class or a subclass. The match's state, such as the gold of each
   // team or the winning team, is a field of CCitadelGameRules, which the
   // citadel_gamerules entity reads.
-  virtual std::expected<FieldResponse, std::string> ReadField(const ReadFieldRequest& /*request*/) {
+  virtual std::expected<fields::FieldResponse, std::string> ReadField(
+      const fields::ReadFieldRequest& /*request*/) {
     return std::unexpected("this host does not support ReadField");
   }
 
@@ -332,15 +346,16 @@ class HostService {
   // to the players. The value takes the form ReadField returns for the type;
   // text fields cannot be written. A write to the match's state sends all of
   // it, so players already in the match see the change.
-  virtual std::expected<void, std::string> WriteField(const WriteFieldRequest& /*request*/) {
+  virtual std::expected<void, std::string> WriteField(
+      const fields::WriteFieldRequest& /*request*/) {
     return std::unexpected("this host does not support WriteField");
   }
 
   // ReadFieldList reads a field that holds a list, such as the m_vecBannedHeroes
   // of CCitadelGameRules. The type is the type of one element: a number, a
   // handle, a boolean or a vector. A list of structures cannot be read.
-  virtual std::expected<FieldListResponse, std::string> ReadFieldList(
-      const ReadFieldRequest& /*request*/) {
+  virtual std::expected<fields::FieldListResponse, std::string> ReadFieldList(
+      const fields::ReadFieldRequest& /*request*/) {
     return std::unexpected("this host does not support ReadFieldList");
   }
 
@@ -348,21 +363,21 @@ class HostService {
   // to the players, growing the list when it holds fewer elements than the
   // new ones.
   virtual std::expected<void, std::string> WriteFieldList(
-      const WriteFieldListRequest& /*request*/) {
+      const fields::WriteFieldListRequest& /*request*/) {
     return std::unexpected("this host does not support WriteFieldList");
   }
 
   // EntityClass returns a live entity's schema class, such as
   // CCitadelPlayerPawn, whose fields ReadField reads, and its designer name.
-  virtual std::expected<EntityClassResponse, std::string> EntityClass(
-      const EntityRequest& /*request*/) {
+  virtual std::expected<entities::EntityClassResponse, std::string> EntityClass(
+      const entities::EntityRequest& /*request*/) {
     return std::unexpected("this host does not support EntityClass");
   }
 
   // ModifierState reports whether an entity has a modifier state, such as
   // MODIFIER_STATE_PARRY_ACTIVE.
-  virtual std::expected<ActiveResponse, std::string> ModifierState(
-      const ModifierStateRequest& /*request*/) {
+  virtual std::expected<abilities::ActiveResponse, std::string> ModifierState(
+      const abilities::ModifierStateRequest& /*request*/) {
     return std::unexpected("this host does not support ModifierState");
   }
 
@@ -370,7 +385,7 @@ class HostService {
   // MODIFIER_STATE_FRIENDLY_FIRE_ENABLED, on an entity while the mod runs, or
   // releases the hold. The hold ends with the entity.
   virtual std::expected<void, std::string> HoldModifierState(
-      const HoldModifierStateRequest& /*request*/) {
+      const abilities::HoldModifierStateRequest& /*request*/) {
     return std::unexpected("this host does not support HoldModifierState");
   }
 
@@ -379,42 +394,47 @@ class HostService {
   // on the smaller team and opens the hero picker with no team screen, holds
   // friendly fire on every hero, and ignores changeteam commands. Turning it
   // off releases the friendly fire holds; players keep their teams.
-  virtual std::expected<void, std::string> SetFreeForAll(const SetFreeForAllRequest& /*request*/) {
+  virtual std::expected<void, std::string> SetFreeForAll(
+      const match::SetFreeForAllRequest& /*request*/) {
     return std::unexpected("this host does not support SetFreeForAll");
   }
 
   // CreateModel places a model in the world, solid when the options ask.
   // The world removes it when the world ends; stopping the mod removes it
   // too.
-  virtual std::expected<ObjectResponse, std::string> CreateModel(const ModelOptions& /*request*/) {
+  virtual std::expected<objects::ObjectResponse, std::string> CreateModel(
+      const objects::ModelOptions& /*request*/) {
     return std::unexpected("this host does not support CreateModel");
   }
 
   // CreateText places text that floats in the world.
-  virtual std::expected<ObjectResponse, std::string> CreateText(const TextOptions& /*request*/) {
+  virtual std::expected<objects::ObjectResponse, std::string> CreateText(
+      const objects::TextOptions& /*request*/) {
     return std::unexpected("this host does not support CreateText");
   }
 
   // CreateParticle starts a particle effect. Removing the object stops it;
   // moving it moves the effect.
-  virtual std::expected<ObjectResponse, std::string> CreateParticle(
-      const ParticleOptions& /*request*/) {
+  virtual std::expected<objects::ObjectResponse, std::string> CreateParticle(
+      const objects::ParticleOptions& /*request*/) {
     return std::unexpected("this host does not support CreateParticle");
   }
 
   // CreateFog fills a box with tinted fog whose density fades across the
   // box's boundary. Removing the object clears it; moving it moves the box.
-  virtual std::expected<ObjectResponse, std::string> CreateFog(const FogOptions& /*request*/) {
+  virtual std::expected<objects::ObjectResponse, std::string> CreateFog(
+      const objects::FogOptions& /*request*/) {
     return std::unexpected("this host does not support CreateFog");
   }
 
   // MoveObject places the object at position, turning it to facing.
-  virtual std::expected<void, std::string> MoveObject(const MoveObjectRequest& /*request*/) {
+  virtual std::expected<void, std::string> MoveObject(
+      const objects::MoveObjectRequest& /*request*/) {
     return std::unexpected("this host does not support MoveObject");
   }
 
   // SetText replaces a text object's words.
-  virtual std::expected<void, std::string> SetText(const SetTextRequest& /*request*/) {
+  virtual std::expected<void, std::string> SetText(const objects::SetTextRequest& /*request*/) {
     return std::unexpected("this host does not support SetText");
   }
 
@@ -422,54 +442,56 @@ class HostService {
   // Other players still see it. A player who leaves sees every object when
   // they return.
   virtual std::expected<void, std::string> SetObjectHidden(
-      const SetObjectHiddenRequest& /*request*/) {
+      const objects::SetObjectHiddenRequest& /*request*/) {
     return std::unexpected("this host does not support SetObjectHidden");
   }
 
   // RemoveObject takes the object out of the world.
-  virtual std::expected<void, std::string> RemoveObject(const ObjectRequest& /*request*/) {
+  virtual std::expected<void, std::string> RemoveObject(const objects::ObjectRequest& /*request*/) {
     return std::unexpected("this host does not support RemoveObject");
   }
 
   // ObjectEntity returns the entity handle of a model, as traces report it.
-  virtual std::expected<EntityResponse, std::string> ObjectEntity(
-      const ObjectRequest& /*request*/) {
+  virtual std::expected<entities::EntityResponse, std::string> ObjectEntity(
+      const objects::ObjectRequest& /*request*/) {
     return std::unexpected("this host does not support ObjectEntity");
   }
 
   // AddBot adds a bot player and returns it. The bot leaves when the world
   // ends or the mod stops.
-  virtual std::expected<BotResponse, std::string> AddBot(const BotOptions& /*request*/) {
+  virtual std::expected<players::BotResponse, std::string> AddBot(
+      const players::BotOptions& /*request*/) {
     return std::unexpected("this host does not support AddBot");
   }
 
   // RemoveBot removes a bot the mod added.
-  virtual std::expected<void, std::string> RemoveBot(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> RemoveBot(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support RemoveBot");
   }
 
   // BlockInput withholds buttons from every player's hero until called
   // again. Stopping the mod releases them.
-  virtual std::expected<void, std::string> BlockInput(const InputRequest& /*request*/) {
+  virtual std::expected<void, std::string> BlockInput(const input::InputRequest& /*request*/) {
     return std::unexpected("this host does not support BlockInput");
   }
 
   // BlockPlayerInput withholds buttons from the player's hero until called
   // again, on top of the block on everyone. Zero releases the player.
-  virtual std::expected<void, std::string> BlockPlayerInput(const PlayerInputRequest& /*request*/) {
+  virtual std::expected<void, std::string> BlockPlayerInput(
+      const input::PlayerInputRequest& /*request*/) {
     return std::unexpected("this host does not support BlockPlayerInput");
   }
 
   // Press presses buttons at the player's next input, even through a block.
   // A bot presses them as a player would.
-  virtual std::expected<void, std::string> Press(const PlayerInputRequest& /*request*/) {
+  virtual std::expected<void, std::string> Press(const input::PlayerInputRequest& /*request*/) {
     return std::unexpected("this host does not support Press");
   }
 
   // WatchInput replaces the buttons whose presses and releases arrive as
   // Input events. Watching does not withhold a press; block it with
   // BlockInput.
-  virtual std::expected<void, std::string> WatchInput(const InputRequest& /*request*/) {
+  virtual std::expected<void, std::string> WatchInput(const input::InputRequest& /*request*/) {
     return std::unexpected("this host does not support WatchInput");
   }
 
@@ -478,13 +500,13 @@ class HostService {
   // from button uses the to ability again as soon as it is ready. A zero from
   // stops remapping, and stopping the mod does too. BlockInput applies after
   // the remap.
-  virtual std::expected<void, std::string> RemapInput(const RemapInputRequest& /*request*/) {
+  virtual std::expected<void, std::string> RemapInput(const input::RemapInputRequest& /*request*/) {
     return std::unexpected("this host does not support RemapInput");
   }
 
   // Ui changes the interface the mod shows the player. The host keeps each
   // player's tree until the mod stops or the player leaves.
-  virtual std::expected<void, std::string> Ui(const UiRequest& /*request*/) {
+  virtual std::expected<void, std::string> Ui(const ui::UiRequest& /*request*/) {
     return std::unexpected("this host does not support Ui");
   }
 
@@ -500,21 +522,23 @@ class HostService {
   // written before it spawns. The world removes it when the world ends;
   // stopping the mod removes it too. It refuses an ability, item or weapon,
   // which only a hero holds: GiveItem and ReplaceAbility give one.
-  virtual std::expected<EntityResponse, std::string> CreateEntity(
-      const EntityOptions& /*request*/) {
+  virtual std::expected<entities::EntityResponse, std::string> CreateEntity(
+      const entities::EntityOptions& /*request*/) {
     return std::unexpected("this host does not support CreateEntity");
   }
 
   // FireInput sends an input to a live entity, as a map's output would, such
   // as Skin with the integer 1. The value must have the type the input reads.
   // It reports false once the entity is gone.
-  virtual std::expected<AliveResponse, std::string> FireInput(const FireInputRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> FireInput(
+      const entities::FireInputRequest& /*request*/) {
     return std::unexpected("this host does not support FireInput");
   }
 
   // RemoveEntity takes an entity the mod created out of the world without
   // rewards. It reports false when the entity was already gone.
-  virtual std::expected<AliveResponse, std::string> RemoveEntity(const EntityRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> RemoveEntity(
+      const entities::EntityRequest& /*request*/) {
     return std::unexpected("this host does not support RemoveEntity");
   }
 
@@ -528,13 +552,14 @@ class HostService {
   // own call. Removing the entity, the world ending or the mod stopping drops
   // the rule.
   virtual std::expected<void, std::string> ShowEntityOnlyTo(
-      const ShowEntityOnlyToRequest& /*request*/) {
+      const entities::ShowEntityOnlyToRequest& /*request*/) {
     return std::unexpected("this host does not support ShowEntityOnlyTo");
   }
 
   // ShowEntityToAll sends an entity the mod created to every player the game
   // would send it to again, undoing ShowEntityOnlyTo.
-  virtual std::expected<void, std::string> ShowEntityToAll(const EntityRequest& /*request*/) {
+  virtual std::expected<void, std::string> ShowEntityToAll(
+      const entities::EntityRequest& /*request*/) {
     return std::unexpected("this host does not support ShowEntityToAll");
   }
 
@@ -542,65 +567,70 @@ class HostService {
   // CreateEntity does, then sets its health and lane. It thinks from the next
   // frame. The world removes it when the world ends; stopping
   // the mod removes it too.
-  virtual std::expected<NpcResponse, std::string> SpawnNpc(const NpcOptions& /*request*/) {
+  virtual std::expected<npcs::NpcResponse, std::string> SpawnNpc(
+      const npcs::NpcOptions& /*request*/) {
     return std::unexpected("this host does not support SpawnNpc");
   }
 
   // ReadNpc returns the unit's state, or nothing once it is gone.
-  virtual std::expected<NpcStateResponse, std::string> ReadNpc(const NpcRequest& /*request*/) {
+  virtual std::expected<npcs::NpcStateResponse, std::string> ReadNpc(
+      const npcs::NpcRequest& /*request*/) {
     return std::unexpected("this host does not support ReadNpc");
   }
 
   // MoveNpc places the unit and sets its velocity, which drives its walk
   // animation. It reports false once the unit is gone.
-  virtual std::expected<AliveResponse, std::string> MoveNpc(const MoveNpcRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> MoveNpc(
+      const npcs::MoveNpcRequest& /*request*/) {
     return std::unexpected("this host does not support MoveNpc");
   }
 
   // SetNpcHealth sets the unit's health, and its maximum when given. It
   // reports false once the unit is gone.
-  virtual std::expected<AliveResponse, std::string> SetNpcHealth(
-      const SetNpcHealthRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> SetNpcHealth(
+      const npcs::SetNpcHealthRequest& /*request*/) {
     return std::unexpected("this host does not support SetNpcHealth");
   }
 
   // RemoveNpc takes a unit the mod spawned out of the world without rewards.
   // It reports false when the unit was already gone.
-  virtual std::expected<AliveResponse, std::string> RemoveNpc(const NpcRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> RemoveNpc(
+      const npcs::NpcRequest& /*request*/) {
     return std::unexpected("this host does not support RemoveNpc");
   }
 
   // CreatePickup places an urn, which a hero carries once collected, or a
   // movement buff. Stopping the mod removes it.
-  virtual std::expected<PickupResponse, std::string> CreatePickup(
-      const CreatePickupRequest& /*request*/) {
+  virtual std::expected<entities::PickupResponse, std::string> CreatePickup(
+      const entities::CreatePickupRequest& /*request*/) {
     return std::unexpected("this host does not support CreatePickup");
   }
 
   // PickupPresent reports whether the pickup still lies in the world,
   // uncollected.
-  virtual std::expected<AliveResponse, std::string> PickupPresent(
-      const PickupRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> PickupPresent(
+      const entities::PickupRequest& /*request*/) {
     return std::unexpected("this host does not support PickupPresent");
   }
 
   // RemovePickup takes the pickup out of the world. It reports false when a
   // player had collected it.
-  virtual std::expected<AliveResponse, std::string> RemovePickup(const PickupRequest& /*request*/) {
+  virtual std::expected<entities::AliveResponse, std::string> RemovePickup(
+      const entities::PickupRequest& /*request*/) {
     return std::unexpected("this host does not support RemovePickup");
   }
 
   // FindEntities returns the handle of every live entity of a class, such as
   // zip_line_node.
-  virtual std::expected<EntitiesResponse, std::string> FindEntities(
-      const FindEntitiesRequest& /*request*/) {
+  virtual std::expected<entities::EntitiesResponse, std::string> FindEntities(
+      const entities::FindEntitiesRequest& /*request*/) {
     return std::unexpected("this host does not support FindEntities");
   }
 
   // RemoveEntities removes every entity of a class, such as npc_trooper,
   // without rewards, and returns how many it removed.
-  virtual std::expected<CountResponse, std::string> RemoveEntities(
-      const RemoveEntitiesRequest& /*request*/) {
+  virtual std::expected<entities::CountResponse, std::string> RemoveEntities(
+      const entities::RemoveEntitiesRequest& /*request*/) {
     return std::unexpected("this host does not support RemoveEntities");
   }
 
@@ -612,13 +642,14 @@ class HostService {
 
   // Damage deals a hit as the game would. The mod's Damage events do not
   // include its own hits.
-  virtual std::expected<void, std::string> Damage(const HitOptions& /*request*/) {
+  virtual std::expected<void, std::string> Damage(const combat::HitOptions& /*request*/) {
     return std::unexpected("this host does not support Damage");
   }
 
   // Trace returns where a line first hits something, or nothing when it hits
   // nothing or the world's collision is not ready.
-  virtual std::expected<TraceResponse, std::string> Trace(const TraceOptions& /*request*/) {
+  virtual std::expected<combat::TraceResponse, std::string> Trace(
+      const combat::TraceOptions& /*request*/) {
     return std::unexpected("this host does not support Trace");
   }
 
@@ -627,75 +658,81 @@ class HostService {
   // removed, structures that match are kept, and moving units are spawned
   // again in place. An NpcsRestored event reports when every target stands
   // as its own unit, or why not. A new call replaces the running one.
-  virtual std::expected<void, std::string> RestoreNpcs(const RestoreNpcsRequest& /*request*/) {
+  virtual std::expected<void, std::string> RestoreNpcs(
+      const npcs::RestoreNpcsRequest& /*request*/) {
     return std::unexpected("this host does not support RestoreNpcs");
   }
 
   // Pause stops or resumes the game clock, as the pause command would.
   // Stopping the mod resumes it.
-  virtual std::expected<void, std::string> Pause(const PauseRequest& /*request*/) {
+  virtual std::expected<void, std::string> Pause(const match::PauseRequest& /*request*/) {
     return std::unexpected("this host does not support Pause");
   }
 
   // MatchClock returns the match time in seconds that the scoreboard shows.
-  virtual std::expected<MatchClockResponse, std::string> MatchClock() {
+  virtual std::expected<match::MatchClockResponse, std::string> MatchClock() {
     return std::unexpected("this host does not support MatchClock");
   }
 
   // HoldMatchClock keeps the match time at seconds every frame until called
   // again; omitted seconds let it run.
   virtual std::expected<void, std::string> HoldMatchClock(
-      const HoldMatchClockRequest& /*request*/) {
+      const match::HoldMatchClockRequest& /*request*/) {
     return std::unexpected("this host does not support HoldMatchClock");
   }
 
   // Rift reads the Rift objective's state.
-  virtual std::expected<RiftResponse, std::string> Rift() {
+  virtual std::expected<match::RiftResponse, std::string> Rift() {
     return std::unexpected("this host does not support Rift");
   }
 
   // StartRift opens the Rift objective at position now.
-  virtual std::expected<void, std::string> StartRift(const StartRiftRequest& /*request*/) {
+  virtual std::expected<void, std::string> StartRift(const match::StartRiftRequest& /*request*/) {
     return std::unexpected("this host does not support StartRift");
   }
 
   // MoveEntity places any entity, such as a projectile, and replaces its
   // facing and motion when given.
-  virtual std::expected<void, std::string> MoveEntity(const MoveEntityRequest& /*request*/) {
+  virtual std::expected<void, std::string> MoveEntity(
+      const entities::MoveEntityRequest& /*request*/) {
     return std::unexpected("this host does not support MoveEntity");
   }
 
   // EmitSound plays one game sound on any entity, such as a projectile.
-  virtual std::expected<void, std::string> EmitSound(const EmitSoundRequest& /*request*/) {
+  virtual std::expected<void, std::string> EmitSound(const effects::EmitSoundRequest& /*request*/) {
     return std::unexpected("this host does not support EmitSound");
   }
 
   // Kill kills a player's hero, crediting no one.
-  virtual std::expected<void, std::string> Kill(const PlayerRequest& /*request*/) {
+  virtual std::expected<void, std::string> Kill(const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Kill");
   }
 
   // SetVelocity replaces the motion of a player's hero without moving it.
-  virtual std::expected<void, std::string> SetVelocity(const SetVelocityRequest& /*request*/) {
+  virtual std::expected<void, std::string> SetVelocity(
+      const movement::SetVelocityRequest& /*request*/) {
     return std::unexpected("this host does not support SetVelocity");
   }
 
   // Buttons returns the buttons a player holds, as Buttons bits, while the
   // player is alive or dead.
-  virtual std::expected<ButtonsResponse, std::string> Buttons(const PlayerRequest& /*request*/) {
+  virtual std::expected<input::ButtonsResponse, std::string> Buttons(
+      const players::PlayerRequest& /*request*/) {
     return std::unexpected("this host does not support Buttons");
   }
 
   // WatchMovement adds a player's hero to the movement samples of each Frame
   // event on a new tick, or removes it.
-  virtual std::expected<void, std::string> WatchMovement(const WatchMovementRequest& /*request*/) {
+  virtual std::expected<void, std::string> WatchMovement(
+      const movement::WatchMovementRequest& /*request*/) {
     return std::unexpected("this host does not support WatchMovement");
   }
 
   // WatchProjectiles reports the projectiles with these designer names, such
   // as rocket_launcher_rocket_projectile, in Launch and Impact events. A new
   // call replaces the list; an empty list stops watching.
-  virtual std::expected<void, std::string> WatchProjectiles(const ProjectileOptions& /*request*/) {
+  virtual std::expected<void, std::string> WatchProjectiles(
+      const combat::ProjectileOptions& /*request*/) {
     return std::unexpected("this host does not support WatchProjectiles");
   }
 
@@ -721,7 +758,7 @@ class HostService {
          }},
         {"Chat",
          [](HostService& host, const std::string& bytes) {
-           ChatRequest request;
+           effects::ChatRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Chat request is malformed");
            }
@@ -729,7 +766,7 @@ class HostService {
          }},
         {"CenterText",
          [](HostService& host, const std::string& bytes) {
-           CenterTextRequest request;
+           effects::CenterTextRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CenterText request is malformed");
            }
@@ -737,7 +774,7 @@ class HostService {
          }},
         {"Announce",
          [](HostService& host, const std::string& bytes) {
-           AnnounceRequest request;
+           effects::AnnounceRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Announce request is malformed");
            }
@@ -758,7 +795,7 @@ class HostService {
          }},
         {"Pawn",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Pawn request is malformed");
            }
@@ -766,7 +803,7 @@ class HostService {
          }},
         {"PlayerSetting",
          [](HostService& host, const std::string& bytes) {
-           PlayerSettingRequest request;
+           settings::PlayerSettingRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the PlayerSetting request is malformed");
            }
@@ -774,7 +811,7 @@ class HostService {
          }},
         {"SetPlayerSetting",
          [](HostService& host, const std::string& bytes) {
-           SetPlayerSettingRequest request;
+           settings::SetPlayerSettingRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetPlayerSetting request is malformed");
            }
@@ -782,7 +819,7 @@ class HostService {
          }},
         {"AddMetric",
          [](HostService& host, const std::string& bytes) {
-           AddMetricRequest request;
+           metrics::AddMetricRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the AddMetric request is malformed");
            }
@@ -790,7 +827,7 @@ class HostService {
          }},
         {"HoldReload",
          [](HostService& host, const std::string& bytes) {
-           HoldReloadRequest request;
+           abilities::HoldReloadRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the HoldReload request is malformed");
            }
@@ -798,7 +835,7 @@ class HostService {
          }},
         {"SelectHero",
          [](HostService& host, const std::string& bytes) {
-           SelectHeroRequest request;
+           players::SelectHeroRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SelectHero request is malformed");
            }
@@ -806,7 +843,7 @@ class HostService {
          }},
         {"Spectate",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Spectate request is malformed");
            }
@@ -814,7 +851,7 @@ class HostService {
          }},
         {"Watch",
          [](HostService& host, const std::string& bytes) {
-           WatchRequest request;
+           players::WatchRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Watch request is malformed");
            }
@@ -822,7 +859,7 @@ class HostService {
          }},
         {"Unwatch",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Unwatch request is malformed");
            }
@@ -830,7 +867,7 @@ class HostService {
          }},
         {"Respawn",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Respawn request is malformed");
            }
@@ -838,7 +875,7 @@ class HostService {
          }},
         {"ClearItems",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ClearItems request is malformed");
            }
@@ -846,7 +883,7 @@ class HostService {
          }},
         {"Freeze",
          [](HostService& host, const std::string& bytes) {
-           FreezeRequest request;
+           players::FreezeRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Freeze request is malformed");
            }
@@ -854,7 +891,7 @@ class HostService {
          }},
         {"RestoreStamina",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RestoreStamina request is malformed");
            }
@@ -862,7 +899,7 @@ class HostService {
          }},
         {"SetStamina",
          [](HostService& host, const std::string& bytes) {
-           SetStaminaRequest request;
+           players::SetStaminaRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetStamina request is malformed");
            }
@@ -870,7 +907,7 @@ class HostService {
          }},
         {"RefreshAbility",
          [](HostService& host, const std::string& bytes) {
-           RefreshAbilityRequest request;
+           abilities::RefreshAbilityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RefreshAbility request is malformed");
            }
@@ -878,7 +915,7 @@ class HostService {
          }},
         {"Abilities",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Abilities request is malformed");
            }
@@ -886,7 +923,7 @@ class HostService {
          }},
         {"SetAbility",
          [](HostService& host, const std::string& bytes) {
-           AbilityOptions request;
+           abilities::AbilityOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetAbility request is malformed");
            }
@@ -894,7 +931,7 @@ class HostService {
          }},
         {"GiveItem",
          [](HostService& host, const std::string& bytes) {
-           GiveItemRequest request;
+           abilities::GiveItemRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the GiveItem request is malformed");
            }
@@ -902,7 +939,7 @@ class HostService {
          }},
         {"ReplaceAbility",
          [](HostService& host, const std::string& bytes) {
-           ReplaceAbilityRequest request;
+           abilities::ReplaceAbilityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ReplaceAbility request is malformed");
            }
@@ -910,7 +947,7 @@ class HostService {
          }},
         {"HoldModifier",
          [](HostService& host, const std::string& bytes) {
-           HoldModifierRequest request;
+           abilities::HoldModifierRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the HoldModifier request is malformed");
            }
@@ -918,7 +955,7 @@ class HostService {
          }},
         {"GiveModifier",
          [](HostService& host, const std::string& bytes) {
-           GiveModifierRequest request;
+           abilities::GiveModifierRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the GiveModifier request is malformed");
            }
@@ -926,7 +963,7 @@ class HostService {
          }},
         {"Teleport",
          [](HostService& host, const std::string& bytes) {
-           TeleportRequest request;
+           movement::TeleportRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Teleport request is malformed");
            }
@@ -934,7 +971,7 @@ class HostService {
          }},
         {"MovePlayer",
          [](HostService& host, const std::string& bytes) {
-           MovePlayerRequest request;
+           movement::MovePlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the MovePlayer request is malformed");
            }
@@ -942,7 +979,7 @@ class HostService {
          }},
         {"Steer",
          [](HostService& host, const std::string& bytes) {
-           SteerRequest request;
+           movement::SteerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Steer request is malformed");
            }
@@ -950,7 +987,7 @@ class HostService {
          }},
         {"Drive",
          [](HostService& host, const std::string& bytes) {
-           DriveRequest request;
+           movement::DriveRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Drive request is malformed");
            }
@@ -958,7 +995,7 @@ class HostService {
          }},
         {"AdjustSouls",
          [](HostService& host, const std::string& bytes) {
-           AdjustSoulsRequest request;
+           players::AdjustSoulsRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the AdjustSouls request is malformed");
            }
@@ -966,7 +1003,7 @@ class HostService {
          }},
         {"StartingSouls",
          [](HostService& host, const std::string& bytes) {
-           StartingSoulsRequest request;
+           players::StartingSoulsRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the StartingSouls request is malformed");
            }
@@ -974,7 +1011,7 @@ class HostService {
          }},
         {"ResetHero",
          [](HostService& host, const std::string& bytes) {
-           ResetHeroRequest request;
+           players::ResetHeroRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ResetHero request is malformed");
            }
@@ -982,7 +1019,7 @@ class HostService {
          }},
         {"Heal",
          [](HostService& host, const std::string& bytes) {
-           HealRequest request;
+           players::HealRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Heal request is malformed");
            }
@@ -990,7 +1027,7 @@ class HostService {
          }},
         {"Sound",
          [](HostService& host, const std::string& bytes) {
-           SoundRequest request;
+           effects::SoundRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Sound request is malformed");
            }
@@ -998,7 +1035,7 @@ class HostService {
          }},
         {"RestoreHero",
          [](HostService& host, const std::string& bytes) {
-           RestoreHeroRequest request;
+           players::RestoreHeroRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RestoreHero request is malformed");
            }
@@ -1006,7 +1043,7 @@ class HostService {
          }},
         {"ScreenEffect",
          [](HostService& host, const std::string& bytes) {
-           ScreenEffectRequest request;
+           effects::ScreenEffectRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ScreenEffect request is malformed");
            }
@@ -1014,7 +1051,7 @@ class HostService {
          }},
         {"ClearScreenEffect",
          [](HostService& host, const std::string& bytes) {
-           ClearScreenEffectRequest request;
+           effects::ClearScreenEffectRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ClearScreenEffect request is malformed");
            }
@@ -1022,7 +1059,7 @@ class HostService {
          }},
         {"ReadField",
          [](HostService& host, const std::string& bytes) {
-           ReadFieldRequest request;
+           fields::ReadFieldRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ReadField request is malformed");
            }
@@ -1030,7 +1067,7 @@ class HostService {
          }},
         {"WriteField",
          [](HostService& host, const std::string& bytes) {
-           WriteFieldRequest request;
+           fields::WriteFieldRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the WriteField request is malformed");
            }
@@ -1038,7 +1075,7 @@ class HostService {
          }},
         {"ReadFieldList",
          [](HostService& host, const std::string& bytes) {
-           ReadFieldRequest request;
+           fields::ReadFieldRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ReadFieldList request is malformed");
            }
@@ -1046,7 +1083,7 @@ class HostService {
          }},
         {"WriteFieldList",
          [](HostService& host, const std::string& bytes) {
-           WriteFieldListRequest request;
+           fields::WriteFieldListRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the WriteFieldList request is malformed");
            }
@@ -1054,7 +1091,7 @@ class HostService {
          }},
         {"EntityClass",
          [](HostService& host, const std::string& bytes) {
-           EntityRequest request;
+           entities::EntityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the EntityClass request is malformed");
            }
@@ -1062,7 +1099,7 @@ class HostService {
          }},
         {"ModifierState",
          [](HostService& host, const std::string& bytes) {
-           ModifierStateRequest request;
+           abilities::ModifierStateRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ModifierState request is malformed");
            }
@@ -1070,7 +1107,7 @@ class HostService {
          }},
         {"HoldModifierState",
          [](HostService& host, const std::string& bytes) {
-           HoldModifierStateRequest request;
+           abilities::HoldModifierStateRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the HoldModifierState request is malformed");
            }
@@ -1078,7 +1115,7 @@ class HostService {
          }},
         {"SetFreeForAll",
          [](HostService& host, const std::string& bytes) {
-           SetFreeForAllRequest request;
+           match::SetFreeForAllRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetFreeForAll request is malformed");
            }
@@ -1086,7 +1123,7 @@ class HostService {
          }},
         {"CreateModel",
          [](HostService& host, const std::string& bytes) {
-           ModelOptions request;
+           objects::ModelOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreateModel request is malformed");
            }
@@ -1094,7 +1131,7 @@ class HostService {
          }},
         {"CreateText",
          [](HostService& host, const std::string& bytes) {
-           TextOptions request;
+           objects::TextOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreateText request is malformed");
            }
@@ -1102,7 +1139,7 @@ class HostService {
          }},
         {"CreateParticle",
          [](HostService& host, const std::string& bytes) {
-           ParticleOptions request;
+           objects::ParticleOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreateParticle request is malformed");
            }
@@ -1110,7 +1147,7 @@ class HostService {
          }},
         {"CreateFog",
          [](HostService& host, const std::string& bytes) {
-           FogOptions request;
+           objects::FogOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreateFog request is malformed");
            }
@@ -1118,7 +1155,7 @@ class HostService {
          }},
         {"MoveObject",
          [](HostService& host, const std::string& bytes) {
-           MoveObjectRequest request;
+           objects::MoveObjectRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the MoveObject request is malformed");
            }
@@ -1126,7 +1163,7 @@ class HostService {
          }},
         {"SetText",
          [](HostService& host, const std::string& bytes) {
-           SetTextRequest request;
+           objects::SetTextRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetText request is malformed");
            }
@@ -1134,7 +1171,7 @@ class HostService {
          }},
         {"SetObjectHidden",
          [](HostService& host, const std::string& bytes) {
-           SetObjectHiddenRequest request;
+           objects::SetObjectHiddenRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetObjectHidden request is malformed");
            }
@@ -1142,7 +1179,7 @@ class HostService {
          }},
         {"RemoveObject",
          [](HostService& host, const std::string& bytes) {
-           ObjectRequest request;
+           objects::ObjectRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemoveObject request is malformed");
            }
@@ -1150,7 +1187,7 @@ class HostService {
          }},
         {"ObjectEntity",
          [](HostService& host, const std::string& bytes) {
-           ObjectRequest request;
+           objects::ObjectRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ObjectEntity request is malformed");
            }
@@ -1158,7 +1195,7 @@ class HostService {
          }},
         {"AddBot",
          [](HostService& host, const std::string& bytes) {
-           BotOptions request;
+           players::BotOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the AddBot request is malformed");
            }
@@ -1166,7 +1203,7 @@ class HostService {
          }},
         {"RemoveBot",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemoveBot request is malformed");
            }
@@ -1174,7 +1211,7 @@ class HostService {
          }},
         {"BlockInput",
          [](HostService& host, const std::string& bytes) {
-           InputRequest request;
+           input::InputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the BlockInput request is malformed");
            }
@@ -1182,7 +1219,7 @@ class HostService {
          }},
         {"BlockPlayerInput",
          [](HostService& host, const std::string& bytes) {
-           PlayerInputRequest request;
+           input::PlayerInputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the BlockPlayerInput request is malformed");
            }
@@ -1190,7 +1227,7 @@ class HostService {
          }},
         {"Press",
          [](HostService& host, const std::string& bytes) {
-           PlayerInputRequest request;
+           input::PlayerInputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Press request is malformed");
            }
@@ -1198,7 +1235,7 @@ class HostService {
          }},
         {"WatchInput",
          [](HostService& host, const std::string& bytes) {
-           InputRequest request;
+           input::InputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the WatchInput request is malformed");
            }
@@ -1206,7 +1243,7 @@ class HostService {
          }},
         {"RemapInput",
          [](HostService& host, const std::string& bytes) {
-           RemapInputRequest request;
+           input::RemapInputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemapInput request is malformed");
            }
@@ -1214,7 +1251,7 @@ class HostService {
          }},
         {"Ui",
          [](HostService& host, const std::string& bytes) {
-           UiRequest request;
+           ui::UiRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Ui request is malformed");
            }
@@ -1230,7 +1267,7 @@ class HostService {
          }},
         {"CreateEntity",
          [](HostService& host, const std::string& bytes) {
-           EntityOptions request;
+           entities::EntityOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreateEntity request is malformed");
            }
@@ -1238,7 +1275,7 @@ class HostService {
          }},
         {"FireInput",
          [](HostService& host, const std::string& bytes) {
-           FireInputRequest request;
+           entities::FireInputRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the FireInput request is malformed");
            }
@@ -1246,7 +1283,7 @@ class HostService {
          }},
         {"RemoveEntity",
          [](HostService& host, const std::string& bytes) {
-           EntityRequest request;
+           entities::EntityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemoveEntity request is malformed");
            }
@@ -1254,7 +1291,7 @@ class HostService {
          }},
         {"ShowEntityOnlyTo",
          [](HostService& host, const std::string& bytes) {
-           ShowEntityOnlyToRequest request;
+           entities::ShowEntityOnlyToRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ShowEntityOnlyTo request is malformed");
            }
@@ -1262,7 +1299,7 @@ class HostService {
          }},
         {"ShowEntityToAll",
          [](HostService& host, const std::string& bytes) {
-           EntityRequest request;
+           entities::EntityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ShowEntityToAll request is malformed");
            }
@@ -1270,7 +1307,7 @@ class HostService {
          }},
         {"SpawnNpc",
          [](HostService& host, const std::string& bytes) {
-           NpcOptions request;
+           npcs::NpcOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SpawnNpc request is malformed");
            }
@@ -1278,7 +1315,7 @@ class HostService {
          }},
         {"ReadNpc",
          [](HostService& host, const std::string& bytes) {
-           NpcRequest request;
+           npcs::NpcRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the ReadNpc request is malformed");
            }
@@ -1286,7 +1323,7 @@ class HostService {
          }},
         {"MoveNpc",
          [](HostService& host, const std::string& bytes) {
-           MoveNpcRequest request;
+           npcs::MoveNpcRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the MoveNpc request is malformed");
            }
@@ -1294,7 +1331,7 @@ class HostService {
          }},
         {"SetNpcHealth",
          [](HostService& host, const std::string& bytes) {
-           SetNpcHealthRequest request;
+           npcs::SetNpcHealthRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetNpcHealth request is malformed");
            }
@@ -1302,7 +1339,7 @@ class HostService {
          }},
         {"RemoveNpc",
          [](HostService& host, const std::string& bytes) {
-           NpcRequest request;
+           npcs::NpcRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemoveNpc request is malformed");
            }
@@ -1310,7 +1347,7 @@ class HostService {
          }},
         {"CreatePickup",
          [](HostService& host, const std::string& bytes) {
-           CreatePickupRequest request;
+           entities::CreatePickupRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the CreatePickup request is malformed");
            }
@@ -1318,7 +1355,7 @@ class HostService {
          }},
         {"PickupPresent",
          [](HostService& host, const std::string& bytes) {
-           PickupRequest request;
+           entities::PickupRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the PickupPresent request is malformed");
            }
@@ -1326,7 +1363,7 @@ class HostService {
          }},
         {"RemovePickup",
          [](HostService& host, const std::string& bytes) {
-           PickupRequest request;
+           entities::PickupRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemovePickup request is malformed");
            }
@@ -1334,7 +1371,7 @@ class HostService {
          }},
         {"FindEntities",
          [](HostService& host, const std::string& bytes) {
-           FindEntitiesRequest request;
+           entities::FindEntitiesRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the FindEntities request is malformed");
            }
@@ -1342,7 +1379,7 @@ class HostService {
          }},
         {"RemoveEntities",
          [](HostService& host, const std::string& bytes) {
-           RemoveEntitiesRequest request;
+           entities::RemoveEntitiesRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RemoveEntities request is malformed");
            }
@@ -1355,7 +1392,7 @@ class HostService {
          }},
         {"Damage",
          [](HostService& host, const std::string& bytes) {
-           HitOptions request;
+           combat::HitOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Damage request is malformed");
            }
@@ -1363,7 +1400,7 @@ class HostService {
          }},
         {"Trace",
          [](HostService& host, const std::string& bytes) {
-           TraceOptions request;
+           combat::TraceOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Trace request is malformed");
            }
@@ -1371,7 +1408,7 @@ class HostService {
          }},
         {"RestoreNpcs",
          [](HostService& host, const std::string& bytes) {
-           RestoreNpcsRequest request;
+           npcs::RestoreNpcsRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the RestoreNpcs request is malformed");
            }
@@ -1379,7 +1416,7 @@ class HostService {
          }},
         {"Pause",
          [](HostService& host, const std::string& bytes) {
-           PauseRequest request;
+           match::PauseRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Pause request is malformed");
            }
@@ -1392,7 +1429,7 @@ class HostService {
          }},
         {"HoldMatchClock",
          [](HostService& host, const std::string& bytes) {
-           HoldMatchClockRequest request;
+           match::HoldMatchClockRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the HoldMatchClock request is malformed");
            }
@@ -1405,7 +1442,7 @@ class HostService {
          }},
         {"StartRift",
          [](HostService& host, const std::string& bytes) {
-           StartRiftRequest request;
+           match::StartRiftRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the StartRift request is malformed");
            }
@@ -1413,7 +1450,7 @@ class HostService {
          }},
         {"MoveEntity",
          [](HostService& host, const std::string& bytes) {
-           MoveEntityRequest request;
+           entities::MoveEntityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the MoveEntity request is malformed");
            }
@@ -1421,7 +1458,7 @@ class HostService {
          }},
         {"EmitSound",
          [](HostService& host, const std::string& bytes) {
-           EmitSoundRequest request;
+           effects::EmitSoundRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the EmitSound request is malformed");
            }
@@ -1429,7 +1466,7 @@ class HostService {
          }},
         {"Kill",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Kill request is malformed");
            }
@@ -1437,7 +1474,7 @@ class HostService {
          }},
         {"SetVelocity",
          [](HostService& host, const std::string& bytes) {
-           SetVelocityRequest request;
+           movement::SetVelocityRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the SetVelocity request is malformed");
            }
@@ -1445,7 +1482,7 @@ class HostService {
          }},
         {"Buttons",
          [](HostService& host, const std::string& bytes) {
-           PlayerRequest request;
+           players::PlayerRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the Buttons request is malformed");
            }
@@ -1453,7 +1490,7 @@ class HostService {
          }},
         {"WatchMovement",
          [](HostService& host, const std::string& bytes) {
-           WatchMovementRequest request;
+           movement::WatchMovementRequest request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the WatchMovement request is malformed");
            }
@@ -1461,7 +1498,7 @@ class HostService {
          }},
         {"WatchProjectiles",
          [](HostService& host, const std::string& bytes) {
-           ProjectileOptions request;
+           combat::ProjectileOptions request;
            if (!request.ParseFromString(bytes)) {
              return detail::Fail("the WatchProjectiles request is malformed");
            }
@@ -1509,7 +1546,7 @@ class ModClient {
   }
 
   // UiPress reports a press on a button in a player's interface.
-  std::expected<void, std::string> UiPress(const UiPressEvent& event) {
+  std::expected<void, std::string> UiPress(const ui::UiPressEvent& event) {
     return Send<void>("UiPress", event);
   }
 
@@ -1520,61 +1557,61 @@ class ModClient {
 
   // Damage offers one hit before the game applies it, while the mod asked
   // for damage. The mod's answer may block the hit or change its amount.
-  std::expected<DamageResult, std::string> Damage(const DamageEvent& event) {
-    return Send<DamageResult>("Damage", event);
+  std::expected<combat::DamageResult, std::string> Damage(const combat::DamageEvent& event) {
+    return Send<combat::DamageResult>("Damage", event);
   }
 
   // Damaged reports one hit the game applied, while the mod asked for
   // damage reports. Hits arrive before the next frame.
-  std::expected<void, std::string> Damaged(const DamagedEvent& event) {
+  std::expected<void, std::string> Damaged(const combat::DamagedEvent& event) {
     return Send<void>("Damaged", event);
   }
 
   // Input reports one player's presses of watched buttons, before the next
   // frame. A block in place still withholds them from the hero.
-  std::expected<void, std::string> Input(const InputEvent& event) {
+  std::expected<void, std::string> Input(const input::InputEvent& event) {
     return Send<void>("Input", event);
   }
 
   // Restored ends one RestoreHero, before the next frame.
-  std::expected<void, std::string> Restored(const RestoredEvent& event) {
+  std::expected<void, std::string> Restored(const players::RestoredEvent& event) {
     return Send<void>("Restored", event);
   }
 
   // NpcsRestored ends one RestoreNpcs, before the next frame.
-  std::expected<void, std::string> NpcsRestored(const NpcsRestoredEvent& event) {
+  std::expected<void, std::string> NpcsRestored(const npcs::NpcsRestoredEvent& event) {
     return Send<void>("NpcsRestored", event);
   }
 
   // Launch reports a watched projectile's first frame, before the next frame.
-  std::expected<void, std::string> Launch(const LaunchEvent& event) {
+  std::expected<void, std::string> Launch(const combat::LaunchEvent& event) {
     return Send<void>("Launch", event);
   }
 
   // Impact reports a watched projectile striking something, inside the
   // game's impact and after its own explosion. The mod's calls apply before
   // the game continues.
-  std::expected<void, std::string> Impact(const ImpactEvent& event) {
+  std::expected<void, std::string> Impact(const combat::ImpactEvent& event) {
     return Send<void>("Impact", event);
   }
 
   // Landed reports a hero landing under the manifest's QuakeWorld movement,
   // before the next frame.
-  std::expected<void, std::string> Landed(const LandedEvent& event) {
+  std::expected<void, std::string> Landed(const movement::LandedEvent& event) {
     return Send<void>("Landed", event);
   }
 
   // SettingChanged reports a player's setting that changed outside the mod,
   // such as on the player's profile. A mod's own SetPlayerSetting reports
   // nothing.
-  std::expected<void, std::string> SettingChanged(const SettingChangedEvent& event) {
+  std::expected<void, std::string> SettingChanged(const settings::SettingChangedEvent& event) {
     return Send<void>("SettingChanged", event);
   }
 
   // PlayersChanged reports the occupied player slots before the first event
   // after Start, and again before the next event whenever a player joins,
   // finishes joining or leaves, so a mod lists players without a call.
-  std::expected<void, std::string> PlayersChanged(const PlayersChangedEvent& event) {
+  std::expected<void, std::string> PlayersChanged(const players::PlayersChangedEvent& event) {
     return Send<void>("PlayersChanged", event);
   }
 

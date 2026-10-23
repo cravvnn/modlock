@@ -12,9 +12,10 @@ import (
 	"regexp"
 
 	"github.com/paralin/modlock/metrics"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/sandbox"
 	"github.com/paralin/modlock/settings"
+	"github.com/paralin/modlock/src/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -33,37 +34,37 @@ func Slug(slug string) error {
 }
 
 // Mod checks the built mod in dist and returns its manifest.
-func Mod(ctx context.Context, dist fs.FS) (*wasm.Manifest, error) {
+func Mod(ctx context.Context, dist fs.FS) (*manifest.Manifest, error) {
 	// Read the build and check its manifest.
 	build, err := sandbox.ReadBuild(dist)
 	if err != nil {
 		return nil, err
 	}
-	manifest := build.Manifest
-	if err := Slug(manifest.GetSlug()); err != nil {
+	m := build.Manifest
+	if err := Slug(m.GetSlug()); err != nil {
 		return nil, errors.Wrap(err, "mod.json")
 	}
-	if err := Version(manifest.GetVersion()); err != nil {
+	if err := Version(m.GetVersion()); err != nil {
 		return nil, err
 	}
-	if err := Content(dist, Addon(manifest)); err != nil {
+	if err := Content(dist, Addon(m)); err != nil {
 		return nil, err
 	}
-	if err := settings.Validate(manifest); err != nil {
+	if err := settings.Validate(m); err != nil {
 		return nil, err
 	}
-	if err := metrics.Validate(manifest); err != nil {
+	if err := metrics.Validate(m); err != nil {
 		return nil, err
 	}
 
 	// Run a module; an interpreted mod's runtime is Modlock's own.
 	switch {
-	case manifest.GetRuntime() == wasm.Manifest_RUNTIME_WASM:
-		return manifest, Module(ctx, build.Entry)
-	case sandbox.Interpreter(manifest.GetRuntime()) != "":
-		return manifest, nil
+	case m.GetRuntime() == manifest.Manifest_RUNTIME_WASM:
+		return m, Module(ctx, build.Entry)
+	case sandbox.Interpreter(m.GetRuntime()) != "":
+		return m, nil
 	default:
-		return nil, errors.Errorf("mod.json names the runtime %s, which this Modlock does not run", manifest.GetRuntime())
+		return nil, errors.Errorf("mod.json names the runtime %s, which this Modlock does not run", m.GetRuntime())
 	}
 }
 

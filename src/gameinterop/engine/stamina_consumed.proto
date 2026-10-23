@@ -1,0 +1,50 @@
+syntax = "proto2";
+
+package modlock.gameinterop.engine;
+
+option go_package = "github.com/paralin/modlock/src/gameinterop/engine;engine";
+
+// StaminaConsumed decodes Deadlock user message 337. Field numbers follow
+// CCitadelUserMsg_StaminaConsumed in the upstream citadel_usermessages.proto.
+// Only serialized bytes cross from the game's protobuf ABI into Modlock.
+message StaminaConsumed {
+  // EntindexTarget is the engine entity index of the pawn spending stamina.
+  optional int32 entindex_target = 1 [default = -1];
+
+  // StaminaBefore is the resource value immediately before this consumption.
+  optional float stamina_before = 3;
+
+  // StaminaAfter is the resource value immediately after this consumption.
+  optional float stamina_after = 4;
+
+  // Drained reports whether this action drained the resource.
+  optional bool drained = 5;
+
+  // StaminaMax is the pawn's current stamina capacity.
+  optional float stamina_max = 6;
+
+  // Gametime is the engine timestamp of this action.
+  optional float gametime = 7;
+
+  // PlaySound is presentation data and does not affect accounting.
+  optional bool play_sound = 8;
+}
+
+// Damage decodes the attribution subset of Deadlock user message 300. Field
+// numbers follow CCitadelUserMessage_Damage in citadel_usermessages.proto.
+message Damage {
+  // Damage is the positive health damage reported for this hit.
+  optional int32 damage = 1;
+
+  // EntindexVictim identifies the hit entity without restricting its category.
+  optional int32 entindex_victim = 6 [default = -1];
+
+  // EntindexAttacker identifies the entity credited with the hit.
+  optional int32 entindex_attacker = 8 [default = -1];
+
+  // HitgroupId identifies the hit region; Source HitGroup_t assigns head to 1.
+  optional int32 hitgroup_id = 21;
+
+  // ServerTick is the authoritative simulation tick used for deduplication.
+  optional int32 server_tick = 29;
+}

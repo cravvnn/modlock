@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <google/protobuf/json/json.h>
 
 #include <fstream>
@@ -42,7 +44,7 @@ std::optional<std::string> FileSettings::Value(std::string_view mod, uint64_t st
 void FileSettings::Store(std::string_view mod, uint64_t steam_id, std::string_view key,
                          std::string_view value) {
   // Replace the player's earlier value, or add the first.
-  wasm::StoredSetting* found = nullptr;
+  wasm::settings::StoredSetting* found = nullptr;
   for (auto& stored : *stored_.mutable_values()) {
     if (stored.mod() == mod && stored.steam_id() == steam_id && stored.key() == key) {
       found = &stored;

@@ -16,7 +16,7 @@ using gameinterop::InteropTraceEnabled;
 constexpr size_t kMaxTraceFailures = 32;
 
 // PlaceEntity teleports a world-text entity to origin with angles and no motion.
-void PlaceEntity(void* entity, const modlock::Vec3& origin, const modlock::EulerAngles& angles) {
+void PlaceEntity(void* entity, const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles) {
   gameinterop::TeleportEntity(entity,
                               {static_cast<float>(origin.x()), static_cast<float>(origin.y()),
                                static_cast<float>(origin.z())},
@@ -98,7 +98,7 @@ WorldTextGameFactory::~WorldTextGameFactory() = default;
 class GameWorldTextEntity final : public WorldTextEntity {
  public:
   GameWorldTextEntity(WorldTextGameFactory& factory, std::string message,
-                      const modlock::Vec3& origin, const modlock::EulerAngles& angles,
+                      const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles,
                       const WorldTextStyle& style)
       : factory_(factory),
         message_(std::move(message)),
@@ -139,7 +139,7 @@ class GameWorldTextEntity final : public WorldTextEntity {
     message_ = std::string(message);
   }
 
-  void SetOrigin(const modlock::Vec3& position, const modlock::EulerAngles& angles) override {
+  void SetOrigin(const modlock::geometry::Vec3& position, const modlock::geometry::EulerAngles& angles) override {
     if (entity_ == nullptr) {
       return;
     }
@@ -258,15 +258,15 @@ class GameWorldTextEntity final : public WorldTextEntity {
 
   WorldTextGameFactory& factory_;
   std::string message_;
-  modlock::Vec3 origin_;
-  modlock::EulerAngles angles_;
+  modlock::geometry::Vec3 origin_;
+  modlock::geometry::EulerAngles angles_;
   WorldTextStyle style_;
   void* entity_ = nullptr;
   void* key_values_ = nullptr;
 };
 
 std::expected<std::unique_ptr<WorldTextEntity>, std::string> WorldTextGameFactory::Create(
-    std::string_view message, const modlock::Vec3& origin, const modlock::EulerAngles& angles,
+    std::string_view message, const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles,
     const WorldTextStyle& style) {
   auto entity = std::unique_ptr<GameWorldTextEntity>(
       new GameWorldTextEntity(*this, std::string(message), origin, angles, style));

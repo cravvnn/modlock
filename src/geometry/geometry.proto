@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package modlock.geometry;
+
+option go_package = "github.com/paralin/modlock/src/geometry;geometry";
+
+// Vec3 is a position or direction in world space, in game units.
+message Vec3 {
+  // X identifies the component along the game world east-west axis.
+  double x = 1;
+
+  // Y identifies the component along the game world north-south axis.
+  double y = 2;
+
+  // Z identifies the component along the game world vertical axis.
+  double z = 3;
+}
+
+// EulerAngles is an orientation in degrees around the game world axes.
+message EulerAngles {
+  // Pitch identifies the rotation around the lateral axis, in degrees.
+  double pitch = 1;
+
+  // Yaw identifies the rotation around the vertical axis, in degrees.
+  double yaw = 2;
+
+  // Roll identifies the rotation around the longitudinal axis, in degrees.
+  double roll = 3;
+}

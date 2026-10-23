@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/wasm_plugin.h"
 
 #include <chrono>
@@ -34,7 +36,7 @@ constexpr auto kDepartWait = std::chrono::seconds(5);
 
 }  // namespace
 
-bool Tune(std::wstring_view module, const char* module_name, const wasm::Manifest& manifest,
+bool Tune(std::wstring_view module, const char* module_name, const wasm::manifest::Manifest& manifest,
           const std::function<void(std::string_view)>& log) {
   // A manifest without abilities needs no tuning.
   if (manifest.abilities().empty()) {
@@ -157,7 +159,7 @@ std::expected<void, std::string> WasmPlugin::Press(int32_t slot, std::string_vie
   }
 
   // Deliver the press to the mod.
-  wasm::UiPressEvent event;
+  wasm::ui::UiPressEvent event;
   event.set_player(slot);
   event.set_node(std::string(node));
   static_cast<void>(mod_.UiPress(event));

@@ -8,7 +8,7 @@
 #include <string_view>
 #include <vector>
 
-#include "proto/modlock/ui.pb.h"
+#include "src/wasm/ui/ui.pb.h"
 
 namespace modlock::wasm {
 

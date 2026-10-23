@@ -4,10 +4,6 @@
 #include "modlock/gameinterop/pawn_observer.h"
 #include "modlock/plugin.h"
 
-namespace modlock {
-class EulerAngles;
-}
-
 namespace modlock::gameinterop {
 
 // TeleportPawnControl adapts the observer's frame-scoped pawn pointers to the
@@ -23,9 +19,9 @@ class MODLOCK_API TeleportPawnControl final : public modlock::PawnControl {
                                TeleportClientCamera reset_camera = nullptr)
       : observer_(observer), reset_camera_(reset_camera) {}
 
-  bool TeleportToPosition(int32_t slot, const Vec3& position) override;
+  bool TeleportToPosition(int32_t slot, const geometry::Vec3& position) override;
 
-  bool ResetToPose(int32_t slot, const Vec3& position, const EulerAngles& angles) override;
+  bool ResetToPose(int32_t slot, const geometry::Vec3& position, const geometry::EulerAngles& angles) override;
 
  private:
   const PawnObserver& observer_;

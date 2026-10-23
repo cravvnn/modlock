@@ -67,13 +67,13 @@ class MODLOCK_API WorldEffectGameFactory final : public WorldEffectFactory {
 
   // CreateFogController enables spatial volumetric fog; its volumes determine
   // where fog exists. Remove volumes before removing their controller.
-  std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogController(const Vec3& origin,
+  std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogController(const geometry::Vec3& origin,
                                                                                float draw_distance);
 
   // CreateFogVolume creates an oriented box of tinted fog. Bounds are
   // local to origin, and density fades across the box's boundary.
   std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogVolume(
-      const Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
+      const geometry::Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
       const std::array<float, 3>& maxs, float strength, const std::array<uint8_t, 3>& tint);
 
  private:
@@ -81,7 +81,7 @@ class MODLOCK_API WorldEffectGameFactory final : public WorldEffectFactory {
   friend class GameWorldEntity;
 
   std::expected<std::unique_ptr<WorldEffect>, std::string> CreateEntity(
-      const char* class_name, const Vec3& origin, const std::array<float, 3>& angles,
+      const char* class_name, const geometry::Vec3& origin, const std::array<float, 3>& angles,
       std::span<const gameinterop::EntityKeyValue> properties);
 
   void TraceFailure(std::string_view message);

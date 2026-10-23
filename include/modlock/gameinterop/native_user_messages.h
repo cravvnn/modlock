@@ -11,7 +11,7 @@ namespace google::protobuf {
 class MessageLite;
 }
 
-namespace modlock::engine {
+namespace modlock::gameinterop::engine {
 enum ScreenEffectState : int;
 }
 

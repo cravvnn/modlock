@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/aperturerobotics/cli"
+	modcli "github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/project"
-	modcli "github.com/paralin/modlock/proto/modlock/cli"
 	"github.com/paralin/modlock/sandbox"
 	"github.com/paralin/modlock/session"
 	"github.com/pkg/errors"

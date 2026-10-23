@@ -4,23 +4,25 @@ import (
 	"testing"
 
 	"github.com/paralin/modlock/metrics"
-	"github.com/paralin/modlock/proto/modlock/control"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/host_app/control"
+	"github.com/paralin/modlock/src/wasm"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
+	metricspb "github.com/paralin/modlock/src/wasm/metrics"
 )
 
 // TestMetrics adds up the player's declared metrics and logs a call the
 // declaration refuses.
 func TestMetrics(t *testing.T) {
 	// Declare one labeled count and record what the session logs.
-	manifest := &wasm.Manifest{Slug: "hud", Metrics: []*wasm.Metric{
-		{Name: "hud.opened", Kind: wasm.Metric_KIND_COUNT, Labels: []string{"compact"}},
+	manifest := &manifestpb.Manifest{Slug: "hud", Metrics: []*metricspb.Metric{
+		{Name: "hud.opened", Kind: metricspb.Metric_KIND_COUNT, Labels: []string{"compact"}},
 	}}
 	var logged []string
 	s := &Sandbox{tallies: map[string]*metrics.Tally{}, config: Config{Events: func(event *control.HostEvent) {
 		logged = append(logged, event.GetLog().GetText())
 	}}}
 	add := func(name, label string) {
-		request, _ := (&wasm.AddMetricRequest{Name: name, Label: &label}).MarshalVT()
+		request, _ := (&metricspb.AddMetricRequest{Name: name, Label: &label}).MarshalVT()
 		s.answer(manifest, &wasm.Call{Method: "AddMetric", Request: request})
 	}
 

@@ -101,6 +101,10 @@ string(REGEX REPLACE "(..)" "'\\\\x\\1'," MODLOCK_GAME_SIGNATURES "${MODLOCK_GAM
 configure_file(cmake/game_signatures_data.cc.in src/gameinterop/game_signatures_data.cc @ONLY)
 configure_file(data/game_signatures.txtpb game_signatures.txtpb COPYONLY)
 
+# The SDK carries every generated message beside its code under src/, except
+# the host executable's own control and dump messages.
+file(GLOB_RECURSE MODLOCK_SDK_PROTO_SOURCES CONFIGURE_DEPENDS src/*.pb.cc)
+list(FILTER MODLOCK_SDK_PROTO_SOURCES EXCLUDE REGEX "/src/host_app/")
 add_library(modlock_sdk SHARED
   src/camera/camera_path.cc
   src/engine_host.cc
@@ -194,14 +198,7 @@ add_library(modlock_sdk SHARED
   src/wasm/wasm_plugin_calls.cc
   src/wasm/wasm_plugin_events.cc
   src/wasm/wasm_host.cc
-  proto/modlock/camera.pb.cc
-  proto/modlock/chat.pb.cc
-  proto/modlock/game_signatures.pb.cc
-  proto/modlock/hud.pb.cc
-  proto/modlock/stamina_consumed.pb.cc
-  proto/modlock/types.pb.cc
-  proto/modlock/ui.pb.cc
-  proto/modlock/wasm.pb.cc
+  ${MODLOCK_SDK_PROTO_SOURCES}
 )
 add_library(modlock::sdk ALIAS modlock_sdk)
 if(MINGW)
@@ -271,8 +268,8 @@ add_executable(modlock-host
   src/host_app/game_dump_entities.cc
   src/host_app/game_dump_schemas.cc
   src/host_app/main.cc
-  proto/modlock/control/control.pb.cc
-  proto/modlock/dump/dump.pb.cc)
+  src/host_app/control/control.pb.cc
+  src/host_app/dump/dump.pb.cc)
 target_include_directories(modlock-host PRIVATE src)
 target_link_libraries(modlock-host PRIVATE modlock::sdk)
 if(WIN32)
@@ -456,7 +453,7 @@ if(NOT MODLOCK_REVISION_LENGTH EQUAL 40 OR NOT MODLOCK_REVISION MATCHES "^[0-9a-
   message(FATAL_ERROR "MODLOCK_REVISION must identify the resolved source commit")
 endif()
 file(GLOB_RECURSE MODLOCK_HEADERS CONFIGURE_DEPENDS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.pb.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h ${CMAKE_CURRENT_SOURCE_DIR}/src/*.pb.h)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${MODLOCK_HEADERS})
 set(MODLOCK_INTERFACE_INPUT "")
 foreach(header IN LISTS MODLOCK_HEADERS)
@@ -472,8 +469,9 @@ install(TARGETS modlock_sdk EXPORT ModlockTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY tests/ DESTINATION ${CMAKE_INSTALL_DATADIR}/modlock/testing FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY proto/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/proto FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY proto/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/github.com/paralin/modlock/proto FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY src/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/src FILES_MATCHING PATTERN "*.pb.h")
+install(DIRECTORY src/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/github.com/paralin/modlock/src
+  FILES_MATCHING PATTERN "*.pb.h")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/modlock/build.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/modlock)
 install(EXPORT ModlockTargets NAMESPACE modlock:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Modlock)
 configure_package_config_file(cmake/ModlockConfig.cmake.in
@@ -596,7 +594,7 @@ if(BUILD_TESTING)
   # wasm_instance_test runs the Go example mod, so it builds it with Go, and
   # the Luau example on the Luau runtime.
   set(hello_go_wasm ${CMAKE_CURRENT_BINARY_DIR}/hello-go.wasm)
-  file(GLOB hello_go_sources CONFIGURE_DEPENDS mod/*.go examples/hello-go/*.go proto/modlock/wasm/*.go)
+  file(GLOB_RECURSE hello_go_sources CONFIGURE_DEPENDS mod/*.go examples/hello-go/*.go src/*.pb.go)
   add_custom_command(OUTPUT ${hello_go_wasm}
     COMMAND ${CMAKE_COMMAND} -E env GOOS=wasip1 GOARCH=wasm
       ${GO_EXECUTABLE} build -buildmode=c-shared -o ${hello_go_wasm} ./examples/hello-go
@@ -617,8 +615,8 @@ if(BUILD_TESTING)
   add_test(NAME wasm_instance_test COMMAND wasm_instance_test)
   # wasm_host_test runs a Go mod that serves and calls extension services.
   set(extension_go_wasm ${CMAKE_CURRENT_BINARY_DIR}/extension-go.wasm)
-  file(GLOB extension_go_sources CONFIGURE_DEPENDS mod/*.go tests/wasm/extension-go/*.go
-    proto/modlock/wasm/*.go)
+  file(GLOB_RECURSE extension_go_sources CONFIGURE_DEPENDS mod/*.go tests/wasm/extension-go/*.go
+    src/*.pb.go)
   add_custom_command(OUTPUT ${extension_go_wasm}
     COMMAND ${CMAKE_COMMAND} -E env GOOS=wasip1 GOARCH=wasm
       ${GO_EXECUTABLE} build -buildmode=c-shared -o ${extension_go_wasm} ./tests/wasm/extension-go

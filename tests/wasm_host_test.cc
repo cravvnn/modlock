@@ -32,7 +32,7 @@ class Events final : public WasmHostObserver {
     seen.push_back("failed: " + std::string(error));
   }
 
-  void Ui(std::string_view, int32_t, const modlock::ui::Change&) override {}
+  void Ui(std::string_view, int32_t, const modlock::wasm::ui::Change&) override {}
 
   void Held(std::string_view, bool held) override { seen.push_back(held ? "held" : "released"); }
 

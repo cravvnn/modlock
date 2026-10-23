@@ -3,7 +3,7 @@ package session
 import (
 	"io"
 
-	"github.com/paralin/modlock/proto/modlock/control"
+	"github.com/paralin/modlock/src/host_app/control"
 )
 
 // Config describes a play session.

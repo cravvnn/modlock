@@ -3,7 +3,7 @@ package mod
 import (
 	"slices"
 
-	"github.com/paralin/modlock/proto/modlock/spot"
+	"github.com/paralin/modlock/mod/spot"
 )
 
 // Spot is a base map and the objects players placed on it. Nothing is

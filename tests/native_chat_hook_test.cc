@@ -8,7 +8,7 @@
 #include <span>
 #include <vector>
 
-#include "proto/modlock/chat.pb.h"
+#include "src/gameinterop/engine/chat.pb.h"
 
 namespace modlock::gameinterop {
 namespace {

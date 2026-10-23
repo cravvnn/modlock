@@ -16,7 +16,7 @@ class MODLOCK_API WorldParticle : public WorldEffect {
  public:
   virtual std::expected<void, std::string> Start() = 0;
   virtual std::expected<void, std::string> Stop() = 0;
-  virtual std::expected<void, std::string> Transform(const Vec3& origin,
+  virtual std::expected<void, std::string> Transform(const geometry::Vec3& origin,
                                                      const std::array<float, 3>& angles) = 0;
   virtual std::expected<void, std::string> Tint(const ParticleTint& tint) = 0;
   virtual std::expected<void, std::string> Data(const ParticleData& data) = 0;

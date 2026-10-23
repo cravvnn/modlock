@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/paralin/modlock/check"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/source2/panorama"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
 )
 
 // TestContent builds a project's content into its addon's directories with
@@ -32,7 +32,7 @@ func TestContent(t *testing.T) {
 	write("content/layout/panel.xml", `<root><scripts><include src="file://{resources}/scripts/{addon}/panel.js" /></scripts><Panel /></root>`)
 	write("content/scripts/panel.js", "$.Msg('{addon} stays as written outside a path');")
 	write("content/layout/.panel.xml.swp", "swap")
-	manifest := &wasm.Manifest{Slug: "parry", Version: "1.2.0", Language: wasm.Manifest_LANGUAGE_TYPESCRIPT}
+	manifest := &manifestpb.Manifest{Slug: "parry", Version: "1.2.0", Language: manifestpb.Manifest_LANGUAGE_TYPESCRIPT}
 	p := &Project{Dir: dir, Manifest: manifest}
 	addon := check.Addon(manifest)
 

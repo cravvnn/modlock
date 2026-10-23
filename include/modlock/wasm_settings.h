@@ -7,7 +7,7 @@
 #include <string_view>
 
 #include "modlock/export.h"
-#include "proto/modlock/wasm.pb.h"
+#include "src/wasm/settings/settings.pb.h"
 
 namespace modlock {
 
@@ -45,7 +45,7 @@ class MODLOCK_API FileSettings final : public WasmSettings {
 
  private:
   std::filesystem::path path_;
-  wasm::StoredSettings stored_;
+  wasm::settings::StoredSettings stored_;
 };
 
 }  // namespace modlock

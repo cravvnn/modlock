@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package modlock.camera;
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+option go_package = "github.com/paralin/modlock/src/camera;camera";
+
+// Interpolation selects how values move between authored keys.
+enum Interpolation {
+  // INTERPOLATION_UNSPECIFIED is the unspecified interpolation.
+  INTERPOLATION_UNSPECIFIED = 0;
+  // INTERPOLATION_LINEAR moves at a constant rate between keys.
+  INTERPOLATION_LINEAR = 1;
+  // INTERPOLATION_SMOOTH uses shape-preserving cubic Hermite between keys.
+  INTERPOLATION_SMOOTH = 2;
+  // INTERPOLATION_STEP holds the previous key's value until the next key.
+  INTERPOLATION_STEP = 3;
+}
+
+// RotationMode selects how yaw and roll cross the 180-degree seam.
+enum RotationMode {
+  // ROTATION_MODE_UNSPECIFIED is the unspecified rotation mode.
+  ROTATION_MODE_UNSPECIFIED = 0;
+  // ROTATION_MODE_SHORTEST travels the shorter arc between keys.
+  ROTATION_MODE_SHORTEST = 1;
+  // ROTATION_MODE_UNWRAPPED preserves authored full turns.
+  ROTATION_MODE_UNWRAPPED = 2;
+}
+
+// CameraPose is one evaluated camera state: position, orientation, and
+// framing at one instant.
+message CameraPose {
+  // Position is the world-space camera position.
+  modlock.geometry.Vec3 position = 1;
+  // Angles is the camera orientation in degrees.
+  modlock.geometry.EulerAngles angles = 2;
+  // AspectRatio is the framing ratio at this instant.
+  double aspect_ratio = 3;
+}
+
+// CameraKeyframe is one authored camera pose at a shot-relative time.
+message CameraKeyframe {
+  // Time is the shot-relative second of this key; keys are strictly
+  // increasing and nonnegative.
+  double time = 1;
+  // Position is the world-space camera position.
+  modlock.geometry.Vec3 position = 2;
+  // Angles is the camera orientation in degrees.
+  modlock.geometry.EulerAngles angles = 3;
+  // AspectRatio is the authored framing ratio at this key.
+  double aspect_ratio = 4;
+}
+
+// CameraPath is an authored, validated camera path. Evaluation is
+// deterministic and stateless: forward playback and rewinds are identical.
+message CameraPath {
+  // Keys are the authored camera keyframes in strictly increasing time order.
+  repeated CameraKeyframe keys = 1;
+  // Interpolation selects movement between keys for position and angles.
+  Interpolation interpolation = 2;
+  // RotationMode selects yaw and roll seam handling.
+  RotationMode rotation_mode = 3;
+  // LensInterpolation selects movement for the aspect-ratio channel.
+  Interpolation lens_interpolation = 4;
+}

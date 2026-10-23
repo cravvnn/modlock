@@ -15,20 +15,20 @@
 namespace {
 
 using modlock::wasm::Call;
-using modlock::wasm::ChatRequest;
+using modlock::wasm::effects::ChatRequest;
 using modlock::wasm::CommandEvent;
 using modlock::wasm::CommandResult;
-using modlock::wasm::FieldResponse;
+using modlock::wasm::fields::FieldResponse;
 using modlock::wasm::FrameEvent;
 using modlock::wasm::Instance;
 using modlock::wasm::Limits;
 using modlock::wasm::LogRequest;
-using modlock::wasm::ReadFieldRequest;
+using modlock::wasm::fields::ReadFieldRequest;
 using modlock::wasm::Reply;
 using modlock::wasm::Runtime;
 using modlock::wasm::StartEvent;
 using modlock::wasm::StartResult;
-using modlock::wasm::WriteFieldRequest;
+using modlock::wasm::fields::WriteFieldRequest;
 
 // ReadFile returns the bytes of a built module.
 std::vector<uint8_t> ReadFile(const char* path) {
@@ -294,7 +294,7 @@ end)
   EXPECT_EQ(write.entity(), 7);
   EXPECT_EQ(write.class_name(), "CBaseEntity");
   EXPECT_EQ(write.field(), "m_iHealth");
-  EXPECT_EQ(write.type(), modlock::wasm::FIELD_TYPE_INT32);
+  EXPECT_EQ(write.type(), modlock::wasm::fields::FIELD_TYPE_INT32);
   const auto& value = write.value();
   EXPECT_EQ(value.has_integer() ? static_cast<double>(value.integer()) : value.number(), 300);
 }

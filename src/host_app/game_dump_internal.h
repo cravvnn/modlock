@@ -14,7 +14,7 @@
 #include "gameinterop/schema_layout.h"
 #include "modlock/gameinterop/console_variables.h"
 #include "modlock/gameinterop/pe_layout.h"
-#include "proto/modlock/dump/dump.pb.h"
+#include "src/host_app/dump/dump.pb.h"
 
 namespace modlock::host_app {
 

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm"
 )
 
 // message is a protobuf message with fast encoding.

@@ -9,7 +9,7 @@
 //
 // encodeSpot writes the spot document, whose bytes depend only on the spot.
 
-import * as pb from '../../proto/modlock/spot/spot.pb.js'
+import * as pb from '../../mod/spot/spot.pb.js'
 import {
   type Angles,
   createModel,

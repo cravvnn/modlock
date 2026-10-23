@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 
+	"github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/project"
-	"github.com/paralin/modlock/proto/modlock/cli"
-	"github.com/paralin/modlock/proto/modlock/control"
-	"github.com/paralin/modlock/proto/modlock/publish"
+	"github.com/paralin/modlock/publish"
+	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/pkg/errors"
 )
 

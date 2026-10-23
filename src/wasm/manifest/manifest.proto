@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package modlock.wasm.manifest;
+
+option go_package = "github.com/paralin/modlock/src/wasm/manifest;manifest";
+
+import "github.com/paralin/modlock/src/wasm/metrics/metrics.proto";
+import "github.com/paralin/modlock/src/wasm/settings/settings.proto";
+
+// Manifest describes a mod in its mod.json. A source project's manifest names
+// its language; modlock build writes a built mod's manifest beside the entry,
+// naming its runtime and entry instead.
+message Manifest {
+  // Runtime is the WebAssembly module that runs a built mod.
+  enum Runtime {
+    // RUNTIME_UNKNOWN is an unset or unsupported runtime.
+    RUNTIME_UNKNOWN = 0;
+
+    // RUNTIME_WASM runs the entry itself, a module compiled from the mod.
+    RUNTIME_WASM = 1;
+
+    // RUNTIME_QUICKJS runs the entry, one JavaScript bundle, on QuickJS.
+    RUNTIME_QUICKJS = 2;
+
+    // RUNTIME_LUAU runs the entry, a zip of Luau sources, on Luau.
+    RUNTIME_LUAU = 3;
+
+    // RUNTIME_PYTHON runs the entry, a zip of Python sources, on CPython.
+    RUNTIME_PYTHON = 4;
+  }
+
+  // Language is the language a mod's source is written in.
+  enum Language {
+    // LANGUAGE_UNKNOWN is an unset or unsupported language.
+    LANGUAGE_UNKNOWN = 0;
+
+    // LANGUAGE_GO builds with Go into a module of its own.
+    LANGUAGE_GO = 1;
+
+    // LANGUAGE_TYPESCRIPT bundles to JavaScript for QuickJS.
+    LANGUAGE_TYPESCRIPT = 2;
+
+    // LANGUAGE_JAVASCRIPT bundles for QuickJS, type checked from JSDoc.
+    LANGUAGE_JAVASCRIPT = 3;
+
+    // LANGUAGE_LUAU runs on Luau.
+    LANGUAGE_LUAU = 4;
+
+    // LANGUAGE_PYTHON runs on CPython.
+    LANGUAGE_PYTHON = 5;
+  }
+
+  // Slug identifies the mod: lowercase letters, digits and hyphens.
+  string slug = 1;
+
+  // Name is the mod's display name.
+  string name = 2;
+
+  // Version is the mod's semantic version.
+  string version = 3;
+
+  // Language is the source language, set in a source project.
+  Language language = 4;
+
+  // Runtime is the module that runs the built mod. A script mod's source
+  // project sets RUNTIME_WASM to publish a module compiled with scriptc
+  // instead of a bundle for QuickJS.
+  Runtime runtime = 5;
+
+  // Entry is the built mod's entry file, relative to mod.json.
+  string entry = 6;
+
+  // Map is the map the mod plays on; empty plays the default map.
+  string map = 7;
+
+  // Movement replaces how heroes move on the server and in each player's
+  // game.
+  Movement movement = 8;
+
+  // Abilities change abilities' data on the server and in each player's
+  // game.
+  repeated AbilityTuning abilities = 9;
+
+  // Settings are the choices each player makes about the mod, which the mod
+  // reads with PlayerSetting.
+  repeated modlock.wasm.settings.Setting settings = 10;
+
+  // Metrics are the measures the mod keeps for each player, which the mod
+  // adds to with AddMetric.
+  repeated modlock.wasm.metrics.Metric metrics = 11;
+
+  // FreeForAll starts the mod in free-for-all: the game shows no team screen,
+  // the host seats each new player on the smaller team and opens the hero
+  // picker, and every hero can damage every other. The mod can change it
+  // while it runs with SetFreeForAll. Meant for dedicated servers.
+  bool free_for_all = 12;
+}
+
+// Movement selects the movement model heroes walk and jump with.
+message Movement {
+  // Model is a movement model the host runs every tick.
+  enum Model {
+    // MODEL_NATIVE is the game's own movement.
+    MODEL_NATIVE = 0;
+
+    // MODEL_QUAKEWORLD is QuakeWorld's player movement against the map's
+    // Quake collision, maps/<map>.bsp, a version 29 BSP. Heroes are solid
+    // boxes to each other, and a landing raises a Landed event.
+    MODEL_QUAKEWORLD = 1;
+  }
+
+  Model model = 1;
+
+  // Scale is game units per Quake unit; zero means 1.
+  float scale = 2;
+
+  // Unpredicted_buttons are left out of the commands the client predicts.
+  // They name inputs the mod remaps or blocks on the server, so the client
+  // predicts no cast or shot the server will not make.
+  uint64 unpredicted_buttons = 3;
+}
+
+// AbilityTuning changes one ability's data where the game keeps it parsed.
+message AbilityTuning {
+  // Ability is the ability's name, such as gunslinger_rocket_launcher.
+  string ability = 1;
+
+  // Properties replaces the values of the ability's named properties, such
+  // as AbilityCooldown.
+  map<string, float> properties = 2;
+
+  // Fields writes float schema fields, named as a path of class.field steps
+  // from the ability's data, such as
+  // CitadelAbilityVData.m_projectileInfo/ProjectileInfo_t.m_flSpeed.
+  map<string, float> fields = 3;
+
+  // CopyFields copies the field at each value's path over the field at its
+  // key's path; both must be the same size.
+  map<string, string> copy_fields = 4;
+}

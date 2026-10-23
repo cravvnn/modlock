@@ -1,7 +1,7 @@
 import type { JsonObject } from '@aptre/protobuf-es-lite'
 import { beforeEach, expect, test } from 'bun:test'
 
-import { Screen } from '../../proto/modlock/ui.pb.js'
+import { Screen } from '../../src/wasm/ui/ui.pb.js'
 import { Bridge } from './bridge.js'
 import { Drawing, layoutDataChanged } from './draw.js'
 

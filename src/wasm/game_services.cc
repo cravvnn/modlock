@@ -1,3 +1,6 @@
+//go:build deps_only
+
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <type_traits>

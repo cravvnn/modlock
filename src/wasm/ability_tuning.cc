@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/ability_tuning.h"
 
 #include <array>
@@ -120,7 +122,7 @@ std::expected<SchemaField, std::string> ResolvePath(void* schema, const char* mo
 
 std::expected<std::vector<std::string>, std::string> TuneAbilities(
     const gameinterop::ModuleImage& module, void* schema, const char* module_name,
-    const google::protobuf::RepeatedPtrField<AbilityTuning>& abilities) {
+    const google::protobuf::RepeatedPtrField<manifest::AbilityTuning>& abilities) {
   // Resolve the definition lookup.
   auto definitions = gameinterop::AbilityDefinitions::Resolve(module);
   if (!definitions) {

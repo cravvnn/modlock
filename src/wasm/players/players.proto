@@ -1,0 +1,321 @@
+syntax = "proto3";
+
+package modlock.wasm.players;
+
+option go_package = "github.com/paralin/modlock/src/wasm/players;players";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// RestoredEvent reports how a RestoreHero ended.
+message RestoredEvent {
+  // Player is the player whose hero was restored.
+  int32 player = 1;
+
+  // Error describes why the hero does not match its target, or is empty when
+  // it held the target for a second.
+  string error = 2;
+}
+
+// PlayersChangedEvent holds every occupied player slot, as Players lists them.
+message PlayersChangedEvent {
+  repeated Connection players = 1;
+}
+
+// PlayerRequest addresses one player.
+message PlayerRequest {
+  // Player is the player's server slot.
+  int32 player = 1;
+}
+
+// PlayersResponse lists the occupied player slots in slot order.
+message PlayersResponse {
+  repeated Connection players = 1;
+}
+
+// Connection is one occupied player slot.
+message Connection {
+  // Player is the connection's server slot.
+  int32 player = 1;
+
+  // SteamId identifies a human's account, or is zero for a bot.
+  uint64 steam_id = 2;
+
+  // Name is the player's name.
+  string name = 3;
+
+  // Bot is true for a bot player.
+  bool bot = 4;
+
+  // Ready is true once a human has finished joining; bots are always ready.
+  bool ready = 5;
+
+  // Generation changes each time a new connection takes the slot.
+  uint32 generation = 6;
+}
+
+// PawnResponse holds the player's hero, absent without a live one.
+message PawnResponse {
+  Pawn pawn = 1;
+}
+
+// Pawn is one player's hero this frame.
+message Pawn {
+  // Entity is the hero's entity handle, which ReadField reads.
+  uint32 entity = 1;
+
+  // Hero identifies the hero, as SelectHero returns it.
+  uint32 hero = 2;
+
+  // Team is the hero's team number.
+  int32 team = 3;
+
+  // Health is the hero's health; zero or less is dead.
+  int32 health = 4;
+
+  // MaxHealth is the hero's networked maximum health.
+  int32 max_health = 5;
+
+  // Position is the hero's origin, at its feet.
+  modlock.geometry.Vec3 position = 6;
+
+  // EyeAngles is where the hero aims.
+  modlock.geometry.EulerAngles eye_angles = 7;
+
+  // CameraAngles is where the player's camera looks.
+  modlock.geometry.EulerAngles camera_angles = 8;
+
+  // Stamina is the hero's stamina, absent until it has spawned fully.
+  optional float stamina = 9;
+
+  // MaxStamina is the hero's maximum stamina, present with stamina.
+  optional float max_stamina = 10;
+
+  // Generation is the connection generation the hero belongs to.
+  uint32 generation = 11;
+
+  // Souls is the souls the player holds.
+  int32 souls = 12;
+
+  // EyePosition is where the hero's view starts, for aiming traces.
+  modlock.geometry.Vec3 eye_position = 13;
+
+  // Velocity is the hero's motion in units per second.
+  modlock.geometry.Vec3 velocity = 14;
+
+  // CarryingUrn is whether the hero carries the soul urn, absent when the
+  // game's modifier states cannot be read.
+  optional bool carrying_urn = 15;
+
+  // Score is the player's scoreboard, absent when the game's scoreboard
+  // cannot be read.
+  optional Score score = 16;
+}
+
+// Score is one player's scoreboard counters since the match began, as the
+// game counts them.
+message Score {
+  int32 kills = 1;
+  int32 deaths = 2;
+  int32 assists = 3;
+
+  // LastHits counts enemy troopers and neutrals the player finished.
+  int32 last_hits = 4;
+
+  // Denies counts allied troopers the player finished before an enemy could.
+  int32 denies = 5;
+
+  // HeroDamage is the damage the player dealt to enemy heroes.
+  int32 hero_damage = 6;
+
+  // HeroHealing is the healing the player gave other heroes.
+  int32 hero_healing = 7;
+
+  // NetWorth is the souls the player has earned, spent or not.
+  int32 net_worth = 8;
+}
+
+// SelectHeroRequest gives a player a hero.
+message SelectHeroRequest {
+  int32 player = 1;
+
+  // Hero names the hero, such as hero_wraith, or gives its identifier as
+  // Pawn.hero reports it.
+  oneof hero {
+    string hero_name = 2;
+    uint32 hero_id = 3;
+  }
+
+  // Team is the team number to join: 2 or 3.
+  int32 team = 4;
+}
+
+// HeroResponse identifies the hero SelectHero gave.
+message HeroResponse {
+  uint32 hero = 1;
+}
+
+// WatchRequest names a spectator and the hero they follow.
+message WatchRequest {
+  // Player is the spectator's server slot.
+  int32 player = 1;
+
+  // Target is the entity handle of the hero to follow, as Pawn.entity
+  // reports it.
+  uint32 target = 2;
+}
+
+// FreezeRequest holds or releases one player's hero.
+message FreezeRequest {
+  int32 player = 1;
+
+  // Frozen holds the hero when true or omitted; false releases it.
+  optional bool frozen = 2;
+}
+
+// AdjustSoulsRequest changes one player's souls.
+message AdjustSoulsRequest {
+  int32 player = 1;
+
+  // Delta adds souls, or spends them when negative.
+  int32 delta = 2;
+
+  // Silent hides the game's souls notice.
+  optional bool silent = 3;
+}
+
+// StartingSoulsRequest sets the souls one player's hero spawns with.
+message StartingSoulsRequest {
+  int32 player = 1;
+
+  // Souls is the amount the player should hold at least.
+  int32 souls = 2;
+}
+
+// ResetHeroRequest rebuilds one player's hero with a fresh build.
+message ResetHeroRequest {
+  int32 player = 1;
+
+  // Souls is the amount the player holds after the reset.
+  int32 souls = 2;
+}
+
+// HealRequest restores health to a player's hero.
+message HealRequest {
+  int32 player = 1;
+
+  // Amount is the health to add; the hero stops at its maximum.
+  int32 amount = 2;
+}
+
+// SetStaminaRequest sets one player's stamina.
+message SetStaminaRequest {
+  int32 player = 1;
+
+  // Stamina is the hero's new stamina; the hero stops at zero and at its
+  // maximum.
+  float stamina = 2;
+}
+
+// RestoreHeroRequest starts restoring a player's live hero to a target.
+message RestoreHeroRequest {
+  int32 player = 1;
+
+  // Target is the state to give the hero.
+  HeroTarget target = 2;
+}
+
+// HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
+// hero's own.
+message HeroTarget {
+  // Position is the hero's origin.
+  modlock.geometry.Vec3 position = 1;
+
+  // Facing is where the camera faces; a bot's hero faces it.
+  modlock.geometry.EulerAngles facing = 2;
+
+  // Fresh gives full health and stamina and readies every ability, in place
+  // of health, max health, upgrade bonuses and timers. A bot's ability
+  // upgrades may grow while the restore runs.
+  optional bool fresh = 3;
+
+  // Level sets the hero's level.
+  optional int32 level = 4;
+
+  // Health and MaxHealth set the hero's health and its base maximum. Both
+  // are required unless the target is fresh.
+  optional int32 health = 5;
+  optional int32 max_health = 6;
+
+  // UpgradeBonuses are the three stat bonuses purchases add, as replays
+  // record them.
+  repeated float upgrade_bonuses = 7;
+
+  // Abilities sets the hero's abilities in their slots.
+  repeated EquipmentTarget abilities = 8;
+
+  // Items lists the items that replace the hero's when ReplaceItems is set.
+  repeated EquipmentTarget items = 9;
+
+  // ReplaceItems replaces every item the hero owns with Items; an empty list
+  // removes them.
+  optional bool replace_items = 10;
+
+  // Timers sets the charges and cooldowns of owned abilities and items.
+  repeated TimerTarget timers = 11;
+}
+
+// EquipmentTarget is one ability or item a HeroTarget gives the hero.
+message EquipmentTarget {
+  // Id identifies the definition, as Ability.id.
+  uint32 id = 1;
+
+  // Slot is its place on the hero, as Ability.slot; abilities need one, and
+  // an item without one goes where the game puts it.
+  optional int32 slot = 2;
+
+  // State is the packed upgrade word, as Ability.state.
+  uint32 state = 3;
+}
+
+// TimerTarget sets one owned ability's or item's charges and cooldowns.
+// Times are seconds from the moment the host writes them; an omitted start
+// and end mean no timer.
+message TimerTarget {
+  // Id identifies the ability, as Ability.id.
+  uint32 id = 1;
+
+  // Charges is the charges it holds.
+  int32 charges = 2;
+
+  // CooldownStart and CooldownEnd bound its cooldown.
+  optional float cooldown_start = 3;
+  optional float cooldown_end = 4;
+
+  // RechargeStart and RechargeEnd bound the recovery of its next charge.
+  optional float recharge_start = 5;
+  optional float recharge_end = 6;
+}
+
+// BotOptions describes a bot player.
+message BotOptions {
+  // Name is the bot's player name.
+  string name = 1;
+
+  // Team is the team number to join: 2 or 3.
+  int32 team = 2;
+
+  // Hero names the bot's hero, such as hero_wraith, or gives its identifier
+  // as Pawn.hero reports it.
+  oneof hero {
+    string hero_name = 3;
+    uint32 hero_id = 4;
+  }
+
+  // Position is where the bot appears.
+  optional modlock.geometry.Vec3 position = 5;
+}
+
+// BotResponse holds the bot AddBot added.
+message BotResponse {
+  int32 player = 1;
+}

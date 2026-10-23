@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package modlock.wasm.npcs;
+
+option go_package = "github.com/paralin/modlock/src/wasm/npcs;npcs";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+import "github.com/paralin/modlock/src/wasm/fields/fields.proto";
+
+// NpcsRestoredEvent reports how a RestoreNpcs ended.
+message NpcsRestoredEvent {
+  // Error describes the unit that does not match its target, or is empty
+  // when every target was found in place.
+  string error = 1;
+}
+
+// NpcOptions describes a unit that is not a player, such as a trooper.
+message NpcOptions {
+  // ClassName is the unit's entity class, such as npc_trooper or
+  // npc_trooper_boss.
+  string class_name = 1;
+
+  // Unit names the unit's game data entry, such as trooper_melee, or is empty
+  // for a unit that needs none.
+  string unit = 2;
+
+  // Team is the unit's team number; 4 is neutral.
+  int32 team = 3;
+
+  // Position is the unit's origin, at its feet.
+  modlock.geometry.Vec3 position = 4;
+
+  // Facing is where the unit faces.
+  optional modlock.geometry.EulerAngles facing = 5;
+
+  // Health is the unit's health; the default is the unit's own.
+  optional int32 health = 6;
+
+  // MaxHealth is the unit's maximum health; the default is health.
+  optional int32 max_health = 7;
+
+  // Lane is the lane the unit walks. A unit whose class walks none, unlike a
+  // trooper, refuses it.
+  optional uint32 lane = 8;
+
+  // Fields are schema fields the host writes after it creates the unit and
+  // before the unit spawns, such as m_iInitialTeamNum, which the game reads
+  // only while spawning. A write that fails cancels the spawn.
+  repeated modlock.wasm.fields.FieldWrite fields = 9;
+}
+
+// NpcResponse holds the unit SpawnNpc added.
+message NpcResponse {
+  uint32 npc = 1;
+}
+
+// NpcRequest addresses one unit the mod spawned.
+message NpcRequest {
+  // Npc is the unit's entity handle, as damage events report it.
+  uint32 npc = 1;
+}
+
+// NpcStateResponse holds a live unit's state, absent once it is gone.
+message NpcStateResponse {
+  NpcState state = 1;
+}
+
+// NpcState is a unit's state this frame.
+message NpcState {
+  // Position is the unit's origin.
+  modlock.geometry.Vec3 position = 1;
+
+  // Facing is where the unit faces.
+  modlock.geometry.EulerAngles facing = 2;
+
+  // Health is the unit's health.
+  int32 health = 3;
+
+  // MaxHealth is the unit's maximum health.
+  int32 max_health = 4;
+
+  // Team is the unit's team number.
+  int32 team = 5;
+}
+
+// MoveNpcRequest places one unit.
+message MoveNpcRequest {
+  uint32 npc = 1;
+
+  // Position is the unit's new origin.
+  modlock.geometry.Vec3 position = 2;
+
+  // Facing is where the unit faces afterwards.
+  optional modlock.geometry.EulerAngles facing = 3;
+
+  // Velocity is the unit's motion, which drives its walk animation.
+  optional modlock.geometry.Vec3 velocity = 4;
+}
+
+// SetNpcHealthRequest sets one unit's health.
+message SetNpcHealthRequest {
+  uint32 npc = 1;
+
+  // Health is the unit's new health.
+  int32 health = 2;
+
+  // MaxHealth is the unit's new maximum health; the default is health.
+  optional int32 max_health = 3;
+}
+
+// RestoreNpcsRequest lists the units the map should hold.
+message RestoreNpcsRequest {
+  repeated NpcTarget npcs = 1;
+}
+
+// NpcTarget is one unit or objective RestoreNpcs places, as replays record
+// it.
+message NpcTarget {
+  // ClassName is the unit's entity class: npc_trooper, npc_trooper_neutral,
+  // npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
+  // npc_base_defense_sentry, npc_super_neutral or
+  // npc_neutral_sinners_sacrifice.
+  string class_name = 1;
+
+  // Id identifies the unit's game data entry.
+  uint32 id = 2;
+
+  // Team is the unit's team number; 4 is neutral.
+  int32 team = 3;
+
+  // Position is the unit's origin, at its feet.
+  modlock.geometry.Vec3 position = 4;
+
+  // Facing is where the unit faces.
+  modlock.geometry.EulerAngles facing = 5;
+
+  // Velocity is the unit's motion in units per second.
+  optional modlock.geometry.Vec3 velocity = 6;
+
+  // Health and MaxHealth are the unit's health.
+  int32 health = 7;
+  int32 max_health = 8;
+
+  // Lane is the lane a trooper walks; troopers need one.
+  optional uint32 lane = 9;
+}

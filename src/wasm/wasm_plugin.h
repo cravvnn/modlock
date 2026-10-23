@@ -61,7 +61,7 @@ struct Mods {
 // Tune writes manifest's ability tuning into the loaded game module and
 // returns whether that is done. A module whose ability data has not loaded
 // yet is tried again on a later call.
-bool Tune(std::wstring_view module, const char* module_name, const wasm::Manifest& manifest,
+bool Tune(std::wstring_view module, const char* module_name, const wasm::manifest::Manifest& manifest,
           const std::function<void(std::string_view)>& log);
 
 // PluginGame is one mod's game with the calls that reach its plugin: its log,
@@ -73,16 +73,16 @@ class PluginGame final : public wasm::Game {
 
  private:
   std::expected<void, std::string> Log(const wasm::LogRequest& request) override;
-  std::expected<void, std::string> Ui(const wasm::UiRequest& request) override;
+  std::expected<void, std::string> Ui(const wasm::ui::UiRequest& request) override;
   std::expected<wasm::ServiceReply, std::string> CallService(
       const wasm::ServiceCall& request) override;
-  std::expected<wasm::SettingResponse, std::string> PlayerSetting(
-      const wasm::PlayerSettingRequest& request) override;
+  std::expected<wasm::settings::SettingResponse, std::string> PlayerSetting(
+      const wasm::settings::PlayerSettingRequest& request) override;
   std::expected<void, std::string> SetPlayerSetting(
-      const wasm::SetPlayerSettingRequest& request) override;
-  std::expected<void, std::string> AddMetric(const wasm::AddMetricRequest& request) override;
-  std::expected<void, std::string> HoldReload(const wasm::HoldReloadRequest& request) override;
-  void Impacted(const wasm::ImpactEvent& event) override;
+      const wasm::settings::SetPlayerSettingRequest& request) override;
+  std::expected<void, std::string> AddMetric(const wasm::metrics::AddMetricRequest& request) override;
+  std::expected<void, std::string> HoldReload(const wasm::abilities::HoldReloadRequest& request) override;
+  void Impacted(const wasm::combat::ImpactEvent& event) override;
 
   // plugin_ owns the game.
   WasmPlugin& plugin_;
@@ -165,7 +165,7 @@ class WasmPlugin final : public Plugin {
   void Log(std::string_view text);
 
   // ApplyUi changes the interface the mod shows one player.
-  std::expected<void, std::string> ApplyUi(const wasm::UiRequest& request);
+  std::expected<void, std::string> ApplyUi(const wasm::ui::UiRequest& request);
 
   // CallService answers the mod's call to a service the host provides.
   std::expected<wasm::ServiceReply, std::string> CallService(const wasm::ServiceCall& call);
@@ -189,7 +189,7 @@ class WasmPlugin final : public Plugin {
                                              std::string_view label);
 
   // Impacted delivers a watched projectile's impact to the mod.
-  void Impacted(const wasm::ImpactEvent& event) {
+  void Impacted(const wasm::combat::ImpactEvent& event) {
     if (instance_) {
       static_cast<void>(mod_.Impact(event));
     }
@@ -285,7 +285,7 @@ class WasmPlugin final : public Plugin {
   std::vector<uint8_t> source_;
   // manifest_ and collision_ are the running build's; tuned_ is true once the
   // manifest's ability tuning is written.
-  wasm::Manifest manifest_;
+  wasm::manifest::Manifest manifest_;
   std::vector<uint8_t> collision_;
   bool tuned_ = false;
   // clock_error_ is the last reason the server clock could not be read, so

@@ -20,7 +20,7 @@ func main() {
 
 	// Reuse the canonical C++ postprocessor for module imports and Go build tags.
 	processor := protogen.NewPostProcessor(root, filepath.Join(root, "vendor"), "github.com/paralin/modlock", nil, false)
-	if err := processor.ProcessAllCppFiles(filepath.Join(root, "proto")); err != nil {
+	if err := processor.ProcessAllCppFiles(filepath.Join(root, "src")); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

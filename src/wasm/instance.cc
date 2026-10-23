@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/instance.h"
 
 #include <chrono>

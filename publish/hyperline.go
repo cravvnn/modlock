@@ -21,7 +21,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/paralin/modlock/proto/modlock/publish"
 	"github.com/pkg/errors"
 )
 
@@ -52,7 +51,7 @@ type Hyperline struct {
 
 // Publish uploads mod with its notes and returns the release the service
 // recorded. It signs in through the browser when no saved session is valid.
-func (h *Hyperline) Publish(ctx context.Context, mod *Mod) (*publish.Release, error) {
+func (h *Hyperline) Publish(ctx context.Context, mod *Mod) (*Release, error) {
 	// Pack the build for a service that can take it.
 	if err := checkOrigin(h.Origin); err != nil {
 		return nil, err
@@ -85,8 +84,8 @@ func (h *Hyperline) Publish(ctx context.Context, mod *Mod) (*publish.Release, er
 var errSignIn = errors.New("sign in again")
 
 // upload sends one release to path.
-func (h *Hyperline) upload(ctx context.Context, path, token string, body []byte) (*publish.Release, error) {
-	release := &publish.Release{}
+func (h *Hyperline) upload(ctx context.Context, path, token string, body []byte) (*Release, error) {
+	release := &Release{}
 	err := h.send(ctx, path, token, body, release)
 	return release, err
 }
@@ -124,7 +123,7 @@ func (h *Hyperline) send(ctx context.Context, path, token string, body []byte, o
 	case response.StatusCode == http.StatusUnauthorized && token != "":
 		return errSignIn
 	}
-	refusal := &publish.Error{}
+	refusal := &Error{}
 	if refusal.UnmarshalVT(data) != nil || refusal.GetMessage() == "" {
 		return errors.Errorf("%s answered %s", h.Origin, response.Status)
 	}
@@ -135,7 +134,7 @@ func (h *Hyperline) send(ctx context.Context, path, token string, body []byte, o
 // missing, expired, from another origin, or refused.
 func (h *Hyperline) token(ctx context.Context, refused bool) (string, error) {
 	// Reuse the saved session while the service still takes it.
-	saved := &publish.Session{}
+	saved := &Session{}
 	if data, err := os.ReadFile(h.SessionFile); err == nil && !refused && saved.UnmarshalJSON(data) == nil &&
 		saved.GetOrigin() == h.Origin && saved.GetToken() != "" && saved.GetExpiresAt() > time.Now().UnixMilli() {
 		return saved.GetToken(), nil
@@ -163,7 +162,7 @@ func (h *Hyperline) token(ctx context.Context, refused bool) (string, error) {
 // code it hands back to a loopback listener for a session. A one-use state
 // binds the callback to this attempt, and the verifier proves it to the
 // service.
-func (h *Hyperline) signIn(ctx context.Context) (*publish.Session, error) {
+func (h *Hyperline) signIn(ctx context.Context) (*Session, error) {
 	// Listen on loopback for the callback with fresh secrets for this attempt.
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
@@ -211,11 +210,11 @@ func (h *Hyperline) signIn(ctx context.Context) (*publish.Session, error) {
 	}
 
 	// Trade the code and verifier for a session.
-	exchange, err := (&publish.SignInExchange{Code: code, Verifier: verifier}).MarshalVT()
+	exchange, err := (&SignInExchange{Code: code, Verifier: verifier}).MarshalVT()
 	if err != nil {
 		return nil, err
 	}
-	signedIn := &publish.SignedIn{}
+	signedIn := &SignedIn{}
 	if err := h.send(ctx, "/api/identity/desktop/exchange", "", exchange, signedIn); err != nil {
 		return nil, errors.Wrap(err, "finish the sign-in")
 	}
@@ -223,7 +222,7 @@ func (h *Hyperline) signIn(ctx context.Context) (*publish.Session, error) {
 		return nil, errors.New("the sign-in returned no session")
 	}
 	_, _ = io.WriteString(h.Output, "Signed in as "+signedIn.GetAccount().GetDisplayName()+"\n")
-	return &publish.Session{
+	return &Session{
 		Origin:    h.Origin,
 		Token:     signedIn.GetToken(),
 		ExpiresAt: signedIn.GetExpiresAt(),

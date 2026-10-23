@@ -14,7 +14,7 @@
 #include "modlock/gameinterop/thunk_owner.h"
 #include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
-#include "proto/modlock/chat.pb.h"
+#include "src/gameinterop/engine/chat.pb.h"
 
 #if defined(_WIN32)
 #include <windows.h>

@@ -14,7 +14,7 @@
 #include "modlock/gameinterop/game_symbols.h"
 #include "modlock/gameinterop/signature.h"
 #include "modlock/gameinterop/virtual_slots.h"
-#include "proto/modlock/game_signatures.pb.h"
+#include "src/gameinterop/signatures/signatures.pb.h"
 
 namespace modlock::gameinterop {
 
@@ -25,7 +25,7 @@ namespace {
 
 // Table is one parsed game data file and the entries that view into it.
 struct Table {
-  gamedata::GameSignatureFile file;
+  signatures::GameSignatureFile file;
   std::vector<GameSignature> entries;
   std::vector<VirtualSlot> slots;
 };
@@ -48,11 +48,11 @@ class FirstError final : public google::protobuf::io::ErrorCollector {
 // Module returns the GameModule bit for module, or zero for an unknown one.
 uint8_t Module(int module) {
   switch (module) {
-    case gamedata::GAME_MODULE_SERVER:
+    case signatures::GAME_MODULE_SERVER:
       return static_cast<uint8_t>(GameModule::kServer);
-    case gamedata::GAME_MODULE_CLIENT:
+    case signatures::GAME_MODULE_CLIENT:
       return static_cast<uint8_t>(GameModule::kClient);
-    case gamedata::GAME_MODULE_ENGINE:
+    case signatures::GAME_MODULE_ENGINE:
       return static_cast<uint8_t>(GameModule::kEngine);
     default:
       return 0;
@@ -60,7 +60,7 @@ uint8_t Module(int module) {
 }
 
 // Entry checks one file entry and views it as a GameSignature.
-std::expected<GameSignature, std::string> Entry(const gamedata::GameSignature& entry) {
+std::expected<GameSignature, std::string> Entry(const signatures::GameSignature& entry) {
   // Every entry needs an id.
   if (entry.id().empty()) {
     return std::unexpected("an entry has no id");
@@ -83,15 +83,15 @@ std::expected<GameSignature, std::string> Entry(const gamedata::GameSignature& e
 
   // Record what a match points at.
   switch (entry.target_case()) {
-    case gamedata::GameSignature::kCallAt:
+    case signatures::GameSignature::kCallAt:
       signature.target = SignatureTarget::kCall;
       signature.delta = entry.call_at();
       break;
-    case gamedata::GameSignature::kRipRelativeAt:
+    case signatures::GameSignature::kRipRelativeAt:
       signature.target = SignatureTarget::kRipRelative;
       signature.delta = entry.rip_relative_at();
       break;
-    case gamedata::GameSignature::TARGET_NOT_SET:
+    case signatures::GameSignature::TARGET_NOT_SET:
       break;
   }
 
@@ -103,7 +103,7 @@ std::expected<GameSignature, std::string> Entry(const gamedata::GameSignature& e
 }
 
 // Slot checks one file entry and views it as a VirtualSlot.
-std::expected<VirtualSlot, std::string> Slot(const gamedata::VirtualSlot& entry) {
+std::expected<VirtualSlot, std::string> Slot(const signatures::VirtualSlot& entry) {
   // A slot needs an id, a module, a class and a valid pattern.
   if (entry.id().empty()) {
     return std::unexpected("a slot has no id");

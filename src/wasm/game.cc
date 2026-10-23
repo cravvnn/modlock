@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/game.h"
 
 #include <algorithm>
@@ -181,7 +183,7 @@ void Game::Leave(int32_t slot) {
 void Game::Clear() {
   // Stop watching every player.
   for (const auto slot : observer_.WatchingSlots()) {
-    PlayerRequest request;
+    players::PlayerRequest request;
     request.set_player(slot);
     static_cast<void>(Unwatch(request));
   }
@@ -283,7 +285,7 @@ std::expected<void, std::string> Game::ServerCommand(const ServerCommandRequest&
   return services_.ServerCommand(request.command());
 }
 
-std::expected<void, std::string> Game::Chat(const ChatRequest& request) {
+std::expected<void, std::string> Game::Chat(const effects::ChatRequest& request) {
   auto messages = services_.Messages();
   if (!messages) {
     return std::unexpected(messages.error());
@@ -291,7 +293,7 @@ std::expected<void, std::string> Game::Chat(const ChatRequest& request) {
   return (*messages)->Chat(request.player(), request.text());
 }
 
-std::expected<void, std::string> Game::CenterText(const CenterTextRequest& request) {
+std::expected<void, std::string> Game::CenterText(const effects::CenterTextRequest& request) {
   auto messages = services_.Messages();
   if (!messages) {
     return std::unexpected(messages.error());
@@ -299,7 +301,7 @@ std::expected<void, std::string> Game::CenterText(const CenterTextRequest& reque
   return (*messages)->CenterText(request.player(), request.text());
 }
 
-std::expected<void, std::string> Game::Announce(const AnnounceRequest& request) {
+std::expected<void, std::string> Game::Announce(const effects::AnnounceRequest& request) {
   auto messages = services_.Messages();
   if (!messages) {
     return std::unexpected(messages.error());
@@ -307,8 +309,8 @@ std::expected<void, std::string> Game::Announce(const AnnounceRequest& request) 
   return (*messages)->Announce(request.player(), request.title(), request.text());
 }
 
-std::expected<PlayersResponse, std::string> Game::Players() {
-  PlayersResponse players;
+std::expected<players::PlayersResponse, std::string> Game::Players() {
+  players::PlayersResponse players;
   for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
     // List each occupied slot.
     const auto state = gameinterop::ConnectionTracker::StateForSlot(slot);
@@ -328,9 +330,9 @@ std::expected<PlayersResponse, std::string> Game::Players() {
   return players;
 }
 
-std::expected<PawnResponse, std::string> Game::Pawn(const PlayerRequest& request) {
+std::expected<players::PawnResponse, std::string> Game::Pawn(const players::PlayerRequest& request) {
   // Sample the player's pawn; a slot without one answers no pawn.
-  PawnResponse response;
+  players::PawnResponse response;
   const auto sample = observer_.Observe(request.player());
   if (!sample) {
     return response;
@@ -386,7 +388,7 @@ std::expected<PawnResponse, std::string> Game::Pawn(const PlayerRequest& request
   }
 
   // The game marks the hero carrying the urn with its holding-idol state.
-  ModifierStateRequest holding;
+  abilities::ModifierStateRequest holding;
   holding.set_entity(sample->pawn_handle);
   holding.set_state("MODIFIER_STATE_HOLDING_IDOL");
   if (const auto carrying = ModifierState(holding)) {
@@ -436,11 +438,11 @@ std::expected<void*, std::string> Game::Entity(uint32_t handle) const {
   return entity;
 }
 
-ObjectResponse Game::Keep(Object object) {
+objects::ObjectResponse Game::Keep(Object object) {
   // Store the object under the next id and return the id.
   const auto id = next_object_++;
   objects_.emplace(id, std::move(object));
-  ObjectResponse response;
+  objects::ObjectResponse response;
   response.set_object(id);
   return response;
 }

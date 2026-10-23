@@ -1,0 +1,174 @@
+syntax = "proto3";
+
+package modlock.cli;
+
+option go_package = "github.com/paralin/modlock/cli;cli";
+
+import "github.com/paralin/modlock/src/host_app/control/control.proto";
+import "github.com/paralin/modlock/publish/publish.proto";
+import "github.com/paralin/modlock/src/wasm/ui/ui.proto";
+
+// With --json, the modlock command line writes one Event per line on standard
+// output as protobuf JSON, and stops when its standard input closes. In the
+// sandbox, each line of standard input is an Input as protobuf JSON. Tool
+// output for people, such as compiler errors, still goes to standard error.
+
+// Event is one thing the command line did or saw.
+message Event {
+  // Body selects the event.
+  oneof body {
+    // Note is a line of progress for the creator.
+    string note = 1;
+
+    // Building reports that a build of the project started.
+    Building building = 2;
+
+    // Built reports a finished build.
+    Built built = 3;
+
+    // Host carries an event from the running server.
+    modlock.host_app.control.HostEvent host = 4;
+
+    // Published reports a release the provider recorded.
+    Published published = 5;
+
+    // Sandbox reports that the session runs the mods in the sandbox, without
+    // the game, and why.
+    Sandbox sandbox = 6;
+  }
+}
+
+// Building identifies the project a build started for.
+message Building {
+  // Dir is the project directory.
+  string dir = 1;
+}
+
+// Built reports a finished build. A failed build leaves the previous built mod
+// in place.
+message Built {
+  // Dir is the project directory.
+  string dir = 1;
+
+  // Ok is true when the build wrote the built mod.
+  bool ok = 2;
+
+  // Error explains a failed build in one line.
+  string error = 3;
+
+  // Diagnostics lists the problems the checks and compilers found. A finished
+  // build replaces the previous build's diagnostics.
+  repeated Diagnostic diagnostics = 4;
+}
+
+// Diagnostic is one problem found in a source file.
+message Diagnostic {
+  // File is the file's absolute path.
+  string file = 1;
+
+  // Line is the 1-based line.
+  uint32 line = 2;
+
+  // Column is the 1-based column, zero when unknown.
+  uint32 column = 3;
+
+  // Message describes the problem.
+  string message = 4;
+
+  // Source names the tool that found it: tsgo, esbuild, go vet or go build.
+  string source = 5;
+
+  // Code is the tool's code for the problem, such as TS2322, if it has one.
+  string code = 6;
+}
+
+// Sandbox reports a session in the sandbox: the mods run without the game,
+// with a stand-in player who has no hero, and standard input carries the
+// player's input.
+message Sandbox {
+  // Reason explains why the session runs in the sandbox, such as a missing
+  // game.
+  string reason = 1;
+}
+
+// Input is one thing the stand-in player does in the sandbox.
+message Input {
+  // Body selects the input.
+  oneof body {
+    // Command is a line the player types in chat, such as "/hello".
+    string command = 1;
+
+    // Press presses a button in a mod's interface.
+    Press press = 2;
+  }
+}
+
+// Press identifies a button in the interface a mod shows a player.
+message Press {
+  // Mod is the mod's name.
+  string mod = 1;
+
+  // Slot identifies the player.
+  int32 slot = 2;
+
+  // Node is the button's id in the mod's tree.
+  string node = 3;
+}
+
+// Published reports a release.
+message Published {
+  // Provider is where the mod went: hyperline, archive or github.
+  string provider = 1;
+
+  // Release is the release hyperline.gg recorded.
+  modlock.publish.Release release = 2;
+
+  // Location is the archive's path or the GitHub release tag.
+  string location = 3;
+}
+
+// Preview is what the preview page of modlock dev draws, one per message on
+// its websocket: what the build and the mods are doing, and the stand-in
+// player's screen. The page sends each of the player's inputs back as an
+// Input on the same socket.
+message Preview {
+  // State is what the build and the mods are doing.
+  oneof state {
+    // Building reports a build in progress.
+    Building building = 1;
+
+    // Failed reports a failed build; the mods from the build before it keep
+    // running.
+    Built failed = 2;
+
+    // Running reports that the mods run.
+    Running running = 3;
+
+    // Stopped reports a mod that stopped or did not load, and why.
+    Stopped stopped = 4;
+  }
+
+  // Screen is the stand-in player's screen as the mods last drew it, kept
+  // through a build and a stop.
+  modlock.wasm.ui.Screen screen = 5;
+
+  // Watch is true when modlock dev rebuilds the mod on each save.
+  bool watch = 6;
+
+  // Note answers this page's last input when no mod received it, such as a
+  // command no mod handled; it is empty otherwise.
+  string note = 7;
+}
+
+// Running reports that the mods run.
+message Running {}
+
+// Stopped reports a mod that stopped or did not load.
+message Stopped {
+  // Failed names the mod and the error that stopped it.
+  modlock.host_app.control.ModFailed failed = 1;
+
+  // Log holds the mod's last log lines since it started, which usually say
+  // why it stopped.
+  repeated string log = 2;
+}

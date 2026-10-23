@@ -16,7 +16,7 @@
 #include "modlock/gameinterop/thunk_owner.h"
 #include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
-#include "proto/modlock/stamina_consumed.pb.h"
+#include "src/gameinterop/engine/stamina_consumed.pb.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -86,10 +86,7 @@ std::optional<modlock::StaminaEvidence> StaminaEvidenceTracker::Bind(
   if (!live_ || lost_ || epoch_ == 0) {
     return std::nullopt;
   }
-  modlock::StaminaEvidence result;
-  result.set_epoch(epoch_);
-  result.set_total_spent(spent_);
-  return result;
+  return modlock::StaminaEvidence{.total_spent = spent_, .epoch = epoch_};
 }
 
 void StaminaEvidenceTracker::Invalidate() {
@@ -101,7 +98,7 @@ void StaminaEvidenceTracker::Record(std::span<const uint8_t> serialized) {
   if (!identity_) {
     return;
   }
-  modlock::engine::StaminaConsumed message;
+  modlock::gameinterop::engine::StaminaConsumed message;
   if (!ParseFramed(serialized, message) || !message.has_entindex_target() ||
       message.entindex_target() < 0) {
     Invalidate();
@@ -155,7 +152,7 @@ void StaminaEvidenceTracker::RecordDamage(std::span<const uint8_t> serialized) {
   if (!identity_) {
     return;
   }
-  modlock::engine::Damage message;
+  modlock::gameinterop::engine::Damage message;
   if (!ParseFramed(serialized, message) || !message.has_damage() || message.damage() <= 0 ||
       !message.has_entindex_attacker() || message.entindex_attacker() < 0 ||
       !message.has_entindex_victim() || message.entindex_victim() < 0 ||

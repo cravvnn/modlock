@@ -6,22 +6,22 @@
 namespace modlock::wasm {
 namespace {
 
-Manifest Declared() {
+manifest::Manifest Declared() {
   // Declare a labeled count.
-  Manifest manifest;
+  manifest::Manifest manifest;
   auto& opened = *manifest.add_metrics();
   opened.set_name("hud.opened");
-  opened.set_kind(Metric::KIND_COUNT);
+  opened.set_kind(metrics::Metric::KIND_COUNT);
   opened.add_labels("classic");
   opened.add_labels("compact");
 
   // Declare a sum and a maximum.
   auto& damage = *manifest.add_metrics();
   damage.set_name("damage");
-  damage.set_kind(Metric::KIND_SUM);
+  damage.set_kind(metrics::Metric::KIND_SUM);
   auto& combo = *manifest.add_metrics();
   combo.set_name("best_combo");
-  combo.set_kind(Metric::KIND_MAX);
+  combo.set_kind(metrics::Metric::KIND_MAX);
   return manifest;
 }
 

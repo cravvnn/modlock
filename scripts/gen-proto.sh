@@ -21,25 +21,33 @@ fi
 GOFLAGS=-mod=mod go mod vendor
 trap 'rm -rf vendor' EXIT
 
-GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate \
-  --language cpp --language go --language ts \
-  --rpc none --targets './proto/modlock/*.proto' --targets './proto/modlock/control/*.proto' "$@"
+aptre() {
+  GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate --rpc none "$@"
+}
+
+# The mod boundary, its geometry and the host's control stream serve the host
+# in C++ and the tools and mod libraries in Go and TypeScript.
+aptre --language cpp --language go --language ts \
+  --targets './src/geometry/*.proto' --targets './src/wasm/*.proto' --targets './src/wasm/*/*.proto' \
+  --targets './src/host_app/control/*.proto' "$@"
+
+# The game's own messages, camera paths and signatures serve only the host.
+aptre --language cpp \
+  --targets './src/camera/*.proto' --targets './src/gameinterop/engine/*.proto' \
+  --targets './src/gameinterop/signatures/*.proto'
 
 # The publishing messages and the command line's events serve the command line
 # and the programs that read its --json output; the spot document serves the
 # mod libraries.
-GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate \
-  --language go --language ts --rpc none \
-  --targets './proto/modlock/publish/*.proto' --targets './proto/modlock/cli/*.proto' \
-  --targets './proto/modlock/spot/*.proto'
+aptre --language go --language ts \
+  --targets './publish/*.proto' --targets './cli/*.proto' --targets './mod/spot/*.proto'
 
 # The game dump serves the host that writes it and the generators that read it.
-GOFLAGS=-mod=mod go run -mod=mod -tags=purego github.com/aperturerobotics/common/cmd/aptre generate \
-  --language cpp --language go --rpc none --targets './proto/modlock/dump/*.proto'
+aptre --language cpp --language go --targets './src/host_app/dump/*.proto'
 
 python3 scripts/restore-proto-exports.py
 
-# Each language's mod library and the host's dispatch follow wasm.proto.
+# Each language's mod library and the host's dispatch follow src/wasm/wasm.proto.
 GOFLAGS=-mod=mod go run -tags=purego ./cmd/modlock-sdkgen
 clang-format -i src/wasm/host_service.gen.h
 

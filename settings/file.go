@@ -4,18 +4,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/settings"
 )
 
 // File keeps players' settings in memory and, given a path, in a JSON file of
-// wasm.StoredSettings, the same file modlock-host keeps. It reads the file
+// settings.StoredSettings, the same file modlock-host keeps. It reads the file
 // when opened and rewrites it on each change. A File is not safe for
 // concurrent use.
 type File struct {
 	// path is the file, or empty to keep values in memory only.
 	path string
 	// stored holds every kept value.
-	stored *wasm.StoredSettings
+	stored *settings.StoredSettings
 }
 
 // Open reads the settings file at path, or starts empty when path is empty
@@ -23,7 +23,7 @@ type File struct {
 // the error says why.
 func Open(path string) (*File, error) {
 	// Start empty without a file.
-	f := &File{path: path, stored: &wasm.StoredSettings{}}
+	f := &File{path: path, stored: &settings.StoredSettings{}}
 	if path == "" {
 		return f, nil
 	}
@@ -37,7 +37,7 @@ func Open(path string) (*File, error) {
 		err = f.stored.UnmarshalJSON(data)
 	}
 	if err != nil {
-		f.stored = &wasm.StoredSettings{}
+		f.stored = &settings.StoredSettings{}
 	}
 	return f, err
 }
@@ -57,7 +57,7 @@ func (f *File) Store(mod string, steamID uint64, key, value string) error {
 	// Replace the player's earlier value, or add the first.
 	found := f.find(mod, steamID, key)
 	if found == nil {
-		found = &wasm.StoredSetting{Mod: mod, SteamId: steamID, Key: key}
+		found = &settings.StoredSetting{Mod: mod, SteamId: steamID, Key: key}
 		f.stored.Values = append(f.stored.Values, found)
 	}
 	found.Value = value
@@ -81,7 +81,7 @@ func (f *File) Store(mod string, steamID uint64, key, value string) error {
 }
 
 // find returns the kept value of the mod's setting for the player, or nil.
-func (f *File) find(mod string, steamID uint64, key string) *wasm.StoredSetting {
+func (f *File) find(mod string, steamID uint64, key string) *settings.StoredSetting {
 	for _, value := range f.stored.GetValues() {
 		if value.GetMod() == mod && value.GetSteamId() == steamID && value.GetKey() == key {
 			return value

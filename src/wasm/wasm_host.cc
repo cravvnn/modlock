@@ -1,5 +1,8 @@
+//go:build deps_only
+
 #include "modlock/wasm_host.h"
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -28,7 +31,7 @@ class ClientMod final : public Plugin {
   bool Start() override {
     // Only a QuakeWorld mod predicts movement.
     const auto& movement = build_.manifest.movement();
-    if (movement.model() != wasm::Movement::MODEL_QUAKEWORLD) {
+    if (movement.model() != wasm::manifest::Movement::MODEL_QUAKEWORLD) {
       return true;
     }
 

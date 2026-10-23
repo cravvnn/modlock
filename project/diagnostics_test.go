@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/evanw/esbuild/pkg/api"
-	"github.com/paralin/modlock/proto/modlock/cli"
+	"github.com/paralin/modlock/cli"
 )
 
 // TestDiagnostics checks that each tool's output becomes diagnostics with

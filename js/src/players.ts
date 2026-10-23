@@ -1,7 +1,7 @@
 // The host reports the occupied player slots before an event whenever they
 // changed, so players answers from memory instead of a call each frame.
 
-import { PlayersResponse } from '../../proto/modlock/wasm.pb.js'
+import { PlayersResponse } from '../../src/wasm/players/players.pb.js'
 import { type Connection, Player } from './host.gen.js'
 import { call } from './host.js'
 

@@ -16,7 +16,7 @@
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/game_symbols.h"
 #include "modlock/gameinterop/player_selection.h"
-#include "proto/modlock/types.pb.h"
+#include "modlock/stamina_evidence.h"
 
 namespace modlock::gameinterop {
 

@@ -1,0 +1,188 @@
+syntax = "proto3";
+
+package modlock.wasm.combat;
+
+option go_package = "github.com/paralin/modlock/src/wasm/combat;combat";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// DamageEvent is one hit before the game applies it. Handles are zero when
+// the game names no such entity.
+message DamageEvent {
+  // Victim is the entity taking the hit.
+  uint32 victim = 1;
+
+  // Attacker is the entity credited with the hit. Zero makes the hit a
+  // hazard, such as poison gas, which credits no one and ignores the
+  // inflictor and hit group.
+  uint32 attacker = 2;
+
+  // Inflictor is what delivered the hit, such as a projectile.
+  uint32 inflictor = 3;
+
+  // Ability is the ability that dealt the hit.
+  uint32 ability = 4;
+
+  // Flags are the game's damage flags.
+  uint64 flags = 5;
+
+  // HitGroup is the body part hit; 1 is the head and -1 means none.
+  int32 hit_group = 6;
+
+  // Amount is the hit's damage before resistances.
+  float amount = 7;
+}
+
+// DamageResult answers a DamageEvent. An empty result lets the hit through.
+message DamageResult {
+  // Block cancels the hit's health loss, force, effects and procs.
+  optional bool block = 1;
+
+  // Amount replaces the hit's damage when present.
+  optional float amount = 2;
+}
+
+// DamagedEvent reports one hit the game applied.
+message DamagedEvent {
+  // Victim is the entity that took the hit.
+  uint32 victim = 1;
+
+  // Attacker is the entity credited with the hit, or zero for a hazard.
+  uint32 attacker = 2;
+
+  // Ability is the ability that dealt the hit.
+  uint32 ability = 3;
+
+  // HealthLost is the health the hit removed, after resistances.
+  int32 health_lost = 4;
+
+  // HealthBefore is the victim's health before the hit; a hit that removes
+  // all of it kills.
+  int32 health_before = 5;
+
+  // Dealt is the hit's damage after resistances, before the victim's health
+  // capped it.
+  int32 dealt = 6;
+}
+
+// LaunchEvent is a watched projectile's first frame.
+message LaunchEvent {
+  // Entity is the projectile's entity handle.
+  uint32 entity = 1;
+
+  // Name is the projectile's designer name.
+  string name = 2;
+
+  // Owner is the entity that fired it, or zero.
+  uint32 owner = 3;
+
+  // Player is the slot of the player whose hero fired it, or -1.
+  int32 player = 4;
+
+  // Position is where the projectile is.
+  modlock.geometry.Vec3 position = 5;
+}
+
+// ImpactEvent is a watched projectile striking something.
+message ImpactEvent {
+  // Entity is the projectile's entity handle.
+  uint32 entity = 1;
+
+  // Name is the projectile's designer name.
+  string name = 2;
+
+  // Owner is the entity that fired it, or zero.
+  uint32 owner = 3;
+
+  // Player is the slot of the player whose hero fired it, or -1.
+  int32 player = 4;
+
+  // Start and End are the projectile's movement this frame, which ended in
+  // the strike.
+  modlock.geometry.Vec3 start = 5;
+  modlock.geometry.Vec3 end = 6;
+
+  // Position is where it struck.
+  modlock.geometry.Vec3 position = 7;
+
+  // Hit is the entity struck, or zero for the world.
+  uint32 hit = 8;
+}
+
+// ProjectileOptions selects the projectiles a mod watches.
+message ProjectileOptions {
+  // Names lists designer names, such as rocket_launcher_rocket_projectile.
+  repeated string names = 1;
+
+  // KeepMomentum gives each live hero back the motion it had before a
+  // watched projectile's explosion, so the mod's Impact handler sets the
+  // push.
+  optional bool keep_momentum = 2;
+}
+
+// HitOptions describes damage the mod deals.
+message HitOptions {
+  // Victim is the hero or unit to hurt. The world, props and buildings are
+  // refused: the client crashes on their damage events.
+  uint32 victim = 1;
+
+  // Attacker is the entity credited with the hit. Without one the hit is a
+  // hazard, such as poison gas, which credits no one and ignores the
+  // inflictor and hit group.
+  optional uint32 attacker = 2;
+
+  // Inflictor is what delivered the hit; the default is the attacker.
+  optional uint32 inflictor = 3;
+
+  // Amount is the damage before resistances.
+  float amount = 4;
+
+  // HitGroup is the body part hit; 1 is the head. The default is the game's
+  // choice.
+  optional int32 hit_group = 5;
+
+  // Ability is the entity handle of the ability that dealt the hit, as
+  // Ability.entity reports it.
+  optional uint32 ability = 6;
+}
+
+// TraceOptions describes a line to test against the world. Layers are bits
+// of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
+// 18 player and 19 NPC.
+message TraceOptions {
+  // Start is where the line begins.
+  modlock.geometry.Vec3 start = 1;
+
+  // End is where the line ends.
+  modlock.geometry.Vec3 end = 2;
+
+  // Layers selects what the line can hit; the default is solid and
+  // hitboxes.
+  optional uint64 layers = 3;
+
+  // Exclude removes things in these layers from the hits.
+  optional uint64 exclude = 4;
+
+  // Ignore lists entity handles the line passes through.
+  repeated uint32 ignore = 5;
+}
+
+// TraceResponse holds where a line hit, absent for a miss.
+message TraceResponse {
+  TraceHit hit = 1;
+}
+
+// TraceHit is where a traced line first hit something.
+message TraceHit {
+  // Position is the hit point.
+  modlock.geometry.Vec3 position = 1;
+
+  // Normal is the surface's direction at the hit point.
+  modlock.geometry.Vec3 normal = 2;
+
+  // StartSolid is true when the line began inside something solid.
+  bool start_solid = 3;
+
+  // Entity is the entity hit, or zero for the world.
+  uint32 entity = 4;
+}

@@ -11,8 +11,8 @@
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
-#include "proto/modlock/chat.pb.h"
-#include "proto/modlock/hud.pb.h"
+#include "src/gameinterop/engine/chat.pb.h"
+#include "src/gameinterop/engine/hud.pb.h"
 
 namespace modlock::gameinterop {
 namespace {

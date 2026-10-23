@@ -10,7 +10,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
+	settingspb "github.com/paralin/modlock/src/wasm/settings"
 	"github.com/pkg/errors"
 )
 
@@ -31,7 +32,7 @@ var (
 )
 
 // Find returns the setting named key that manifest declares, or nil.
-func Find(manifest *wasm.Manifest, key string) *wasm.Setting {
+func Find(manifest *manifestpb.Manifest, key string) *settingspb.Setting {
 	for _, setting := range manifest.GetSettings() {
 		if setting.GetKey() == key {
 			return setting
@@ -43,14 +44,14 @@ func Find(manifest *wasm.Manifest, key string) *wasm.Setting {
 // Canonical returns value as the setting holds it and whether the setting
 // accepts it: a choice's value, "true" or "false", or a number from min to
 // max on a step from min.
-func Canonical(setting *wasm.Setting, value string) (string, bool) {
+func Canonical(setting *settingspb.Setting, value string) (string, bool) {
 	switch setting.GetKind() {
-	case wasm.Setting_KIND_CHOICE:
-		ok := slices.ContainsFunc(setting.GetChoices(), func(c *wasm.SettingChoice) bool { return c.GetValue() == value })
+	case settingspb.Setting_KIND_CHOICE:
+		ok := slices.ContainsFunc(setting.GetChoices(), func(c *settingspb.SettingChoice) bool { return c.GetValue() == value })
 		return value, ok
-	case wasm.Setting_KIND_SWITCH:
+	case settingspb.Setting_KIND_SWITCH:
 		return value, value == "true" || value == "false"
-	case wasm.Setting_KIND_NUMBER:
+	case settingspb.Setting_KIND_NUMBER:
 		number, err := strconv.ParseFloat(value, 64)
 		if err != nil || math.IsNaN(number) || number < setting.GetMin() || number > setting.GetMax() {
 			return "", false
@@ -68,25 +69,25 @@ func Canonical(setting *wasm.Setting, value string) (string, bool) {
 
 // Default returns the value a player starts with: the declared default, or
 // the first choice, off or min when the setting declares none.
-func Default(setting *wasm.Setting) string {
+func Default(setting *settingspb.Setting) string {
 	if value, ok := Canonical(setting, setting.GetDefaultValue()); ok {
 		return value
 	}
 	switch setting.GetKind() {
-	case wasm.Setting_KIND_CHOICE:
+	case settingspb.Setting_KIND_CHOICE:
 		if len(setting.GetChoices()) != 0 {
 			return setting.GetChoices()[0].GetValue()
 		}
-	case wasm.Setting_KIND_SWITCH:
+	case settingspb.Setting_KIND_SWITCH:
 		return "false"
-	case wasm.Setting_KIND_NUMBER:
+	case settingspb.Setting_KIND_NUMBER:
 		return numberText(setting.GetMin())
 	}
 	return ""
 }
 
 // Validate checks the settings manifest declares.
-func Validate(manifest *wasm.Manifest) error {
+func Validate(manifest *manifestpb.Manifest) error {
 	settings := manifest.GetSettings()
 	if len(settings) > limit {
 		return errors.Errorf("mod.json declares more than %d settings", limit)
@@ -95,7 +96,7 @@ func Validate(manifest *wasm.Manifest) error {
 		if err := validate(setting); err != nil {
 			return err
 		}
-		if slices.ContainsFunc(settings[:i], func(s *wasm.Setting) bool { return s.GetKey() == setting.GetKey() }) {
+		if slices.ContainsFunc(settings[:i], func(s *settingspb.Setting) bool { return s.GetKey() == setting.GetKey() }) {
 			return errors.Errorf("mod.json declares setting %q twice", setting.GetKey())
 		}
 	}
@@ -103,7 +104,7 @@ func Validate(manifest *wasm.Manifest) error {
 }
 
 // validate checks one declared setting.
-func validate(setting *wasm.Setting) error {
+func validate(setting *settingspb.Setting) error {
 	// Check the name the code knows the setting by and the one players see.
 	key := setting.GetKey()
 	if !keyPattern.MatchString(key) {
@@ -115,7 +116,7 @@ func validate(setting *wasm.Setting) error {
 
 	// Check the values its kind allows.
 	switch setting.GetKind() {
-	case wasm.Setting_KIND_CHOICE:
+	case settingspb.Setting_KIND_CHOICE:
 		choices := setting.GetChoices()
 		if len(choices) == 0 || len(choices) > choiceLimit {
 			return errors.Errorf("setting %q lists 1 to %d choices", key, choiceLimit)
@@ -124,12 +125,12 @@ func validate(setting *wasm.Setting) error {
 			if !valuePattern.MatchString(choice.GetValue()) || len(choice.GetLabel()) > labelLimit {
 				return errors.Errorf("setting %q choice %q must be a short word with a short label", key, choice.GetValue())
 			}
-			if slices.ContainsFunc(choices[:i], func(c *wasm.SettingChoice) bool { return c.GetValue() == choice.GetValue() }) {
+			if slices.ContainsFunc(choices[:i], func(c *settingspb.SettingChoice) bool { return c.GetValue() == choice.GetValue() }) {
 				return errors.Errorf("setting %q lists choice %q twice", key, choice.GetValue())
 			}
 		}
-	case wasm.Setting_KIND_SWITCH:
-	case wasm.Setting_KIND_NUMBER:
+	case settingspb.Setting_KIND_SWITCH:
+	case settingspb.Setting_KIND_NUMBER:
 		if !(setting.GetMin() < setting.GetMax()) || setting.GetStep() < 0 {
 			return errors.Errorf("setting %q needs a min below its max and a step of zero or more", key)
 		}

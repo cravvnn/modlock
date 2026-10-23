@@ -1,5 +1,5 @@
-# proto-file: proto/modlock/game_signatures.proto
-# proto-message: modlock.gamedata.GameSignatureFile
+# proto-file: src/gameinterop/signatures/signatures.proto
+# proto-message: modlock.gameinterop.signatures.GameSignatureFile
 #
 # Every byte pattern modlock scans for in the game binaries, then every
 # virtual function it calls through a dispatch table. After a game update, run

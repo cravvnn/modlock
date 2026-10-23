@@ -8,7 +8,7 @@
 
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/hero_definitions.h"
-#include "proto/modlock/wasm.pb.h"
+#include "src/wasm/wasm.pb.h"
 
 // Helpers the translation units of Game and GameServices share.
 namespace modlock::wasm {
@@ -20,23 +20,23 @@ inline constexpr size_t kMaxChanges = 256;
 // kDesignerNameOffset is CEntityIdentity's designer name pointer.
 inline constexpr size_t kDesignerNameOffset = 0x20;
 
-inline std::array<float, 3> Floats(const Vec3& vector) {
+inline std::array<float, 3> Floats(const geometry::Vec3& vector) {
   return {static_cast<float>(vector.x()), static_cast<float>(vector.y()),
           static_cast<float>(vector.z())};
 }
 
-inline std::array<float, 3> Floats(const EulerAngles& angles) {
+inline std::array<float, 3> Floats(const geometry::EulerAngles& angles) {
   return {static_cast<float>(angles.pitch()), static_cast<float>(angles.yaw()),
           static_cast<float>(angles.roll())};
 }
 
-inline void SetAngles(EulerAngles* out, const std::array<float, 3>& angles) {
+inline void SetAngles(geometry::EulerAngles* out, const std::array<float, 3>& angles) {
   out->set_pitch(angles[0]);
   out->set_yaw(angles[1]);
   out->set_roll(angles[2]);
 }
 
-inline void SetVector(Vec3* out, const std::array<float, 3>& vector) {
+inline void SetVector(geometry::Vec3* out, const std::array<float, 3>& vector) {
   out->set_x(vector[0]);
   out->set_y(vector[1]);
   out->set_z(vector[2]);

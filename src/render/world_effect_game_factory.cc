@@ -38,7 +38,7 @@ bool IsShippedEffect(std::string_view effect_name) {
 }
 
 // Teleport places an effect entity at origin with angles and no motion.
-void Teleport(void* entity, const modlock::Vec3& origin, const std::array<float, 3>& angles) {
+void Teleport(void* entity, const modlock::geometry::Vec3& origin, const std::array<float, 3>& angles) {
   gameinterop::TeleportEntity(entity,
                               {static_cast<float>(origin.x()), static_cast<float>(origin.y()),
                                static_cast<float>(origin.z())},
@@ -85,7 +85,7 @@ class GameWorldEffect final : public WorldParticle {
 
   ~GameWorldEffect() override { Remove(); }
 
-  void Move(const modlock::Vec3& origin,
+  void Move(const modlock::geometry::Vec3& origin,
             const std::optional<std::array<float, 3>>& angles) override {
     if (entity_ == nullptr) {
       return;
@@ -101,7 +101,7 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> Stop() override { return Input("Stop"); }
 
-  std::expected<void, std::string> Transform(const Vec3& origin,
+  std::expected<void, std::string> Transform(const geometry::Vec3& origin,
                                              const std::array<float, 3>& angles) override {
     // Only a live particle with a finite pose moves.
     if (!entity_) {
@@ -314,7 +314,7 @@ class GameWorldEntity final : public WorldEffect {
 
   ~GameWorldEntity() override { Remove(); }
 
-  void Move(const Vec3& origin, const std::optional<std::array<float, 3>>& angles) override {
+  void Move(const geometry::Vec3& origin, const std::optional<std::array<float, 3>>& angles) override {
     if (!entity_) {
       return;
     }
@@ -345,7 +345,7 @@ class GameWorldEntity final : public WorldEffect {
 };
 
 std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory::CreateEntity(
-    const char* class_name, const Vec3& origin, const std::array<float, 3>& angles,
+    const char* class_name, const geometry::Vec3& origin, const std::array<float, 3>& angles,
     std::span<const gameinterop::EntityKeyValue> properties) {
   // Every engine call must be resolved.
   if (!calls_.entity_system || !calls_.create_entity_by_name || !calls_.queue_spawn_entity ||
@@ -372,7 +372,7 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
 }
 
 std::expected<std::unique_ptr<WorldEffect>, std::string>
-WorldEffectGameFactory::CreateFogController(const Vec3& origin, float draw_distance) {
+WorldEffectGameFactory::CreateFogController(const geometry::Vec3& origin, float draw_distance) {
   const gameinterop::EntityKeyValue properties[] = {
       {.key = "IsMaster", .value = true},
       {.key = "startdisabled", .value = false},
@@ -388,7 +388,7 @@ WorldEffectGameFactory::CreateFogController(const Vec3& origin, float draw_dista
 }
 
 std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory::CreateFogVolume(
-    const Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
+    const geometry::Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
     const std::array<float, 3>& maxs, float strength, const std::array<uint8_t, 3>& tint) {
   const gameinterop::EntityKeyValue properties[] = {
       {.key = "startdisabled", .value = false},

@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package modlock.wasm.match;
+
+option go_package = "github.com/paralin/modlock/src/wasm/match;match";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// SetFreeForAllRequest turns free-for-all on or off.
+message SetFreeForAllRequest {
+  // Enabled turns free-for-all on when true and off when false.
+  bool enabled = 1;
+}
+
+// PauseRequest pauses or resumes the game.
+message PauseRequest {
+  bool paused = 1;
+}
+
+// MatchClockResponse holds the match time.
+message MatchClockResponse {
+  float seconds = 1;
+}
+
+// HoldMatchClockRequest holds the match clock, or releases it.
+message HoldMatchClockRequest {
+  // Seconds is the time to hold; omitted releases the clock.
+  optional float seconds = 1;
+}
+
+// RiftResponse holds the Rift objective's state.
+message RiftResponse {
+  RiftState state = 1;
+}
+
+// RiftState is the Rift objective's timing as the game holds it. Times are
+// game times in seconds, or zero when unset.
+message RiftState {
+  // ScoringTeam is the team holding the Rift, or zero.
+  int32 scoring_team = 1;
+  float scoring_time = 2;
+  float cash_in_started = 3;
+  float give_up_time = 4;
+
+  // NextSpawn is when the Rift next opens.
+  float next_spawn = 5;
+  float spawn_window = 6;
+}
+
+// StartRiftRequest starts the Rift objective at an authored position.
+message StartRiftRequest {
+  modlock.geometry.Vec3 position = 1;
+}

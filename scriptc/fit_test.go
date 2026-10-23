@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/paralin/modlock/check"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/sandbox"
+	"github.com/paralin/modlock/src/wasm"
 )
 
 // fitted returns testdata/mod.wasm fitted to the boundary. The module is

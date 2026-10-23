@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package modlock.wasm.input;
+
+option go_package = "github.com/paralin/modlock/src/wasm/input;input";
+
+// InputEvent is one player's watched buttons that went down or up.
+message InputEvent {
+  // Player is the player who pressed.
+  int32 player = 1;
+
+  // Pressed holds one bit per button that went down.
+  uint64 pressed = 2;
+
+  // Released holds one bit per button that went up.
+  uint64 released = 3;
+}
+
+// ButtonsResponse holds the buttons a player holds.
+message ButtonsResponse {
+  uint64 buttons = 1;
+}
+
+// InputRequest names buttons for every player. Buttons are the game's input
+// bits; bit 42 is parry.
+message InputRequest {
+  // Buttons holds one bit per button; zero names none.
+  uint64 buttons = 1;
+}
+
+// PlayerInputRequest names buttons for one player.
+message PlayerInputRequest {
+  int32 player = 1;
+
+  // Buttons holds one bit per button.
+  uint64 buttons = 2;
+}
+
+// RemapInputRequest replaces the button the mod remaps for every hero.
+message RemapInputRequest {
+  // From holds the buttons the player presses; zero stops remapping.
+  uint64 from = 1;
+
+  // To holds the buttons the hero receives in their place.
+  uint64 to = 2;
+
+  // Repeat marks to as newly pressed in every input while from is held.
+  optional bool repeat = 3;
+}

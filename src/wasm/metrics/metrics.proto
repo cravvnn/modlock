@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package modlock.wasm.metrics;
+
+option go_package = "github.com/paralin/modlock/src/wasm/metrics;metrics";
+
+// AddMetricRequest adds to one of a player's metric totals.
+message AddMetricRequest {
+  // Player is the player's server slot.
+  int32 player = 1;
+
+  // Name names a metric the manifest declares.
+  string name = 2;
+
+  // Value is the amount a sum adds and the value a maximum compares; a
+  // count adds one.
+  double value = 3;
+
+  // Label is one of the metric's declared labels, or empty for a metric
+  // without labels.
+  optional string label = 4;
+}
+
+// Metric is one measure a mod keeps for each player, such as how often the
+// player opens a HUD panel. A metric with labels keeps one total per label,
+// such as one per HUD layout.
+message Metric {
+  // Kind is how a metric combines the values added to it.
+  enum Kind {
+    // KIND_UNKNOWN is an unset or unsupported kind.
+    KIND_UNKNOWN = 0;
+
+    // KIND_COUNT counts the calls.
+    KIND_COUNT = 1;
+
+    // KIND_SUM adds the values.
+    KIND_SUM = 2;
+
+    // KIND_MAX keeps the largest value.
+    KIND_MAX = 3;
+  }
+
+  // Name names the metric in the mod's code: up to 64 letters, digits,
+  // underscores and dots, starting with a letter or an underscore.
+  string name = 1;
+
+  Kind kind = 2;
+
+  // Labels are the values a call may label the metric with: letters,
+  // digits, dots, underscores and hyphens. Empty takes no label.
+  repeated string labels = 3;
+}
+
+// MetricTotal is one player's total of one metric and label.
+message MetricTotal {
+  string name = 1;
+  string label = 2;
+  double value = 3;
+}
+
+// MetricTotals are one player's totals for one mod's session.
+message MetricTotals {
+  repeated MetricTotal totals = 1;
+}

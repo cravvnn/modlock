@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	"github.com/paralin/modlock/metrics"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/settings"
+	"github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -59,13 +59,13 @@ func (p *Project) Build(ctx context.Context, output io.Writer, mode Mode) error 
 
 	// Compile the mod for its language.
 	switch p.Manifest.GetLanguage() {
-	case wasm.Manifest_LANGUAGE_GO:
+	case manifest.Manifest_LANGUAGE_GO:
 		return p.buildGo(ctx, output)
-	case wasm.Manifest_LANGUAGE_TYPESCRIPT, wasm.Manifest_LANGUAGE_JAVASCRIPT:
+	case manifest.Manifest_LANGUAGE_TYPESCRIPT, manifest.Manifest_LANGUAGE_JAVASCRIPT:
 		return p.buildScript(ctx, output, mode)
-	case wasm.Manifest_LANGUAGE_LUAU:
+	case manifest.Manifest_LANGUAGE_LUAU:
 		return p.buildLuau(ctx, output)
-	case wasm.Manifest_LANGUAGE_PYTHON:
+	case manifest.Manifest_LANGUAGE_PYTHON:
 		return p.buildPython(ctx, output)
 	default:
 		return errors.Errorf("modlock cannot build %s mods yet", p.Manifest.GetLanguage())
@@ -112,15 +112,15 @@ func (p *Project) buildGo(ctx context.Context, output io.Writer) error {
 	if err := os.Rename(staged, filepath.Join(p.Output(), Entry)); err != nil {
 		return errors.Wrap(err, "write the module")
 	}
-	return p.writeBuiltManifest(wasm.Manifest_RUNTIME_WASM, Entry)
+	return p.writeBuiltManifest(manifest.Manifest_RUNTIME_WASM, Entry)
 }
 
 // writeBuiltManifest writes the built mod's mod.json: the project's manifest,
 // naming the runtime and entry in place of the language.
-func (p *Project) writeBuiltManifest(runtime wasm.Manifest_Runtime, entry string) error {
+func (p *Project) writeBuiltManifest(runtime manifest.Manifest_Runtime, entry string) error {
 	// Copy the manifest, naming the runtime and the entry.
 	built := p.Manifest.CloneVT()
-	built.Language = wasm.Manifest_LANGUAGE_UNKNOWN
+	built.Language = manifest.Manifest_LANGUAGE_UNKNOWN
 	built.Runtime = runtime
 	built.Entry = entry
 	return WriteManifest(filepath.Join(p.Output(), ManifestFile), built)

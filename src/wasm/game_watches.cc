@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include <algorithm>
 #include <array>
 #include <cstring>
@@ -14,13 +16,13 @@ namespace modlock::wasm {
 namespace {
 
 // Watches reports whether options name a projectile.
-bool Watches(const ProjectileOptions& options, std::string_view name) {
+bool Watches(const combat::ProjectileOptions& options, std::string_view name) {
   return !name.empty() && std::ranges::find(options.names(), name) != options.names().end();
 }
 
 }  // namespace
 
-std::expected<void, std::string> Game::MoveEntity(const MoveEntityRequest& request) {
+std::expected<void, std::string> Game::MoveEntity(const entities::MoveEntityRequest& request) {
   // Move the entity, keeping its facing and velocity unless given.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -35,7 +37,7 @@ std::expected<void, std::string> Game::MoveEntity(const MoveEntityRequest& reque
   return {};
 }
 
-std::expected<void, std::string> Game::EmitSound(const EmitSoundRequest& request) {
+std::expected<void, std::string> Game::EmitSound(const effects::EmitSoundRequest& request) {
   // Play the sound on the entity.
   auto sound = services_.Sound();
   if (!sound) {
@@ -51,7 +53,7 @@ std::expected<void, std::string> Game::EmitSound(const EmitSoundRequest& request
   return {};
 }
 
-std::expected<void, std::string> Game::Kill(const PlayerRequest& request) {
+std::expected<void, std::string> Game::Kill(const players::PlayerRequest& request) {
   // Kill the live player's hero unless it is already dead.
   auto damage = services_.Damage();
   if (!damage) {
@@ -67,7 +69,7 @@ std::expected<void, std::string> Game::Kill(const PlayerRequest& request) {
   return (*damage)->Kill(observer_.PawnForSlot(request.player()));
 }
 
-std::expected<void, std::string> Game::SetVelocity(const SetVelocityRequest& request) {
+std::expected<void, std::string> Game::SetVelocity(const movement::SetVelocityRequest& request) {
   if (auto sample = Live(request.player()); !sample) {
     return std::unexpected(sample.error());
   }
@@ -76,7 +78,7 @@ std::expected<void, std::string> Game::SetVelocity(const SetVelocityRequest& req
   return {};
 }
 
-std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& request) {
+std::expected<input::ButtonsResponse, std::string> Game::Buttons(const players::PlayerRequest& request) {
   // Resolve the controller's pawn fields.
   auto pawn_field = services_.Field("CBasePlayerController", "m_hPawn");
   if (!pawn_field) {
@@ -112,7 +114,7 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
   if (controller == all.end()) {
     return std::unexpected("the player is not connected");
   }
-  ButtonsResponse response;
+  input::ButtonsResponse response;
   for (const auto& field : {*pawn_field, *hero_field}) {
     // Read the pawn's movement services.
     uint32_t handle = 0;
@@ -135,7 +137,7 @@ std::expected<ButtonsResponse, std::string> Game::Buttons(const PlayerRequest& r
   return response;
 }
 
-std::expected<void, std::string> Game::WatchMovement(const WatchMovementRequest& request) {
+std::expected<void, std::string> Game::WatchMovement(const movement::WatchMovementRequest& request) {
   if (request.player() < 0 || request.player() >= gameinterop::kMaxPlayerSlots) {
     return std::unexpected("no player has that slot");
   }
@@ -151,8 +153,8 @@ std::expected<void, std::string> Game::WatchMovement(const WatchMovementRequest&
   return {};
 }
 
-std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) {
-  std::vector<MovementSample> samples;
+std::vector<movement::MovementSample> Game::Movement(std::span<const MovementFact> facts) {
+  std::vector<movement::MovementSample> samples;
   for (const auto slot : movers_) {
     // Skip a dead or unmoving pawn.
     const auto sample = observer_.Observe(slot);
@@ -207,7 +209,7 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
         continue;
       }
       out.add_actions(fact.action);
-      if (fact.action == MOVEMENT_ACTION_ABILITY_EXECUTED) {
+      if (fact.action == movement::MOVEMENT_ACTION_ABILITY_EXECUTED) {
         out.add_casts(fact.ability);
       }
     }
@@ -215,7 +217,7 @@ std::vector<MovementSample> Game::Movement(std::span<const MovementFact> facts) 
   return samples;
 }
 
-std::expected<void, std::string> Game::WatchProjectiles(const ProjectileOptions& request) {
+std::expected<void, std::string> Game::WatchProjectiles(const combat::ProjectileOptions& request) {
   projectiles_ = request;
   if (!projectiles_.names().empty()) {
     services_.Projectiles();
@@ -274,7 +276,7 @@ void Game::TrackProjectiles() {
     }
 
     // Report the new one's launch with its owner and position.
-    LaunchEvent launch;
+    combat::LaunchEvent launch;
     launch.set_entity(*handle);
     launch.set_name(std::string(name));
     const auto [owner, player] = Owner(entity);
@@ -288,7 +290,7 @@ void Game::TrackProjectiles() {
   projectiles_seen_ = std::move(seen);
 }
 
-std::optional<ImpactEvent> Game::Watching(void* entity, const gameinterop::TraceResult& contact) {
+std::optional<combat::ImpactEvent> Game::Watching(void* entity, const gameinterop::TraceResult& contact) {
   // Only a watched projectile reports an impact.
   const auto name = DesignerName(entity);
   if (!Watches(projectiles_, name)) {
@@ -296,7 +298,7 @@ std::optional<ImpactEvent> Game::Watching(void* entity, const gameinterop::Trace
   }
 
   // Name the projectile and its owner.
-  ImpactEvent event;
+  combat::ImpactEvent event;
   event.set_entity(gameinterop::ReferenceHandleOf(entity).value_or(0));
   event.set_name(std::string(name));
   const auto [owner, player] = Owner(entity);

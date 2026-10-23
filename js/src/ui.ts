@@ -35,8 +35,8 @@ import {
   type Length as WireLength,
   type Node,
   type Style as WireStyle,
-} from '../../proto/modlock/ui.pb.js'
-import { UiRequest } from '../../proto/modlock/wasm.pb.js'
+  UiRequest,
+} from '../../src/wasm/ui/ui.pb.js'
 import type { Player } from './host.gen.js'
 import { call } from './host.js'
 

@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package modlock.wasm.fields;
+
+option go_package = "github.com/paralin/modlock/src/wasm/fields;fields";
+
+import "github.com/paralin/modlock/src/geometry/geometry.proto";
+
+// FieldType is how ReadField and WriteField interpret a field's storage.
+enum FieldType {
+  // FIELD_TYPE_UNKNOWN is an unset type, which the host refuses.
+  FIELD_TYPE_UNKNOWN = 0;
+
+  // FIELD_TYPE_BOOL is one byte read as a boolean.
+  FIELD_TYPE_BOOL = 1;
+
+  // FIELD_TYPE_INT8 through FIELD_TYPE_UINT32 are integers read as numbers.
+  FIELD_TYPE_INT8 = 2;
+  FIELD_TYPE_INT16 = 3;
+  FIELD_TYPE_INT32 = 4;
+  FIELD_TYPE_UINT8 = 5;
+  FIELD_TYPE_UINT16 = 6;
+  FIELD_TYPE_UINT32 = 7;
+
+  // FIELD_TYPE_INT64 and FIELD_TYPE_UINT64 are 64-bit integers.
+  FIELD_TYPE_INT64 = 8;
+  FIELD_TYPE_UINT64 = 9;
+
+  // FIELD_TYPE_FLOAT32 and FIELD_TYPE_FLOAT64 are floating point numbers.
+  FIELD_TYPE_FLOAT32 = 10;
+  FIELD_TYPE_FLOAT64 = 11;
+
+  // FIELD_TYPE_VECTOR is three floats, such as a position or angles.
+  FIELD_TYPE_VECTOR = 12;
+
+  // FIELD_TYPE_HANDLE is an entity handle, read as a number.
+  FIELD_TYPE_HANDLE = 13;
+
+  // FIELD_TYPE_STRING is a string the field points to.
+  FIELD_TYPE_STRING = 14;
+}
+
+// ReadFieldRequest names one schema field of a live entity.
+message ReadFieldRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // ClassName is the server class that declares the field, or a subclass.
+  string class_name = 2;
+
+  // Field is the field's schema name, such as m_iHealth. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+  string field = 3;
+
+  // Type is how to read the field.
+  FieldType type = 4;
+}
+
+// FieldResponse holds the value ReadField read.
+message FieldResponse {
+  FieldValue value = 1;
+}
+
+// FieldValue is one field's value. The host accepts any numeric case for a
+// numeric type and answers with the case its type reads as: a boolean, a
+// number for a type of 32 bits or less and a handle, an integer for a 64-bit
+// type, a vector or text.
+message FieldValue {
+  oneof value {
+    bool boolean = 1;
+    double number = 2;
+    int64 integer = 3;
+    string text = 4;
+    modlock.geometry.Vec3 vector = 5;
+  }
+}
+
+// FieldListResponse holds the elements ReadFieldList read.
+message FieldListResponse {
+  repeated FieldValue values = 1;
+}
+
+// WriteFieldListRequest replaces the elements of one list field of a live
+// entity.
+message WriteFieldListRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // ClassName is the server class that declares the field, or a subclass.
+  string class_name = 2;
+
+  // Field is the field's schema name, such as m_vecBannedHeroes.
+  string field = 3;
+
+  // Type is how to write each element.
+  FieldType type = 4;
+
+  // Values are the list's new elements, each in the form WriteField takes.
+  repeated FieldValue values = 5;
+}
+
+// WriteFieldRequest writes one schema field of a live entity.
+message WriteFieldRequest {
+  // Entity is the entity's handle.
+  uint32 entity = 1;
+
+  // ClassName is the server class that declares the field, or a subclass.
+  string class_name = 2;
+
+  // Field is the field's schema name, such as m_iClip. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+  string field = 3;
+
+  // Type is how to write the field.
+  FieldType type = 4;
+
+  // Value is the field's new value.
+  FieldValue value = 5;
+}
+
+// FieldWrite writes one schema field of an entity the host creates.
+message FieldWrite {
+  // ClassName is the server class that declares the field, or a subclass.
+  string class_name = 1;
+
+  // Field is the field's schema name, such as m_iLane. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+  string field = 2;
+
+  // Type is how to write the field.
+  FieldType type = 3;
+
+  // Value is the field's value.
+  FieldValue value = 4;
+}

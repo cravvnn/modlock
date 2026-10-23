@@ -4,9 +4,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/paralin/modlock/proto/modlock/control"
-	"github.com/paralin/modlock/proto/modlock/wasm"
 	"github.com/paralin/modlock/settings"
+	"github.com/paralin/modlock/src/host_app/control"
+	"github.com/paralin/modlock/src/wasm"
+	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
+	settingspb "github.com/paralin/modlock/src/wasm/settings"
 )
 
 // TestSettings answers a mod's settings calls: the player starts at the
@@ -14,11 +16,11 @@ import (
 // leaves the kept one.
 func TestSettings(t *testing.T) {
 	// Declare one choice and keep it in a file across sessions.
-	manifest := &wasm.Manifest{Slug: "hud", Settings: []*wasm.Setting{{
+	manifest := &manifestpb.Manifest{Slug: "hud", Settings: []*settingspb.Setting{{
 		Key:     "layout",
 		Label:   "Layout",
-		Kind:    wasm.Setting_KIND_CHOICE,
-		Choices: []*wasm.SettingChoice{{Value: "corner"}, {Value: "center"}},
+		Kind:    settingspb.Setting_KIND_CHOICE,
+		Choices: []*settingspb.SettingChoice{{Value: "corner"}, {Value: "center"}},
 	}}}
 	path := filepath.Join(t.TempDir(), "settings.json")
 	session := func() *Sandbox {
@@ -29,15 +31,15 @@ func TestSettings(t *testing.T) {
 		return &Sandbox{settings: file, config: Config{Events: func(*control.HostEvent) {}}}
 	}
 	read := func(s *Sandbox) string {
-		request, _ := (&wasm.PlayerSettingRequest{Key: "layout"}).MarshalVT()
-		response := &wasm.SettingResponse{}
+		request, _ := (&settingspb.PlayerSettingRequest{Key: "layout"}).MarshalVT()
+		response := &settingspb.SettingResponse{}
 		if err := response.UnmarshalVT(s.answer(manifest, &wasm.Call{Method: "PlayerSetting", Request: request}).GetResponse()); err != nil {
 			t.Fatal(err)
 		}
 		return response.GetValue()
 	}
 	set := func(s *Sandbox, value string) {
-		request, _ := (&wasm.SetPlayerSettingRequest{Key: "layout", Value: value}).MarshalVT()
+		request, _ := (&settingspb.SetPlayerSettingRequest{Key: "layout", Value: value}).MarshalVT()
 		s.answer(manifest, &wasm.Call{Method: "SetPlayerSetting", Request: request})
 	}
 

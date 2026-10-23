@@ -10,7 +10,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/paralin/modlock/proto/modlock/control"
+	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/pkg/errors"
 )
 

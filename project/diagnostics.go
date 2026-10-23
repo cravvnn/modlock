@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/evanw/esbuild/pkg/api"
-	"github.com/paralin/modlock/proto/modlock/cli"
+	"github.com/paralin/modlock/cli"
 )
 
 // CheckError is a build that failed on problems in the sources. Diagnostics

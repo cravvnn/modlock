@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/hero_restore.h"
 
 #include <algorithm>

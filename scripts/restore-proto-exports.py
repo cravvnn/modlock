@@ -12,7 +12,10 @@ import re
 import sys
 from pathlib import Path
 
-PROTO_DIR = Path(__file__).resolve().parent.parent / "proto" / "modlock"
+# The SDK DLL exports every message generated under src/ except the host
+# app's own, which modlock-host compiles into itself.
+SOURCE_DIR = Path(__file__).resolve().parent.parent / "src"
+HOST_APP_DIR = SOURCE_DIR / "host_app"
 
 # class <Msg> final : public ::google::protobuf::Message (pb.h)
 CLASS_RE = re.compile(r"^class (\w+) final : public ::google::protobuf::Message", re.M)
@@ -48,9 +51,11 @@ def restore(path: Path) -> bool:
 
 def main() -> int:
     changed = []
-    for path in sorted(PROTO_DIR.glob("*.pb.*")):
-        if path.suffix in (".h", ".cc") and restore(path):
-            changed.append(path.name)
+    for path in sorted(SOURCE_DIR.rglob("*.pb.*")):
+        if HOST_APP_DIR in path.parents or path.suffix not in (".h", ".cc"):
+            continue
+        if restore(path):
+            changed.append(str(path.relative_to(SOURCE_DIR)))
     print("restored MODLOCK_API in:", ", ".join(changed) if changed else "(none)")
     return 0
 

@@ -13,7 +13,7 @@
 #include "modlock/plugin_library.h"
 #include "modlock/wasm_metrics.h"
 #include "modlock/wasm_settings.h"
-#include "proto/modlock/ui.pb.h"
+#include "src/wasm/ui/ui.pb.h"
 
 namespace modlock {
 
@@ -37,7 +37,7 @@ class MODLOCK_API WasmHostObserver {
 
   // Ui carries a change to the interface mod shows the player in slot. A mod
   // that stops, and a player who leaves, end with a reset change.
-  virtual void Ui(std::string_view mod, int32_t slot, const ui::Change& change) = 0;
+  virtual void Ui(std::string_view mod, int32_t slot, const wasm::ui::Change& change) = 0;
 
   // Slowed reports an event of mod that ran past its slow time and finished,
   // with where the time went. The players may restart a mod that stays stuck.
@@ -56,7 +56,7 @@ using WasmExtension = std::function<std::expected<std::string, std::string>(
     std::string_view mod, std::string_view method, std::string_view payload)>;
 
 // WasmHost runs WebAssembly mods. Each mod runs in its own sandbox and reaches
-// the game only through the host requests in proto/modlock/wasm.proto. An
+// the game only through the host requests in src/wasm/wasm.proto. An
 // event that runs past half a second finishes; the host warns the players in
 // chat and, for five minutes, lets any of them restart the mod with
 // /restartmod. A trap, a runaway event past five seconds or an exhausted

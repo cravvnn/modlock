@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstring>
 
 #include "modlock/gameinterop/entity_abi.h"

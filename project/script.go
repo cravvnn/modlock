@@ -14,7 +14,7 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 	"github.com/paralin/modlock/internal/npm"
 	"github.com/paralin/modlock/js"
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm/manifest"
 	"github.com/pkg/errors"
 )
 
@@ -36,8 +36,8 @@ const libraryPackage = `{
 `
 
 // scriptMain returns the source entry of a TypeScript or JavaScript project.
-func scriptMain(language wasm.Manifest_Language) string {
-	if language == wasm.Manifest_LANGUAGE_JAVASCRIPT {
+func scriptMain(language manifest.Manifest_Language) string {
+	if language == manifest.Manifest_LANGUAGE_JAVASCRIPT {
 		return "main.js"
 	}
 	return "main.ts"
@@ -75,10 +75,10 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 	}
 
 	// Compile a release build with scriptc when the mod asks and scriptc can.
-	if mode == Release && p.Manifest.GetRuntime() == wasm.Manifest_RUNTIME_WASM {
+	if mode == Release && p.Manifest.GetRuntime() == manifest.Manifest_RUNTIME_WASM {
 		module, err := p.compileScriptc(ctx, library, tsgo, output)
 		if err == nil {
-			return p.writeBuild(module, wasm.Manifest_RUNTIME_WASM, Entry, ScriptEntry)
+			return p.writeBuild(module, manifest.Manifest_RUNTIME_WASM, Entry, ScriptEntry)
 		}
 		_, _ = fmt.Fprintf(output, "%v; the mod runs on QuickJS\n", err)
 	}
@@ -108,13 +108,13 @@ func (p *Project) buildScript(ctx context.Context, output io.Writer, mode Mode) 
 		}
 	}
 
-	return p.writeBuild(result.OutputFiles[0].Contents, wasm.Manifest_RUNTIME_QUICKJS, ScriptEntry, Entry)
+	return p.writeBuild(result.OutputFiles[0].Contents, manifest.Manifest_RUNTIME_QUICKJS, ScriptEntry, Entry)
 }
 
 // writeBuild replaces the built mod's entry with content, then the manifest
 // that names it, and removes the entry of the other runtime, stale, a
 // script mod builds for.
-func (p *Project) writeBuild(content []byte, runtime wasm.Manifest_Runtime, entry, stale string) error {
+func (p *Project) writeBuild(content []byte, runtime manifest.Manifest_Runtime, entry, stale string) error {
 	// Stage the entry so a failed write leaves the previous build in place.
 	if err := os.MkdirAll(p.Output(), 0o755); err != nil {
 		return errors.Wrap(err, "create the build directory")

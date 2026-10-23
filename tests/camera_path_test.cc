@@ -1,5 +1,6 @@
 #include "modlock/camera/camera_path.h"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -10,10 +11,10 @@ namespace modlock::camera {
 namespace {
 
 // Key makes one keyframe with defaults matching the Dolly test helpers.
-modlock::CameraKeyframe Key(double time, double x = 0, double y = 0, double z = 0, double pitch = 0,
+modlock::camera::CameraKeyframe Key(double time, double x = 0, double y = 0, double z = 0, double pitch = 0,
                             double yaw = 0, double roll = 0, double aspect = kDefaultAspectRatio) {
   // Set the time and position.
-  modlock::CameraKeyframe key;
+  modlock::camera::CameraKeyframe key;
   key.set_time(time);
   key.mutable_position()->set_x(x);
   key.mutable_position()->set_y(y);
@@ -28,12 +29,12 @@ modlock::CameraKeyframe Key(double time, double x = 0, double y = 0, double z = 
 }
 
 // Path makes a default-interpolation path from keys.
-modlock::CameraPath MakePath(std::initializer_list<modlock::CameraKeyframe> keys,
-                             modlock::Interpolation interpolation = modlock::INTERPOLATION_SMOOTH,
-                             modlock::RotationMode rotation = modlock::ROTATION_MODE_SHORTEST,
-                             modlock::Interpolation lens = modlock::INTERPOLATION_SMOOTH) {
+modlock::camera::CameraPath MakePath(std::initializer_list<modlock::camera::CameraKeyframe> keys,
+                             modlock::camera::Interpolation interpolation = modlock::camera::INTERPOLATION_SMOOTH,
+                             modlock::camera::RotationMode rotation = modlock::camera::ROTATION_MODE_SHORTEST,
+                             modlock::camera::Interpolation lens = modlock::camera::INTERPOLATION_SMOOTH) {
   // Set the modes and append each key.
-  modlock::CameraPath path;
+  modlock::camera::CameraPath path;
   path.set_interpolation(interpolation);
   path.set_rotation_mode(rotation);
   path.set_lens_interpolation(lens);
@@ -50,7 +51,7 @@ void ExpectClose(double actual, double expected, double tolerance = 1e-9) {
 
 TEST(CameraPathTest, EmptyPathValidatesButCannotEvaluate) {
   // An empty path is valid, but has no pose.
-  modlock::CameraPath path;
+  modlock::camera::CameraPath path;
   EXPECT_TRUE(ValidatePath(path).has_value());
   auto evaluated = EvaluatePath(path, 0);
   EXPECT_FALSE(evaluated.has_value());
@@ -71,7 +72,7 @@ TEST(CameraPathTest, SingleKeyHoldsAndNegativeEvaluationIsClamped) {
 TEST(CameraPathTest, LinearMovementAndIndependentLens) {
   // Aspect ratio interpolates on its own channel with linear movement here.
   auto path = MakePath({Key(1, 10, -20, 0, 0, 0, 0, 1.2), Key(3, 30, 20, 0, 0, 0, 0, 2.4)},
-                       modlock::INTERPOLATION_LINEAR);
+                       modlock::camera::INTERPOLATION_LINEAR);
   auto evaluated = EvaluatePath(path, 1.5);
   ASSERT_TRUE(evaluated.has_value());
   ExpectClose(evaluated->position().x(), 15);
@@ -80,7 +81,7 @@ TEST(CameraPathTest, LinearMovementAndIndependentLens) {
 }
 
 TEST(CameraPathTest, UnevenSmoothPathReproducesConstantVelocity) {
-  modlock::CameraPath path;
+  modlock::camera::CameraPath path;
   for (double t : {0.0, 0.1, 2.3, 10.0}) {
     *path.add_keys() = Key(t, 3 * t + 1, -2 * t, 0.5 * t);
   }
@@ -126,7 +127,7 @@ TEST(CameraPathTest, ShortestYawAndRollCrossWrapWithoutLongSpin) {
 
 TEST(CameraPathTest, ShortestAnglesStayContinuousAcrossSeamsAndRewinds) {
   // Author views that cross the seam back and forth.
-  modlock::CameraPath path;
+  modlock::camera::CameraPath path;
   *path.add_keys() = Key(0, 0, 0, 0, 0, 170, -170);
   *path.add_keys() = Key(0.7, 0, 0, 0, 0, -175, 175);
   *path.add_keys() = Key(1.8, 0, 0, 0, 0, 175, -175);
@@ -134,7 +135,7 @@ TEST(CameraPathTest, ShortestAnglesStayContinuousAcrossSeamsAndRewinds) {
 
   // Sample densely, tracking the largest step and extremes.
   double max_yaw_delta = 0, max_roll_delta = 0, max_yaw = -1e9, min_roll = 1e9;
-  std::vector<modlock::CameraPose> samples;
+  std::vector<modlock::camera::CameraPose> samples;
   for (int i = 0; i <= 3000; ++i) {
     // Sample the path and track the largest step.
     auto evaluated = EvaluatePath(path, i / 1000.0);
@@ -177,8 +178,8 @@ TEST(CameraPathTest, ShortestAnglesStayContinuousAcrossSeamsAndRewinds) {
 
 TEST(CameraPathTest, UnwrappedModePreservesIntentionalMultipleSpins) {
   // Spin twice in yaw and once in roll.
-  auto path = MakePath({Key(0), Key(4, 0, 0, 0, 0, 720, -360)}, modlock::INTERPOLATION_SMOOTH,
-                       modlock::ROTATION_MODE_UNWRAPPED);
+  auto path = MakePath({Key(0), Key(4, 0, 0, 0, 0, 720, -360)}, modlock::camera::INTERPOLATION_SMOOTH,
+                       modlock::camera::ROTATION_MODE_UNWRAPPED);
   auto at2 = EvaluatePath(path, 2);
   ASSERT_TRUE(at2.has_value());
   ExpectClose(at2->angles().yaw(), 360);
@@ -220,7 +221,7 @@ TEST(CameraPathTest, AspectRatioNeverOvershootsOnUnevenKeys) {
   // Author aspect ratios at uneven times.
   const double times[] = {0, 0.03, 1, 20};
   const double values[] = {1, 1.9, 0.8, 1.5};
-  modlock::CameraPath path;
+  modlock::camera::CameraPath path;
   for (int i = 0; i < 4; ++i) {
     *path.add_keys() = Key(times[i], 0, 0, 0, 0, 0, 0, values[i]);
   }
@@ -241,7 +242,7 @@ TEST(CameraPathTest, AspectRatioNeverOvershootsOnUnevenKeys) {
 }
 
 TEST(CameraPathTest, StepInterpolationHasExactKeyBoundary) {
-  auto path = MakePath({Key(0)}, modlock::INTERPOLATION_STEP);
+  auto path = MakePath({Key(0)}, modlock::camera::INTERPOLATION_STEP);
   auto evaluated = EvaluatePath(path, 1.5);
   ASSERT_TRUE(evaluated.has_value());
   EXPECT_EQ(evaluated->position().x(), 0);
@@ -259,7 +260,7 @@ TEST(CameraPathTest, ValidationRejectsBadTimesAndAspect) {
 
 TEST(IntegrateFlightTest, DiscardsSuspensionBacklog) {
   // A half second step is discarded as backlog.
-  modlock::CameraPose pose;
+  modlock::camera::CameraPose pose;
   pose.mutable_position()->set_z(100);
   FlightInput input;
   input.forward = 1;
@@ -269,7 +270,7 @@ TEST(IntegrateFlightTest, DiscardsSuspensionBacklog) {
 
 TEST(IntegrateFlightTest, MovesForwardAlongYawAndClampsPitch) {
   // Fly forward.
-  modlock::CameraPose pose;
+  modlock::camera::CameraPose pose;
   FlightInput forward;
   forward.forward = 1;
 

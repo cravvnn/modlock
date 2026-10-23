@@ -70,7 +70,7 @@ class MODLOCK_API WorldTextGameFactory final : public WorldTextEntityFactory {
   void SetEntitySystem(void* entity_system) { calls_.entity_system = entity_system; }
 
   std::expected<std::unique_ptr<WorldTextEntity>, std::string> Create(
-      std::string_view message, const modlock::Vec3& origin, const modlock::EulerAngles& angles,
+      std::string_view message, const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles,
       const WorldTextStyle& style) override;
 
  private:

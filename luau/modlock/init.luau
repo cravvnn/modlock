@@ -44,33 +44,6 @@ local function with(options: any, name: string, value: any): any
 	return request
 end
 
--- MovementAction is a movement fact the game announced for a hero.
-export type MovementAction = "landed" | "ziplineAttached" | "groundDash" | "slide" | "bouncePad" | "dashJump" | "airJump" | "wallJump" | "airDash" | "meleeStarted" | "abilityExecuted"
-local MovementAction: { [any]: any } = {
-	[1] = "landed",
-	landed = 1,
-	[2] = "ziplineAttached",
-	ziplineAttached = 2,
-	[3] = "groundDash",
-	groundDash = 3,
-	[4] = "slide",
-	slide = 4,
-	[5] = "bouncePad",
-	bouncePad = 5,
-	[6] = "dashJump",
-	dashJump = 6,
-	[7] = "airJump",
-	airJump = 7,
-	[8] = "wallJump",
-	wallJump = 8,
-	[9] = "airDash",
-	airDash = 9,
-	[10] = "meleeStarted",
-	meleeStarted = 10,
-	[11] = "abilityExecuted",
-	abilityExecuted = 11,
-}
-
 -- ScreenEffect is a stock full-screen view effect.
 export type ScreenEffect = "killed" | "black" | "blinded" | "darkness" | "matchIntro"
 local ScreenEffect: { [any]: any } = {
@@ -128,37 +101,323 @@ local PickupKind: { [any]: any } = {
 	movementBuff = 1,
 }
 
--- StartEvent describes the server the mod starts in.
-export type StartEvent = {
-	-- args holds the arguments that follow -- on the host command line.
-	args: { string },
-	-- checkOnly is true when the host checks the mod without starting a game;
-	-- every call but Log then fails.
-	checkOnly: boolean,
-	-- source holds an interpreted mod's entry, which the interpreter module
-	-- evaluates during start. It is empty for a compiled mod.
-	source: string,
+-- MovementAction is a movement fact the game announced for a hero.
+export type MovementAction = "landed" | "ziplineAttached" | "groundDash" | "slide" | "bouncePad" | "dashJump" | "airJump" | "wallJump" | "airDash" | "meleeStarted" | "abilityExecuted"
+local MovementAction: { [any]: any } = {
+	[1] = "landed",
+	landed = 1,
+	[2] = "ziplineAttached",
+	ziplineAttached = 2,
+	[3] = "groundDash",
+	groundDash = 3,
+	[4] = "slide",
+	slide = 4,
+	[5] = "bouncePad",
+	bouncePad = 5,
+	[6] = "dashJump",
+	dashJump = 6,
+	[7] = "airJump",
+	airJump = 7,
+	[8] = "wallJump",
+	wallJump = 8,
+	[9] = "airDash",
+	airDash = 9,
+	[10] = "meleeStarted",
+	meleeStarted = 10,
+	[11] = "abilityExecuted",
+	abilityExecuted = 11,
 }
 
--- StartResult declares which events the mod consumes.
-export type StartResult = {
-	-- frames asks for a Frame event every server frame.
-	frames: boolean,
-	-- damage asks for a damage event before each hit.
-	damage: boolean,
-	-- damaged asks for a damaged event after each hit.
-	damaged: boolean,
+-- Ability is one ability a hero owns.
+export type Ability = {
+	-- name is the ability's name, such as citadel_ability_hornet_snipe.
+	name: string,
+	-- slot is the ability's place on the hero: 0 to 3 are the ability keys.
+	slot: number,
+	-- entity is the ability's entity handle, as DamageEvent.ability reports
+	-- it.
+	entity: number,
+	-- upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
+	-- its upgrades.
+	upgrades: number,
+	-- charges is the charges the ability holds.
+	charges: number,
+	-- cooldownEnd is the game time its cooldown ends, or zero without one.
+	cooldownEnd: number,
+	-- id identifies the ability's definition, as replays record it.
+	id: number,
+	-- state is the packed upgrade word; its high half is upgrades.
+	state: number,
+	-- cooldownStart is the game time its cooldown began.
+	cooldownStart: number,
+	-- rechargeStart is the game time its next charge began recovering.
+	rechargeStart: number,
+	-- rechargeEnd is the game time its next charge returns, or zero without
+	-- one.
+	rechargeEnd: number,
 }
 
--- FrameEvent identifies one server frame.
-export type FrameEvent = {
-	-- tick is the server tick, or zero when the clock is unavailable.
-	tick: number,
-	-- timeSeconds is the game clock at this frame, in seconds.
-	timeSeconds: number,
-	-- movement holds one sample per watched, live hero when this frame starts a
-	-- new tick, and is empty otherwise.
-	movement: { MovementSample },
+-- AbilityOptions changes one ability of a player's hero.
+export type AbilityOptions = {
+	-- ability is the ability's name.
+	ability: string,
+	-- upgrades replaces the bought tiers, as ability.upgrades: 0b1111 unlocks
+	-- it with all three upgrades.
+	upgrades: number?,
+	-- charges replaces the charges the ability holds, keeping its timers.
+	charges: number?,
+	-- cooldownEnd replaces the game time its cooldown ends.
+	cooldownEnd: number?,
+	-- rechargeEnd replaces the game time its next charge returns.
+	rechargeEnd: number?,
+	-- maxCharges replaces the most charges the ability can hold, from 1 to 100;
+	-- 0 returns it to the game's own. The server applies it, so the hero's
+	-- screen can still show the game's maximum. charges above the new maximum
+	-- are not removed; set them with charges.
+	maxCharges: number?,
+}
+
+-- DamageEvent is one hit before the game applies it. Handles are zero when
+-- the game names no such entity.
+export type DamageEvent = {
+	-- victim is the entity taking the hit.
+	victim: number,
+	-- attacker is the entity credited with the hit. Zero makes the hit a
+	-- hazard, such as poison gas, which credits no one and ignores the
+	-- inflictor and hit group.
+	attacker: number,
+	-- inflictor is what delivered the hit, such as a projectile.
+	inflictor: number,
+	-- ability is the ability that dealt the hit.
+	ability: number,
+	-- flags are the game's damage flags.
+	flags: number,
+	-- hitGroup is the body part hit; 1 is the head and -1 means none.
+	hitGroup: number,
+	-- amount is the hit's damage before resistances.
+	amount: number,
+}
+
+-- DamageResult answers a DamageEvent. An empty result lets the hit through.
+export type DamageResult = {
+	-- block cancels the hit's health loss, force, effects and procs.
+	block: boolean?,
+	-- amount replaces the hit's damage when present.
+	amount: number?,
+}
+
+-- DamagedEvent reports one hit the game applied.
+export type DamagedEvent = {
+	-- victim is the entity that took the hit.
+	victim: number,
+	-- attacker is the entity credited with the hit, or zero for a hazard.
+	attacker: number,
+	-- ability is the ability that dealt the hit.
+	ability: number,
+	-- healthLost is the health the hit removed, after resistances.
+	healthLost: number,
+	-- healthBefore is the victim's health before the hit; a hit that removes
+	-- all of it kills.
+	healthBefore: number,
+	-- dealt is the hit's damage after resistances, before the victim's health
+	-- capped it.
+	dealt: number,
+}
+
+-- LaunchEvent is a watched projectile's first frame.
+export type LaunchEvent = {
+	-- entity is the projectile's entity handle.
+	entity: number,
+	-- name is the projectile's designer name.
+	name: string,
+	-- owner is the entity that fired it, or zero.
+	owner: number,
+	-- player is the slot of the player whose hero fired it, or -1.
+	player: Player,
+	-- position is where the projectile is.
+	position: Vector,
+}
+
+-- ImpactEvent is a watched projectile striking something.
+export type ImpactEvent = {
+	-- entity is the projectile's entity handle.
+	entity: number,
+	-- name is the projectile's designer name.
+	name: string,
+	-- owner is the entity that fired it, or zero.
+	owner: number,
+	-- player is the slot of the player whose hero fired it, or -1.
+	player: Player,
+	-- start and end are the projectile's movement this frame, which ended in
+	-- the strike.
+	start: Vector,
+	["end"]: Vector,
+	-- position is where it struck.
+	position: Vector,
+	-- hit is the entity struck, or zero for the world.
+	hit: number,
+}
+
+-- ProjectileOptions selects the projectiles a mod watches.
+export type ProjectileOptions = {
+	-- names lists designer names, such as rocket_launcher_rocket_projectile.
+	names: { string }?,
+	-- keepMomentum gives each live hero back the motion it had before a
+	-- watched projectile's explosion, so the mod's Impact handler sets the
+	-- push.
+	keepMomentum: boolean?,
+}
+
+-- HitOptions describes damage the mod deals.
+export type HitOptions = {
+	-- victim is the hero or unit to hurt. The world, props and buildings are
+	-- refused: the client crashes on their damage events.
+	victim: number,
+	-- attacker is the entity credited with the hit. Without one the hit is a
+	-- hazard, such as poison gas, which credits no one and ignores the
+	-- inflictor and hit group.
+	attacker: number?,
+	-- inflictor is what delivered the hit; the default is the attacker.
+	inflictor: number?,
+	-- amount is the damage before resistances.
+	amount: number,
+	-- hitGroup is the body part hit; 1 is the head. The default is the game's
+	-- choice.
+	hitGroup: number?,
+	-- ability is the entity handle of the ability that dealt the hit, as
+	-- ability.entity reports it.
+	ability: number?,
+}
+
+-- TraceOptions describes a line to test against the world. Layers are bits
+-- of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
+-- 18 player and 19 NPC.
+export type TraceOptions = {
+	-- start is where the line begins.
+	start: Vector,
+	-- end is where the line ends.
+	["end"]: Vector,
+	-- layers selects what the line can hit; the default is solid and
+	-- hitboxes.
+	layers: number?,
+	-- exclude removes things in these layers from the hits.
+	exclude: number?,
+	-- ignore lists entity handles the line passes through.
+	ignore: { number }?,
+}
+
+-- TraceHit is where a traced line first hit something.
+export type TraceHit = {
+	-- position is the hit point.
+	position: Vector,
+	-- normal is the surface's direction at the hit point.
+	normal: Vector,
+	-- startSolid is true when the line began inside something solid.
+	startSolid: boolean,
+	-- entity is the entity hit, or zero for the world.
+	entity: number,
+}
+
+-- ScreenTiming is a screen effect's timing in seconds.
+export type ScreenTiming = {
+	-- delay is the time before the effect starts.
+	delay: number?,
+	-- fadeIn is the time the effect takes to reach full strength.
+	fadeIn: number?,
+	-- hold is the time the effect stays at full strength.
+	hold: number?,
+	-- fadeOut is the time the effect takes to end.
+	fadeOut: number?,
+}
+
+-- FieldValue is one field's value. The host accepts any numeric case for a
+-- numeric type and answers with the case its type reads as: a boolean, a
+-- number for a type of 32 bits or less and a handle, an integer for a 64-bit
+-- type, a vector or text.
+export type FieldValue = boolean | number | string | Vector
+
+-- FieldWrite writes one schema field of an entity the host creates.
+export type FieldWrite = {
+	-- className is the server class that declares the field, or a subclass.
+	className: string,
+	-- field is the field's schema name, such as m_iLane. A dotted path, such as
+	-- m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+	field: string,
+	-- type is how to write the field.
+	type: FieldType,
+	-- value is the field's value.
+	value: FieldValue,
+}
+
+-- EntityClassName names one entity's class two ways.
+export type EntityClassName = {
+	-- className is the server schema class, such as CCitadelPlayerPawn.
+	className: string,
+	-- designerName is the name maps and spawns use, such as npc_trooper.
+	designerName: string,
+}
+
+-- EntityOptions describes an entity to create.
+export type EntityOptions = {
+	-- designerName is the entity's designer name, such as npc_trooper_boss.
+	designerName: string,
+	-- subclass names the entity's game data entry, such as npc_boss_tier1 for
+	-- the lane Guardian, for an entity that reads one while spawning. An NPC
+	-- needs one.
+	subclass: string,
+	-- team is the entity's team number; 4 is neutral.
+	team: number,
+	-- position is the entity's origin.
+	position: Vector,
+	-- facing is where the entity faces.
+	facing: Angles?,
+	-- keyValues are the entity's spawn key values, as a map sets them, such as
+	-- model or rendercolor.
+	keyValues: { KeyValue }?,
+	-- fields are schema fields the host writes after it creates the entity and
+	-- before the entity spawns. A write that fails cancels the creation.
+	fields: { FieldWrite }?,
+	-- transmitAlways sends the entity to every client, past the game's own
+	-- rule, which never sends one without a model, such as a
+	-- point_clientui_dialog.
+	transmitAlways: boolean?,
+}
+
+-- KeyValue is one spawn key value.
+export type KeyValue = {
+	-- key is the key value's name, such as skin.
+	key: string,
+	-- value is the key value's value.
+	value: EntityValue,
+}
+
+-- EntityValue is a value a map gives an entity: a spawn key value or an
+-- input's parameter. An input reads its parameter as the type it takes, such
+-- as an integer for Skin or a color, as 0xRRGGBBAA, for Color, and does not
+-- convert text.
+export type EntityValue = { boolean: boolean } | { integer: number } | { number: number } | { text: string } | { vector: Vector } | { color: number }
+
+-- InputEvent is one player's watched buttons that went down or up.
+export type InputEvent = {
+	-- player is the player who pressed.
+	player: Player,
+	-- pressed holds one bit per button that went down.
+	pressed: number,
+	-- released holds one bit per button that went up.
+	released: number,
+}
+
+-- RiftState is the Rift objective's timing as the game holds it. Times are
+-- game times in seconds, or zero when unset.
+export type RiftState = {
+	-- scoringTeam is the team holding the Rift, or zero.
+	scoringTeam: number,
+	scoringTime: number,
+	cashInStarted: number,
+	giveUpTime: number,
+	-- nextSpawn is when the Rift next opens.
+	nextSpawn: number,
+	spawnWindow: number,
 }
 
 -- MovementSample is one watched hero's movement on one tick, as the game keeps
@@ -230,163 +489,6 @@ export type MovementCommand = {
 	grounded: boolean,
 }
 
--- CommandEvent carries one command line from a player: a chat line that
--- starts with a slash (or ".", "+" or "-"), without that prefix, or a console
--- command the server received.
-export type CommandEvent = {
-	-- player is the player who typed the command.
-	player: Player,
-	-- line is the complete command line, starting with the command name.
-	line: string,
-}
-
--- CommandResult answers whether the mod handled a command.
-export type CommandResult = {
-	-- claimed ends the command's dispatch; the game and later mods do not see
-	-- it.
-	claimed: boolean,
-}
-
--- WorldEvent announces a loaded world.
-export type WorldEvent = {
-	-- map names the world's map.
-	map: string,
-}
-
--- UiPressEvent reports a press on a button in a player's interface.
-export type UiPressEvent = {
-	-- player is the player who pressed.
-	player: Player,
-	-- node is the id of the pressed button.
-	node: string,
-}
-
--- ServiceCall calls one method of a service outside Modlock. A host that
--- embeds Modlock provides services of its own, such as a game mode's match,
--- and a mod may serve one to the host. The service and its caller agree on
--- the payload's encoding.
-export type ServiceCall = {
-	-- service names the service, such as "arena.match".
-	service: string,
-	-- method names the method within the service.
-	method: string,
-	-- payload is the call's argument.
-	payload: string,
-}
-
--- ServiceReply is a service's answer.
-export type ServiceReply = {
-	-- payload is the answer.
-	payload: string,
-}
-
--- DamageEvent is one hit before the game applies it. Handles are zero when
--- the game names no such entity.
-export type DamageEvent = {
-	-- victim is the entity taking the hit.
-	victim: number,
-	-- attacker is the entity credited with the hit. Zero makes the hit a
-	-- hazard, such as poison gas, which credits no one and ignores the
-	-- inflictor and hit group.
-	attacker: number,
-	-- inflictor is what delivered the hit, such as a projectile.
-	inflictor: number,
-	-- ability is the ability that dealt the hit.
-	ability: number,
-	-- flags are the game's damage flags.
-	flags: number,
-	-- hitGroup is the body part hit; 1 is the head and -1 means none.
-	hitGroup: number,
-	-- amount is the hit's damage before resistances.
-	amount: number,
-}
-
--- DamageResult answers a DamageEvent. An empty result lets the hit through.
-export type DamageResult = {
-	-- block cancels the hit's health loss, force, effects and procs.
-	block: boolean?,
-	-- amount replaces the hit's damage when present.
-	amount: number?,
-}
-
--- DamagedEvent reports one hit the game applied.
-export type DamagedEvent = {
-	-- victim is the entity that took the hit.
-	victim: number,
-	-- attacker is the entity credited with the hit, or zero for a hazard.
-	attacker: number,
-	-- ability is the ability that dealt the hit.
-	ability: number,
-	-- healthLost is the health the hit removed, after resistances.
-	healthLost: number,
-	-- healthBefore is the victim's health before the hit; a hit that removes
-	-- all of it kills.
-	healthBefore: number,
-	-- dealt is the hit's damage after resistances, before the victim's health
-	-- capped it.
-	dealt: number,
-}
-
--- InputEvent is one player's watched buttons that went down or up.
-export type InputEvent = {
-	-- player is the player who pressed.
-	player: Player,
-	-- pressed holds one bit per button that went down.
-	pressed: number,
-	-- released holds one bit per button that went up.
-	released: number,
-}
-
--- RestoredEvent reports how a RestoreHero ended.
-export type RestoredEvent = {
-	-- player is the player whose hero was restored.
-	player: Player,
-	-- error describes why the hero does not match its target, or is empty when
-	-- it held the target for a second.
-	error: string,
-}
-
--- NpcsRestoredEvent reports how a RestoreNpcs ended.
-export type NpcsRestoredEvent = {
-	-- error describes the unit that does not match its target, or is empty
-	-- when every target was found in place.
-	error: string,
-}
-
--- LaunchEvent is a watched projectile's first frame.
-export type LaunchEvent = {
-	-- entity is the projectile's entity handle.
-	entity: number,
-	-- name is the projectile's designer name.
-	name: string,
-	-- owner is the entity that fired it, or zero.
-	owner: number,
-	-- player is the slot of the player whose hero fired it, or -1.
-	player: Player,
-	-- position is where the projectile is.
-	position: Vector,
-}
-
--- ImpactEvent is a watched projectile striking something.
-export type ImpactEvent = {
-	-- entity is the projectile's entity handle.
-	entity: number,
-	-- name is the projectile's designer name.
-	name: string,
-	-- owner is the entity that fired it, or zero.
-	owner: number,
-	-- player is the slot of the player whose hero fired it, or -1.
-	player: Player,
-	-- start and end are the projectile's movement this frame, which ended in
-	-- the strike.
-	start: Vector,
-	["end"]: Vector,
-	-- position is where it struck.
-	position: Vector,
-	-- hit is the entity struck, or zero for the world.
-	hit: number,
-}
-
 -- LandedEvent is one hero landing.
 export type LandedEvent = {
 	-- player is the slot of the player who landed.
@@ -395,150 +497,6 @@ export type LandedEvent = {
 	on: number,
 	-- speed is the downward speed just before landing, in units per second.
 	speed: number,
-}
-
--- SettingChangedEvent is one player's new value of one setting.
-export type SettingChangedEvent = {
-	-- player is the player's server slot.
-	player: Player,
-	-- key names the setting.
-	key: string,
-	-- value is the new value.
-	value: string,
-}
-
--- PlayersChangedEvent holds every occupied player slot, as Players lists them.
-export type PlayersChangedEvent = {
-	players: { Connection },
-}
-
--- PrecacheOptions names what the next world loads ahead of use.
-export type PrecacheOptions = {
-	-- heroes are hero names, such as hero_wraith.
-	heroes: { string }?,
-	-- resources are model and particle paths, such as models/props/crate.vmdl.
-	resources: { string }?,
-}
-
--- Connection is one occupied player slot.
-export type Connection = {
-	-- player is the connection's server slot.
-	player: Player,
-	-- steamId identifies a human's account, or is zero for a bot.
-	steamId: string,
-	-- name is the player's name.
-	name: string,
-	-- bot is true for a bot player.
-	bot: boolean,
-	-- ready is true once a human has finished joining; bots are always ready.
-	ready: boolean,
-	-- generation changes each time a new connection takes the slot.
-	generation: number,
-}
-
--- Pawn is one player's hero this frame.
-export type Pawn = {
-	-- entity is the hero's entity handle, which ReadField reads.
-	entity: number,
-	-- hero identifies the hero, as SelectHero returns it.
-	hero: number,
-	-- team is the hero's team number.
-	team: number,
-	-- health is the hero's health; zero or less is dead.
-	health: number,
-	-- maxHealth is the hero's networked maximum health.
-	maxHealth: number,
-	-- position is the hero's origin, at its feet.
-	position: Vector,
-	-- eyeAngles is where the hero aims.
-	eyeAngles: Angles,
-	-- cameraAngles is where the player's camera looks.
-	cameraAngles: Angles,
-	-- stamina is the hero's stamina, absent until it has spawned fully.
-	stamina: number?,
-	-- maxStamina is the hero's maximum stamina, present with stamina.
-	maxStamina: number?,
-	-- generation is the connection generation the hero belongs to.
-	generation: number,
-	-- souls is the souls the player holds.
-	souls: number,
-	-- eyePosition is where the hero's view starts, for aiming traces.
-	eyePosition: Vector,
-	-- velocity is the hero's motion in units per second.
-	velocity: Vector,
-	-- carryingUrn is whether the hero carries the soul urn, absent when the
-	-- game's modifier states cannot be read.
-	carryingUrn: boolean?,
-	-- score is the player's scoreboard, absent when the game's scoreboard
-	-- cannot be read.
-	score: Score?,
-}
-
--- Score is one player's scoreboard counters since the match began, as the
--- game counts them.
-export type Score = {
-	kills: number,
-	deaths: number,
-	assists: number,
-	-- lastHits counts enemy troopers and neutrals the player finished.
-	lastHits: number,
-	-- denies counts allied troopers the player finished before an enemy could.
-	denies: number,
-	-- heroDamage is the damage the player dealt to enemy heroes.
-	heroDamage: number,
-	-- heroHealing is the healing the player gave other heroes.
-	heroHealing: number,
-	-- netWorth is the souls the player has earned, spent or not.
-	netWorth: number,
-}
-
--- Ability is one ability a hero owns.
-export type Ability = {
-	-- name is the ability's name, such as citadel_ability_hornet_snipe.
-	name: string,
-	-- slot is the ability's place on the hero: 0 to 3 are the ability keys.
-	slot: number,
-	-- entity is the ability's entity handle, as DamageEvent.ability reports
-	-- it.
-	entity: number,
-	-- upgrades holds the bought tiers: bit 0 unlocks it and bits 1 to 3 are
-	-- its upgrades.
-	upgrades: number,
-	-- charges is the charges the ability holds.
-	charges: number,
-	-- cooldownEnd is the game time its cooldown ends, or zero without one.
-	cooldownEnd: number,
-	-- id identifies the ability's definition, as replays record it.
-	id: number,
-	-- state is the packed upgrade word; its high half is upgrades.
-	state: number,
-	-- cooldownStart is the game time its cooldown began.
-	cooldownStart: number,
-	-- rechargeStart is the game time its next charge began recovering.
-	rechargeStart: number,
-	-- rechargeEnd is the game time its next charge returns, or zero without
-	-- one.
-	rechargeEnd: number,
-}
-
--- AbilityOptions changes one ability of a player's hero.
-export type AbilityOptions = {
-	-- ability is the ability's name.
-	ability: string,
-	-- upgrades replaces the bought tiers, as ability.upgrades: 0b1111 unlocks
-	-- it with all three upgrades.
-	upgrades: number?,
-	-- charges replaces the charges the ability holds, keeping its timers.
-	charges: number?,
-	-- cooldownEnd replaces the game time its cooldown ends.
-	cooldownEnd: number?,
-	-- rechargeEnd replaces the game time its next charge returns.
-	rechargeEnd: number?,
-	-- maxCharges replaces the most charges the ability can hold, from 1 to 100;
-	-- 0 returns it to the game's own. The server applies it, so the hero's
-	-- screen can still show the game's maximum. charges above the new maximum
-	-- are not removed; set them with charges.
-	maxCharges: number?,
 }
 
 -- Steering is one recorded movement command and the pose its step ends on.
@@ -567,91 +525,78 @@ export type DriveCommand = {
 	pressed: number,
 }
 
--- ProjectileOptions selects the projectiles a mod watches.
-export type ProjectileOptions = {
-	-- names lists designer names, such as rocket_launcher_rocket_projectile.
-	names: { string }?,
-	-- keepMomentum gives each live hero back the motion it had before a
-	-- watched projectile's explosion, so the mod's Impact handler sets the
-	-- push.
-	keepMomentum: boolean?,
+-- NpcsRestoredEvent reports how a RestoreNpcs ended.
+export type NpcsRestoredEvent = {
+	-- error describes the unit that does not match its target, or is empty
+	-- when every target was found in place.
+	error: string,
 }
 
--- HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
--- hero's own.
-export type HeroTarget = {
-	-- position is the hero's origin.
+-- NpcOptions describes a unit that is not a player, such as a trooper.
+export type NpcOptions = {
+	-- className is the unit's entity class, such as npc_trooper or
+	-- npc_trooper_boss.
+	className: string,
+	-- unit names the unit's game data entry, such as trooper_melee, or is empty
+	-- for a unit that needs none.
+	unit: string,
+	-- team is the unit's team number; 4 is neutral.
+	team: number,
+	-- position is the unit's origin, at its feet.
 	position: Vector,
-	-- facing is where the camera faces; a bot's hero faces it.
-	facing: Angles,
-	-- fresh gives full health and stamina and readies every ability, in place
-	-- of health, max health, upgrade bonuses and timers. A bot's ability
-	-- upgrades may grow while the restore runs.
-	fresh: boolean?,
-	-- level sets the hero's level.
-	level: number?,
-	-- health and maxHealth set the hero's health and its base maximum. Both
-	-- are required unless the target is fresh.
+	-- facing is where the unit faces.
+	facing: Angles?,
+	-- health is the unit's health; the default is the unit's own.
 	health: number?,
+	-- maxHealth is the unit's maximum health; the default is health.
 	maxHealth: number?,
-	-- upgradeBonuses are the three stat bonuses purchases add, as replays
-	-- record them.
-	upgradeBonuses: { number }?,
-	-- abilities sets the hero's abilities in their slots.
-	abilities: { EquipmentTarget }?,
-	-- items lists the items that replace the hero's when replaceItems is set.
-	items: { EquipmentTarget }?,
-	-- replaceItems replaces every item the hero owns with items; an empty list
-	-- removes them.
-	replaceItems: boolean?,
-	-- timers sets the charges and cooldowns of owned abilities and items.
-	timers: { TimerTarget }?,
+	-- lane is the lane the unit walks. A unit whose class walks none, unlike a
+	-- trooper, refuses it.
+	lane: number?,
+	-- fields are schema fields the host writes after it creates the unit and
+	-- before the unit spawns, such as m_iInitialTeamNum, which the game reads
+	-- only while spawning. A write that fails cancels the spawn.
+	fields: { FieldWrite }?,
 }
 
--- EquipmentTarget is one ability or item a HeroTarget gives the hero.
-export type EquipmentTarget = {
-	-- id identifies the definition, as Ability.id.
+-- NpcState is a unit's state this frame.
+export type NpcState = {
+	-- position is the unit's origin.
+	position: Vector,
+	-- facing is where the unit faces.
+	facing: Angles,
+	-- health is the unit's health.
+	health: number,
+	-- maxHealth is the unit's maximum health.
+	maxHealth: number,
+	-- team is the unit's team number.
+	team: number,
+}
+
+-- NpcTarget is one unit or objective RestoreNpcs places, as replays record
+-- it.
+export type NpcTarget = {
+	-- className is the unit's entity class: npc_trooper, npc_trooper_neutral,
+	-- npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
+	-- npc_base_defense_sentry, npc_super_neutral or
+	-- npc_neutral_sinners_sacrifice.
+	className: string,
+	-- id identifies the unit's game data entry.
 	id: number,
-	-- slot is its place on the hero, as Ability.slot; abilities need one, and
-	-- an item without one goes where the game puts it.
-	slot: number?,
-	-- state is the packed upgrade word, as Ability.state.
-	state: number,
+	-- team is the unit's team number; 4 is neutral.
+	team: number,
+	-- position is the unit's origin, at its feet.
+	position: Vector,
+	-- facing is where the unit faces.
+	facing: Angles,
+	-- velocity is the unit's motion in units per second.
+	velocity: Vector?,
+	-- health and maxHealth are the unit's health.
+	health: number,
+	maxHealth: number,
+	-- lane is the lane a trooper walks; troopers need one.
+	lane: number?,
 }
-
--- TimerTarget sets one owned ability's or item's charges and cooldowns.
--- Times are seconds from the moment the host writes them; an omitted start
--- and end mean no timer.
-export type TimerTarget = {
-	-- id identifies the ability, as Ability.id.
-	id: number,
-	-- charges is the charges it holds.
-	charges: number,
-	-- cooldownStart and cooldownEnd bound its cooldown.
-	cooldownStart: number?,
-	cooldownEnd: number?,
-	-- rechargeStart and rechargeEnd bound the recovery of its next charge.
-	rechargeStart: number?,
-	rechargeEnd: number?,
-}
-
--- ScreenTiming is a screen effect's timing in seconds.
-export type ScreenTiming = {
-	-- delay is the time before the effect starts.
-	delay: number?,
-	-- fadeIn is the time the effect takes to reach full strength.
-	fadeIn: number?,
-	-- hold is the time the effect stays at full strength.
-	hold: number?,
-	-- fadeOut is the time the effect takes to end.
-	fadeOut: number?,
-}
-
--- FieldValue is one field's value. The host accepts any numeric case for a
--- numeric type and answers with the case its type reads as: a boolean, a
--- number for a type of 32 bits or less and a handle, an integer for a 64-bit
--- type, a vector or text.
-export type FieldValue = boolean | number | string | Vector
 
 -- ModelOptions describes a model placed in the world.
 export type ModelOptions = {
@@ -733,12 +678,148 @@ export type FogOptions = {
 	color: number,
 }
 
--- EntityClassName names one entity's class two ways.
-export type EntityClassName = {
-	-- className is the server schema class, such as CCitadelPlayerPawn.
-	className: string,
-	-- designerName is the name maps and spawns use, such as npc_trooper.
-	designerName: string,
+-- RestoredEvent reports how a RestoreHero ended.
+export type RestoredEvent = {
+	-- player is the player whose hero was restored.
+	player: Player,
+	-- error describes why the hero does not match its target, or is empty when
+	-- it held the target for a second.
+	error: string,
+}
+
+-- PlayersChangedEvent holds every occupied player slot, as Players lists them.
+export type PlayersChangedEvent = {
+	players: { Connection },
+}
+
+-- Connection is one occupied player slot.
+export type Connection = {
+	-- player is the connection's server slot.
+	player: Player,
+	-- steamId identifies a human's account, or is zero for a bot.
+	steamId: string,
+	-- name is the player's name.
+	name: string,
+	-- bot is true for a bot player.
+	bot: boolean,
+	-- ready is true once a human has finished joining; bots are always ready.
+	ready: boolean,
+	-- generation changes each time a new connection takes the slot.
+	generation: number,
+}
+
+-- Pawn is one player's hero this frame.
+export type Pawn = {
+	-- entity is the hero's entity handle, which ReadField reads.
+	entity: number,
+	-- hero identifies the hero, as SelectHero returns it.
+	hero: number,
+	-- team is the hero's team number.
+	team: number,
+	-- health is the hero's health; zero or less is dead.
+	health: number,
+	-- maxHealth is the hero's networked maximum health.
+	maxHealth: number,
+	-- position is the hero's origin, at its feet.
+	position: Vector,
+	-- eyeAngles is where the hero aims.
+	eyeAngles: Angles,
+	-- cameraAngles is where the player's camera looks.
+	cameraAngles: Angles,
+	-- stamina is the hero's stamina, absent until it has spawned fully.
+	stamina: number?,
+	-- maxStamina is the hero's maximum stamina, present with stamina.
+	maxStamina: number?,
+	-- generation is the connection generation the hero belongs to.
+	generation: number,
+	-- souls is the souls the player holds.
+	souls: number,
+	-- eyePosition is where the hero's view starts, for aiming traces.
+	eyePosition: Vector,
+	-- velocity is the hero's motion in units per second.
+	velocity: Vector,
+	-- carryingUrn is whether the hero carries the soul urn, absent when the
+	-- game's modifier states cannot be read.
+	carryingUrn: boolean?,
+	-- score is the player's scoreboard, absent when the game's scoreboard
+	-- cannot be read.
+	score: Score?,
+}
+
+-- Score is one player's scoreboard counters since the match began, as the
+-- game counts them.
+export type Score = {
+	kills: number,
+	deaths: number,
+	assists: number,
+	-- lastHits counts enemy troopers and neutrals the player finished.
+	lastHits: number,
+	-- denies counts allied troopers the player finished before an enemy could.
+	denies: number,
+	-- heroDamage is the damage the player dealt to enemy heroes.
+	heroDamage: number,
+	-- heroHealing is the healing the player gave other heroes.
+	heroHealing: number,
+	-- netWorth is the souls the player has earned, spent or not.
+	netWorth: number,
+}
+
+-- HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
+-- hero's own.
+export type HeroTarget = {
+	-- position is the hero's origin.
+	position: Vector,
+	-- facing is where the camera faces; a bot's hero faces it.
+	facing: Angles,
+	-- fresh gives full health and stamina and readies every ability, in place
+	-- of health, max health, upgrade bonuses and timers. A bot's ability
+	-- upgrades may grow while the restore runs.
+	fresh: boolean?,
+	-- level sets the hero's level.
+	level: number?,
+	-- health and maxHealth set the hero's health and its base maximum. Both
+	-- are required unless the target is fresh.
+	health: number?,
+	maxHealth: number?,
+	-- upgradeBonuses are the three stat bonuses purchases add, as replays
+	-- record them.
+	upgradeBonuses: { number }?,
+	-- abilities sets the hero's abilities in their slots.
+	abilities: { EquipmentTarget }?,
+	-- items lists the items that replace the hero's when replaceItems is set.
+	items: { EquipmentTarget }?,
+	-- replaceItems replaces every item the hero owns with items; an empty list
+	-- removes them.
+	replaceItems: boolean?,
+	-- timers sets the charges and cooldowns of owned abilities and items.
+	timers: { TimerTarget }?,
+}
+
+-- EquipmentTarget is one ability or item a HeroTarget gives the hero.
+export type EquipmentTarget = {
+	-- id identifies the definition, as Ability.id.
+	id: number,
+	-- slot is its place on the hero, as Ability.slot; abilities need one, and
+	-- an item without one goes where the game puts it.
+	slot: number?,
+	-- state is the packed upgrade word, as Ability.state.
+	state: number,
+}
+
+-- TimerTarget sets one owned ability's or item's charges and cooldowns.
+-- Times are seconds from the moment the host writes them; an omitted start
+-- and end mean no timer.
+export type TimerTarget = {
+	-- id identifies the ability, as Ability.id.
+	id: number,
+	-- charges is the charges it holds.
+	charges: number,
+	-- cooldownStart and cooldownEnd bound its cooldown.
+	cooldownStart: number?,
+	cooldownEnd: number?,
+	-- rechargeStart and rechargeEnd bound the recovery of its next charge.
+	rechargeStart: number?,
+	rechargeEnd: number?,
 }
 
 -- BotOptions describes a bot player.
@@ -754,186 +835,105 @@ export type BotOptions = {
 	position: Vector?,
 }
 
--- EntityOptions describes an entity to create.
-export type EntityOptions = {
-	-- designerName is the entity's designer name, such as npc_trooper_boss.
-	designerName: string,
-	-- subclass names the entity's game data entry, such as npc_boss_tier1 for
-	-- the lane Guardian, for an entity that reads one while spawning. An NPC
-	-- needs one.
-	subclass: string,
-	-- team is the entity's team number; 4 is neutral.
-	team: number,
-	-- position is the entity's origin.
-	position: Vector,
-	-- facing is where the entity faces.
-	facing: Angles?,
-	-- keyValues are the entity's spawn key values, as a map sets them, such as
-	-- model or rendercolor.
-	keyValues: { KeyValue }?,
-	-- fields are schema fields the host writes after it creates the entity and
-	-- before the entity spawns. A write that fails cancels the creation.
-	fields: { FieldWrite }?,
-	-- transmitAlways sends the entity to every client, past the game's own
-	-- rule, which never sends one without a model, such as a
-	-- point_clientui_dialog.
-	transmitAlways: boolean?,
-}
-
--- KeyValue is one spawn key value.
-export type KeyValue = {
-	-- key is the key value's name, such as skin.
+-- SettingChangedEvent is one player's new value of one setting.
+export type SettingChangedEvent = {
+	-- player is the player's server slot.
+	player: Player,
+	-- key names the setting.
 	key: string,
-	-- value is the key value's value.
-	value: EntityValue,
+	-- value is the new value.
+	value: string,
 }
 
--- EntityValue is a value a map gives an entity: a spawn key value or an
--- input's parameter. An input reads its parameter as the type it takes, such
--- as an integer for Skin or a color, as 0xRRGGBBAA, for Color, and does not
--- convert text.
-export type EntityValue = { boolean: boolean } | { integer: number } | { number: number } | { text: string } | { vector: Vector } | { color: number }
-
--- NpcOptions describes a unit that is not a player, such as a trooper.
-export type NpcOptions = {
-	-- className is the unit's entity class, such as npc_trooper or
-	-- npc_trooper_boss.
-	className: string,
-	-- unit names the unit's game data entry, such as trooper_melee, or is empty
-	-- for a unit that needs none.
-	unit: string,
-	-- team is the unit's team number; 4 is neutral.
-	team: number,
-	-- position is the unit's origin, at its feet.
-	position: Vector,
-	-- facing is where the unit faces.
-	facing: Angles?,
-	-- health is the unit's health; the default is the unit's own.
-	health: number?,
-	-- maxHealth is the unit's maximum health; the default is health.
-	maxHealth: number?,
-	-- lane is the lane the unit walks. A unit whose class walks none, unlike a
-	-- trooper, refuses it.
-	lane: number?,
-	-- fields are schema fields the host writes after it creates the unit and
-	-- before the unit spawns, such as m_iInitialTeamNum, which the game reads
-	-- only while spawning. A write that fails cancels the spawn.
-	fields: { FieldWrite }?,
+-- UiPressEvent reports a press on a button in a player's interface.
+export type UiPressEvent = {
+	-- player is the player who pressed.
+	player: Player,
+	-- node is the id of the pressed button.
+	node: string,
 }
 
--- FieldWrite writes one schema field of an entity the host creates.
-export type FieldWrite = {
-	-- className is the server class that declares the field, or a subclass.
-	className: string,
-	-- field is the field's schema name, such as m_iLane. A dotted path, such as
-	-- m_Collision.m_CollisionGroup, names a field inside an embedded structure.
-	field: string,
-	-- type is how to write the field.
-	type: FieldType,
-	-- value is the field's value.
-	value: FieldValue,
+-- StartEvent describes the server the mod starts in.
+export type StartEvent = {
+	-- args holds the arguments that follow -- on the host command line.
+	args: { string },
+	-- checkOnly is true when the host checks the mod without starting a game;
+	-- every call but Log then fails.
+	checkOnly: boolean,
+	-- source holds an interpreted mod's entry, which the interpreter module
+	-- evaluates during start. It is empty for a compiled mod.
+	source: string,
 }
 
--- NpcState is a unit's state this frame.
-export type NpcState = {
-	-- position is the unit's origin.
-	position: Vector,
-	-- facing is where the unit faces.
-	facing: Angles,
-	-- health is the unit's health.
-	health: number,
-	-- maxHealth is the unit's maximum health.
-	maxHealth: number,
-	-- team is the unit's team number.
-	team: number,
+-- StartResult declares which events the mod consumes.
+export type StartResult = {
+	-- frames asks for a Frame event every server frame.
+	frames: boolean,
+	-- damage asks for a damage event before each hit.
+	damage: boolean,
+	-- damaged asks for a damaged event after each hit.
+	damaged: boolean,
 }
 
--- HitOptions describes damage the mod deals.
-export type HitOptions = {
-	-- victim is the hero or unit to hurt. The world, props and buildings are
-	-- refused: the client crashes on their damage events.
-	victim: number,
-	-- attacker is the entity credited with the hit. Without one the hit is a
-	-- hazard, such as poison gas, which credits no one and ignores the
-	-- inflictor and hit group.
-	attacker: number?,
-	-- inflictor is what delivered the hit; the default is the attacker.
-	inflictor: number?,
-	-- amount is the damage before resistances.
-	amount: number,
-	-- hitGroup is the body part hit; 1 is the head. The default is the game's
-	-- choice.
-	hitGroup: number?,
-	-- ability is the entity handle of the ability that dealt the hit, as
-	-- ability.entity reports it.
-	ability: number?,
+-- FrameEvent identifies one server frame.
+export type FrameEvent = {
+	-- tick is the server tick, or zero when the clock is unavailable.
+	tick: number,
+	-- timeSeconds is the game clock at this frame, in seconds.
+	timeSeconds: number,
+	-- movement holds one sample per watched, live hero when this frame starts a
+	-- new tick, and is empty otherwise.
+	movement: { MovementSample },
 }
 
--- TraceOptions describes a line to test against the world. Layers are bits
--- of the game's collision layers: bit 0 is solid, 2 trigger, 4 player clip,
--- 18 player and 19 NPC.
-export type TraceOptions = {
-	-- start is where the line begins.
-	start: Vector,
-	-- end is where the line ends.
-	["end"]: Vector,
-	-- layers selects what the line can hit; the default is solid and
-	-- hitboxes.
-	layers: number?,
-	-- exclude removes things in these layers from the hits.
-	exclude: number?,
-	-- ignore lists entity handles the line passes through.
-	ignore: { number }?,
+-- CommandEvent carries one command line from a player: a chat line that
+-- starts with a slash (or ".", "+" or "-"), without that prefix, or a console
+-- command the server received.
+export type CommandEvent = {
+	-- player is the player who typed the command.
+	player: Player,
+	-- line is the complete command line, starting with the command name.
+	line: string,
 }
 
--- TraceHit is where a traced line first hit something.
-export type TraceHit = {
-	-- position is the hit point.
-	position: Vector,
-	-- normal is the surface's direction at the hit point.
-	normal: Vector,
-	-- startSolid is true when the line began inside something solid.
-	startSolid: boolean,
-	-- entity is the entity hit, or zero for the world.
-	entity: number,
+-- CommandResult answers whether the mod handled a command.
+export type CommandResult = {
+	-- claimed ends the command's dispatch; the game and later mods do not see
+	-- it.
+	claimed: boolean,
 }
 
--- NpcTarget is one unit or objective RestoreNpcs places, as replays record
--- it.
-export type NpcTarget = {
-	-- className is the unit's entity class: npc_trooper, npc_trooper_neutral,
-	-- npc_boss_tier2, npc_boss_tier3, npc_barrack_boss,
-	-- npc_base_defense_sentry, npc_super_neutral or
-	-- npc_neutral_sinners_sacrifice.
-	className: string,
-	-- id identifies the unit's game data entry.
-	id: number,
-	-- team is the unit's team number; 4 is neutral.
-	team: number,
-	-- position is the unit's origin, at its feet.
-	position: Vector,
-	-- facing is where the unit faces.
-	facing: Angles,
-	-- velocity is the unit's motion in units per second.
-	velocity: Vector?,
-	-- health and maxHealth are the unit's health.
-	health: number,
-	maxHealth: number,
-	-- lane is the lane a trooper walks; troopers need one.
-	lane: number?,
+-- WorldEvent announces a loaded world.
+export type WorldEvent = {
+	-- map names the world's map.
+	map: string,
 }
 
--- RiftState is the Rift objective's timing as the game holds it. Times are
--- game times in seconds, or zero when unset.
-export type RiftState = {
-	-- scoringTeam is the team holding the Rift, or zero.
-	scoringTeam: number,
-	scoringTime: number,
-	cashInStarted: number,
-	giveUpTime: number,
-	-- nextSpawn is when the Rift next opens.
-	nextSpawn: number,
-	spawnWindow: number,
+-- ServiceCall calls one method of a service outside Modlock. A host that
+-- embeds Modlock provides services of its own, such as a game mode's match,
+-- and a mod may serve one to the host. The service and its caller agree on
+-- the payload's encoding.
+export type ServiceCall = {
+	-- service names the service, such as "arena.match".
+	service: string,
+	-- method names the method within the service.
+	method: string,
+	-- payload is the call's argument.
+	payload: string,
+}
+
+-- ServiceReply is a service's answer.
+export type ServiceReply = {
+	-- payload is the answer.
+	payload: string,
+}
+
+-- PrecacheOptions names what the next world loads ahead of use.
+export type PrecacheOptions = {
+	-- heroes are hero names, such as hero_wraith.
+	heroes: { string }?,
+	-- resources are model and particle paths, such as models/props/crate.vmdl.
+	resources: { string }?,
 }
 
 -- Player addresses one connected player by their server slot.
@@ -1541,6 +1541,69 @@ end
 
 modlock.Pickup = Pickup
 
+schema.HoldReloadRequest = {
+	{ number = 1, name = "held", kind = "bool" },
+}
+schema.RefreshAbilityRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "ability", kind = "string" },
+}
+schema.AbilitiesResponse = {
+	{ number = 1, name = "abilities", kind = "message", repeated = true, message = "Ability" },
+}
+schema.Ability = {
+	{ number = 1, name = "name", kind = "string" },
+	{ number = 2, name = "slot", kind = "int32" },
+	{ number = 3, name = "entity", kind = "uint32" },
+	{ number = 4, name = "upgrades", kind = "uint32" },
+	{ number = 5, name = "charges", kind = "int32" },
+	{ number = 6, name = "cooldownEnd", kind = "float" },
+	{ number = 7, name = "id", kind = "uint32" },
+	{ number = 8, name = "state", kind = "uint32" },
+	{ number = 9, name = "cooldownStart", kind = "float" },
+	{ number = 10, name = "rechargeStart", kind = "float" },
+	{ number = 11, name = "rechargeEnd", kind = "float" },
+}
+schema.AbilityOptions = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "ability", kind = "string" },
+	{ number = 3, name = "upgrades", kind = "uint32", optional = true },
+	{ number = 4, name = "charges", kind = "int32", optional = true },
+	{ number = 5, name = "cooldownEnd", kind = "float", optional = true },
+	{ number = 6, name = "rechargeEnd", kind = "float", optional = true },
+	{ number = 7, name = "maxCharges", kind = "int32", optional = true },
+}
+schema.GiveItemRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "item", kind = "string" },
+}
+schema.ReplaceAbilityRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "index", kind = "uint32" },
+	{ number = 3, name = "ability", kind = "string" },
+}
+schema.HoldModifierRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "modifier", kind = "string" },
+	{ number = 3, name = "active", kind = "bool", optional = true },
+}
+schema.GiveModifierRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "modifier", kind = "string" },
+	{ number = 3, name = "seconds", kind = "float" },
+}
+schema.ModifierStateRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "state", kind = "string" },
+}
+schema.ActiveResponse = {
+	{ number = 1, name = "active", kind = "bool" },
+}
+schema.HoldModifierStateRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "state", kind = "string" },
+	{ number = 3, name = "active", kind = "bool", optional = true },
+}
 schema.Vec3 = {
 	{ number = 1, name = "x", kind = "double" },
 	{ number = 2, name = "y", kind = "double" },
@@ -1551,29 +1614,274 @@ schema.EulerAngles = {
 	{ number = 2, name = "yaw", kind = "double" },
 	{ number = 3, name = "roll", kind = "double" },
 }
-schema.Call = {
-	{ number = 1, name = "method", kind = "string" },
-	{ number = 2, name = "request", kind = "bytes" },
+schema.DamageEvent = {
+	{ number = 1, name = "victim", kind = "uint32" },
+	{ number = 2, name = "attacker", kind = "uint32" },
+	{ number = 3, name = "inflictor", kind = "uint32" },
+	{ number = 4, name = "ability", kind = "uint32" },
+	{ number = 5, name = "flags", kind = "uint64" },
+	{ number = 6, name = "hitGroup", kind = "int32" },
+	{ number = 7, name = "amount", kind = "float" },
 }
-schema.Reply = {
-	{ number = 1, name = "error", kind = "string" },
-	{ number = 2, name = "response", kind = "bytes" },
+schema.DamageResult = {
+	{ number = 1, name = "block", kind = "bool", optional = true },
+	{ number = 2, name = "amount", kind = "float", optional = true },
 }
-schema.Empty = {}
-schema.StartEvent = {
-	{ number = 1, name = "args", kind = "string", repeated = true },
-	{ number = 2, name = "checkOnly", kind = "bool" },
-	{ number = 3, name = "source", kind = "bytes" },
+schema.DamagedEvent = {
+	{ number = 1, name = "victim", kind = "uint32" },
+	{ number = 2, name = "attacker", kind = "uint32" },
+	{ number = 3, name = "ability", kind = "uint32" },
+	{ number = 4, name = "healthLost", kind = "int32" },
+	{ number = 5, name = "healthBefore", kind = "int32" },
+	{ number = 6, name = "dealt", kind = "int32" },
 }
-schema.StartResult = {
-	{ number = 1, name = "frames", kind = "bool" },
-	{ number = 2, name = "damage", kind = "bool" },
-	{ number = 3, name = "damaged", kind = "bool" },
+schema.LaunchEvent = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "name", kind = "string" },
+	{ number = 3, name = "owner", kind = "uint32" },
+	{ number = 4, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 5, name = "position", kind = "message", message = "Vec3" },
 }
-schema.FrameEvent = {
-	{ number = 1, name = "tick", kind = "uint64" },
-	{ number = 2, name = "timeSeconds", kind = "double" },
-	{ number = 3, name = "movement", kind = "message", repeated = true, message = "MovementSample" },
+schema.ImpactEvent = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "name", kind = "string" },
+	{ number = 3, name = "owner", kind = "uint32" },
+	{ number = 4, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 5, name = "start", kind = "message", message = "Vec3" },
+	{ number = 6, name = "end", kind = "message", message = "Vec3" },
+	{ number = 7, name = "position", kind = "message", message = "Vec3" },
+	{ number = 8, name = "hit", kind = "uint32" },
+}
+schema.ProjectileOptions = {
+	{ number = 1, name = "names", kind = "string", repeated = true },
+	{ number = 2, name = "keepMomentum", kind = "bool", optional = true },
+}
+schema.HitOptions = {
+	{ number = 1, name = "victim", kind = "uint32" },
+	{ number = 2, name = "attacker", kind = "uint32", optional = true },
+	{ number = 3, name = "inflictor", kind = "uint32", optional = true },
+	{ number = 4, name = "amount", kind = "float" },
+	{ number = 5, name = "hitGroup", kind = "int32", optional = true },
+	{ number = 6, name = "ability", kind = "uint32", optional = true },
+}
+schema.TraceOptions = {
+	{ number = 1, name = "start", kind = "message", message = "Vec3" },
+	{ number = 2, name = "end", kind = "message", message = "Vec3" },
+	{ number = 3, name = "layers", kind = "uint64", optional = true },
+	{ number = 4, name = "exclude", kind = "uint64", optional = true },
+	{ number = 5, name = "ignore", kind = "uint32", repeated = true },
+}
+schema.TraceResponse = {
+	{ number = 1, name = "hit", kind = "message", optional = true, message = "TraceHit" },
+}
+schema.TraceHit = {
+	{ number = 1, name = "position", kind = "message", message = "Vec3" },
+	{ number = 2, name = "normal", kind = "message", message = "Vec3" },
+	{ number = 3, name = "startSolid", kind = "bool" },
+	{ number = 4, name = "entity", kind = "uint32" },
+}
+schema.ChatRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "text", kind = "string" },
+}
+schema.CenterTextRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "text", kind = "string" },
+}
+schema.AnnounceRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "title", kind = "string" },
+	{ number = 3, name = "text", kind = "string" },
+}
+schema.SoundRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "sound", kind = "string" },
+}
+schema.EmitSoundRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "sound", kind = "string" },
+}
+schema.ScreenEffectRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "effect", kind = "enum", enum = ScreenEffect },
+	{ number = 3, name = "timing", kind = "message", optional = true, message = "ScreenTiming" },
+}
+schema.ScreenTiming = {
+	{ number = 1, name = "delay", kind = "float", optional = true },
+	{ number = 2, name = "fadeIn", kind = "float", optional = true },
+	{ number = 3, name = "hold", kind = "float", optional = true },
+	{ number = 4, name = "fadeOut", kind = "float", optional = true },
+}
+schema.ClearScreenEffectRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "effect", kind = "enum", enum = ScreenEffect },
+}
+schema.ReadFieldRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "className", kind = "string" },
+	{ number = 3, name = "field", kind = "string" },
+	{ number = 4, name = "type", kind = "enum", enum = FieldType },
+}
+schema.FieldResponse = {
+	{ number = 1, name = "value", kind = "message", message = "FieldValue", union = "value" },
+}
+schema.FieldValue = {
+	{ number = 1, name = "boolean", kind = "bool", oneof = "value" },
+	{ number = 2, name = "number", kind = "double", oneof = "value" },
+	{ number = 3, name = "integer", kind = "int64", oneof = "value" },
+	{ number = 4, name = "text", kind = "string", oneof = "value" },
+	{ number = 5, name = "vector", kind = "message", oneof = "value", message = "Vec3" },
+}
+schema.FieldListResponse = {
+	{ number = 1, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
+}
+schema.WriteFieldListRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "className", kind = "string" },
+	{ number = 3, name = "field", kind = "string" },
+	{ number = 4, name = "type", kind = "enum", enum = FieldType },
+	{ number = 5, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
+}
+schema.WriteFieldRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "className", kind = "string" },
+	{ number = 3, name = "field", kind = "string" },
+	{ number = 4, name = "type", kind = "enum", enum = FieldType },
+	{ number = 5, name = "value", kind = "message", message = "FieldValue", union = "value" },
+}
+schema.FieldWrite = {
+	{ number = 1, name = "className", kind = "string" },
+	{ number = 2, name = "field", kind = "string" },
+	{ number = 3, name = "type", kind = "enum", enum = FieldType },
+	{ number = 4, name = "value", kind = "message", message = "FieldValue", union = "value" },
+}
+schema.MoveEntityRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+}
+schema.EntityRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+}
+schema.EntityClassResponse = {
+	{ number = 1, name = "name", kind = "message", optional = true, message = "EntityClassName" },
+}
+schema.EntityClassName = {
+	{ number = 1, name = "className", kind = "string" },
+	{ number = 2, name = "designerName", kind = "string" },
+}
+schema.EntityResponse = {
+	{ number = 1, name = "entity", kind = "uint32" },
+}
+schema.EntityOptions = {
+	{ number = 1, name = "designerName", kind = "string" },
+	{ number = 2, name = "subclass", kind = "string" },
+	{ number = 3, name = "team", kind = "int32" },
+	{ number = 4, name = "position", kind = "message", message = "Vec3" },
+	{ number = 5, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 6, name = "keyValues", kind = "message", repeated = true, message = "KeyValue" },
+	{ number = 7, name = "fields", kind = "message", repeated = true, message = "FieldWrite" },
+	{ number = 8, name = "transmitAlways", kind = "bool", optional = true },
+}
+schema.KeyValue = {
+	{ number = 1, name = "key", kind = "string" },
+	{ number = 2, name = "value", kind = "message", message = "EntityValue" },
+}
+schema.EntityValue = {
+	{ number = 1, name = "boolean", kind = "bool", optional = true },
+	{ number = 2, name = "integer", kind = "int32", optional = true },
+	{ number = 3, name = "number", kind = "float", optional = true },
+	{ number = 4, name = "text", kind = "string", optional = true },
+	{ number = 5, name = "vector", kind = "message", optional = true, message = "Vec3" },
+	{ number = 6, name = "color", kind = "fixed32", optional = true },
+}
+schema.ShowEntityOnlyToRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "players", kind = "int32", repeated = true },
+}
+schema.FireInputRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "input", kind = "string" },
+	{ number = 3, name = "value", kind = "message", optional = true, message = "EntityValue" },
+	{ number = 4, name = "activator", kind = "uint32", optional = true },
+}
+schema.AliveResponse = {
+	{ number = 1, name = "alive", kind = "bool" },
+}
+schema.CreatePickupRequest = {
+	{ number = 1, name = "kind", kind = "enum", enum = PickupKind },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+}
+schema.PickupResponse = {
+	{ number = 1, name = "pickup", kind = "uint32", class = Pickup, key = "entity" },
+}
+schema.PickupRequest = {
+	{ number = 1, name = "pickup", kind = "uint32", class = Pickup, key = "entity" },
+}
+schema.FindEntitiesRequest = {
+	{ number = 1, name = "className", kind = "string" },
+}
+schema.RemoveEntitiesRequest = {
+	{ number = 1, name = "className", kind = "string" },
+}
+schema.EntitiesResponse = {
+	{ number = 1, name = "entities", kind = "uint32", repeated = true },
+}
+schema.CountResponse = {
+	{ number = 1, name = "count", kind = "int32" },
+}
+schema.InputEvent = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "pressed", kind = "uint64" },
+	{ number = 3, name = "released", kind = "uint64" },
+}
+schema.ButtonsResponse = {
+	{ number = 1, name = "buttons", kind = "uint64" },
+}
+schema.InputRequest = {
+	{ number = 1, name = "buttons", kind = "uint64" },
+}
+schema.PlayerInputRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "buttons", kind = "uint64" },
+}
+schema.RemapInputRequest = {
+	{ number = 1, name = "from", kind = "uint64" },
+	{ number = 2, name = "to", kind = "uint64" },
+	{ number = 3, name = "repeat", kind = "bool", optional = true },
+}
+schema.SetFreeForAllRequest = {
+	{ number = 1, name = "enabled", kind = "bool" },
+}
+schema.PauseRequest = {
+	{ number = 1, name = "paused", kind = "bool" },
+}
+schema.MatchClockResponse = {
+	{ number = 1, name = "seconds", kind = "float" },
+}
+schema.HoldMatchClockRequest = {
+	{ number = 1, name = "seconds", kind = "float", optional = true },
+}
+schema.RiftResponse = {
+	{ number = 1, name = "state", kind = "message", optional = true, message = "RiftState" },
+}
+schema.RiftState = {
+	{ number = 1, name = "scoringTeam", kind = "int32" },
+	{ number = 2, name = "scoringTime", kind = "float" },
+	{ number = 3, name = "cashInStarted", kind = "float" },
+	{ number = 4, name = "giveUpTime", kind = "float" },
+	{ number = 5, name = "nextSpawn", kind = "float" },
+	{ number = 6, name = "spawnWindow", kind = "float" },
+}
+schema.StartRiftRequest = {
+	{ number = 1, name = "position", kind = "message", message = "Vec3" },
+}
+schema.AddMetricRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "name", kind = "string" },
+	{ number = 3, name = "value", kind = "double" },
+	{ number = 4, name = "label", kind = "string", optional = true },
 }
 schema.MovementSample = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
@@ -1607,137 +1915,176 @@ schema.MovementCommand = {
 	{ number = 6, name = "up", kind = "float" },
 	{ number = 7, name = "grounded", kind = "bool" },
 }
-schema.CommandEvent = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "line", kind = "string" },
-}
-schema.CommandResult = {
-	{ number = 1, name = "claimed", kind = "bool" },
-}
-schema.WorldEvent = {
-	{ number = 1, name = "map", kind = "string" },
-}
-schema.UiPressEvent = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "node", kind = "string" },
-}
-schema.ServiceCall = {
-	{ number = 1, name = "service", kind = "string" },
-	{ number = 2, name = "method", kind = "string" },
-	{ number = 3, name = "payload", kind = "bytes" },
-}
-schema.ServiceReply = {
-	{ number = 1, name = "payload", kind = "bytes" },
-}
-schema.DamageEvent = {
-	{ number = 1, name = "victim", kind = "uint32" },
-	{ number = 2, name = "attacker", kind = "uint32" },
-	{ number = 3, name = "inflictor", kind = "uint32" },
-	{ number = 4, name = "ability", kind = "uint32" },
-	{ number = 5, name = "flags", kind = "uint64" },
-	{ number = 6, name = "hitGroup", kind = "int32" },
-	{ number = 7, name = "amount", kind = "float" },
-}
-schema.DamageResult = {
-	{ number = 1, name = "block", kind = "bool", optional = true },
-	{ number = 2, name = "amount", kind = "float", optional = true },
-}
-schema.DamagedEvent = {
-	{ number = 1, name = "victim", kind = "uint32" },
-	{ number = 2, name = "attacker", kind = "uint32" },
-	{ number = 3, name = "ability", kind = "uint32" },
-	{ number = 4, name = "healthLost", kind = "int32" },
-	{ number = 5, name = "healthBefore", kind = "int32" },
-	{ number = 6, name = "dealt", kind = "int32" },
-}
-schema.InputEvent = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "pressed", kind = "uint64" },
-	{ number = 3, name = "released", kind = "uint64" },
-}
-schema.RestoredEvent = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "error", kind = "string" },
-}
-schema.NpcsRestoredEvent = {
-	{ number = 1, name = "error", kind = "string" },
-}
-schema.LaunchEvent = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "name", kind = "string" },
-	{ number = 3, name = "owner", kind = "uint32" },
-	{ number = 4, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 5, name = "position", kind = "message", message = "Vec3" },
-}
-schema.ImpactEvent = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "name", kind = "string" },
-	{ number = 3, name = "owner", kind = "uint32" },
-	{ number = 4, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 5, name = "start", kind = "message", message = "Vec3" },
-	{ number = 6, name = "end", kind = "message", message = "Vec3" },
-	{ number = 7, name = "position", kind = "message", message = "Vec3" },
-	{ number = 8, name = "hit", kind = "uint32" },
-}
 schema.LandedEvent = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "on", kind = "int32" },
 	{ number = 3, name = "speed", kind = "float" },
 }
-schema.SettingChangedEvent = {
+schema.TeleportRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "key", kind = "string" },
-	{ number = 3, name = "value", kind = "string" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+}
+schema.MovePlayerRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+}
+schema.SteerRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "steering", kind = "message", optional = true, message = "Steering" },
+}
+schema.Steering = {
+	{ number = 1, name = "command", kind = "message", message = "MovementCommand" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "velocity", kind = "message", message = "Vec3" },
+	{ number = 4, name = "grounded", kind = "bool" },
+	{ number = 5, name = "facing", kind = "message", message = "EulerAngles" },
+}
+schema.DriveRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "command", kind = "message", optional = true, message = "DriveCommand" },
+}
+schema.DriveCommand = {
+	{ number = 1, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 2, name = "forward", kind = "float" },
+	{ number = 3, name = "left", kind = "float" },
+	{ number = 4, name = "held", kind = "uint64" },
+	{ number = 5, name = "pressed", kind = "uint64" },
+}
+schema.SetVelocityRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "velocity", kind = "message", message = "Vec3" },
+}
+schema.WatchMovementRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "watch", kind = "bool" },
+}
+schema.NpcsRestoredEvent = {
+	{ number = 1, name = "error", kind = "string" },
+}
+schema.NpcOptions = {
+	{ number = 1, name = "className", kind = "string" },
+	{ number = 2, name = "unit", kind = "string" },
+	{ number = 3, name = "team", kind = "int32" },
+	{ number = 4, name = "position", kind = "message", message = "Vec3" },
+	{ number = 5, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 6, name = "health", kind = "int32", optional = true },
+	{ number = 7, name = "maxHealth", kind = "int32", optional = true },
+	{ number = 8, name = "lane", kind = "uint32", optional = true },
+	{ number = 9, name = "fields", kind = "message", repeated = true, message = "FieldWrite" },
+}
+schema.NpcResponse = {
+	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+}
+schema.NpcRequest = {
+	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+}
+schema.NpcStateResponse = {
+	{ number = 1, name = "state", kind = "message", optional = true, message = "NpcState" },
+}
+schema.NpcState = {
+	{ number = 1, name = "position", kind = "message", message = "Vec3" },
+	{ number = 2, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 3, name = "health", kind = "int32" },
+	{ number = 4, name = "maxHealth", kind = "int32" },
+	{ number = 5, name = "team", kind = "int32" },
+}
+schema.MoveNpcRequest = {
+	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+}
+schema.SetNpcHealthRequest = {
+	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+	{ number = 2, name = "health", kind = "int32" },
+	{ number = 3, name = "maxHealth", kind = "int32", optional = true },
+}
+schema.RestoreNpcsRequest = {
+	{ number = 1, name = "npcs", kind = "message", repeated = true, message = "NpcTarget" },
+}
+schema.NpcTarget = {
+	{ number = 1, name = "className", kind = "string" },
+	{ number = 2, name = "id", kind = "uint32" },
+	{ number = 3, name = "team", kind = "int32" },
+	{ number = 4, name = "position", kind = "message", message = "Vec3" },
+	{ number = 5, name = "facing", kind = "message", message = "EulerAngles" },
+	{ number = 6, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+	{ number = 7, name = "health", kind = "int32" },
+	{ number = 8, name = "maxHealth", kind = "int32" },
+	{ number = 9, name = "lane", kind = "uint32", optional = true },
+}
+schema.ModelOptions = {
+	{ number = 1, name = "resource", kind = "string" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 4, name = "scale", kind = "float", optional = true },
+	{ number = 5, name = "color", kind = "fixed32", optional = true },
+	{ number = 6, name = "glow", kind = "bool", optional = true },
+	{ number = 7, name = "solid", kind = "bool", optional = true },
+}
+schema.TextOptions = {
+	{ number = 1, name = "text", kind = "string" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 4, name = "fontSize", kind = "float", optional = true },
+	{ number = 5, name = "color", kind = "fixed32", optional = true },
+	{ number = 6, name = "faceCamera", kind = "bool", optional = true },
+	{ number = 7, name = "scale", kind = "float", optional = true },
+}
+schema.ParticleOptions = {
+	{ number = 1, name = "resource", kind = "string" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 4, name = "color", kind = "fixed32", optional = true },
+	{ number = 5, name = "tintPoint", kind = "int32", optional = true },
+	{ number = 6, name = "point", kind = "message", optional = true, message = "ParticlePoint" },
+	{ number = 7, name = "parent", kind = "uint32", optional = true },
+}
+schema.ParticlePoint = {
+	{ number = 1, name = "index", kind = "int32" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+}
+schema.FogOptions = {
+	{ number = 1, name = "position", kind = "message", message = "Vec3" },
+	{ number = 2, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+	{ number = 3, name = "mins", kind = "message", message = "Vec3" },
+	{ number = 4, name = "maxs", kind = "message", message = "Vec3" },
+	{ number = 5, name = "strength", kind = "float" },
+	{ number = 6, name = "color", kind = "fixed32" },
+}
+schema.ObjectResponse = {
+	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
+}
+schema.ObjectRequest = {
+	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
+}
+schema.MoveObjectRequest = {
+	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
+	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
+}
+schema.SetTextRequest = {
+	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
+	{ number = 2, name = "text", kind = "string" },
+}
+schema.SetObjectHiddenRequest = {
+	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
+	{ number = 2, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 3, name = "hidden", kind = "bool" },
+}
+schema.RestoredEvent = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "error", kind = "string" },
 }
 schema.PlayersChangedEvent = {
 	{ number = 1, name = "players", kind = "message", repeated = true, message = "Connection" },
 }
-schema.LogRequest = {
-	{ number = 1, name = "message", kind = "string" },
-}
-schema.ServerCommandRequest = {
-	{ number = 1, name = "command", kind = "string" },
-}
 schema.PlayerRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-}
-schema.PlayerSettingRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "key", kind = "string" },
-}
-schema.SettingResponse = {
-	{ number = 1, name = "value", kind = "string" },
-}
-schema.AddMetricRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "name", kind = "string" },
-	{ number = 3, name = "value", kind = "double" },
-	{ number = 4, name = "label", kind = "string", optional = true },
-}
-schema.HoldReloadRequest = {
-	{ number = 1, name = "held", kind = "bool" },
-}
-schema.SetPlayerSettingRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "key", kind = "string" },
-	{ number = 3, name = "value", kind = "string" },
-}
-schema.ChatRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "text", kind = "string" },
-}
-schema.CenterTextRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "text", kind = "string" },
-}
-schema.AnnounceRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "title", kind = "string" },
-	{ number = 3, name = "text", kind = "string" },
-}
-schema.PrecacheOptions = {
-	{ number = 1, name = "heroes", kind = "string", repeated = true },
-	{ number = 2, name = "resources", kind = "string", repeated = true },
 }
 schema.Connection = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
@@ -1795,88 +2142,6 @@ schema.FreezeRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "frozen", kind = "bool", optional = true },
 }
-schema.RefreshAbilityRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "ability", kind = "string" },
-}
-schema.AbilitiesResponse = {
-	{ number = 1, name = "abilities", kind = "message", repeated = true, message = "Ability" },
-}
-schema.Ability = {
-	{ number = 1, name = "name", kind = "string" },
-	{ number = 2, name = "slot", kind = "int32" },
-	{ number = 3, name = "entity", kind = "uint32" },
-	{ number = 4, name = "upgrades", kind = "uint32" },
-	{ number = 5, name = "charges", kind = "int32" },
-	{ number = 6, name = "cooldownEnd", kind = "float" },
-	{ number = 7, name = "id", kind = "uint32" },
-	{ number = 8, name = "state", kind = "uint32" },
-	{ number = 9, name = "cooldownStart", kind = "float" },
-	{ number = 10, name = "rechargeStart", kind = "float" },
-	{ number = 11, name = "rechargeEnd", kind = "float" },
-}
-schema.AbilityOptions = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "ability", kind = "string" },
-	{ number = 3, name = "upgrades", kind = "uint32", optional = true },
-	{ number = 4, name = "charges", kind = "int32", optional = true },
-	{ number = 5, name = "cooldownEnd", kind = "float", optional = true },
-	{ number = 6, name = "rechargeEnd", kind = "float", optional = true },
-	{ number = 7, name = "maxCharges", kind = "int32", optional = true },
-}
-schema.GiveItemRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "item", kind = "string" },
-}
-schema.ReplaceAbilityRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "index", kind = "uint32" },
-	{ number = 3, name = "ability", kind = "string" },
-}
-schema.HoldModifierRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "modifier", kind = "string" },
-	{ number = 3, name = "active", kind = "bool", optional = true },
-}
-schema.GiveModifierRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "modifier", kind = "string" },
-	{ number = 3, name = "seconds", kind = "float" },
-}
-schema.TeleportRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
-	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
-}
-schema.MovePlayerRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
-	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
-}
-schema.SteerRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "steering", kind = "message", optional = true, message = "Steering" },
-}
-schema.Steering = {
-	{ number = 1, name = "command", kind = "message", message = "MovementCommand" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "velocity", kind = "message", message = "Vec3" },
-	{ number = 4, name = "grounded", kind = "bool" },
-	{ number = 5, name = "facing", kind = "message", message = "EulerAngles" },
-}
-schema.DriveRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "command", kind = "message", optional = true, message = "DriveCommand" },
-}
-schema.DriveCommand = {
-	{ number = 1, name = "facing", kind = "message", message = "EulerAngles" },
-	{ number = 2, name = "forward", kind = "float" },
-	{ number = 3, name = "left", kind = "float" },
-	{ number = 4, name = "held", kind = "uint64" },
-	{ number = 5, name = "pressed", kind = "uint64" },
-}
 schema.AdjustSoulsRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "delta", kind = "int32" },
@@ -1897,35 +2162,6 @@ schema.HealRequest = {
 schema.SetStaminaRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "stamina", kind = "float" },
-}
-schema.SoundRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "sound", kind = "string" },
-}
-schema.MoveEntityRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
-}
-schema.EmitSoundRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "sound", kind = "string" },
-}
-schema.SetVelocityRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "velocity", kind = "message", message = "Vec3" },
-}
-schema.WatchMovementRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "watch", kind = "bool" },
-}
-schema.ButtonsResponse = {
-	{ number = 1, name = "buttons", kind = "uint64" },
-}
-schema.ProjectileOptions = {
-	{ number = 1, name = "names", kind = "string", repeated = true },
-	{ number = 2, name = "keepMomentum", kind = "bool", optional = true },
 }
 schema.RestoreHeroRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
@@ -1957,141 +2193,6 @@ schema.TimerTarget = {
 	{ number = 5, name = "rechargeStart", kind = "float", optional = true },
 	{ number = 6, name = "rechargeEnd", kind = "float", optional = true },
 }
-schema.ScreenEffectRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "effect", kind = "enum", enum = ScreenEffect },
-	{ number = 3, name = "timing", kind = "message", optional = true, message = "ScreenTiming" },
-}
-schema.ScreenTiming = {
-	{ number = 1, name = "delay", kind = "float", optional = true },
-	{ number = 2, name = "fadeIn", kind = "float", optional = true },
-	{ number = 3, name = "hold", kind = "float", optional = true },
-	{ number = 4, name = "fadeOut", kind = "float", optional = true },
-}
-schema.ClearScreenEffectRequest = {
-	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "effect", kind = "enum", enum = ScreenEffect },
-}
-schema.ReadFieldRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "className", kind = "string" },
-	{ number = 3, name = "field", kind = "string" },
-	{ number = 4, name = "type", kind = "enum", enum = FieldType },
-}
-schema.FieldResponse = {
-	{ number = 1, name = "value", kind = "message", message = "FieldValue", union = "value" },
-}
-schema.FieldValue = {
-	{ number = 1, name = "boolean", kind = "bool", oneof = "value" },
-	{ number = 2, name = "number", kind = "double", oneof = "value" },
-	{ number = 3, name = "integer", kind = "int64", oneof = "value" },
-	{ number = 4, name = "text", kind = "string", oneof = "value" },
-	{ number = 5, name = "vector", kind = "message", oneof = "value", message = "Vec3" },
-}
-schema.FieldListResponse = {
-	{ number = 1, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
-}
-schema.WriteFieldListRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "className", kind = "string" },
-	{ number = 3, name = "field", kind = "string" },
-	{ number = 4, name = "type", kind = "enum", enum = FieldType },
-	{ number = 5, name = "values", kind = "message", repeated = true, message = "FieldValue", union = "value" },
-}
-schema.WriteFieldRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "className", kind = "string" },
-	{ number = 3, name = "field", kind = "string" },
-	{ number = 4, name = "type", kind = "enum", enum = FieldType },
-	{ number = 5, name = "value", kind = "message", message = "FieldValue", union = "value" },
-}
-schema.ModifierStateRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "state", kind = "string" },
-}
-schema.ActiveResponse = {
-	{ number = 1, name = "active", kind = "bool" },
-}
-schema.HoldModifierStateRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "state", kind = "string" },
-	{ number = 3, name = "active", kind = "bool", optional = true },
-}
-schema.SetFreeForAllRequest = {
-	{ number = 1, name = "enabled", kind = "bool" },
-}
-schema.ModelOptions = {
-	{ number = 1, name = "resource", kind = "string" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 4, name = "scale", kind = "float", optional = true },
-	{ number = 5, name = "color", kind = "fixed32", optional = true },
-	{ number = 6, name = "glow", kind = "bool", optional = true },
-	{ number = 7, name = "solid", kind = "bool", optional = true },
-}
-schema.TextOptions = {
-	{ number = 1, name = "text", kind = "string" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 4, name = "fontSize", kind = "float", optional = true },
-	{ number = 5, name = "color", kind = "fixed32", optional = true },
-	{ number = 6, name = "faceCamera", kind = "bool", optional = true },
-	{ number = 7, name = "scale", kind = "float", optional = true },
-}
-schema.ParticleOptions = {
-	{ number = 1, name = "resource", kind = "string" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 4, name = "color", kind = "fixed32", optional = true },
-	{ number = 5, name = "tintPoint", kind = "int32", optional = true },
-	{ number = 6, name = "point", kind = "message", optional = true, message = "ParticlePoint" },
-	{ number = 7, name = "parent", kind = "uint32", optional = true },
-}
-schema.ParticlePoint = {
-	{ number = 1, name = "index", kind = "int32" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-}
-schema.FogOptions = {
-	{ number = 1, name = "position", kind = "message", message = "Vec3" },
-	{ number = 2, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 3, name = "mins", kind = "message", message = "Vec3" },
-	{ number = 4, name = "maxs", kind = "message", message = "Vec3" },
-	{ number = 5, name = "strength", kind = "float" },
-	{ number = 6, name = "color", kind = "fixed32" },
-}
-schema.ObjectResponse = {
-	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
-}
-schema.EntityRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-}
-schema.EntityClassResponse = {
-	{ number = 1, name = "name", kind = "message", optional = true, message = "EntityClassName" },
-}
-schema.EntityClassName = {
-	{ number = 1, name = "className", kind = "string" },
-	{ number = 2, name = "designerName", kind = "string" },
-}
-schema.EntityResponse = {
-	{ number = 1, name = "entity", kind = "uint32" },
-}
-schema.ObjectRequest = {
-	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
-}
-schema.MoveObjectRequest = {
-	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-}
-schema.SetTextRequest = {
-	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
-	{ number = 2, name = "text", kind = "string" },
-}
-schema.SetObjectHiddenRequest = {
-	{ number = 1, name = "object", kind = "uint32", class = WorldObject, key = "id" },
-	{ number = 2, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 3, name = "hidden", kind = "bool" },
-}
 schema.BotOptions = {
 	{ number = 1, name = "name", kind = "string" },
 	{ number = 2, name = "team", kind = "int32" },
@@ -2102,179 +2203,78 @@ schema.BotOptions = {
 schema.BotResponse = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 }
-schema.InputRequest = {
-	{ number = 1, name = "buttons", kind = "uint64" },
-}
-schema.PlayerInputRequest = {
+schema.SettingChangedEvent = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
-	{ number = 2, name = "buttons", kind = "uint64" },
+	{ number = 2, name = "key", kind = "string" },
+	{ number = 3, name = "value", kind = "string" },
 }
-schema.RemapInputRequest = {
-	{ number = 1, name = "from", kind = "uint64" },
-	{ number = 2, name = "to", kind = "uint64" },
-	{ number = 3, name = "repeat", kind = "bool", optional = true },
+schema.PlayerSettingRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "key", kind = "string" },
 }
-schema.EntityOptions = {
-	{ number = 1, name = "designerName", kind = "string" },
-	{ number = 2, name = "subclass", kind = "string" },
-	{ number = 3, name = "team", kind = "int32" },
-	{ number = 4, name = "position", kind = "message", message = "Vec3" },
-	{ number = 5, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 6, name = "keyValues", kind = "message", repeated = true, message = "KeyValue" },
-	{ number = 7, name = "fields", kind = "message", repeated = true, message = "FieldWrite" },
-	{ number = 8, name = "transmitAlways", kind = "bool", optional = true },
+schema.SettingResponse = {
+	{ number = 1, name = "value", kind = "string" },
 }
-schema.KeyValue = {
-	{ number = 1, name = "key", kind = "string" },
-	{ number = 2, name = "value", kind = "message", message = "EntityValue" },
+schema.SetPlayerSettingRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "key", kind = "string" },
+	{ number = 3, name = "value", kind = "string" },
 }
-schema.EntityValue = {
-	{ number = 1, name = "boolean", kind = "bool", optional = true },
-	{ number = 2, name = "integer", kind = "int32", optional = true },
-	{ number = 3, name = "number", kind = "float", optional = true },
-	{ number = 4, name = "text", kind = "string", optional = true },
-	{ number = 5, name = "vector", kind = "message", optional = true, message = "Vec3" },
-	{ number = 6, name = "color", kind = "fixed32", optional = true },
+schema.UiPressEvent = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "node", kind = "string" },
 }
-schema.ShowEntityOnlyToRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "players", kind = "int32", repeated = true },
+schema.Call = {
+	{ number = 1, name = "method", kind = "string" },
+	{ number = 2, name = "request", kind = "bytes" },
 }
-schema.FireInputRequest = {
-	{ number = 1, name = "entity", kind = "uint32" },
-	{ number = 2, name = "input", kind = "string" },
-	{ number = 3, name = "value", kind = "message", optional = true, message = "EntityValue" },
-	{ number = 4, name = "activator", kind = "uint32", optional = true },
+schema.Reply = {
+	{ number = 1, name = "error", kind = "string" },
+	{ number = 2, name = "response", kind = "bytes" },
 }
-schema.NpcOptions = {
-	{ number = 1, name = "className", kind = "string" },
-	{ number = 2, name = "unit", kind = "string" },
-	{ number = 3, name = "team", kind = "int32" },
-	{ number = 4, name = "position", kind = "message", message = "Vec3" },
-	{ number = 5, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 6, name = "health", kind = "int32", optional = true },
-	{ number = 7, name = "maxHealth", kind = "int32", optional = true },
-	{ number = 8, name = "lane", kind = "uint32", optional = true },
-	{ number = 9, name = "fields", kind = "message", repeated = true, message = "FieldWrite" },
+schema.Empty = {}
+schema.StartEvent = {
+	{ number = 1, name = "args", kind = "string", repeated = true },
+	{ number = 2, name = "checkOnly", kind = "bool" },
+	{ number = 3, name = "source", kind = "bytes" },
 }
-schema.FieldWrite = {
-	{ number = 1, name = "className", kind = "string" },
-	{ number = 2, name = "field", kind = "string" },
-	{ number = 3, name = "type", kind = "enum", enum = FieldType },
-	{ number = 4, name = "value", kind = "message", message = "FieldValue", union = "value" },
+schema.StartResult = {
+	{ number = 1, name = "frames", kind = "bool" },
+	{ number = 2, name = "damage", kind = "bool" },
+	{ number = 3, name = "damaged", kind = "bool" },
 }
-schema.NpcResponse = {
-	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+schema.FrameEvent = {
+	{ number = 1, name = "tick", kind = "uint64" },
+	{ number = 2, name = "timeSeconds", kind = "double" },
+	{ number = 3, name = "movement", kind = "message", repeated = true, message = "MovementSample" },
 }
-schema.NpcRequest = {
-	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
+schema.CommandEvent = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "line", kind = "string" },
 }
-schema.NpcStateResponse = {
-	{ number = 1, name = "state", kind = "message", optional = true, message = "NpcState" },
+schema.CommandResult = {
+	{ number = 1, name = "claimed", kind = "bool" },
 }
-schema.NpcState = {
-	{ number = 1, name = "position", kind = "message", message = "Vec3" },
-	{ number = 2, name = "facing", kind = "message", message = "EulerAngles" },
-	{ number = 3, name = "health", kind = "int32" },
-	{ number = 4, name = "maxHealth", kind = "int32" },
-	{ number = 5, name = "team", kind = "int32" },
+schema.WorldEvent = {
+	{ number = 1, name = "map", kind = "string" },
 }
-schema.MoveNpcRequest = {
-	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
-	{ number = 3, name = "facing", kind = "message", optional = true, message = "EulerAngles" },
-	{ number = 4, name = "velocity", kind = "message", optional = true, message = "Vec3" },
+schema.ServiceCall = {
+	{ number = 1, name = "service", kind = "string" },
+	{ number = 2, name = "method", kind = "string" },
+	{ number = 3, name = "payload", kind = "bytes" },
 }
-schema.SetNpcHealthRequest = {
-	{ number = 1, name = "npc", kind = "uint32", class = Npc, key = "entity" },
-	{ number = 2, name = "health", kind = "int32" },
-	{ number = 3, name = "maxHealth", kind = "int32", optional = true },
+schema.ServiceReply = {
+	{ number = 1, name = "payload", kind = "bytes" },
 }
-schema.AliveResponse = {
-	{ number = 1, name = "alive", kind = "bool" },
+schema.LogRequest = {
+	{ number = 1, name = "message", kind = "string" },
 }
-schema.CreatePickupRequest = {
-	{ number = 1, name = "kind", kind = "enum", enum = PickupKind },
-	{ number = 2, name = "position", kind = "message", message = "Vec3" },
+schema.ServerCommandRequest = {
+	{ number = 1, name = "command", kind = "string" },
 }
-schema.PickupResponse = {
-	{ number = 1, name = "pickup", kind = "uint32", class = Pickup, key = "entity" },
-}
-schema.PickupRequest = {
-	{ number = 1, name = "pickup", kind = "uint32", class = Pickup, key = "entity" },
-}
-schema.FindEntitiesRequest = {
-	{ number = 1, name = "className", kind = "string" },
-}
-schema.RemoveEntitiesRequest = {
-	{ number = 1, name = "className", kind = "string" },
-}
-schema.EntitiesResponse = {
-	{ number = 1, name = "entities", kind = "uint32", repeated = true },
-}
-schema.CountResponse = {
-	{ number = 1, name = "count", kind = "int32" },
-}
-schema.HitOptions = {
-	{ number = 1, name = "victim", kind = "uint32" },
-	{ number = 2, name = "attacker", kind = "uint32", optional = true },
-	{ number = 3, name = "inflictor", kind = "uint32", optional = true },
-	{ number = 4, name = "amount", kind = "float" },
-	{ number = 5, name = "hitGroup", kind = "int32", optional = true },
-	{ number = 6, name = "ability", kind = "uint32", optional = true },
-}
-schema.TraceOptions = {
-	{ number = 1, name = "start", kind = "message", message = "Vec3" },
-	{ number = 2, name = "end", kind = "message", message = "Vec3" },
-	{ number = 3, name = "layers", kind = "uint64", optional = true },
-	{ number = 4, name = "exclude", kind = "uint64", optional = true },
-	{ number = 5, name = "ignore", kind = "uint32", repeated = true },
-}
-schema.TraceResponse = {
-	{ number = 1, name = "hit", kind = "message", optional = true, message = "TraceHit" },
-}
-schema.TraceHit = {
-	{ number = 1, name = "position", kind = "message", message = "Vec3" },
-	{ number = 2, name = "normal", kind = "message", message = "Vec3" },
-	{ number = 3, name = "startSolid", kind = "bool" },
-	{ number = 4, name = "entity", kind = "uint32" },
-}
-schema.RestoreNpcsRequest = {
-	{ number = 1, name = "npcs", kind = "message", repeated = true, message = "NpcTarget" },
-}
-schema.NpcTarget = {
-	{ number = 1, name = "className", kind = "string" },
-	{ number = 2, name = "id", kind = "uint32" },
-	{ number = 3, name = "team", kind = "int32" },
-	{ number = 4, name = "position", kind = "message", message = "Vec3" },
-	{ number = 5, name = "facing", kind = "message", message = "EulerAngles" },
-	{ number = 6, name = "velocity", kind = "message", optional = true, message = "Vec3" },
-	{ number = 7, name = "health", kind = "int32" },
-	{ number = 8, name = "maxHealth", kind = "int32" },
-	{ number = 9, name = "lane", kind = "uint32", optional = true },
-}
-schema.PauseRequest = {
-	{ number = 1, name = "paused", kind = "bool" },
-}
-schema.MatchClockResponse = {
-	{ number = 1, name = "seconds", kind = "float" },
-}
-schema.HoldMatchClockRequest = {
-	{ number = 1, name = "seconds", kind = "float", optional = true },
-}
-schema.RiftResponse = {
-	{ number = 1, name = "state", kind = "message", optional = true, message = "RiftState" },
-}
-schema.RiftState = {
-	{ number = 1, name = "scoringTeam", kind = "int32" },
-	{ number = 2, name = "scoringTime", kind = "float" },
-	{ number = 3, name = "cashInStarted", kind = "float" },
-	{ number = 4, name = "giveUpTime", kind = "float" },
-	{ number = 5, name = "nextSpawn", kind = "float" },
-	{ number = 6, name = "spawnWindow", kind = "float" },
-}
-schema.StartRiftRequest = {
-	{ number = 1, name = "position", kind = "message", message = "Vec3" },
+schema.PrecacheOptions = {
+	{ number = 1, name = "heroes", kind = "string", repeated = true },
+	{ number = 2, name = "resources", kind = "string", repeated = true },
 }
 
 -- log writes one line to the server log under the mod's name.

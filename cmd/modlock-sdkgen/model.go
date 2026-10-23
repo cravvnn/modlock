@@ -12,7 +12,7 @@ import (
 // schema is the boundary the two services declare, with every message and
 // enum they reach.
 type schema struct {
-	// messages holds each message by its full name, such as ".modlock.Vec3".
+	// messages holds each message by its full name, such as ".modlock.geometry.Vec3".
 	messages map[string]*message
 	// enums holds each enum by its full name.
 	enums map[string]*enum
@@ -24,12 +24,29 @@ type schema struct {
 	host *service
 	// mod is the service a mod serves to the game.
 	mod *service
+	// file is the file that declares the services, Call and Reply.
+	file *protoFile
+}
+
+// protoFile is one schema file, which each generated library imports for the
+// messages and enums it declares.
+type protoFile struct {
+	// path is the file's path in the repository, such as
+	// src/wasm/players/players.proto.
+	path string
+	// pkg is its protobuf package, such as modlock.wasm.players.
+	pkg string
+	// goPath and goName are the Go package's import path and name.
+	goPath, goName string
 }
 
 // message is one protobuf message.
 type message struct {
+	// name is the message's name in the mod libraries, nested names joined
+	// by underscores as the generated code joins them, such as Pawn_Hero.
 	name   string
 	full   string
+	file   *protoFile
 	doc    string
 	fields []*field
 	oneofs []*oneof
@@ -69,6 +86,7 @@ type oneof struct {
 type enum struct {
 	name   string
 	full   string
+	file   *protoFile
 	doc    string
 	values []*enumValue
 }
@@ -111,9 +129,16 @@ func readSchema(set *descriptorpb.FileDescriptorSet, file string) (*schema, erro
 	for _, f := range set.GetFile() {
 		docs := comments(f)
 		prefix := "." + f.GetPackage() + "."
+		goPath, goName, _ := strings.Cut(f.GetOptions().GetGoPackage(), ";")
+		pf := &protoFile{
+			path:   strings.TrimPrefix(f.GetName(), modulePath+"/"),
+			pkg:    f.GetPackage(),
+			goPath: goPath,
+			goName: goName,
+		}
 		var addEnum func(e *descriptorpb.EnumDescriptorProto, name, full, path string)
 		addEnum = func(e *descriptorpb.EnumDescriptorProto, name, full, path string) {
-			en := &enum{name: name, full: full, doc: docs[path]}
+			en := &enum{name: name, full: full, file: pf, doc: docs[path]}
 			for j, v := range e.GetValue() {
 				en.values = append(en.values, &enumValue{name: v.GetName(), number: v.GetNumber(), doc: docs[fmt.Sprint(path, ".2.", j)]})
 			}
@@ -122,7 +147,7 @@ func readSchema(set *descriptorpb.FileDescriptorSet, file string) (*schema, erro
 		}
 		var addMessage func(m *descriptorpb.DescriptorProto, name, full, path string)
 		addMessage = func(m *descriptorpb.DescriptorProto, name, full, path string) {
-			msg := &message{name: name, full: full, doc: docs[path]}
+			msg := &message{name: name, full: full, file: pf, doc: docs[path]}
 			for j, o := range m.GetOneofDecl() {
 				msg.oneofs = append(msg.oneofs, &oneof{name: o.GetName(), doc: docs[fmt.Sprint(path, ".8.", j)]})
 			}
@@ -164,11 +189,27 @@ func readSchema(set *descriptorpb.FileDescriptorSet, file string) (*schema, erro
 			addEnum(e, e.GetName(), prefix+e.GetName(), fmt.Sprint(5, ".", i))
 		}
 		if f.GetName() == file {
-			services, serviceDocs, serviceFile = f.GetService(), docs, f
+			services, serviceDocs, serviceFile, s.file = f.GetService(), docs, f, pf
 		}
 	}
 	if serviceFile == nil {
 		return nil, fmt.Errorf("the descriptor set lacks %s", file)
+	}
+
+	// The mod libraries name every type by its short name alone, so no two
+	// packages may declare the same one.
+	declared := map[string]string{}
+	for _, m := range s.messageOrder {
+		if other, ok := declared[m.name]; ok {
+			return nil, fmt.Errorf("%s and %s share the name %s", other, m.full, m.name)
+		}
+		declared[m.name] = m.full
+	}
+	for _, e := range s.enumOrder {
+		if other, ok := declared[e.name]; ok {
+			return nil, fmt.Errorf("%s and %s share the name %s", other, e.full, e.name)
+		}
+		declared[e.name] = e.full
 	}
 
 	// Resolve each field's message or enum type.

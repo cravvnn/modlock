@@ -3,7 +3,7 @@ package sandbox
 import (
 	"io"
 
-	"github.com/paralin/modlock/proto/modlock/wasm"
+	"github.com/paralin/modlock/src/wasm"
 	"github.com/tetratelabs/wazero"
 )
 

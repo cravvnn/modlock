@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test'
 
-import { Reply } from '../../proto/modlock/wasm.pb.js'
+import { Reply } from '../../src/wasm/wasm.pb.js'
 import { bind } from '../src/host.js'
 import { advance, after, every, sequence } from '../src/timer.js'
 

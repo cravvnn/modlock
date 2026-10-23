@@ -1,3 +1,5 @@
+//go:build deps_only
+
 #include "wasm/runtime.h"
 
 #include <condition_variable>
