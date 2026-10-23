@@ -37,16 +37,16 @@ import { press, tick } from './ui.js'
 export { Buttons, Layers } from './bits.js'
 export { after, every, sequence, type Timer } from './timer.js'
 export {
-  type CameraKey,
   type CameraMove,
-  cameraPath,
-  type CameraPathOptions,
+  type CameraPlayOptions,
   cameraPulse,
   type CameraPulseOptions,
   cameraShake,
   type CameraShakeOptions,
+  playCamera,
   setOrbitCamera,
 } from './camera.js'
+export * as curve from './curve.js'
 export * from './host.gen.js'
 export { players } from './players.js'
 export { type CatalogEntry, Dropper, dropperButtons } from './dropper.js'

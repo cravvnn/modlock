@@ -5,17 +5,31 @@
 // the server ignores the wheel's orbit_camera_in and orbit_camera_out without
 // it.
 //
-// The helpers below build camera paths from moveCamera's queued lerps: the
-// operations on one param in one context run in order, so a whole path goes
+// playCamera plays curves (curve.ts) on moveCamera's queued lerps: the
+// operations on one param in one context run in order, so a whole curve goes
 // to the client at once and plays without the mod's timers.
 
 import {
+  type CameraCurve,
+  chain,
+  durationOf,
+  type Ease,
+  ease,
+  hold,
+  type LerpShape,
+  line,
+  reverse,
+  wave,
+} from './curve.js'
+import {
+  type CameraOptions,
   type CameraParam,
   type CameraValue,
   holdModifierState,
   type Player,
   writeField,
 } from './host.gen.js'
+import { every, type Timer } from './timer.js'
 
 /**
  * setOrbitCamera gives the player's hero the hideout's orbit camera, zoomed
@@ -44,105 +58,89 @@ export function setOrbitCamera(player: Player, enabled: boolean): boolean {
   return flag && zoom
 }
 
-/** CameraKey is one point of a camera path: a value at a time. */
-export interface CameraKey {
-  /** at is the time of the key, in seconds after the path starts. */
-  at: number
-  /** value is the param's value at the key. */
-  value: CameraValue
-  /** bias and gain shape the curve from the key before this one. */
-  bias?: number
-  gain?: number
-}
-
-/** CameraPathOptions moves one param of a player's camera through keys. */
-export interface CameraPathOptions {
-  /** param is the camera value the path moves. */
-  param: CameraParam
+/** CameraPlayOptions plays curves on a player's camera. */
+export interface CameraPlayOptions {
   /**
-   * keys are the path's points in time order. The param moves in a line
-   * from each to the next, holds where two keys share a value, and jumps
-   * where two share a time.
+   * tracks holds a curve for each param that moves. All tracks start
+   * together, so a pull back and a wider view can share one timeline.
    */
-  keys: readonly CameraKey[]
-  /** relative adds the keys' values to the param's usual value. */
+  tracks: Partial<Record<CameraParam, CameraCurve>>
+  /** relative adds the curves' values to each param's usual value. */
   relative?: boolean
-  /** context names the path's operations; omitted, a name of its own. */
+  /** delay starts the tracks after this many seconds. */
+  delay?: number
+  /** loop plays the tracks again each time they end, until cancelled. */
+  loop?: boolean
+  /**
+   * rate is how many lerps each second play a span the game's lerp cannot
+   * draw; omitted, 30. A straight or bias and gain span is always one lerp.
+   */
+  rate?: number
+  /** context names the operations; omitted, a name of its own. */
   context?: string
-  /** priority decides between this path and another context's moves. */
+  /** priority decides between these tracks and another context's moves. */
   priority?: number
   /** target is the entity handle of the hero whose camera moves. */
   target?: number
 }
 
-/** CameraMove is a path running on a player's camera. */
+/** CameraMove is a set of curves playing on a player's camera. */
 export interface CameraMove {
-  /** context names the path's operations. */
+  /** context names the operations. */
   readonly context: string
-  /** duration is how long the path runs, in seconds. */
+  /** duration is how long the move runs, in seconds; Infinity when it loops. */
   readonly duration: number
-  /** cancel ends the path at once and returns the param to its usual value. */
+  /** cancel ends the move at once and returns each param to its usual value. */
   cancel(): boolean
 }
 
-/** paths counts the paths started, to give each its own context. */
-let paths = 0
+/** moves counts the moves started, to give each its own context. */
+let moves = 0
 
 /**
- * cameraPath moves one param of the player's camera through keys, sent at
- * once as a queue of lerps in one context. The param returns to its usual
- * value after the last key, so a path ends where the camera should rest: at
- * zero when relative. Two paths in their own contexts take turns by priority.
- * It returns undefined when the player has no hero or a call fails.
+ * playCamera plays a curve for each param of the player's camera, sent at
+ * once as lerps queued in one context. Each param returns to its usual value
+ * after its curve ends, so a curve ends where the camera rests: at zero when
+ * relative. Moves in their own contexts take turns by priority. It returns
+ * undefined when the player has no hero or a call fails.
  */
-export function cameraPath(
+export function playCamera(
   player: Player,
-  options: CameraPathOptions,
+  options: CameraPlayOptions,
 ): CameraMove | undefined {
-  // A path without keys moves nothing.
-  const { param, keys, relative, priority, target } = options
-  const context = options.context ?? `modlock.camera.${++paths}`
-  const [first, ...rest] = keys
-  if (!first) return undefined
+  // Each move takes a context of its own unless the mod names one.
+  const context = options.context ?? `modlock.camera.${++moves}`
+  const tracks = Object.entries(options.tracks) as [CameraParam, CameraCurve][]
+  const length = Math.max(0, ...tracks.map(([, curve]) => durationOf(curve)))
+  const send = (delay: number | undefined) =>
+    tracks.every(([param, curve]) =>
+      sendCurve(player, { ...options, context, param, delay }, curve),
+    )
 
-  // Each segment between two keys is one lerp, queued after the one before.
-  // Only the first operation waits for the first key.
-  let sent = true
-  let delay = first.at > 0 ? first.at : undefined
-  let from = first
-  for (const to of rest) {
-    const duration = to.at - from.at
-    if (duration > 0) {
-      const lerp = {
-        start: from.value,
-        end: to.value,
-        bias: to.bias,
-        gain: to.gain,
-        duration,
-      }
-      sent &&= player.moveCamera({
-        context,
-        param,
-        motion: { lerp },
-        delay,
-        relative,
-        priority,
-        target,
-      })
-      delay = undefined
-    }
-    from = to
+  // A looping move queues two rounds, then one more as each ends, so the
+  // queue never runs dry; it stops once the player has no hero.
+  let timer: Timer | undefined
+  const stop = () => {
+    timer?.cancel()
+    return player.clearCamera(context)
+  }
+  let sent = send(options.delay)
+  if (sent && options.loop && length > 0) {
+    sent = send(undefined)
+    timer = every(length, () => {
+      if (!send(undefined)) stop()
+    })
   }
 
-  // A path that half reached the camera is taken back off it.
+  // A move that half reached the camera is taken back off it.
   if (!sent) {
-    player.clearCamera(context)
+    stop()
     return undefined
   }
   return {
     context,
-    duration: from.at,
-    cancel: () => player.clearCamera(context),
+    duration: options.loop ? Infinity : (options.delay ?? 0) + length,
+    cancel: stop,
   }
 }
 
@@ -158,6 +156,8 @@ export interface CameraPulseOptions {
   hold: number
   /** out is how long the move back takes, in seconds. */
   out: number
+  /** ease shapes the move out; the move back is its mirror. Omitted, linear. */
+  ease?: Ease
   /** context names the pulse's operations; omitted, a name of its own. */
   context?: string
   /** priority decides between this pulse and another context's moves. */
@@ -175,17 +175,17 @@ export function cameraPulse(
   player: Player,
   options: CameraPulseOptions,
 ): CameraMove | undefined {
-  const { by, in: rise, hold, out } = options
+  const { param, by, ease: shape = ease.linear } = options
   const rest = zero(by)
-  return cameraPath(player, {
+  const curve = chain(
+    line(rest, by, options.in, shape),
+    hold(by, options.hold),
+    reverse(line(rest, by, options.out, shape)),
+  )
+  return playCamera(player, {
     ...options,
     relative: true,
-    keys: [
-      { at: 0, value: rest },
-      { at: rise, value: by },
-      { at: rise + hold, value: by },
-      { at: rise + hold + out, value: rest },
-    ],
+    tracks: { [param]: curve },
   })
 }
 
@@ -197,7 +197,7 @@ export interface CameraShakeOptions {
   amplitude: number
   /** duration is how long the shake runs, in seconds. */
   duration: number
-  /** frequency is how many swings each way per second; omitted, 12. */
+  /** frequency is how many full swings it makes each second; omitted, 8. */
   frequency?: number
   /** context names the shake's operations; omitted, a name of its own. */
   context?: string
@@ -209,28 +209,87 @@ export interface CameraShakeOptions {
 
 /**
  * cameraShake swings one param of the player's camera to either side of its
- * usual value, each swing smaller than the one before, and settles back. It
- * returns undefined when the player has no hero or a call fails.
+ * usual value, smaller each time, and settles back. It returns undefined
+ * when the player has no hero or a call fails.
  */
 export function cameraShake(
   player: Player,
   options: CameraShakeOptions,
 ): CameraMove | undefined {
-  // Swings alternate sides at even spacing and shrink to zero at the end.
   const { amplitude, duration } = options
-  const swings = Math.max(1, Math.round(duration * (options.frequency ?? 12)))
-  const keys: CameraKey[] = [{ at: 0, value: 0 }]
-  for (let i = 1; i <= swings; i++) {
-    const side = i % 2 === 1 ? 1 : -1
-    const value = side * amplitude * (1 - (i - 1) / swings)
-    keys.push({ at: (duration * i) / (swings + 1), value })
-  }
-  keys.push({ at: duration, value: 0 })
-  return cameraPath(player, {
+  const curve = wave({
+    amplitude,
+    duration,
+    frequency: options.frequency ?? 8,
+    decay: true,
+  })
+  const param = options.param ?? 'horizontalOffset'
+  return playCamera(player, {
     ...options,
-    param: options.param ?? 'horizontalOffset',
     relative: true,
-    keys,
+    tracks: { [param]: curve },
+  })
+}
+
+/** SendOptions names where one param's curve goes. */
+interface SendOptions extends CameraPlayOptions {
+  context: string
+  param: CameraParam
+}
+
+/**
+ * sendCurve queues one param's curve as lerps: one for a span with a lerp
+ * shape, and for any other span one per sample at the rate. Only the first lerp waits
+ * for the delay; the rest queue behind it.
+ */
+function sendCurve(
+  player: Player,
+  options: SendOptions,
+  curve: CameraCurve,
+): boolean {
+  // Every lerp of the track shares its context; only the first carries the
+  // delay.
+  const { context, param, relative, priority, target } = options
+  const rate = options.rate ?? 30
+  let delay = options.delay
+  const lerp = (
+    start: CameraValue,
+    end: CameraValue,
+    duration: number,
+    shape: LerpShape = {},
+  ) => {
+    const sent = player.moveCamera({
+      context,
+      param,
+      motion: { lerp: { start, end, duration, ...shape } },
+      delay,
+      relative,
+      priority,
+      target,
+    } satisfies CameraOptions)
+    delay = undefined
+    return sent
+  }
+
+  // A span the game draws goes out as one lerp, any other as samples.
+  return curve.every((span) => {
+    // An empty span adds nothing to the queue.
+    if (span.duration <= 0) return true
+    if (span.lerp) {
+      return lerp(span.at(0), span.at(1), span.duration, span.lerp)
+    }
+
+    // Samples split the span evenly, at least one per span.
+    const steps = Math.max(1, Math.ceil(span.duration * rate))
+    for (let i = 0; i < steps; i++) {
+      const sent = lerp(
+        span.at(i / steps),
+        span.at((i + 1) / steps),
+        span.duration / steps,
+      )
+      if (!sent) return false
+    }
+    return true
   })
 }
 

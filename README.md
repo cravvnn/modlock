@@ -589,23 +589,84 @@ whose `cancel` you call with a colon. In Python, `modlock.after`,
 
 ### Players and heroes
 
-| Call                                                                                   | Effect                                                             |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `players()`                                                                            | List the connected players and bots.                               |
-| `player.pawn()`                                                                        | Read the hero: health, team, position, aim and stamina.            |
-| `player.chat`, `centerText`, `announce`                                                | Show text to one player.                                           |
-| `player.selectHero`, `respawn`, `teleport`, `setVelocity`, `freeze`, `kill`            | Move the hero through the match.                                   |
-| `player.spectate()`                                                                    | Move the player to the spectators, without a hero.                 |
-| `player.watch(target, chase?)`, `freeCamera(position, facing)`, `unwatch()`            | Watch a hero, chase it or fly freely, and return to the hero.      |
-| `player.moveCamera(options)`, `clearCamera(context?)`                                  | Pull back, widen, offset or aim the camera, as abilities do.       |
-| `player.clearItems`, `giveItem`, `restoreStamina`, `setStamina`, `refreshAbility`      | Change what the hero carries.                                      |
-| `player.abilities()`, `setAbility`, `replaceAbility`, `holdModifier`                   | Read or change abilities, their timers and charges, modifiers.     |
-| `player.setting`, `setSetting`, `settingOn(player, key)`, `settingNumber(player, key)` | Read or change the player's settings.                              |
-| `player.addMetric(name, value, label?)`                                                | Add to the player's total of a metric.                             |
-| `player.watchMovement(true)`                                                           | Add the hero's movement, landings and wall jumps to each frame.    |
-| `cameraPulse(player, options)`, `cameraPath`, `cameraShake`, `move.cancel()`           | Move, hold and return the camera, run it through keys or shake it. |
-| `setOrbitCamera(player, enabled)`                                                      | Switch the hero to the hideout's zoom camera and HUD, or back.     |
-| `addBot(options)`, `player.removeBot()`                                                | Add or remove a bot player.                                        |
+| Call                                                                                   | Effect                                                          |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `players()`                                                                            | List the connected players and bots.                            |
+| `player.pawn()`                                                                        | Read the hero: health, team, position, aim and stamina.         |
+| `player.chat`, `centerText`, `announce`                                                | Show text to one player.                                        |
+| `player.selectHero`, `respawn`, `teleport`, `setVelocity`, `freeze`, `kill`            | Move the hero through the match.                                |
+| `player.spectate()`                                                                    | Move the player to the spectators, without a hero.              |
+| `player.watch(target, chase?)`, `freeCamera(position, facing)`, `unwatch()`            | Watch a hero, chase it or fly freely, and return to the hero.   |
+| `player.moveCamera(options)`, `clearCamera(context?)`                                  | Pull back, widen, offset or aim the camera, as abilities do.    |
+| `player.clearItems`, `giveItem`, `restoreStamina`, `setStamina`, `refreshAbility`      | Change what the hero carries.                                   |
+| `player.abilities()`, `setAbility`, `replaceAbility`, `holdModifier`                   | Read or change abilities, their timers and charges, modifiers.  |
+| `player.setting`, `setSetting`, `settingOn(player, key)`, `settingNumber(player, key)` | Read or change the player's settings.                           |
+| `player.addMetric(name, value, label?)`                                                | Add to the player's total of a metric.                          |
+| `player.watchMovement(true)`                                                           | Add the hero's movement, landings and wall jumps to each frame. |
+| `playCamera(player, options)`, `cameraPulse`, `cameraShake`                            | Play curves on the camera; see [Camera moves](#camera-moves).   |
+| `setOrbitCamera(player, enabled)`                                                      | Switch the hero to the hideout's zoom camera and HUD, or back.  |
+| `addBot(options)`, `player.removeBot()`                                                | Add or remove a bot player.                                     |
+
+### Camera moves
+
+`playCamera` plays a curve on each camera param it names (`distance`,
+`fieldOfView`, `target`, `verticalOffset`, `horizontalOffset`), all on one
+timeline. The whole move goes to the client at once, as the game's own lerps
+queued in one context, so it plays smoothly without the mod's timers. It
+returns a move with `duration` and `cancel()`, or nothing when the player has
+no hero. Each param snaps back to its usual value when its curve ends, so
+end a curve at rest: at zero when it is `relative`. A move takes a context of its own unless you
+name one; moves in two contexts take turns by `priority`, and the higher one
+hands back when it ends. `loop` plays the curves again until `cancel()`.
+
+The `curve` namespace builds curves. Each one is a list of spans, and every
+builder returns one, so they compose:
+
+| Call                                                                 | Curve                                                         |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `curve.line(from, to, seconds, ease?)`, `curve.hold(value, seconds)` | A move from one value to another, or a value held.            |
+| `curve.keyframes(keys, { smooth? })`                                 | Through `{ at, value, ease? }` keys, straight or on a spline. |
+| `curve.through(points, { speed, ease?, smooth? })`                   | Through points at a speed, each move as long as its distance. |
+| `curve.orbit({ center, radius, duration, turns?, start?, rise? })`   | Around a point, for the `target` param; a spiral when rising. |
+| `curve.wave({ amplitude, frequency, duration, decay? })`             | Swings either side of zero, shrinking with `decay`.           |
+| `curve.chain(...)`, `repeat(c, n)`, `reverse(c)`, `pingPong(c)`      | Curves one after another, repeated, backward, there and back. |
+| `curve.durationOf(c)`, `curve.valueAt(c, seconds)`                   | How long a curve plays, and its value at a time.              |
+
+`curve.ease` holds `linear`, `in`, `out`, `inOut`, `sine`, `back`, `elastic`
+and `bounce`, and any function from 0 to 1 works as an ease. The game's lerp
+draws `linear`, `ease.bias(b)` and `ease.gain(g)` itself (Valve's bias and
+gain, each linear at 0.5), so a span with one of them plays as one lerp. Any
+other span is sampled into `rate` lerps a second, 30 unless you set it. The
+client plays at most one queued lerp a frame, so on a client slower than the
+rate a sampled span plays slower than its duration. `cameraPulse` moves a param out by an amount,
+holds it and brings it back, as an ability pulls the camera back while it
+charges, and `cameraShake` shakes one.
+
+```ts
+// Pull back while the view widens, ease back in after two seconds.
+playCamera(player, {
+  relative: true,
+  tracks: {
+    distance: curve.chain(
+      curve.line(0, 300, 0.4, curve.ease.out),
+      curve.hold(300, 2),
+      curve.line(300, 0, 0.6, curve.ease.inOut),
+    ),
+    fieldOfView: curve.keyframes([
+      { at: 0, value: 0 },
+      { at: 0.4, value: 15, ease: curve.ease.out },
+      { at: 3, value: 0, ease: curve.ease.sine },
+    ]),
+  },
+})
+
+// Circle a point of interest until the round starts.
+const tour = playCamera(player, {
+  loop: true,
+  tracks: { target: curve.orbit({ center: spot, radius: 400, duration: 12 }) },
+})
+after(30, () => tour?.cancel())
+```
 
 ### Input
 

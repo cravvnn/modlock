@@ -56,7 +56,7 @@ const Preview = "preview"
 
 // Declarations are the built library's declarations, which modlock build
 // installs into each script project.
-var Declarations = []string{"index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "players.d.ts", "timer.d.ts", "camera.d.ts", "jsx-runtime.d.ts"}
+var Declarations = []string{"index.d.ts", "globals.d.ts", "host.gen.d.ts", "entities.d.ts", "console.d.ts", "ui.d.ts", "bits.d.ts", "spot.d.ts", "dropper.d.ts", "players.d.ts", "timer.d.ts", "camera.d.ts", "curve.d.ts", "jsx-runtime.d.ts"}
 
 // jsxRuntime and jsxTypes are the library's JSX runtime, which the compiler
 // and the bundler import as modlock/jsx-runtime.
