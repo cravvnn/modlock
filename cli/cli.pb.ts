@@ -31,6 +31,7 @@ export interface Event {
     | { value: HostEvent; case: 'host' }
     | { value: Published; case: 'published' }
     | { value: Sandbox; case: 'sandbox' }
+    | { value: Update; case: 'update' }
 }
 
 export const Event: MessageType<Event> =
@@ -43,6 +44,7 @@ export const Event: MessageType<Event> =
       [4, 'host', 11, 0, HostEvent.codec, 'body'],
       [5, 'published', 11, 0, Published.codec, 'body'],
       [6, 'sandbox', 11, 0, Sandbox.codec, 'body'],
+      [7, 'update', 11, 0, Update.codec, 'body'],
     ],
     {
       decode: (r: BinaryReader, end: number, m: Event): Event => {
@@ -103,6 +105,16 @@ export const Event: MessageType<Event> =
                 ),
               }
               break
+            case 7:
+              m.body = {
+                case: 'update',
+                value: Update.decode(
+                  r,
+                  r.delimited(),
+                  m.body?.case === 'update' ? m.body.value : {},
+                ),
+              }
+              break
             default:
               r.skip(t)
           }
@@ -139,6 +151,11 @@ export const Event: MessageType<Event> =
           const o = m.body
           if (o?.case === 'sandbox' && o.value != null)
             Sandbox.writeField(w, 6, o.value)
+        }
+        {
+          const o = m.body
+          if (o?.case === 'update' && o.value != null)
+            Update.writeField(w, 7, o.value)
         }
       },
     },
@@ -406,6 +423,103 @@ export const Sandbox: MessageType<Sandbox> =
         {
           const v = m.reason
           if (v) w.uint32(10).string(v)
+        }
+      },
+    },
+  )
+
+/**
+ * Update reports that a newer release of the command line is out; modlock
+ * update installs it.
+ *
+ * @generated from message modlock.cli.Update
+ */
+export interface Update {
+  /**
+   * Current is the running command line's release, such as v0.1.9.
+   */
+  current?: string
+  /**
+   * Latest is the newest release.
+   */
+  latest?: string
+}
+
+export const Update: MessageType<Update> =
+  /* @__PURE__ */ createMessageType<Update>(
+    'modlock.cli.Update',
+    () => [
+      [1, 'current', 9],
+      [2, 'latest', 9],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: Update): Update => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.current = r.string()
+              break
+            case 2:
+              m.latest = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Update, w: Writer): void => {
+        {
+          const v = m.current
+          if (v) w.uint32(10).string(v)
+        }
+        {
+          const v = m.latest
+          if (v) w.uint32(18).string(v)
+        }
+      },
+    },
+  )
+
+/**
+ * Config is the command line's settings, kept as protobuf JSON in
+ * modlock/config.json in the user configuration directory. modlock config
+ * lists and changes them.
+ *
+ * @generated from message modlock.cli.Config
+ */
+export interface Config {
+  /**
+   * SkipUpdateCheck stops commands from looking for a newer release.
+   */
+  skipUpdateCheck?: boolean
+}
+
+export const Config: MessageType<Config> =
+  /* @__PURE__ */ createMessageType<Config>(
+    'modlock.cli.Config',
+    () => [[1, 'skip_update_check', 8]],
+    {
+      decode: (r: BinaryReader, end: number, m: Config): Config => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.skipUpdateCheck = r.bool()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Config, w: Writer): void => {
+        {
+          const v = m.skipUpdateCheck
+          if (v) w.uint32(8).bool(v)
         }
       },
     },

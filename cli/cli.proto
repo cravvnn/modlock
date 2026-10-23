@@ -35,6 +35,9 @@ message Event {
     // Sandbox reports that the session runs the mods in the sandbox, without
     // the game, and why.
     Sandbox sandbox = 6;
+
+    // Update reports a newer release of the command line.
+    Update update = 7;
   }
 }
 
@@ -89,6 +92,24 @@ message Sandbox {
   // Reason explains why the session runs in the sandbox, such as a missing
   // game.
   string reason = 1;
+}
+
+// Update reports that a newer release of the command line is out; modlock
+// update installs it.
+message Update {
+  // Current is the running command line's release, such as v0.1.9.
+  string current = 1;
+
+  // Latest is the newest release.
+  string latest = 2;
+}
+
+// Config is the command line's settings, kept as protobuf JSON in
+// modlock/config.json in the user configuration directory. modlock config
+// lists and changes them.
+message Config {
+  // SkipUpdateCheck stops commands from looking for a newer release.
+  bool skip_update_check = 1;
 }
 
 // Input is one thing the stand-in player does in the sandbox.

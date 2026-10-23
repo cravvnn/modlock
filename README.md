@@ -78,6 +78,11 @@ Steam's Proton. It fetches the server that matches its release the first time.
 Script mods need nothing else installed; a Go mod needs
 [Go](https://go.dev/dl/).
 
+`modlock` looks for a newer release at most once a day, in the background,
+and says when one is out; `modlock update` installs it in place. The check is
+off in CI, with `MODLOCK_NO_UPDATE_CHECK` set, or after
+`modlock config set update-check off`.
+
 ```sh
 modlock new my-mod
 cd my-mod
@@ -128,6 +133,8 @@ and why a mod stopped. `--preview-port` moves it, and 0 turns it off.
 | `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save. |
 | `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.  |
 | `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                 |
+| `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.  |
+| `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.   |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:
 
@@ -138,11 +145,12 @@ and why a mod stopped. `--preview-port` moves it, and 0 turns it off.
 | `--arg VALUE` | Pass `VALUE` to the mods' `onStart` handlers; repeatable. |
 | `--sandbox`   | Run in the sandbox even when the game is installed.       |
 
-| Variable         | Use it when                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------ |
-| `DEADLOCK_DIR`   | Deadlock is installed outside the Steam libraries.                                   |
-| `MODLOCK_HOST`   | You built `modlock-host.exe` yourself. The sandbox reads the interpreters beside it. |
-| `MODLOCK_PROTON` | You want a particular Proton installation.                                           |
+| Variable                  | Use it when                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| `DEADLOCK_DIR`            | Deadlock is installed outside the Steam libraries.                                   |
+| `MODLOCK_HOST`            | You built `modlock-host.exe` yourself. The sandbox reads the interpreters beside it. |
+| `MODLOCK_PROTON`          | You want a particular Proton installation.                                           |
+| `MODLOCK_NO_UPDATE_CHECK` | You want no check for a newer release in this environment.                           |
 
 ### Game files
 

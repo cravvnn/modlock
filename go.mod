@@ -16,7 +16,9 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.33
 	github.com/pkg/errors v0.9.1
 	github.com/tetratelabs/wazero v1.12.1-0.20260928190838-e234f6fe6ecd
-	golang.org/x/sys v0.47.0
+	golang.org/x/mod v0.42.0
+	golang.org/x/sys v0.49.0
+	golang.org/x/term v0.47.0
 )
 
 require (
@@ -24,6 +26,5 @@ require (
 	github.com/aperturerobotics/go-protoc-gen-prost v0.0.0-20261003014807-d46d22154f35 // indirect
 	github.com/aperturerobotics/json-iterator-lite v1.1.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 // indirect
-	golang.org/x/mod v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )

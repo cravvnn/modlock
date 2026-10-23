@@ -52,6 +52,7 @@ func playCommand(out *printer) *cli.Command {
 			if len(paths) == 0 {
 				paths = []string{"."}
 			}
+			out.header("play", strings.Join(paths, " "))
 			mods := make([]string, 0, len(paths))
 			for _, path := range paths {
 				dir, err := filepath.Abs(path)
@@ -170,7 +171,7 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 		ui = "127.0.0.1:" + strconv.Itoa(int(port))
 		renderer, err = readRenderer(c.Context)
 		if err != nil {
-			out.note("mod interfaces show only in the browser preview:", err)
+			out.mark("!", yellow, "mod interfaces show only in the browser preview: "+err.Error())
 		}
 	}
 	running, err := session.Start(c.Context, session.Config{
@@ -193,8 +194,9 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 
 	// Steam cannot connect a game that is already running, so name the
 	// console line that joins.
-	out.note("starting the server; its console is in", logPath)
-	out.note("to join from a running game, enter in its console: connect 127.0.0.1:" + strconv.Itoa(int(c.Uint("port"))))
+	out.field("console", logPath)
+	out.field("join", "connect 127.0.0.1:"+strconv.Itoa(int(c.Uint("port")))+" in a running game's console")
+	out.mark("…", dim, "starting the server")
 	return running, nil
 }
 

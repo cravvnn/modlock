@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"github.com/aperturerobotics/cli"
+	"github.com/paralin/modlock/internal/selfupdate"
 )
 
 // Version is the release this command line belongs to; the release build
@@ -21,7 +22,8 @@ func main() {
 	defer stop()
 
 	// Report as text, or as events once the flags ask for them.
-	out := &printer{}
+	out := &printer{current: Version}
+	selfupdate.Clean()
 	app := &cli.App{
 		Name:    "modlock",
 		Usage:   "create, build and run Deadlock mods",
@@ -33,7 +35,14 @@ func main() {
 			},
 		},
 		Before: func(c *cli.Context) error {
+			// Choose the output, and look for a newer release meanwhile.
 			out.json = c.Bool("json")
+			out.color, out.errColor = !out.json && colorful(os.Stdout), colorful(os.Stderr)
+			checkForUpdate(c.Context, out, c.Args().First())
+			return nil
+		},
+		After: func(*cli.Context) error {
+			out.notice()
 			return nil
 		},
 		Commands: []*cli.Command{
@@ -45,6 +54,8 @@ func main() {
 			panoramaCommand(out),
 			vpkCommand(out),
 			kv3Command(),
+			updateCommand(out),
+			configCommand(out),
 		},
 	}
 

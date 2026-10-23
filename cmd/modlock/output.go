@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/paralin/modlock/cli"
@@ -18,11 +20,112 @@ import (
 type printer struct {
 	// json selects the event lines.
 	json bool
+	// color and errColor are true when standard output and standard error
+	// show color.
+	color, errColor bool
+	// current is the running command line's release.
+	current string
 	// watch, when set, also receives every event the printer reports. Set it
 	// before the first report.
 	watch func(*cli.Event)
-	// mu keeps lines from the build and the server whole.
+
+	// mu keeps lines from the build and the server whole, and guards the
+	// fields below.
 	mu sync.Mutex
+	// session is true for a dev or play command, whose header carries the
+	// update notice, and headed once that header printed.
+	session, headed bool
+	// latest is a newer release an update check found, and noticed is true
+	// once the person was told about it.
+	latest  string
+	noticed bool
+}
+
+// header opens a session's output with the command line's release, the
+// command and what it runs, and the update notice once one is known.
+func (p *printer) header(command, name string) {
+	// A program reads the events instead.
+	if p.json {
+		return
+	}
+
+	// Name the session.
+	p.mu.Lock()
+	p.session, p.headed = true, true
+	_, _ = os.Stdout.WriteString("\n  " + paint(p.color, bold, "modlock "+p.current) + paint(p.color, dim, "  "+command+" "+name) + "\n\n")
+	p.mu.Unlock()
+	p.notice()
+}
+
+// field prints one labeled fact a person may need, such as an address.
+func (p *printer) field(label, value string) {
+	if p.json {
+		p.note(strings.TrimSpace(label)+":", value)
+		return
+	}
+	p.line(fmt.Sprintf("  %s %s", paint(p.color, dim, fmt.Sprintf("%-8s", label)), value))
+}
+
+// mark prints one line of a session's progress after a symbol in t.
+func (p *printer) mark(symbol string, t tone, text string) {
+	if p.json {
+		p.note(text)
+		return
+	}
+	p.line("  " + paint(p.color, t, symbol) + " " + text)
+}
+
+// line prints text as one whole line on standard output.
+func (p *printer) line(text string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, _ = os.Stdout.WriteString(text + "\n")
+}
+
+// update reports latest, a newer release than the running one. A program
+// gets an event at once. A person reading a session gets a framed notice in
+// its header, or as soon as it is known after that; anyone else gets a line
+// when the command ends.
+func (p *printer) update(latest string) {
+	// Keep the newest release found.
+	p.mu.Lock()
+	p.latest, p.noticed = latest, false
+	headed := p.headed
+	p.mu.Unlock()
+
+	// Tell a program, or a session already under way.
+	if p.json {
+		p.emit(&cli.Event{Body: &cli.Event_Update{Update: &cli.Update{Current: p.current, Latest: latest}}})
+		return
+	}
+	if headed {
+		p.notice()
+	}
+}
+
+// notice tells a person on a terminal about the newer release, once.
+func (p *printer) notice() {
+	// Tell only a person, about a release not yet noticed.
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.json || p.latest == "" || p.noticed || !terminal(os.Stderr) {
+		return
+	}
+	p.noticed = true
+
+	// Frame it in a session, or keep it to one line after another command.
+	paintErr := func(t tone, text string) string { return paint(p.errColor, t, text) }
+	if !p.session {
+		_, _ = fmt.Fprintf(os.Stderr, "%s modlock %s is out, and this is %s; run %s to install it\n",
+			paintErr(yellow, "!"), paintErr(bold, p.latest), p.current, paintErr(cyan, "modlock update"))
+		return
+	}
+	box := frame([]string{
+		"modlock " + paintErr(bold+";"+green, p.latest) + " is out, and this is " + paintErr(dim, p.current),
+		"run " + paintErr(cyan, "modlock update") + " to install it",
+		paintErr(dim, "modlock config set update-check off stops this check"),
+	}, func(edge string) string { return paintErr(yellow, edge) })
+	_, _ = os.Stderr.WriteString(indent(box) + "\n")
 }
 
 // note prints one line of progress.
@@ -35,9 +138,7 @@ func (p *printer) note(parts ...any) {
 	}
 
 	// Print the line for a person.
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	_, _ = os.Stdout.WriteString(text)
+	p.line(text[:len(text)-1])
 }
 
 // building reports that a build of the project in dir started.
@@ -63,9 +164,16 @@ func (p *printer) built(dir string, err error) {
 	event := &cli.Event{Body: &cli.Event_Built{Built: built}}
 	p.observe(event)
 
-	// A person reads the tools' own output instead.
-	if p.json {
+	// A person reads the tools' own output for problems, and a session marks
+	// each good build.
+	p.mu.Lock()
+	session := p.session
+	p.mu.Unlock()
+	switch {
+	case p.json:
 		p.emit(event)
+	case session && err == nil:
+		p.mark("✓", green, "built "+filepath.Base(dir))
 	}
 }
 
@@ -86,8 +194,8 @@ func (p *printer) sandbox(reason string) {
 		p.emit(&cli.Event{Body: &cli.Event_Sandbox{Sandbox: &cli.Sandbox{Reason: reason}}})
 		return
 	}
-	p.note(reason + "; running the mods in the sandbox, without the game, with a stand-in player")
-	p.note("type a command, such as /hello, and press Enter to send it as the player")
+	p.mark("●", yellow, reason+"; running the mods in the sandbox, without the game, with a stand-in player")
+	p.field("input", "type a command, such as /hello, and press Enter to send it as the player")
 }
 
 // host reports one event from the server.
@@ -103,24 +211,38 @@ func (p *printer) host(event *control.HostEvent) {
 	// Describe the events a person follows.
 	switch {
 	case event.GetReady() != nil && event.GetReady().GetMap() == "":
-		p.note("ready")
+		p.mark("●", green, "ready")
 	case event.GetReady() != nil:
-		p.note("server ready on", event.GetReady().GetMap())
+		p.mark("●", green, "server ready on "+event.GetReady().GetMap())
 	case event.GetJoined() != nil:
-		p.note(event.GetJoined().GetName(), "joined")
+		p.mark("→", cyan, event.GetJoined().GetName()+" joined")
 	case event.GetStarted() != nil && event.GetStarted().GetReloaded():
-		p.note(event.GetStarted().GetMod(), "reloaded")
+		p.mark("↻", cyan, event.GetStarted().GetMod()+" reloaded")
 	case event.GetStarted() != nil:
-		p.note(event.GetStarted().GetMod(), "started")
+		p.mark("✓", green, event.GetStarted().GetMod()+" started")
 	case event.GetLog() != nil:
-		p.note("[" + event.GetLog().GetMod() + "] " + event.GetLog().GetText())
+		p.line("  " + paint(p.color, dim, "["+event.GetLog().GetMod()+"]") + " " + event.GetLog().GetText())
 	case event.GetMessage() != nil:
-		p.note("[" + event.GetMessage().GetMod() + "] " + shown(event.GetMessage()))
-	case event.GetFailed() != nil && event.GetFailed().GetMod() == "":
-		fmt.Fprintln(os.Stderr, event.GetFailed().GetError())
+		p.line("  " + paint(p.color, dim, "["+event.GetMessage().GetMod()+"]") + " " + shown(event.GetMessage()))
 	case event.GetFailed() != nil:
-		fmt.Fprintf(os.Stderr, "%s: %s\n", event.GetFailed().GetMod(), event.GetFailed().GetError())
+		p.failed(event.GetFailed().GetMod(), event.GetFailed().GetError())
 	}
+}
+
+// failed prints a failure on standard error, naming the mod when there is
+// one.
+func (p *printer) failed(mod, text string) {
+	if mod != "" {
+		text = mod + ": " + text
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, _ = os.Stderr.WriteString("  " + paint(p.errColor, red, "✗") + " " + text + "\n")
+}
+
+// indent moves each line of text two columns right.
+func indent(text string) string {
+	return "  " + strings.ReplaceAll(strings.TrimSuffix(text, "\n"), "\n", "\n  ") + "\n"
 }
 
 // shown describes a message as the player sees it.

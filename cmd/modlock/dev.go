@@ -47,6 +47,7 @@ func devCommand(out *printer) *cli.Command {
 			if err != nil {
 				return err
 			}
+			out.header("dev", opened.Manifest.GetSlug())
 
 			// Serve the preview page, which takes the player's input once
 			// the mods run in the sandbox.
@@ -71,9 +72,9 @@ func devCommand(out *printer) *cli.Command {
 				// Keep the running mod when the build fails.
 				if err := out.build(c.Context, opened, project.Dev); err != nil {
 					if watch {
-						out.note("the build failed; fix it and save to try again")
+						out.mark("✗", red, "the build failed; fix it and save to try again")
 					} else {
-						out.note("the build failed; fix it and run again, or pass --watch to rebuild on each save")
+						out.mark("✗", red, "the build failed; fix it and run again, or pass --watch to rebuild on each save")
 					}
 					return
 				}
@@ -98,11 +99,11 @@ func devCommand(out *printer) *cli.Command {
 					return
 				}
 				err := opened.Watch(c.Context, func() {
-					out.note("rebuilding", opened.Manifest.GetSlug())
+					out.mark("…", dim, "rebuilding "+opened.Manifest.GetSlug())
 					rebuild()
 				})
 				if err != nil && c.Context.Err() == nil {
-					out.note(errors.Wrap(err, "stopped watching").Error())
+					out.mark("!", yellow, errors.Wrap(err, "stopped watching").Error())
 				}
 			}()
 
@@ -129,7 +130,7 @@ func servePreview(ctx context.Context, out *printer, port int, built string, wat
 	// Find the page's files in the library.
 	library, err := js.Library(ctx)
 	if err != nil {
-		out.note("the preview page is off:", err)
+		out.mark("!", yellow, "the preview page is off: "+err.Error())
 		return
 	}
 	page := preview.New(filepath.Join(library, js.Preview), built, watch, input)
@@ -138,12 +139,12 @@ func servePreview(ctx context.Context, out *printer, port int, built string, wat
 	address := net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
 	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		out.note("the preview page is off:", err)
+		out.mark("!", yellow, "the preview page is off: "+err.Error())
 		return
 	}
 	out.watch = page.Observe
 	server := &http.Server{Handler: page, ReadHeaderTimeout: 10 * time.Second}
 	context.AfterFunc(ctx, func() { _ = server.Close() })
 	go func() { _ = server.Serve(listener) }()
-	out.note("the preview is on http://" + address + "/")
+	out.field("preview", "http://"+address+"/")
 }

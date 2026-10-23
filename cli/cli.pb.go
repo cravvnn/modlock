@@ -28,6 +28,7 @@ type Event struct {
 	//	*Event_Host
 	//	*Event_Published
 	//	*Event_Sandbox
+	//	*Event_Update
 	Body isEvent_Body `protobuf_oneof:"body"`
 }
 
@@ -86,6 +87,13 @@ func (x *Event) GetSandbox() *Sandbox {
 	return nil
 }
 
+func (x *Event) GetUpdate() *Update {
+	if x, ok := x.GetBody().(*Event_Update); ok {
+		return x.Update
+	}
+	return nil
+}
+
 type isEvent_Body interface {
 	isEvent_Body()
 }
@@ -121,6 +129,11 @@ type Event_Sandbox struct {
 	Sandbox *Sandbox `protobuf:"bytes,6,opt,name=sandbox,proto3,oneof"`
 }
 
+type Event_Update struct {
+	// Update reports a newer release of the command line.
+	Update *Update `protobuf:"bytes,7,opt,name=update,proto3,oneof"`
+}
+
 func (*Event_Note) isEvent_Body() {}
 
 func (*Event_Building) isEvent_Body() {}
@@ -132,6 +145,8 @@ func (*Event_Host) isEvent_Body() {}
 func (*Event_Published) isEvent_Body() {}
 
 func (*Event_Sandbox) isEvent_Body() {}
+
+func (*Event_Update) isEvent_Body() {}
 
 // Building identifies the project a build started for.
 type Building struct {
@@ -288,6 +303,58 @@ func (x *Sandbox) GetReason() string {
 		return x.Reason
 	}
 	return ""
+}
+
+// Update reports that a newer release of the command line is out; modlock
+// update installs it.
+type Update struct {
+	unknownFields []byte
+	// Current is the running command line's release, such as v0.1.9.
+	Current string `protobuf:"bytes,1,opt,name=current,proto3" json:"current,omitempty"`
+	// Latest is the newest release.
+	Latest string `protobuf:"bytes,2,opt,name=latest,proto3" json:"latest,omitempty"`
+}
+
+func (x *Update) Reset() {
+	*x = Update{}
+}
+
+func (*Update) ProtoMessage() {}
+
+func (x *Update) GetCurrent() string {
+	if x != nil {
+		return x.Current
+	}
+	return ""
+}
+
+func (x *Update) GetLatest() string {
+	if x != nil {
+		return x.Latest
+	}
+	return ""
+}
+
+// Config is the command line's settings, kept as protobuf JSON in
+// modlock/config.json in the user configuration directory. modlock config
+// lists and changes them.
+type Config struct {
+	unknownFields []byte
+	// SkipUpdateCheck stops commands from looking for a newer release.
+	SkipUpdateCheck bool `protobuf:"varint,1,opt,name=skip_update_check,json=skipUpdateCheck,proto3" json:"skipUpdateCheck,omitempty"`
+}
+
+func (x *Config) Reset() {
+	*x = Config{}
+}
+
+func (*Config) ProtoMessage() {}
+
+func (x *Config) GetSkipUpdateCheck() bool {
+	if x != nil {
+		return x.SkipUpdateCheck
+	}
+	return false
 }
 
 // Input is one thing the stand-in player does in the sandbox.
@@ -678,6 +745,19 @@ func (m *Event_Sandbox) CloneOneofVT() isEvent_Body {
 	return m.CloneVT()
 }
 
+func (m *Event_Update) CloneVT() *Event_Update {
+	if m == nil {
+		return (*Event_Update)(nil)
+	}
+	r := new(Event_Update)
+	r.Update = protobuf_go_lite.CloneVTValue(m.Update)
+	return r
+}
+
+func (m *Event_Update) CloneOneofVT() isEvent_Body {
+	return m.CloneVT()
+}
+
 func (m *Building) CloneVT() *Building {
 	if m == nil {
 		return (*Building)(nil)
@@ -747,6 +827,39 @@ func (m *Sandbox) CloneVT() *Sandbox {
 }
 
 func (m *Sandbox) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Update) CloneVT() *Update {
+	if m == nil {
+		return (*Update)(nil)
+	}
+	r := new(Update)
+	r.Current = m.Current
+	r.Latest = m.Latest
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Update) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Config) CloneVT() *Config {
+	if m == nil {
+		return (*Config)(nil)
+	}
+	r := new(Config)
+	r.SkipUpdateCheck = m.SkipUpdateCheck
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Config) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -1064,6 +1177,23 @@ func (this *Event_Sandbox) EqualVT(thatIface isEvent_Body) bool {
 	return true
 }
 
+func (this *Event_Update) EqualVT(thatIface isEvent_Body) bool {
+	that, ok := thatIface.(*Event_Update)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Update, that.Update, func() *Update { return &Update{} }) {
+		return false
+	}
+	return true
+}
+
 func (this *Building) EqualVT(that *Building) bool {
 	if this == that {
 		return true
@@ -1162,6 +1292,49 @@ func (this *Sandbox) EqualVT(that *Sandbox) bool {
 
 func (this *Sandbox) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*Sandbox)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Update) EqualVT(that *Update) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Current != that.Current {
+		return false
+	}
+	if this.Latest != that.Latest {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Update) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Update)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Config) EqualVT(that *Config) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.SkipUpdateCheck != that.SkipUpdateCheck {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Config) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Config)
 	if !ok {
 		return false
 	}
@@ -1459,6 +1632,10 @@ func (x *Event) MarshalProtoJSON(s *json.MarshalState) {
 			s.WriteMoreIf(&wroteField)
 			s.WriteObjectField("sandbox")
 			ov.Sandbox.MarshalProtoJSON(s.WithField("sandbox"))
+		case *Event_Update:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("update")
+			ov.Update.MarshalProtoJSON(s.WithField("update"))
 		}
 	}
 	s.WriteObjectEnd()
@@ -1528,6 +1705,15 @@ func (x *Event) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			ov.Sandbox = &Sandbox{}
 			ov.Sandbox.UnmarshalProtoJSON(s.WithField("sandbox", true))
+		case "update":
+			ov := &Event_Update{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Update = nil
+				return
+			}
+			ov.Update = &Update{}
+			ov.Update.UnmarshalProtoJSON(s.WithField("update", true))
 		}
 	})
 }
@@ -1787,6 +1973,98 @@ func (x *Sandbox) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the Sandbox from JSON.
 func (x *Sandbox) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Update message to JSON.
+func (x *Update) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Current != "" || s.HasField("current") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("current")
+		s.WriteString(x.Current)
+	}
+	if x.Latest != "" || s.HasField("latest") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("latest")
+		s.WriteString(x.Latest)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Update to JSON.
+func (x *Update) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Update message from JSON.
+func (x *Update) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "current":
+			s.AddField("current")
+			x.Current = s.ReadString()
+		case "latest":
+			s.AddField("latest")
+			x.Latest = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Update from JSON.
+func (x *Update) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Config message to JSON.
+func (x *Config) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.SkipUpdateCheck || s.HasField("skipUpdateCheck") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("skipUpdateCheck")
+		s.WriteBool(x.SkipUpdateCheck)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Config to JSON.
+func (x *Config) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Config message from JSON.
+func (x *Config) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "skip_update_check", "skipUpdateCheck":
+			s.AddField("skip_update_check")
+			x.SkipUpdateCheck = s.ReadBool()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Config from JSON.
+func (x *Config) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -2350,6 +2628,30 @@ func (m *Event_Sandbox) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *Event_Update) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Event_Update) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Update != nil {
+		size, err := m.Update.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x3a
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x3a
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *Building) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -2541,6 +2843,85 @@ func (m *Sandbox) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Reason)
 		i--
 		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Update) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Update) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Update) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Latest) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Latest)
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Current) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Current)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Config) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Config) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Config) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.SkipUpdateCheck {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.SkipUpdateCheck)
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -3058,6 +3439,21 @@ func (m *Event_Sandbox) SizeVT() (n int) {
 	return n
 }
 
+func (m *Event_Update) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Update != nil {
+		l = m.Update.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
 func (m *Building) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -3109,6 +3505,29 @@ func (m *Sandbox) SizeVT() (n int) {
 	var l int
 	_ = l
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Reason)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Update) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Current)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Latest)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Config) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.SkipUpdateCheck)
 	n += len(m.unknownFields)
 	return n
 }
@@ -3326,6 +3745,13 @@ func (x *Event) MarshalProtoText() string {
 		} else {
 			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Sandbox)
 		}
+	case *Event_Update:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "update")
+		if body.Update == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &Update{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Update)
+		}
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3427,6 +3853,38 @@ func (x *Sandbox) MarshalProtoText() string {
 }
 
 func (x *Sandbox) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Update) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Update")
+	if x.Current != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "current")
+		protobuf_go_lite.TextWriteString(&sb, x.Current)
+	}
+	if x.Latest != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "latest")
+		protobuf_go_lite.TextWriteString(&sb, x.Latest)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Update) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Config) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Config")
+	if x.SkipUpdateCheck != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "skip_update_check")
+		protobuf_go_lite.TextWriteBool(&sb, x.SkipUpdateCheck)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Config) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -3708,6 +4166,26 @@ func (m *Event) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 				m.Body = &Event_Sandbox{Sandbox: v}
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Update", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*Event_Update); ok {
+				if err := oneof.Update.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &Update{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &Event_Update{Update: v}
 			}
 			iNdEx = postIndex
 		default:
@@ -4003,6 +4481,122 @@ func (m *Sandbox) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Reason = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Update) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Update: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Update: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Current", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Current = v
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Latest", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Latest = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Config) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Config: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Config: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SkipUpdateCheck", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.SkipUpdateCheck = bool(v)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
