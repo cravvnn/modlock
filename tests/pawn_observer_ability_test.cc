@@ -396,6 +396,25 @@ TEST(PawnObserver, ReconcilesMissingAuxiliaryAbilityThroughItsNativeOwner) {
                            modlock::gameinterop::AbilityUpgrade{101, 23, 65537}};
   EXPECT_TRUE(observer.ReconcileAbilities(0, unbound, definitions, create, set_bits));
   EXPECT_EQ(fixture.adds, 2);
+
+  // The same definition in separate main slots retains independent upgrades.
+  fixture.InitAbility(fixture.hero, 100, 0);
+  fixture.InitAbility(fixture.item, 100, 1);
+  const std::array repeated{modlock::gameinterop::AbilityUpgrade{100, 0, 65537},
+                            modlock::gameinterop::AbilityUpgrade{100, 1, 196609}};
+  auto copies = observer.ReconcileAbilities(0, repeated, definitions, create, set_bits);
+  ASSERT_TRUE(copies) << copies.error();
+  const auto independent = observer.CurrentAbilitiesForSlot(0);
+  ASSERT_TRUE(independent);
+  ASSERT_EQ(independent->size(), 2u);
+  EXPECT_NE(independent->at(0).handle, independent->at(1).handle);
+  EXPECT_EQ(independent->at(0).upgrade_info, 65537u);
+  EXPECT_EQ(independent->at(1).upgrade_info, 196609u);
+  EXPECT_EQ(fixture.adds, 2);
+
+  // A duplicate identity is still rejected before either copy changes.
+  const std::array duplicate{repeated[0], repeated[0]};
+  EXPECT_FALSE(observer.ReconcileAbilities(0, duplicate, definitions, create, set_bits));
 }
 
 TEST(PawnObserver, ObservesStaminaOnlyWhenFiniteAndPositive) {

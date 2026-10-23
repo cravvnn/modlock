@@ -618,6 +618,12 @@ whose `cancel` you call with a colon. In Python, `modlock.after`,
 | `setOrbitCamera(player, enabled)`                                                      | Switch the hero to the hideout's zoom camera and HUD, or back.  |
 | `addBot(options)`, `player.removeBot()`                                                | Add or remove a bot player.                                     |
 
+`replaceAbility(index, name)` honors an explicit main slot, 0 to 3, including
+an ultimate placed on another ability key. The same definition can occupy
+several main slots as separate native ability entities. Replacements start
+untrained. Use `restoreHero` ability targets with their definition ID and slot
+to train each copy; `setAbility` addresses the first matching name.
+
 ### Camera moves
 
 `playCamera` plays a curve on each camera param it names (`distance`,

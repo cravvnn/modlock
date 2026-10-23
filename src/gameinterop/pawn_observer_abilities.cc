@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <memory>
 #include <span>
 
 #include "modlock/gameinterop/entity_abi.h"
@@ -9,9 +10,103 @@
 #include "pawn_observer_internal.h"
 #include "utl_vector.h"
 
+#if defined(_WIN32)
+#include <safetyhook.hpp>
+#endif
+
 namespace modlock::gameinterop {
 
 namespace {
+
+#if defined(_WIN32)
+using NativeCreateAbility = void* (*)(void*, void*, uint16_t, uint64_t, bool, void*);
+
+// SlotRequest is scoped to one mod creation on the engine thread. Native
+// auxiliary creations and allocations on other threads keep their own rules.
+struct SlotRequest {
+  void* component;
+  void* definition;
+  uint16_t slot;
+};
+
+thread_local const SlotRequest* g_slot_request = nullptr;
+
+class ScopedSlotRequest {
+ public:
+  explicit ScopedSlotRequest(const SlotRequest& request) : previous_(g_slot_request) {
+    g_slot_request = &request;
+  }
+
+  ~ScopedSlotRequest() { g_slot_request = previous_; }
+
+ private:
+  const SlotRequest* previous_;
+};
+
+// SlotSelection lives while any resolved creator holds it. Callers release
+// creators at world shutdown, before the borrowed server module unloads.
+struct SlotSelection;
+SlotSelection* g_slot_selection = nullptr;
+std::weak_ptr<SlotSelection> g_shared_slot_selection;
+
+struct SlotSelection {
+  void* target = nullptr;
+  safetyhook::InlineHook hook;
+
+  ~SlotSelection() {
+    hook.reset();
+    if (g_slot_selection == this) {
+      g_slot_selection = nullptr;
+    }
+  }
+
+  void* Create(NativeCreateAbility create, void* component, void* definition, uint16_t slot,
+               uint64_t upgrade, bool flag, void* extra) const {
+    const SlotRequest request{component, definition, slot};
+    const ScopedSlotRequest scoped(request);
+    return create(component, definition, slot, upgrade, flag, extra);
+  }
+};
+
+int32_t SelectSlotThunk(void* component, void* definition, uint16_t slot) {
+  const auto* request = g_slot_request;
+  if (request && slot < 4 && request->component == component && request->definition == definition &&
+      request->slot == slot) {
+    return slot;
+  }
+  return g_slot_selection->hook.call<int32_t>(component, definition, slot);
+}
+
+std::expected<std::shared_ptr<SlotSelection>, std::string> ResolveSlotSelection(
+    const ModuleImage& server) {
+  // Resolve the allocator's own slot-selection call before touching its code.
+  auto target = ResolveSignature(server, "ability.select-slot");
+  if (!target) {
+    return std::unexpected(target.error());
+  }
+  if (auto shared = g_shared_slot_selection.lock()) {
+    if (shared->target != *target) {
+      return std::unexpected("ability slot selection belongs to another server module");
+    }
+    return shared;
+  }
+
+  // Publish the owner before enabling the detour; failure removes it again.
+  auto selection = std::make_shared<SlotSelection>();
+  selection->target = *target;
+  selection->hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&SelectSlotThunk),
+                                              safetyhook::InlineHook::StartDisabled);
+  if (!selection->hook) {
+    return std::unexpected("cannot create ability slot selection hook");
+  }
+  g_slot_selection = selection.get();
+  if (!selection->hook.enable()) {
+    return std::unexpected("cannot enable ability slot selection hook");
+  }
+  g_shared_slot_selection = selection;
+  return selection;
+}
+#endif
 
 // ReadFinite reads the float at an optional offset, or is empty when the
 // offset did not resolve or the value is not finite.
@@ -223,24 +318,37 @@ std::expected<CreateAbility, std::string> ResolveCreateAbility(const ModuleImage
   if (!address) {
     return std::unexpected(address.error());
   }
-  return reinterpret_cast<CreateAbility>(*address);
+#if defined(_WIN32)
+  auto selection = ResolveSlotSelection(server);
+  if (!selection) {
+    return std::unexpected(selection.error());
+  }
+  const auto native = reinterpret_cast<NativeCreateAbility>(*address);
+  return CreateAbility([native, owner = *selection](void* component, void* definition,
+                                                    uint16_t slot, uint64_t upgrade, bool flag,
+                                                    void* extra) {
+    return owner->Create(native, component, definition, slot, upgrade, flag, extra);
+  });
+#else
+  using NativeCreateAbility = void* (*)(void*, void*, uint16_t, uint64_t, bool, void*);
+  return CreateAbility(reinterpret_cast<NativeCreateAbility>(*address));
+#endif
 }
 
 std::expected<void, std::string> PawnObserver::ReconcileAbilities(
     int32_t slot, std::span<const AbilityUpgrade> targets, const AbilityDefinitions& definitions,
     CreateAbility create, SetUpgradeBits set_bits) {
-  // Check that every target's slot and definition is unique.
-  std::vector<uint16_t> slots;
-  std::vector<uint32_t> subclasses;
-  for (const auto& target : targets) {
+  // Each bound slot is unique; unbound abilities are distinct by definition.
+  for (size_t i = 0; i < targets.size(); ++i) {
+    const auto& target = targets[i];
     // Many triggered abilities may share the unbound slot.
-    if (target.slot > kUnboundSlot || IsActiveItemSlot(target.slot) ||
-        (target.slot != kUnboundSlot && std::ranges::find(slots, target.slot) != slots.end()) ||
-        std::ranges::find(subclasses, target.subclass_id) != subclasses.end()) {
+    const bool repeated = std::ranges::any_of(targets.first(i), [&](const auto& previous) {
+      return previous.slot == target.slot &&
+             (target.slot != kUnboundSlot || previous.subclass_id == target.subclass_id);
+    });
+    if (target.slot > kUnboundSlot || IsActiveItemSlot(target.slot) || repeated) {
       return std::unexpected("invalid or duplicate replay ability slot");
     }
-    slots.push_back(target.slot);
-    subclasses.push_back(target.subclass_id);
   }
 
   // Create each target the pawn lacks, then apply the upgrades.
@@ -250,11 +358,10 @@ std::expected<void, std::string> PawnObserver::ReconcileAbilities(
     if (!owned) {
       return std::unexpected(owned.error());
     }
-    const auto existing = std::ranges::find(*owned, target.subclass_id, &Ability::subclass_id);
+    const auto existing = std::ranges::find_if(*owned, [&](const auto& ability) {
+      return ability.subclass_id == target.subclass_id && ability.slot == target.slot;
+    });
     if (existing != owned->end()) {
-      if (existing->slot != target.slot) {
-        return std::unexpected("replay ability occupies another slot");
-      }
       continue;
     }
 
