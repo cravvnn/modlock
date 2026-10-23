@@ -11,6 +11,10 @@
 #define NOMINMAX
 #include <windows.h>
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <intrin.h>
+#endif
+
 #include <safetyhook.hpp>
 #endif
 
