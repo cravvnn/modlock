@@ -2,6 +2,7 @@
 // @generated from file github.com/paralin/modlock/src/wasm/players/players.proto (package modlock.wasm.players, syntax proto3)
 /* eslint-disable */
 
+import { createEnumType } from '@aptre/protobuf-es-lite/enum'
 import type { MessageType } from '@aptre/protobuf-es-lite/message'
 import { createMessageType } from '@aptre/protobuf-es-lite/message'
 import type {
@@ -9,6 +10,50 @@ import type {
   Writer,
 } from '@aptre/protobuf-es-lite/binary-encoding'
 import { EulerAngles, Vec3 } from '../../geometry/geometry.pb.js'
+
+/**
+ * CameraParam is one value of the camera that follows a hero, which the
+ * game's abilities move as Mirage's Tornado pulls the camera back.
+ *
+ * @generated from enum modlock.wasm.players.CameraParam
+ */
+export enum CameraParam {
+  /**
+   * CAMERA_PARAM_DISTANCE is how far behind the hero the camera sits.
+   */
+  DISTANCE = 0,
+
+  /**
+   * CAMERA_PARAM_FIELD_OF_VIEW is the view's field of view in degrees.
+   */
+  FIELD_OF_VIEW = 1,
+
+  /**
+   * CAMERA_PARAM_TARGET is the position the camera follows.
+   */
+  TARGET = 2,
+
+  /**
+   * CAMERA_PARAM_VERTICAL_OFFSET raises the camera.
+   */
+  VERTICAL_OFFSET = 3,
+
+  /**
+   * CAMERA_PARAM_HORIZONTAL_OFFSET moves the camera to the side.
+   */
+  HORIZONTAL_OFFSET = 4,
+}
+
+export const CameraParam_Enum = /* @__PURE__ */ createEnumType(
+  'modlock.wasm.players.CameraParam',
+  [
+    [0, 'CAMERA_PARAM_DISTANCE'],
+    [1, 'CAMERA_PARAM_FIELD_OF_VIEW'],
+    [2, 'CAMERA_PARAM_TARGET'],
+    [3, 'CAMERA_PARAM_VERTICAL_OFFSET'],
+    [4, 'CAMERA_PARAM_HORIZONTAL_OFFSET'],
+  ],
+)
 
 /**
  * RestoredEvent reports how a RestoreHero ended.
@@ -933,6 +978,788 @@ export const FreeCameraRequest: MessageType<FreeCameraRequest> =
         {
           const v = m.facing
           if (v != null) EulerAngles.writeField(w, 3, v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraValue is a value for a camera param: a number for every param but
+ * the target, which takes a position.
+ *
+ * @generated from message modlock.wasm.players.CameraValue
+ */
+export interface CameraValue {
+  /**
+   * @generated from oneof modlock.wasm.players.CameraValue.value
+   */
+  value?:
+    | { value?: undefined; case: undefined }
+    | { value: number; case: 'number' }
+    | { value: Vec3; case: 'position' }
+}
+
+export const CameraValue: MessageType<CameraValue> =
+  /* @__PURE__ */ createMessageType<CameraValue>(
+    'modlock.wasm.players.CameraValue',
+    () => [
+      [1, 'number', 2, 0, 0, 'value'],
+      [2, 'position', 11, 0, Vec3.codec, 'value'],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraValue): CameraValue => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.value = { case: 'number', value: r.float() }
+              break
+            case 2:
+              m.value = {
+                case: 'position',
+                value: Vec3.decode(
+                  r,
+                  r.delimited(),
+                  m.value?.case === 'position' ? m.value.value : {},
+                ),
+              }
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraValue, w: Writer): void => {
+        {
+          const o = m.value
+          if (o?.case === 'number' && o.value != null)
+            w.uint32(13).float(o.value)
+        }
+        {
+          const o = m.value
+          if (o?.case === 'position' && o.value != null)
+            Vec3.writeField(w, 2, o.value)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraMotion is how an operation moves its param.
+ *
+ * @generated from message modlock.wasm.players.CameraMotion
+ */
+export interface CameraMotion {
+  /**
+   * @generated from oneof modlock.wasm.players.CameraMotion.motion
+   */
+  motion?:
+    | { value?: undefined; case: undefined }
+    | { value: CameraHold; case: 'hold' }
+    | { value: CameraApproach; case: 'approach' }
+    | { value: CameraSpring; case: 'spring' }
+    | { value: CameraLerp; case: 'lerp' }
+    | { value: CameraLag; case: 'lag' }
+}
+
+export const CameraMotion: MessageType<CameraMotion> =
+  /* @__PURE__ */ createMessageType<CameraMotion>(
+    'modlock.wasm.players.CameraMotion',
+    () => [
+      [1, 'hold', 11, 0, CameraHold.codec, 'motion'],
+      [2, 'approach', 11, 0, CameraApproach.codec, 'motion'],
+      [3, 'spring', 11, 0, CameraSpring.codec, 'motion'],
+      [4, 'lerp', 11, 0, CameraLerp.codec, 'motion'],
+      [5, 'lag', 11, 0, CameraLag.codec, 'motion'],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraMotion): CameraMotion => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.motion = {
+                case: 'hold',
+                value: CameraHold.decode(
+                  r,
+                  r.delimited(),
+                  m.motion?.case === 'hold' ? m.motion.value : {},
+                ),
+              }
+              break
+            case 2:
+              m.motion = {
+                case: 'approach',
+                value: CameraApproach.decode(
+                  r,
+                  r.delimited(),
+                  m.motion?.case === 'approach' ? m.motion.value : {},
+                ),
+              }
+              break
+            case 3:
+              m.motion = {
+                case: 'spring',
+                value: CameraSpring.decode(
+                  r,
+                  r.delimited(),
+                  m.motion?.case === 'spring' ? m.motion.value : {},
+                ),
+              }
+              break
+            case 4:
+              m.motion = {
+                case: 'lerp',
+                value: CameraLerp.decode(
+                  r,
+                  r.delimited(),
+                  m.motion?.case === 'lerp' ? m.motion.value : {},
+                ),
+              }
+              break
+            case 5:
+              m.motion = {
+                case: 'lag',
+                value: CameraLag.decode(
+                  r,
+                  r.delimited(),
+                  m.motion?.case === 'lag' ? m.motion.value : {},
+                ),
+              }
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraMotion, w: Writer): void => {
+        {
+          const o = m.motion
+          if (o?.case === 'hold' && o.value != null)
+            CameraHold.writeField(w, 1, o.value)
+        }
+        {
+          const o = m.motion
+          if (o?.case === 'approach' && o.value != null)
+            CameraApproach.writeField(w, 2, o.value)
+        }
+        {
+          const o = m.motion
+          if (o?.case === 'spring' && o.value != null)
+            CameraSpring.writeField(w, 3, o.value)
+        }
+        {
+          const o = m.motion
+          if (o?.case === 'lerp' && o.value != null)
+            CameraLerp.writeField(w, 4, o.value)
+        }
+        {
+          const o = m.motion
+          if (o?.case === 'lag' && o.value != null)
+            CameraLag.writeField(w, 5, o.value)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraHold keeps a param where it is.
+ *
+ * @generated from message modlock.wasm.players.CameraHold
+ */
+export interface CameraHold {
+  /**
+   * Duration is how long it holds, in seconds.
+   */
+  duration?: number
+}
+
+export const CameraHold: MessageType<CameraHold> =
+  /* @__PURE__ */ createMessageType<CameraHold>(
+    'modlock.wasm.players.CameraHold',
+    () => [[1, 'duration', 2, 4]],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraHold): CameraHold => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.duration = r.float()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraHold, w: Writer): void => {
+        {
+          const v = m.duration
+          if (v != null) w.uint32(13).float(v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraApproach moves a param toward a value.
+ *
+ * @generated from message modlock.wasm.players.CameraApproach
+ */
+export interface CameraApproach {
+  /**
+   * Value is the value it approaches.
+   */
+  value?: CameraValue
+  /**
+   * Speed is the most the param moves each second; omitted, 600.
+   */
+  speed?: number
+  /**
+   * DefaultSpeed is the speed of the return to the usual value; omitted, 600.
+   */
+  defaultSpeed?: number
+  /**
+   * Acceleration is how fast the speed builds each second; omitted, 1000.
+   */
+  acceleration?: number
+  /**
+   * MinDuration is the least time it runs, in seconds.
+   */
+  minDuration?: number
+  /**
+   * ChaseDefault approaches the param's usual value instead of Value.
+   */
+  chaseDefault?: boolean
+}
+
+export const CameraApproach: MessageType<CameraApproach> =
+  /* @__PURE__ */ createMessageType<CameraApproach>(
+    'modlock.wasm.players.CameraApproach',
+    () => [
+      [1, 'value', 11, 0, CameraValue.codec],
+      [2, 'speed', 2, 4],
+      [3, 'default_speed', 2, 4],
+      [4, 'acceleration', 2, 4],
+      [5, 'min_duration', 2, 4],
+      [6, 'chase_default', 8, 4],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: CameraApproach,
+      ): CameraApproach => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.value = CameraValue.decode(r, r.delimited(), m.value ?? {})
+              break
+            case 2:
+              m.speed = r.float()
+              break
+            case 3:
+              m.defaultSpeed = r.float()
+              break
+            case 4:
+              m.acceleration = r.float()
+              break
+            case 5:
+              m.minDuration = r.float()
+              break
+            case 6:
+              m.chaseDefault = r.bool()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraApproach, w: Writer): void => {
+        {
+          const v = m.value
+          if (v != null) CameraValue.writeField(w, 1, v)
+        }
+        {
+          const v = m.speed
+          if (v != null) w.uint32(21).float(v)
+        }
+        {
+          const v = m.defaultSpeed
+          if (v != null) w.uint32(29).float(v)
+        }
+        {
+          const v = m.acceleration
+          if (v != null) w.uint32(37).float(v)
+        }
+        {
+          const v = m.minDuration
+          if (v != null) w.uint32(45).float(v)
+        }
+        {
+          const v = m.chaseDefault
+          if (v != null) w.uint32(48).bool(v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraSpring pulls a param toward a value.
+ *
+ * @generated from message modlock.wasm.players.CameraSpring
+ */
+export interface CameraSpring {
+  /**
+   * Value is the value the spring pulls toward.
+   */
+  value?: CameraValue
+  /**
+   * Strength is the spring's strength; omitted, 10.
+   */
+  strength?: number
+  /**
+   * MinSpeed is the least the param moves each second.
+   */
+  minSpeed?: number
+  /**
+   * MaxDuration ends the spring after this many seconds, or never when zero.
+   */
+  maxDuration?: number
+}
+
+export const CameraSpring: MessageType<CameraSpring> =
+  /* @__PURE__ */ createMessageType<CameraSpring>(
+    'modlock.wasm.players.CameraSpring',
+    () => [
+      [1, 'value', 11, 0, CameraValue.codec],
+      [2, 'strength', 2, 4],
+      [3, 'min_speed', 2, 4],
+      [4, 'max_duration', 2, 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraSpring): CameraSpring => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.value = CameraValue.decode(r, r.delimited(), m.value ?? {})
+              break
+            case 2:
+              m.strength = r.float()
+              break
+            case 3:
+              m.minSpeed = r.float()
+              break
+            case 4:
+              m.maxDuration = r.float()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraSpring, w: Writer): void => {
+        {
+          const v = m.value
+          if (v != null) CameraValue.writeField(w, 1, v)
+        }
+        {
+          const v = m.strength
+          if (v != null) w.uint32(21).float(v)
+        }
+        {
+          const v = m.minSpeed
+          if (v != null) w.uint32(29).float(v)
+        }
+        {
+          const v = m.maxDuration
+          if (v != null) w.uint32(37).float(v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraLerp moves a param from one value to another over a time.
+ *
+ * @generated from message modlock.wasm.players.CameraLerp
+ */
+export interface CameraLerp {
+  /**
+   * Start is the value it starts from.
+   */
+  start?: CameraValue
+  /**
+   * End is the value it ends at.
+   */
+  end?: CameraValue
+  /**
+   * Bias and Gain shape the curve between them.
+   */
+  bias?: number
+  gain?: number
+  /**
+   * Duration is the time it takes, in seconds; omitted, 1.
+   */
+  duration?: number
+}
+
+export const CameraLerp: MessageType<CameraLerp> =
+  /* @__PURE__ */ createMessageType<CameraLerp>(
+    'modlock.wasm.players.CameraLerp',
+    () => [
+      [1, 'start', 11, 0, CameraValue.codec],
+      [2, 'end', 11, 0, CameraValue.codec],
+      [3, 'bias', 2, 4],
+      [4, 'gain', 2, 4],
+      [5, 'duration', 2, 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraLerp): CameraLerp => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.start = CameraValue.decode(r, r.delimited(), m.start ?? {})
+              break
+            case 2:
+              m.end = CameraValue.decode(r, r.delimited(), m.end ?? {})
+              break
+            case 3:
+              m.bias = r.float()
+              break
+            case 4:
+              m.gain = r.float()
+              break
+            case 5:
+              m.duration = r.float()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraLerp, w: Writer): void => {
+        {
+          const v = m.start
+          if (v != null) CameraValue.writeField(w, 1, v)
+        }
+        {
+          const v = m.end
+          if (v != null) CameraValue.writeField(w, 2, v)
+        }
+        {
+          const v = m.bias
+          if (v != null) w.uint32(29).float(v)
+        }
+        {
+          const v = m.gain
+          if (v != null) w.uint32(37).float(v)
+        }
+        {
+          const v = m.duration
+          if (v != null) w.uint32(45).float(v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraLag lets a param trail its usual value.
+ *
+ * @generated from message modlock.wasm.players.CameraLag
+ */
+export interface CameraLag {
+  /**
+   * MinDuration is the least time it runs, in seconds.
+   */
+  minDuration?: number
+  /**
+   * LagTime is how far behind the param trails, in seconds.
+   */
+  lagTime?: number
+  /**
+   * MaxSpeed is the most the param moves each second.
+   */
+  maxSpeed?: number
+  /**
+   * SpringStrength is the strength of the pull back to the usual value.
+   */
+  springStrength?: number
+  /**
+   * KeepTargetOnScreen strengthens the pull when the target would leave the
+   * screen; omitted, true.
+   */
+  keepTargetOnScreen?: boolean
+}
+
+export const CameraLag: MessageType<CameraLag> =
+  /* @__PURE__ */ createMessageType<CameraLag>(
+    'modlock.wasm.players.CameraLag',
+    () => [
+      [1, 'min_duration', 2, 4],
+      [2, 'lag_time', 2, 4],
+      [3, 'max_speed', 2, 4],
+      [4, 'spring_strength', 2, 4],
+      [5, 'keep_target_on_screen', 8, 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: CameraLag): CameraLag => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.minDuration = r.float()
+              break
+            case 2:
+              m.lagTime = r.float()
+              break
+            case 3:
+              m.maxSpeed = r.float()
+              break
+            case 4:
+              m.springStrength = r.float()
+              break
+            case 5:
+              m.keepTargetOnScreen = r.bool()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraLag, w: Writer): void => {
+        {
+          const v = m.minDuration
+          if (v != null) w.uint32(13).float(v)
+        }
+        {
+          const v = m.lagTime
+          if (v != null) w.uint32(21).float(v)
+        }
+        {
+          const v = m.maxSpeed
+          if (v != null) w.uint32(29).float(v)
+        }
+        {
+          const v = m.springStrength
+          if (v != null) w.uint32(37).float(v)
+        }
+        {
+          const v = m.keepTargetOnScreen
+          if (v != null) w.uint32(40).bool(v)
+        }
+      },
+    },
+  )
+
+/**
+ * CameraOptions adds one operation to a player's camera.
+ *
+ * @generated from message modlock.wasm.players.CameraOptions
+ */
+export interface CameraOptions {
+  player?: number
+  /**
+   * Context names a group of operations, which ClearCamera removes together.
+   */
+  context?: string
+  /**
+   * Param is the camera value the operation moves.
+   */
+  param?: CameraParam
+  /**
+   * Motion is how it moves.
+   */
+  motion?: CameraMotion
+  /**
+   * Delay starts the operation after this many seconds.
+   */
+  delay?: number
+  /**
+   * Relative adds the operation's values to the param's usual value instead
+   * of replacing it.
+   */
+  relative?: boolean
+  /**
+   * Priority decides between operations on one param; the higher wins.
+   * Omitted, 1.
+   */
+  priority?: number
+  /**
+   * Shared lets operations of other contexts move the param at the same time.
+   */
+  shared?: boolean
+  /**
+   * Target is the entity handle of the hero whose camera moves, as
+   * Pawn.entity reports it; omitted, the player's own hero.
+   */
+  target?: number
+}
+
+export const CameraOptions: MessageType<CameraOptions> =
+  /* @__PURE__ */ createMessageType<CameraOptions>(
+    'modlock.wasm.players.CameraOptions',
+    () => [
+      [1, 'player', 5],
+      [2, 'context', 9, 4],
+      [3, 'param', 14, 0, CameraParam_Enum],
+      [4, 'motion', 11, 0, CameraMotion.codec],
+      [5, 'delay', 2, 4],
+      [6, 'relative', 8, 4],
+      [7, 'priority', 13, 4],
+      [8, 'shared', 8, 4],
+      [9, 'target', 13, 4],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: CameraOptions,
+      ): CameraOptions => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.player = r.int32()
+              break
+            case 2:
+              m.context = r.string()
+              break
+            case 3:
+              m.param = r.int32()
+              break
+            case 4:
+              m.motion = CameraMotion.decode(r, r.delimited(), m.motion ?? {})
+              break
+            case 5:
+              m.delay = r.float()
+              break
+            case 6:
+              m.relative = r.bool()
+              break
+            case 7:
+              m.priority = r.uint32()
+              break
+            case 8:
+              m.shared = r.bool()
+              break
+            case 9:
+              m.target = r.uint32()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: CameraOptions, w: Writer): void => {
+        {
+          const v = m.player
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.context
+          if (v != null) w.uint32(18).string(v)
+        }
+        {
+          const v = m.param
+          if (v) w.uint32(24).int32(v)
+        }
+        {
+          const v = m.motion
+          if (v != null) CameraMotion.writeField(w, 4, v)
+        }
+        {
+          const v = m.delay
+          if (v != null) w.uint32(45).float(v)
+        }
+        {
+          const v = m.relative
+          if (v != null) w.uint32(48).bool(v)
+        }
+        {
+          const v = m.priority
+          if (v != null) w.uint32(56).uint32(v)
+        }
+        {
+          const v = m.shared
+          if (v != null) w.uint32(64).bool(v)
+        }
+        {
+          const v = m.target
+          if (v != null) w.uint32(72).uint32(v)
+        }
+      },
+    },
+  )
+
+/**
+ * ClearCameraRequest removes operations from a player's camera.
+ *
+ * @generated from message modlock.wasm.players.ClearCameraRequest
+ */
+export interface ClearCameraRequest {
+  player?: number
+  /**
+   * Context names the operations to remove; omitted, every operation.
+   */
+  context?: string
+}
+
+export const ClearCameraRequest: MessageType<ClearCameraRequest> =
+  /* @__PURE__ */ createMessageType<ClearCameraRequest>(
+    'modlock.wasm.players.ClearCameraRequest',
+    () => [
+      [1, 'player', 5],
+      [2, 'context', 9, 4],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: ClearCameraRequest,
+      ): ClearCameraRequest => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.player = r.int32()
+              break
+            case 2:
+              m.context = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: ClearCameraRequest, w: Writer): void => {
+        {
+          const v = m.player
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.context
+          if (v != null) w.uint32(18).string(v)
         }
       },
     },

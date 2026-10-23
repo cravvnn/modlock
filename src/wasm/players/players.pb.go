@@ -9,11 +9,61 @@ import (
 	io "io"
 	math "math"
 	slices "slices"
+	strconv "strconv"
 
 	protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
 	geometry "github.com/paralin/modlock/src/geometry"
 )
+
+// CameraParam is one value of the camera that follows a hero, which the
+// game's abilities move as Mirage's Tornado pulls the camera back.
+type CameraParam int32
+
+const (
+	// CAMERA_PARAM_DISTANCE is how far behind the hero the camera sits.
+	CameraParam_CAMERA_PARAM_DISTANCE CameraParam = 0
+	// CAMERA_PARAM_FIELD_OF_VIEW is the view's field of view in degrees.
+	CameraParam_CAMERA_PARAM_FIELD_OF_VIEW CameraParam = 1
+	// CAMERA_PARAM_TARGET is the position the camera follows.
+	CameraParam_CAMERA_PARAM_TARGET CameraParam = 2
+	// CAMERA_PARAM_VERTICAL_OFFSET raises the camera.
+	CameraParam_CAMERA_PARAM_VERTICAL_OFFSET CameraParam = 3
+	// CAMERA_PARAM_HORIZONTAL_OFFSET moves the camera to the side.
+	CameraParam_CAMERA_PARAM_HORIZONTAL_OFFSET CameraParam = 4
+)
+
+// Enum value maps for CameraParam.
+var (
+	CameraParam_name = map[int32]string{
+		0: "CAMERA_PARAM_DISTANCE",
+		1: "CAMERA_PARAM_FIELD_OF_VIEW",
+		2: "CAMERA_PARAM_TARGET",
+		3: "CAMERA_PARAM_VERTICAL_OFFSET",
+		4: "CAMERA_PARAM_HORIZONTAL_OFFSET",
+	}
+	CameraParam_value = map[string]int32{
+		"CAMERA_PARAM_DISTANCE":          0,
+		"CAMERA_PARAM_FIELD_OF_VIEW":     1,
+		"CAMERA_PARAM_TARGET":            2,
+		"CAMERA_PARAM_VERTICAL_OFFSET":   3,
+		"CAMERA_PARAM_HORIZONTAL_OFFSET": 4,
+	}
+)
+
+func (x CameraParam) Enum() *CameraParam {
+	p := new(CameraParam)
+	*p = x
+	return p
+}
+
+func (x CameraParam) String() string {
+	name, valid := CameraParam_name[int32(x)]
+	if valid {
+		return name
+	}
+	return strconv.Itoa(int(x))
+}
 
 // RestoredEvent reports how a RestoreHero ended.
 type RestoredEvent struct {
@@ -591,6 +641,524 @@ func (x *FreeCameraRequest) GetFacing() *geometry.EulerAngles {
 		return x.Facing
 	}
 	return nil
+}
+
+// CameraValue is a value for a camera param: a number for every param but
+// the target, which takes a position.
+type CameraValue struct {
+	unknownFields []byte
+	// Types that are assignable to Value:
+	//	*CameraValue_Number
+	//	*CameraValue_Position
+	Value isCameraValue_Value `protobuf_oneof:"value"`
+}
+
+func (x *CameraValue) Reset() {
+	*x = CameraValue{}
+}
+
+func (*CameraValue) ProtoMessage() {}
+
+func (m *CameraValue) GetValue() isCameraValue_Value {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
+func (x *CameraValue) GetNumber() float32 {
+	if x, ok := x.GetValue().(*CameraValue_Number); ok {
+		return x.Number
+	}
+	return 0
+}
+
+func (x *CameraValue) GetPosition() *geometry.Vec3 {
+	if x, ok := x.GetValue().(*CameraValue_Position); ok {
+		return x.Position
+	}
+	return nil
+}
+
+type isCameraValue_Value interface {
+	isCameraValue_Value()
+}
+
+type CameraValue_Number struct {
+	Number float32 `protobuf:"fixed32,1,opt,name=number,proto3,oneof"`
+}
+
+type CameraValue_Position struct {
+	Position *geometry.Vec3 `protobuf:"bytes,2,opt,name=position,proto3,oneof"`
+}
+
+func (*CameraValue_Number) isCameraValue_Value() {}
+
+func (*CameraValue_Position) isCameraValue_Value() {}
+
+// CameraMotion is how an operation moves its param.
+type CameraMotion struct {
+	unknownFields []byte
+	// Types that are assignable to Motion:
+	//	*CameraMotion_Hold
+	//	*CameraMotion_Approach
+	//	*CameraMotion_Spring
+	//	*CameraMotion_Lerp
+	//	*CameraMotion_Lag
+	Motion isCameraMotion_Motion `protobuf_oneof:"motion"`
+}
+
+func (x *CameraMotion) Reset() {
+	*x = CameraMotion{}
+}
+
+func (*CameraMotion) ProtoMessage() {}
+
+func (m *CameraMotion) GetMotion() isCameraMotion_Motion {
+	if m != nil {
+		return m.Motion
+	}
+	return nil
+}
+
+func (x *CameraMotion) GetHold() *CameraHold {
+	if x, ok := x.GetMotion().(*CameraMotion_Hold); ok {
+		return x.Hold
+	}
+	return nil
+}
+
+func (x *CameraMotion) GetApproach() *CameraApproach {
+	if x, ok := x.GetMotion().(*CameraMotion_Approach); ok {
+		return x.Approach
+	}
+	return nil
+}
+
+func (x *CameraMotion) GetSpring() *CameraSpring {
+	if x, ok := x.GetMotion().(*CameraMotion_Spring); ok {
+		return x.Spring
+	}
+	return nil
+}
+
+func (x *CameraMotion) GetLerp() *CameraLerp {
+	if x, ok := x.GetMotion().(*CameraMotion_Lerp); ok {
+		return x.Lerp
+	}
+	return nil
+}
+
+func (x *CameraMotion) GetLag() *CameraLag {
+	if x, ok := x.GetMotion().(*CameraMotion_Lag); ok {
+		return x.Lag
+	}
+	return nil
+}
+
+type isCameraMotion_Motion interface {
+	isCameraMotion_Motion()
+}
+
+type CameraMotion_Hold struct {
+	// Hold keeps the param where it is.
+	Hold *CameraHold `protobuf:"bytes,1,opt,name=hold,proto3,oneof"`
+}
+
+type CameraMotion_Approach struct {
+	// Approach moves the param toward a value at a speed.
+	Approach *CameraApproach `protobuf:"bytes,2,opt,name=approach,proto3,oneof"`
+}
+
+type CameraMotion_Spring struct {
+	// Spring pulls the param toward a value.
+	Spring *CameraSpring `protobuf:"bytes,3,opt,name=spring,proto3,oneof"`
+}
+
+type CameraMotion_Lerp struct {
+	// Lerp moves the param from one value to another over a time.
+	Lerp *CameraLerp `protobuf:"bytes,4,opt,name=lerp,proto3,oneof"`
+}
+
+type CameraMotion_Lag struct {
+	// Lag lets the param trail its usual value.
+	Lag *CameraLag `protobuf:"bytes,5,opt,name=lag,proto3,oneof"`
+}
+
+func (*CameraMotion_Hold) isCameraMotion_Motion() {}
+
+func (*CameraMotion_Approach) isCameraMotion_Motion() {}
+
+func (*CameraMotion_Spring) isCameraMotion_Motion() {}
+
+func (*CameraMotion_Lerp) isCameraMotion_Motion() {}
+
+func (*CameraMotion_Lag) isCameraMotion_Motion() {}
+
+// CameraHold keeps a param where it is.
+type CameraHold struct {
+	unknownFields []byte
+	// Duration is how long it holds, in seconds.
+	Duration *float32 `protobuf:"fixed32,1,opt,name=duration,proto3,oneof" json:"duration,omitempty"`
+}
+
+func (x *CameraHold) Reset() {
+	*x = CameraHold{}
+}
+
+func (*CameraHold) ProtoMessage() {}
+
+func (x *CameraHold) GetDuration() float32 {
+	if x != nil && x.Duration != nil {
+		return *x.Duration
+	}
+	return 0
+}
+
+// CameraApproach moves a param toward a value.
+type CameraApproach struct {
+	unknownFields []byte
+	// Value is the value it approaches.
+	Value *CameraValue `protobuf:"bytes,1,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	// Speed is the most the param moves each second; omitted, 600.
+	Speed *float32 `protobuf:"fixed32,2,opt,name=speed,proto3,oneof" json:"speed,omitempty"`
+	// DefaultSpeed is the speed of the return to the usual value; omitted, 600.
+	DefaultSpeed *float32 `protobuf:"fixed32,3,opt,name=default_speed,json=defaultSpeed,proto3,oneof" json:"defaultSpeed,omitempty"`
+	// Acceleration is how fast the speed builds each second; omitted, 1000.
+	Acceleration *float32 `protobuf:"fixed32,4,opt,name=acceleration,proto3,oneof" json:"acceleration,omitempty"`
+	// MinDuration is the least time it runs, in seconds.
+	MinDuration *float32 `protobuf:"fixed32,5,opt,name=min_duration,json=minDuration,proto3,oneof" json:"minDuration,omitempty"`
+	// ChaseDefault approaches the param's usual value instead of Value.
+	ChaseDefault *bool `protobuf:"varint,6,opt,name=chase_default,json=chaseDefault,proto3,oneof" json:"chaseDefault,omitempty"`
+}
+
+func (x *CameraApproach) Reset() {
+	*x = CameraApproach{}
+}
+
+func (*CameraApproach) ProtoMessage() {}
+
+func (x *CameraApproach) GetValue() *CameraValue {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *CameraApproach) GetSpeed() float32 {
+	if x != nil && x.Speed != nil {
+		return *x.Speed
+	}
+	return 0
+}
+
+func (x *CameraApproach) GetDefaultSpeed() float32 {
+	if x != nil && x.DefaultSpeed != nil {
+		return *x.DefaultSpeed
+	}
+	return 0
+}
+
+func (x *CameraApproach) GetAcceleration() float32 {
+	if x != nil && x.Acceleration != nil {
+		return *x.Acceleration
+	}
+	return 0
+}
+
+func (x *CameraApproach) GetMinDuration() float32 {
+	if x != nil && x.MinDuration != nil {
+		return *x.MinDuration
+	}
+	return 0
+}
+
+func (x *CameraApproach) GetChaseDefault() bool {
+	if x != nil && x.ChaseDefault != nil {
+		return *x.ChaseDefault
+	}
+	return false
+}
+
+// CameraSpring pulls a param toward a value.
+type CameraSpring struct {
+	unknownFields []byte
+	// Value is the value the spring pulls toward.
+	Value *CameraValue `protobuf:"bytes,1,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	// Strength is the spring's strength; omitted, 10.
+	Strength *float32 `protobuf:"fixed32,2,opt,name=strength,proto3,oneof" json:"strength,omitempty"`
+	// MinSpeed is the least the param moves each second.
+	MinSpeed *float32 `protobuf:"fixed32,3,opt,name=min_speed,json=minSpeed,proto3,oneof" json:"minSpeed,omitempty"`
+	// MaxDuration ends the spring after this many seconds, or never when zero.
+	MaxDuration *float32 `protobuf:"fixed32,4,opt,name=max_duration,json=maxDuration,proto3,oneof" json:"maxDuration,omitempty"`
+}
+
+func (x *CameraSpring) Reset() {
+	*x = CameraSpring{}
+}
+
+func (*CameraSpring) ProtoMessage() {}
+
+func (x *CameraSpring) GetValue() *CameraValue {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *CameraSpring) GetStrength() float32 {
+	if x != nil && x.Strength != nil {
+		return *x.Strength
+	}
+	return 0
+}
+
+func (x *CameraSpring) GetMinSpeed() float32 {
+	if x != nil && x.MinSpeed != nil {
+		return *x.MinSpeed
+	}
+	return 0
+}
+
+func (x *CameraSpring) GetMaxDuration() float32 {
+	if x != nil && x.MaxDuration != nil {
+		return *x.MaxDuration
+	}
+	return 0
+}
+
+// CameraLerp moves a param from one value to another over a time.
+type CameraLerp struct {
+	unknownFields []byte
+	// Start is the value it starts from.
+	Start *CameraValue `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	// End is the value it ends at.
+	End *CameraValue `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	// Bias and Gain shape the curve between them.
+	Bias *float32 `protobuf:"fixed32,3,opt,name=bias,proto3,oneof" json:"bias,omitempty"`
+	Gain *float32 `protobuf:"fixed32,4,opt,name=gain,proto3,oneof" json:"gain,omitempty"`
+	// Duration is the time it takes, in seconds; omitted, 1.
+	Duration *float32 `protobuf:"fixed32,5,opt,name=duration,proto3,oneof" json:"duration,omitempty"`
+}
+
+func (x *CameraLerp) Reset() {
+	*x = CameraLerp{}
+}
+
+func (*CameraLerp) ProtoMessage() {}
+
+func (x *CameraLerp) GetStart() *CameraValue {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *CameraLerp) GetEnd() *CameraValue {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *CameraLerp) GetBias() float32 {
+	if x != nil && x.Bias != nil {
+		return *x.Bias
+	}
+	return 0
+}
+
+func (x *CameraLerp) GetGain() float32 {
+	if x != nil && x.Gain != nil {
+		return *x.Gain
+	}
+	return 0
+}
+
+func (x *CameraLerp) GetDuration() float32 {
+	if x != nil && x.Duration != nil {
+		return *x.Duration
+	}
+	return 0
+}
+
+// CameraLag lets a param trail its usual value.
+type CameraLag struct {
+	unknownFields []byte
+	// MinDuration is the least time it runs, in seconds.
+	MinDuration *float32 `protobuf:"fixed32,1,opt,name=min_duration,json=minDuration,proto3,oneof" json:"minDuration,omitempty"`
+	// LagTime is how far behind the param trails, in seconds.
+	LagTime *float32 `protobuf:"fixed32,2,opt,name=lag_time,json=lagTime,proto3,oneof" json:"lagTime,omitempty"`
+	// MaxSpeed is the most the param moves each second.
+	MaxSpeed *float32 `protobuf:"fixed32,3,opt,name=max_speed,json=maxSpeed,proto3,oneof" json:"maxSpeed,omitempty"`
+	// SpringStrength is the strength of the pull back to the usual value.
+	SpringStrength *float32 `protobuf:"fixed32,4,opt,name=spring_strength,json=springStrength,proto3,oneof" json:"springStrength,omitempty"`
+	// KeepTargetOnScreen strengthens the pull when the target would leave the
+	// screen; omitted, true.
+	KeepTargetOnScreen *bool `protobuf:"varint,5,opt,name=keep_target_on_screen,json=keepTargetOnScreen,proto3,oneof" json:"keepTargetOnScreen,omitempty"`
+}
+
+func (x *CameraLag) Reset() {
+	*x = CameraLag{}
+}
+
+func (*CameraLag) ProtoMessage() {}
+
+func (x *CameraLag) GetMinDuration() float32 {
+	if x != nil && x.MinDuration != nil {
+		return *x.MinDuration
+	}
+	return 0
+}
+
+func (x *CameraLag) GetLagTime() float32 {
+	if x != nil && x.LagTime != nil {
+		return *x.LagTime
+	}
+	return 0
+}
+
+func (x *CameraLag) GetMaxSpeed() float32 {
+	if x != nil && x.MaxSpeed != nil {
+		return *x.MaxSpeed
+	}
+	return 0
+}
+
+func (x *CameraLag) GetSpringStrength() float32 {
+	if x != nil && x.SpringStrength != nil {
+		return *x.SpringStrength
+	}
+	return 0
+}
+
+func (x *CameraLag) GetKeepTargetOnScreen() bool {
+	if x != nil && x.KeepTargetOnScreen != nil {
+		return *x.KeepTargetOnScreen
+	}
+	return false
+}
+
+// CameraOptions adds one operation to a player's camera.
+type CameraOptions struct {
+	unknownFields []byte
+	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	// Context names a group of operations, which ClearCamera removes together.
+	Context *string `protobuf:"bytes,2,opt,name=context,proto3,oneof" json:"context,omitempty"`
+	// Param is the camera value the operation moves.
+	Param CameraParam `protobuf:"varint,3,opt,name=param,proto3" json:"param,omitempty"`
+	// Motion is how it moves.
+	Motion *CameraMotion `protobuf:"bytes,4,opt,name=motion,proto3" json:"motion,omitempty"`
+	// Delay starts the operation after this many seconds.
+	Delay *float32 `protobuf:"fixed32,5,opt,name=delay,proto3,oneof" json:"delay,omitempty"`
+	// Relative adds the operation's values to the param's usual value instead
+	// of replacing it.
+	Relative *bool `protobuf:"varint,6,opt,name=relative,proto3,oneof" json:"relative,omitempty"`
+	// Priority decides between operations on one param; the higher wins.
+	// Omitted, 1.
+	Priority *uint32 `protobuf:"varint,7,opt,name=priority,proto3,oneof" json:"priority,omitempty"`
+	// Shared lets operations of other contexts move the param at the same time.
+	Shared *bool `protobuf:"varint,8,opt,name=shared,proto3,oneof" json:"shared,omitempty"`
+	// Target is the entity handle of the hero whose camera moves, as
+	// Pawn.entity reports it; omitted, the player's own hero.
+	Target *uint32 `protobuf:"varint,9,opt,name=target,proto3,oneof" json:"target,omitempty"`
+}
+
+func (x *CameraOptions) Reset() {
+	*x = CameraOptions{}
+}
+
+func (*CameraOptions) ProtoMessage() {}
+
+func (x *CameraOptions) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *CameraOptions) GetContext() string {
+	if x != nil && x.Context != nil {
+		return *x.Context
+	}
+	return ""
+}
+
+func (x *CameraOptions) GetParam() CameraParam {
+	if x != nil {
+		return x.Param
+	}
+	return CameraParam_CAMERA_PARAM_DISTANCE
+}
+
+func (x *CameraOptions) GetMotion() *CameraMotion {
+	if x != nil {
+		return x.Motion
+	}
+	return nil
+}
+
+func (x *CameraOptions) GetDelay() float32 {
+	if x != nil && x.Delay != nil {
+		return *x.Delay
+	}
+	return 0
+}
+
+func (x *CameraOptions) GetRelative() bool {
+	if x != nil && x.Relative != nil {
+		return *x.Relative
+	}
+	return false
+}
+
+func (x *CameraOptions) GetPriority() uint32 {
+	if x != nil && x.Priority != nil {
+		return *x.Priority
+	}
+	return 0
+}
+
+func (x *CameraOptions) GetShared() bool {
+	if x != nil && x.Shared != nil {
+		return *x.Shared
+	}
+	return false
+}
+
+func (x *CameraOptions) GetTarget() uint32 {
+	if x != nil && x.Target != nil {
+		return *x.Target
+	}
+	return 0
+}
+
+// ClearCameraRequest removes operations from a player's camera.
+type ClearCameraRequest struct {
+	unknownFields []byte
+	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`
+	// Context names the operations to remove; omitted, every operation.
+	Context *string `protobuf:"bytes,2,opt,name=context,proto3,oneof" json:"context,omitempty"`
+}
+
+func (x *ClearCameraRequest) Reset() {
+	*x = ClearCameraRequest{}
+}
+
+func (*ClearCameraRequest) ProtoMessage() {}
+
+func (x *ClearCameraRequest) GetPlayer() int32 {
+	if x != nil {
+		return x.Player
+	}
+	return 0
+}
+
+func (x *ClearCameraRequest) GetContext() string {
+	if x != nil && x.Context != nil {
+		return *x.Context
+	}
+	return ""
 }
 
 // FreezeRequest holds or releases one player's hero.
@@ -1375,6 +1943,270 @@ func (m *FreeCameraRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *CameraValue) CloneVT() *CameraValue {
+	if m == nil {
+		return (*CameraValue)(nil)
+	}
+	r := new(CameraValue)
+	if m.Value != nil {
+		r.Value = m.Value.(interface{ CloneOneofVT() isCameraValue_Value }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraValue) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraValue_Number) CloneVT() *CameraValue_Number {
+	if m == nil {
+		return (*CameraValue_Number)(nil)
+	}
+	r := new(CameraValue_Number)
+	r.Number = m.Number
+	return r
+}
+
+func (m *CameraValue_Number) CloneOneofVT() isCameraValue_Value {
+	return m.CloneVT()
+}
+
+func (m *CameraValue_Position) CloneVT() *CameraValue_Position {
+	if m == nil {
+		return (*CameraValue_Position)(nil)
+	}
+	r := new(CameraValue_Position)
+	r.Position = protobuf_go_lite.CloneVTValue(m.Position)
+	return r
+}
+
+func (m *CameraValue_Position) CloneOneofVT() isCameraValue_Value {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion) CloneVT() *CameraMotion {
+	if m == nil {
+		return (*CameraMotion)(nil)
+	}
+	r := new(CameraMotion)
+	if m.Motion != nil {
+		r.Motion = m.Motion.(interface{ CloneOneofVT() isCameraMotion_Motion }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraMotion) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion_Hold) CloneVT() *CameraMotion_Hold {
+	if m == nil {
+		return (*CameraMotion_Hold)(nil)
+	}
+	r := new(CameraMotion_Hold)
+	r.Hold = protobuf_go_lite.CloneVTValue(m.Hold)
+	return r
+}
+
+func (m *CameraMotion_Hold) CloneOneofVT() isCameraMotion_Motion {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion_Approach) CloneVT() *CameraMotion_Approach {
+	if m == nil {
+		return (*CameraMotion_Approach)(nil)
+	}
+	r := new(CameraMotion_Approach)
+	r.Approach = protobuf_go_lite.CloneVTValue(m.Approach)
+	return r
+}
+
+func (m *CameraMotion_Approach) CloneOneofVT() isCameraMotion_Motion {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion_Spring) CloneVT() *CameraMotion_Spring {
+	if m == nil {
+		return (*CameraMotion_Spring)(nil)
+	}
+	r := new(CameraMotion_Spring)
+	r.Spring = protobuf_go_lite.CloneVTValue(m.Spring)
+	return r
+}
+
+func (m *CameraMotion_Spring) CloneOneofVT() isCameraMotion_Motion {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion_Lerp) CloneVT() *CameraMotion_Lerp {
+	if m == nil {
+		return (*CameraMotion_Lerp)(nil)
+	}
+	r := new(CameraMotion_Lerp)
+	r.Lerp = protobuf_go_lite.CloneVTValue(m.Lerp)
+	return r
+}
+
+func (m *CameraMotion_Lerp) CloneOneofVT() isCameraMotion_Motion {
+	return m.CloneVT()
+}
+
+func (m *CameraMotion_Lag) CloneVT() *CameraMotion_Lag {
+	if m == nil {
+		return (*CameraMotion_Lag)(nil)
+	}
+	r := new(CameraMotion_Lag)
+	r.Lag = protobuf_go_lite.CloneVTValue(m.Lag)
+	return r
+}
+
+func (m *CameraMotion_Lag) CloneOneofVT() isCameraMotion_Motion {
+	return m.CloneVT()
+}
+
+func (m *CameraHold) CloneVT() *CameraHold {
+	if m == nil {
+		return (*CameraHold)(nil)
+	}
+	r := new(CameraHold)
+	r.Duration = protobuf_go_lite.ClonePtr(m.Duration)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraHold) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraApproach) CloneVT() *CameraApproach {
+	if m == nil {
+		return (*CameraApproach)(nil)
+	}
+	r := new(CameraApproach)
+	r.Value = protobuf_go_lite.CloneVTValue(m.Value)
+	r.Speed = protobuf_go_lite.ClonePtr(m.Speed)
+	r.DefaultSpeed = protobuf_go_lite.ClonePtr(m.DefaultSpeed)
+	r.Acceleration = protobuf_go_lite.ClonePtr(m.Acceleration)
+	r.MinDuration = protobuf_go_lite.ClonePtr(m.MinDuration)
+	r.ChaseDefault = protobuf_go_lite.ClonePtr(m.ChaseDefault)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraApproach) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraSpring) CloneVT() *CameraSpring {
+	if m == nil {
+		return (*CameraSpring)(nil)
+	}
+	r := new(CameraSpring)
+	r.Value = protobuf_go_lite.CloneVTValue(m.Value)
+	r.Strength = protobuf_go_lite.ClonePtr(m.Strength)
+	r.MinSpeed = protobuf_go_lite.ClonePtr(m.MinSpeed)
+	r.MaxDuration = protobuf_go_lite.ClonePtr(m.MaxDuration)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraSpring) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraLerp) CloneVT() *CameraLerp {
+	if m == nil {
+		return (*CameraLerp)(nil)
+	}
+	r := new(CameraLerp)
+	r.Start = protobuf_go_lite.CloneVTValue(m.Start)
+	r.End = protobuf_go_lite.CloneVTValue(m.End)
+	r.Bias = protobuf_go_lite.ClonePtr(m.Bias)
+	r.Gain = protobuf_go_lite.ClonePtr(m.Gain)
+	r.Duration = protobuf_go_lite.ClonePtr(m.Duration)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraLerp) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraLag) CloneVT() *CameraLag {
+	if m == nil {
+		return (*CameraLag)(nil)
+	}
+	r := new(CameraLag)
+	r.MinDuration = protobuf_go_lite.ClonePtr(m.MinDuration)
+	r.LagTime = protobuf_go_lite.ClonePtr(m.LagTime)
+	r.MaxSpeed = protobuf_go_lite.ClonePtr(m.MaxSpeed)
+	r.SpringStrength = protobuf_go_lite.ClonePtr(m.SpringStrength)
+	r.KeepTargetOnScreen = protobuf_go_lite.ClonePtr(m.KeepTargetOnScreen)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraLag) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *CameraOptions) CloneVT() *CameraOptions {
+	if m == nil {
+		return (*CameraOptions)(nil)
+	}
+	r := new(CameraOptions)
+	r.Player = m.Player
+	r.Param = m.Param
+	r.Context = protobuf_go_lite.ClonePtr(m.Context)
+	r.Motion = protobuf_go_lite.CloneVTValue(m.Motion)
+	r.Delay = protobuf_go_lite.ClonePtr(m.Delay)
+	r.Relative = protobuf_go_lite.ClonePtr(m.Relative)
+	r.Priority = protobuf_go_lite.ClonePtr(m.Priority)
+	r.Shared = protobuf_go_lite.ClonePtr(m.Shared)
+	r.Target = protobuf_go_lite.ClonePtr(m.Target)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *CameraOptions) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *ClearCameraRequest) CloneVT() *ClearCameraRequest {
+	if m == nil {
+		return (*ClearCameraRequest)(nil)
+	}
+	r := new(ClearCameraRequest)
+	r.Player = m.Player
+	r.Context = protobuf_go_lite.ClonePtr(m.Context)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *ClearCameraRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *FreezeRequest) CloneVT() *FreezeRequest {
 	if m == nil {
 		return (*FreezeRequest)(nil)
@@ -2008,6 +2840,398 @@ func (this *FreeCameraRequest) EqualMessageVT(thatMsg any) bool {
 	return this.EqualVT(that)
 }
 
+func (this *CameraValue) EqualVT(that *CameraValue) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Value == nil && that.Value != nil {
+		return false
+	} else if this.Value != nil {
+		if that.Value == nil {
+			return false
+		}
+		if !this.Value.(interface {
+			EqualVT(isCameraValue_Value) bool
+		}).EqualVT(that.Value) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraValue) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraValue)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraValue_Number) EqualVT(thatIface isCameraValue_Value) bool {
+	that, ok := thatIface.(*CameraValue_Number)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Number != that.Number {
+		return false
+	}
+	return true
+}
+
+func (this *CameraValue_Position) EqualVT(thatIface isCameraValue_Value) bool {
+	that, ok := thatIface.(*CameraValue_Position)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Position, that.Position, func() *geometry.Vec3 { return &geometry.Vec3{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraMotion) EqualVT(that *CameraMotion) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Motion == nil && that.Motion != nil {
+		return false
+	} else if this.Motion != nil {
+		if that.Motion == nil {
+			return false
+		}
+		if !this.Motion.(interface {
+			EqualVT(isCameraMotion_Motion) bool
+		}).EqualVT(that.Motion) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraMotion) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraMotion)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraMotion_Hold) EqualVT(thatIface isCameraMotion_Motion) bool {
+	that, ok := thatIface.(*CameraMotion_Hold)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Hold, that.Hold, func() *CameraHold { return &CameraHold{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraMotion_Approach) EqualVT(thatIface isCameraMotion_Motion) bool {
+	that, ok := thatIface.(*CameraMotion_Approach)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Approach, that.Approach, func() *CameraApproach { return &CameraApproach{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraMotion_Spring) EqualVT(thatIface isCameraMotion_Motion) bool {
+	that, ok := thatIface.(*CameraMotion_Spring)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Spring, that.Spring, func() *CameraSpring { return &CameraSpring{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraMotion_Lerp) EqualVT(thatIface isCameraMotion_Motion) bool {
+	that, ok := thatIface.(*CameraMotion_Lerp)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Lerp, that.Lerp, func() *CameraLerp { return &CameraLerp{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraMotion_Lag) EqualVT(thatIface isCameraMotion_Motion) bool {
+	that, ok := thatIface.(*CameraMotion_Lag)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Lag, that.Lag, func() *CameraLag { return &CameraLag{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *CameraHold) EqualVT(that *CameraHold) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Duration, that.Duration) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraHold) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraHold)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraApproach) EqualVT(that *CameraApproach) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Value, that.Value) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Speed, that.Speed) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.DefaultSpeed, that.DefaultSpeed) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Acceleration, that.Acceleration) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MinDuration, that.MinDuration) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.ChaseDefault, that.ChaseDefault) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraApproach) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraApproach)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraSpring) EqualVT(that *CameraSpring) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Value, that.Value) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Strength, that.Strength) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MinSpeed, that.MinSpeed) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MaxDuration, that.MaxDuration) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraSpring) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraSpring)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraLerp) EqualVT(that *CameraLerp) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Start, that.Start) {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.End, that.End) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Bias, that.Bias) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Gain, that.Gain) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Duration, that.Duration) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraLerp) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraLerp)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraLag) EqualVT(that *CameraLag) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MinDuration, that.MinDuration) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.LagTime, that.LagTime) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.MaxSpeed, that.MaxSpeed) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.SpringStrength, that.SpringStrength) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.KeepTargetOnScreen, that.KeepTargetOnScreen) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraLag) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraLag)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *CameraOptions) EqualVT(that *CameraOptions) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Context, that.Context) {
+		return false
+	}
+	if this.Param != that.Param {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.Motion, that.Motion) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Delay, that.Delay) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Relative, that.Relative) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Priority, that.Priority) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Shared, that.Shared) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Target, that.Target) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *CameraOptions) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*CameraOptions)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *ClearCameraRequest) EqualVT(that *ClearCameraRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Player != that.Player {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Context, that.Context) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ClearCameraRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*ClearCameraRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
 func (this *FreezeRequest) EqualVT(that *FreezeRequest) bool {
 	if this == that {
 		return true
@@ -2371,6 +3595,46 @@ func (this *BotResponse) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+// MarshalProtoJSON marshals the CameraParam to JSON.
+func (x CameraParam) MarshalProtoJSON(s *json.MarshalState) {
+	s.WriteEnum(int32(x), CameraParam_name)
+}
+
+// MarshalText marshals the CameraParam to text.
+func (x CameraParam) MarshalText() ([]byte, error) {
+	return []byte(json.GetEnumString(int32(x), CameraParam_name)), nil
+}
+
+// MarshalJSON marshals the CameraParam to JSON.
+func (x CameraParam) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraParam from JSON.
+func (x *CameraParam) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	v := s.ReadEnum(CameraParam_value)
+	if err := s.Err(); err != nil {
+		s.SetErrorf("could not read CameraParam enum: %v", err)
+		return
+	}
+	*x = CameraParam(v)
+}
+
+// UnmarshalText unmarshals the CameraParam from text.
+func (x *CameraParam) UnmarshalText(b []byte) error {
+	i, err := json.ParseEnumString(string(b), CameraParam_value)
+	if err != nil {
+		return err
+	}
+	*x = CameraParam(i)
+	return nil
+}
+
+// UnmarshalJSON unmarshals the CameraParam from JSON.
+func (x *CameraParam) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
 // MarshalProtoJSON marshals the RestoredEvent message to JSON.
@@ -3258,6 +4522,803 @@ func (x *FreeCameraRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the FreeCameraRequest from JSON.
 func (x *FreeCameraRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraValue message to JSON.
+func (x *CameraValue) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Value != nil {
+		switch ov := x.Value.(type) {
+		case *CameraValue_Number:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("number")
+			s.WriteFloat32(ov.Number)
+		case *CameraValue_Position:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("position")
+			ov.Position.MarshalProtoJSON(s.WithField("position"))
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraValue to JSON.
+func (x *CameraValue) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraValue message from JSON.
+func (x *CameraValue) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "number":
+			s.AddField("number")
+			ov := &CameraValue_Number{}
+			x.Value = ov
+			ov.Number = s.ReadFloat32()
+		case "position":
+			ov := &CameraValue_Position{}
+			x.Value = ov
+			if s.ReadNil() {
+				ov.Position = nil
+				return
+			}
+			ov.Position = &geometry.Vec3{}
+			ov.Position.UnmarshalProtoJSON(s.WithField("position", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraValue from JSON.
+func (x *CameraValue) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraMotion message to JSON.
+func (x *CameraMotion) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Motion != nil {
+		switch ov := x.Motion.(type) {
+		case *CameraMotion_Hold:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("hold")
+			ov.Hold.MarshalProtoJSON(s.WithField("hold"))
+		case *CameraMotion_Approach:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("approach")
+			ov.Approach.MarshalProtoJSON(s.WithField("approach"))
+		case *CameraMotion_Spring:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("spring")
+			ov.Spring.MarshalProtoJSON(s.WithField("spring"))
+		case *CameraMotion_Lerp:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("lerp")
+			ov.Lerp.MarshalProtoJSON(s.WithField("lerp"))
+		case *CameraMotion_Lag:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("lag")
+			ov.Lag.MarshalProtoJSON(s.WithField("lag"))
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraMotion to JSON.
+func (x *CameraMotion) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraMotion message from JSON.
+func (x *CameraMotion) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "hold":
+			ov := &CameraMotion_Hold{}
+			x.Motion = ov
+			if s.ReadNil() {
+				ov.Hold = nil
+				return
+			}
+			ov.Hold = &CameraHold{}
+			ov.Hold.UnmarshalProtoJSON(s.WithField("hold", true))
+		case "approach":
+			ov := &CameraMotion_Approach{}
+			x.Motion = ov
+			if s.ReadNil() {
+				ov.Approach = nil
+				return
+			}
+			ov.Approach = &CameraApproach{}
+			ov.Approach.UnmarshalProtoJSON(s.WithField("approach", true))
+		case "spring":
+			ov := &CameraMotion_Spring{}
+			x.Motion = ov
+			if s.ReadNil() {
+				ov.Spring = nil
+				return
+			}
+			ov.Spring = &CameraSpring{}
+			ov.Spring.UnmarshalProtoJSON(s.WithField("spring", true))
+		case "lerp":
+			ov := &CameraMotion_Lerp{}
+			x.Motion = ov
+			if s.ReadNil() {
+				ov.Lerp = nil
+				return
+			}
+			ov.Lerp = &CameraLerp{}
+			ov.Lerp.UnmarshalProtoJSON(s.WithField("lerp", true))
+		case "lag":
+			ov := &CameraMotion_Lag{}
+			x.Motion = ov
+			if s.ReadNil() {
+				ov.Lag = nil
+				return
+			}
+			ov.Lag = &CameraLag{}
+			ov.Lag.UnmarshalProtoJSON(s.WithField("lag", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraMotion from JSON.
+func (x *CameraMotion) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraHold message to JSON.
+func (x *CameraHold) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Duration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("duration")
+		s.WriteFloat32(*x.Duration)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraHold to JSON.
+func (x *CameraHold) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraHold message from JSON.
+func (x *CameraHold) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "duration":
+			s.AddField("duration")
+			if s.ReadNil() {
+				x.Duration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Duration = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraHold from JSON.
+func (x *CameraHold) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraApproach message to JSON.
+func (x *CameraApproach) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Value != nil || s.HasField("value") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("value")
+		x.Value.MarshalProtoJSON(s.WithField("value"))
+	}
+	if x.Speed != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("speed")
+		s.WriteFloat32(*x.Speed)
+	}
+	if x.DefaultSpeed != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("defaultSpeed")
+		s.WriteFloat32(*x.DefaultSpeed)
+	}
+	if x.Acceleration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("acceleration")
+		s.WriteFloat32(*x.Acceleration)
+	}
+	if x.MinDuration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("minDuration")
+		s.WriteFloat32(*x.MinDuration)
+	}
+	if x.ChaseDefault != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("chaseDefault")
+		s.WriteBool(*x.ChaseDefault)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraApproach to JSON.
+func (x *CameraApproach) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraApproach message from JSON.
+func (x *CameraApproach) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "value":
+			if s.ReadNil() {
+				x.Value = nil
+				return
+			}
+			x.Value = &CameraValue{}
+			x.Value.UnmarshalProtoJSON(s.WithField("value", true))
+		case "speed":
+			s.AddField("speed")
+			if s.ReadNil() {
+				x.Speed = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Speed = &t
+		case "default_speed", "defaultSpeed":
+			s.AddField("default_speed")
+			if s.ReadNil() {
+				x.DefaultSpeed = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.DefaultSpeed = &t
+		case "acceleration":
+			s.AddField("acceleration")
+			if s.ReadNil() {
+				x.Acceleration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Acceleration = &t
+		case "min_duration", "minDuration":
+			s.AddField("min_duration")
+			if s.ReadNil() {
+				x.MinDuration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.MinDuration = &t
+		case "chase_default", "chaseDefault":
+			s.AddField("chase_default")
+			if s.ReadNil() {
+				x.ChaseDefault = nil
+				return
+			}
+			t := s.ReadBool()
+			x.ChaseDefault = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraApproach from JSON.
+func (x *CameraApproach) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraSpring message to JSON.
+func (x *CameraSpring) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Value != nil || s.HasField("value") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("value")
+		x.Value.MarshalProtoJSON(s.WithField("value"))
+	}
+	if x.Strength != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("strength")
+		s.WriteFloat32(*x.Strength)
+	}
+	if x.MinSpeed != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("minSpeed")
+		s.WriteFloat32(*x.MinSpeed)
+	}
+	if x.MaxDuration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("maxDuration")
+		s.WriteFloat32(*x.MaxDuration)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraSpring to JSON.
+func (x *CameraSpring) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraSpring message from JSON.
+func (x *CameraSpring) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "value":
+			if s.ReadNil() {
+				x.Value = nil
+				return
+			}
+			x.Value = &CameraValue{}
+			x.Value.UnmarshalProtoJSON(s.WithField("value", true))
+		case "strength":
+			s.AddField("strength")
+			if s.ReadNil() {
+				x.Strength = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Strength = &t
+		case "min_speed", "minSpeed":
+			s.AddField("min_speed")
+			if s.ReadNil() {
+				x.MinSpeed = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.MinSpeed = &t
+		case "max_duration", "maxDuration":
+			s.AddField("max_duration")
+			if s.ReadNil() {
+				x.MaxDuration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.MaxDuration = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraSpring from JSON.
+func (x *CameraSpring) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraLerp message to JSON.
+func (x *CameraLerp) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Start != nil || s.HasField("start") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("start")
+		x.Start.MarshalProtoJSON(s.WithField("start"))
+	}
+	if x.End != nil || s.HasField("end") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("end")
+		x.End.MarshalProtoJSON(s.WithField("end"))
+	}
+	if x.Bias != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("bias")
+		s.WriteFloat32(*x.Bias)
+	}
+	if x.Gain != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("gain")
+		s.WriteFloat32(*x.Gain)
+	}
+	if x.Duration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("duration")
+		s.WriteFloat32(*x.Duration)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraLerp to JSON.
+func (x *CameraLerp) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraLerp message from JSON.
+func (x *CameraLerp) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "start":
+			if s.ReadNil() {
+				x.Start = nil
+				return
+			}
+			x.Start = &CameraValue{}
+			x.Start.UnmarshalProtoJSON(s.WithField("start", true))
+		case "end":
+			if s.ReadNil() {
+				x.End = nil
+				return
+			}
+			x.End = &CameraValue{}
+			x.End.UnmarshalProtoJSON(s.WithField("end", true))
+		case "bias":
+			s.AddField("bias")
+			if s.ReadNil() {
+				x.Bias = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Bias = &t
+		case "gain":
+			s.AddField("gain")
+			if s.ReadNil() {
+				x.Gain = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Gain = &t
+		case "duration":
+			s.AddField("duration")
+			if s.ReadNil() {
+				x.Duration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Duration = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraLerp from JSON.
+func (x *CameraLerp) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraLag message to JSON.
+func (x *CameraLag) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.MinDuration != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("minDuration")
+		s.WriteFloat32(*x.MinDuration)
+	}
+	if x.LagTime != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("lagTime")
+		s.WriteFloat32(*x.LagTime)
+	}
+	if x.MaxSpeed != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("maxSpeed")
+		s.WriteFloat32(*x.MaxSpeed)
+	}
+	if x.SpringStrength != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("springStrength")
+		s.WriteFloat32(*x.SpringStrength)
+	}
+	if x.KeepTargetOnScreen != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("keepTargetOnScreen")
+		s.WriteBool(*x.KeepTargetOnScreen)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraLag to JSON.
+func (x *CameraLag) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraLag message from JSON.
+func (x *CameraLag) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "min_duration", "minDuration":
+			s.AddField("min_duration")
+			if s.ReadNil() {
+				x.MinDuration = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.MinDuration = &t
+		case "lag_time", "lagTime":
+			s.AddField("lag_time")
+			if s.ReadNil() {
+				x.LagTime = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.LagTime = &t
+		case "max_speed", "maxSpeed":
+			s.AddField("max_speed")
+			if s.ReadNil() {
+				x.MaxSpeed = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.MaxSpeed = &t
+		case "spring_strength", "springStrength":
+			s.AddField("spring_strength")
+			if s.ReadNil() {
+				x.SpringStrength = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.SpringStrength = &t
+		case "keep_target_on_screen", "keepTargetOnScreen":
+			s.AddField("keep_target_on_screen")
+			if s.ReadNil() {
+				x.KeepTargetOnScreen = nil
+				return
+			}
+			t := s.ReadBool()
+			x.KeepTargetOnScreen = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraLag from JSON.
+func (x *CameraLag) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the CameraOptions message to JSON.
+func (x *CameraOptions) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Context != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("context")
+		s.WriteString(*x.Context)
+	}
+	if x.Param != 0 || s.HasField("param") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("param")
+		x.Param.MarshalProtoJSON(s)
+	}
+	if x.Motion != nil || s.HasField("motion") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("motion")
+		x.Motion.MarshalProtoJSON(s.WithField("motion"))
+	}
+	if x.Delay != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("delay")
+		s.WriteFloat32(*x.Delay)
+	}
+	if x.Relative != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("relative")
+		s.WriteBool(*x.Relative)
+	}
+	if x.Priority != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("priority")
+		s.WriteUint32(*x.Priority)
+	}
+	if x.Shared != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("shared")
+		s.WriteBool(*x.Shared)
+	}
+	if x.Target != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("target")
+		s.WriteUint32(*x.Target)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the CameraOptions to JSON.
+func (x *CameraOptions) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the CameraOptions message from JSON.
+func (x *CameraOptions) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "context":
+			s.AddField("context")
+			if s.ReadNil() {
+				x.Context = nil
+				return
+			}
+			t := s.ReadString()
+			x.Context = &t
+		case "param":
+			s.AddField("param")
+			x.Param.UnmarshalProtoJSON(s)
+		case "motion":
+			if s.ReadNil() {
+				x.Motion = nil
+				return
+			}
+			x.Motion = &CameraMotion{}
+			x.Motion.UnmarshalProtoJSON(s.WithField("motion", true))
+		case "delay":
+			s.AddField("delay")
+			if s.ReadNil() {
+				x.Delay = nil
+				return
+			}
+			t := s.ReadFloat32()
+			x.Delay = &t
+		case "relative":
+			s.AddField("relative")
+			if s.ReadNil() {
+				x.Relative = nil
+				return
+			}
+			t := s.ReadBool()
+			x.Relative = &t
+		case "priority":
+			s.AddField("priority")
+			if s.ReadNil() {
+				x.Priority = nil
+				return
+			}
+			t := s.ReadUint32()
+			x.Priority = &t
+		case "shared":
+			s.AddField("shared")
+			if s.ReadNil() {
+				x.Shared = nil
+				return
+			}
+			t := s.ReadBool()
+			x.Shared = &t
+		case "target":
+			s.AddField("target")
+			if s.ReadNil() {
+				x.Target = nil
+				return
+			}
+			t := s.ReadUint32()
+			x.Target = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the CameraOptions from JSON.
+func (x *CameraOptions) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ClearCameraRequest message to JSON.
+func (x *ClearCameraRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Player != 0 || s.HasField("player") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("player")
+		s.WriteInt32(x.Player)
+	}
+	if x.Context != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("context")
+		s.WriteString(*x.Context)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ClearCameraRequest to JSON.
+func (x *ClearCameraRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ClearCameraRequest message from JSON.
+func (x *ClearCameraRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "player":
+			s.AddField("player")
+			x.Player = s.ReadInt32()
+		case "context":
+			s.AddField("context")
+			if s.ReadNil() {
+				x.Context = nil
+				return
+			}
+			t := s.ReadString()
+			x.Context = &t
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ClearCameraRequest from JSON.
+func (x *ClearCameraRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -4851,6 +6912,654 @@ func (m *FreeCameraRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *CameraValue) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraValue) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraValue) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Value.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraValue_Number) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraValue_Number) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Number))))
+	i--
+	dAtA[i] = 0xd
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraValue_Position) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraValue_Position) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Position != nil {
+		size, err := m.Position.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraMotion) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Motion.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion_Hold) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion_Hold) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Hold != nil {
+		size, err := m.Hold.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion_Approach) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion_Approach) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Approach != nil {
+		size, err := m.Approach.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion_Spring) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion_Spring) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Spring != nil {
+		size, err := m.Spring.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion_Lerp) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion_Lerp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Lerp != nil {
+		size, err := m.Lerp.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraMotion_Lag) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraMotion_Lag) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Lag != nil {
+		size, err := m.Lag.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x2a
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x2a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraHold) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraHold) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraHold) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Duration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Duration))))
+		i--
+		dAtA[i] = 0xd
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraApproach) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraApproach) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraApproach) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.ChaseDefault != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.ChaseDefault)
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.MinDuration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.MinDuration))))
+		i--
+		dAtA[i] = 0x2d
+	}
+	if m.Acceleration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Acceleration))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.DefaultSpeed != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.DefaultSpeed))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.Speed != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Speed))))
+		i--
+		dAtA[i] = 0x15
+	}
+	if m.Value != nil {
+		size, err := m.Value.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraSpring) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraSpring) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraSpring) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.MaxDuration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.MaxDuration))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.MinSpeed != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.MinSpeed))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.Strength != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Strength))))
+		i--
+		dAtA[i] = 0x15
+	}
+	if m.Value != nil {
+		size, err := m.Value.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraLerp) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraLerp) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraLerp) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Duration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Duration))))
+		i--
+		dAtA[i] = 0x2d
+	}
+	if m.Gain != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Gain))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.Bias != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Bias))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.End != nil {
+		size, err := m.End.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Start != nil {
+		size, err := m.Start.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraLag) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraLag) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraLag) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.KeepTargetOnScreen != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.KeepTargetOnScreen)
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.SpringStrength != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.SpringStrength))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.MaxSpeed != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.MaxSpeed))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.LagTime != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.LagTime))))
+		i--
+		dAtA[i] = 0x15
+	}
+	if m.MinDuration != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.MinDuration))))
+		i--
+		dAtA[i] = 0xd
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CameraOptions) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CameraOptions) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *CameraOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Target != nil {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(*m.Target))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.Shared != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.Shared)
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.Priority != nil {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(*m.Priority))
+		i--
+		dAtA[i] = 0x38
+	}
+	if m.Relative != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.Relative)
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Delay != nil {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(*m.Delay))))
+		i--
+		dAtA[i] = 0x2d
+	}
+	if m.Motion != nil {
+		size, err := m.Motion.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Param != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Param))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Context != nil {
+		i = protobuf_go_lite.EncodeString(dAtA, i, *m.Context)
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ClearCameraRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ClearCameraRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ClearCameraRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Context != nil {
+		i = protobuf_go_lite.EncodeString(dAtA, i, *m.Context)
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Player != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Player))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *FreezeRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -5731,6 +8440,249 @@ func (m *FreeCameraRequest) SizeVT() (n int) {
 	return n
 }
 
+func (m *CameraValue) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Value.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraValue_Number) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeFixed32Value(1)
+	return n
+}
+
+func (m *CameraValue_Position) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Position != nil {
+		l = m.Position.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraMotion) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Motion.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraMotion_Hold) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Hold != nil {
+		l = m.Hold.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraMotion_Approach) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Approach != nil {
+		l = m.Approach.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraMotion_Spring) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Spring != nil {
+		l = m.Spring.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraMotion_Lerp) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Lerp != nil {
+		l = m.Lerp.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraMotion_Lag) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Lag != nil {
+		l = m.Lag.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *CameraHold) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Duration)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraApproach) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Value != nil {
+		l = m.Value.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Speed)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.DefaultSpeed)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Acceleration)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.MinDuration)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.ChaseDefault)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraSpring) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Value != nil {
+		l = m.Value.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Strength)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.MinSpeed)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.MaxDuration)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraLerp) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Start != nil {
+		l = m.Start.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	if m.End != nil {
+		l = m.End.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Bias)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Gain)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Duration)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraLag) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.MinDuration)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.LagTime)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.MaxSpeed)
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.SpringStrength)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.KeepTargetOnScreen)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *CameraOptions) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	n += protobuf_go_lite.SizeStringPtr(1, m.Context)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Param)
+	if m.Motion != nil {
+		l = m.Motion.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeFixed32Ptr(1, m.Delay)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.Relative)
+	n += protobuf_go_lite.SizeVarintPtr(1, m.Priority)
+	n += protobuf_go_lite.SizeBoolPtr(1, m.Shared)
+	n += protobuf_go_lite.SizeVarintPtr(1, m.Target)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ClearCameraRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
+	n += protobuf_go_lite.SizeStringPtr(1, m.Context)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *FreezeRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -5932,6 +8884,10 @@ func (m *BotResponse) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeVarintNonZero(1, m.Player)
 	n += len(m.unknownFields)
 	return n
+}
+
+func (x CameraParam) MarshalProtoText() string {
+	return x.String()
 }
 
 func (x *RestoredEvent) MarshalProtoText() string {
@@ -6255,6 +9211,273 @@ func (x *FreeCameraRequest) MarshalProtoText() string {
 }
 
 func (x *FreeCameraRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraValue) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraValue")
+	switch body := x.Value.(type) {
+	case *CameraValue_Number:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "number")
+		protobuf_go_lite.TextWriteFloat32(&sb, body.Number)
+	case *CameraValue_Position:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "position")
+		if body.Position == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &geometry.Vec3{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Position)
+		}
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraValue) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraMotion) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraMotion")
+	switch body := x.Motion.(type) {
+	case *CameraMotion_Hold:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "hold")
+		if body.Hold == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &CameraHold{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Hold)
+		}
+	case *CameraMotion_Approach:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "approach")
+		if body.Approach == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &CameraApproach{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Approach)
+		}
+	case *CameraMotion_Spring:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "spring")
+		if body.Spring == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &CameraSpring{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Spring)
+		}
+	case *CameraMotion_Lerp:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lerp")
+		if body.Lerp == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &CameraLerp{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Lerp)
+		}
+	case *CameraMotion_Lag:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lag")
+		if body.Lag == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &CameraLag{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Lag)
+		}
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraMotion) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraHold) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraHold")
+	if x.Duration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "duration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Duration)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraHold) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraApproach) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraApproach")
+	if x.Value != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "value")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Value)
+	}
+	if x.Speed != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "speed")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Speed)
+	}
+	if x.DefaultSpeed != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "default_speed")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.DefaultSpeed)
+	}
+	if x.Acceleration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "acceleration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Acceleration)
+	}
+	if x.MinDuration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "min_duration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.MinDuration)
+	}
+	if x.ChaseDefault != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "chase_default")
+		protobuf_go_lite.TextWriteBool(&sb, *x.ChaseDefault)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraApproach) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraSpring) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraSpring")
+	if x.Value != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "value")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Value)
+	}
+	if x.Strength != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "strength")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Strength)
+	}
+	if x.MinSpeed != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "min_speed")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.MinSpeed)
+	}
+	if x.MaxDuration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "max_duration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.MaxDuration)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraSpring) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraLerp) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraLerp")
+	if x.Start != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "start")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Start)
+	}
+	if x.End != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "end")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.End)
+	}
+	if x.Bias != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "bias")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Bias)
+	}
+	if x.Gain != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "gain")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Gain)
+	}
+	if x.Duration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "duration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Duration)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraLerp) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraLag) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraLag")
+	if x.MinDuration != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "min_duration")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.MinDuration)
+	}
+	if x.LagTime != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lag_time")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.LagTime)
+	}
+	if x.MaxSpeed != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "max_speed")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.MaxSpeed)
+	}
+	if x.SpringStrength != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "spring_strength")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.SpringStrength)
+	}
+	if x.KeepTargetOnScreen != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "keep_target_on_screen")
+		protobuf_go_lite.TextWriteBool(&sb, *x.KeepTargetOnScreen)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraLag) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *CameraOptions) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "CameraOptions")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Context != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "context")
+		protobuf_go_lite.TextWriteString(&sb, *x.Context)
+	}
+	if x.Param != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "param")
+		protobuf_go_lite.TextWriteStringer(&sb, CameraParam(x.Param))
+	}
+	if x.Motion != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "motion")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Motion)
+	}
+	if x.Delay != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "delay")
+		protobuf_go_lite.TextWriteFloat32(&sb, *x.Delay)
+	}
+	if x.Relative != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "relative")
+		protobuf_go_lite.TextWriteBool(&sb, *x.Relative)
+	}
+	if x.Priority != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "priority")
+		protobuf_go_lite.TextWriteUint(&sb, *x.Priority)
+	}
+	if x.Shared != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "shared")
+		protobuf_go_lite.TextWriteBool(&sb, *x.Shared)
+	}
+	if x.Target != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "target")
+		protobuf_go_lite.TextWriteUint(&sb, *x.Target)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *CameraOptions) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *ClearCameraRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ClearCameraRequest")
+	if x.Player != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "player")
+		protobuf_go_lite.TextWriteInt(&sb, x.Player)
+	}
+	if x.Context != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "context")
+		protobuf_go_lite.TextWriteString(&sb, *x.Context)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ClearCameraRequest) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -7566,6 +10789,921 @@ func (m *FreeCameraRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraValue) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraValue: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraValue: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Number", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Value = &CameraValue_Number{Number: float32(math.Float32frombits(v))}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Position", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Value.(*CameraValue_Position); ok {
+				if err := oneof.Position.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &geometry.Vec3{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Value = &CameraValue_Position{Position: v}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraMotion) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraMotion: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraMotion: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hold", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Motion.(*CameraMotion_Hold); ok {
+				if err := oneof.Hold.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CameraHold{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Motion = &CameraMotion_Hold{Hold: v}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Approach", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Motion.(*CameraMotion_Approach); ok {
+				if err := oneof.Approach.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CameraApproach{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Motion = &CameraMotion_Approach{Approach: v}
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Spring", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Motion.(*CameraMotion_Spring); ok {
+				if err := oneof.Spring.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CameraSpring{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Motion = &CameraMotion_Spring{Spring: v}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lerp", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Motion.(*CameraMotion_Lerp); ok {
+				if err := oneof.Lerp.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CameraLerp{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Motion = &CameraMotion_Lerp{Lerp: v}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lag", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Motion.(*CameraMotion_Lag); ok {
+				if err := oneof.Lag.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &CameraLag{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Motion = &CameraMotion_Lag{Lag: v}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraHold) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraHold: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraHold: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Duration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Duration = &v2
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraApproach) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraApproach: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraApproach: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Value == nil {
+				m.Value = &CameraValue{}
+			}
+			if err := m.Value.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Speed", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Speed = &v2
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DefaultSpeed", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.DefaultSpeed = &v2
+		case 4:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Acceleration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Acceleration = &v2
+		case 5:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinDuration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.MinDuration = &v2
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChaseDefault", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.ChaseDefault = &b
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraSpring) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraSpring: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraSpring: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Value", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Value == nil {
+				m.Value = &CameraValue{}
+			}
+			if err := m.Value.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Strength", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Strength = &v2
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinSpeed", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.MinSpeed = &v2
+		case 4:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxDuration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.MaxDuration = &v2
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraLerp) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraLerp: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraLerp: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Start", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Start == nil {
+				m.Start = &CameraValue{}
+			}
+			if err := m.Start.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field End", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.End == nil {
+				m.End = &CameraValue{}
+			}
+			if err := m.End.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bias", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Bias = &v2
+		case 4:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Gain", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Gain = &v2
+		case 5:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Duration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Duration = &v2
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraLag) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraLag: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraLag: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MinDuration", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.MinDuration = &v2
+		case 2:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LagTime", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.LagTime = &v2
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MaxSpeed", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.MaxSpeed = &v2
+		case 4:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SpringStrength", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.SpringStrength = &v2
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KeepTargetOnScreen", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.KeepTargetOnScreen = &b
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *CameraOptions) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CameraOptions: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CameraOptions: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Context", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Context = &v
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Param", wireType)
+			}
+			m.Param = 0
+			var _v uint64
+			_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			m.Param = CameraParam(_v)
+			if err != nil {
+				return err
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Motion", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Motion == nil {
+				m.Motion = &CameraMotion{}
+			}
+			if err := m.Motion.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Delay", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			v2 := float32(math.Float32frombits(v))
+			m.Delay = &v2
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Relative", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.Relative = &b
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Priority", wireType)
+			}
+			var v uint32
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Priority = &v
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shared", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.Shared = &b
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Target", wireType)
+			}
+			var v uint32
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Target = &v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *ClearCameraRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ClearCameraRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ClearCameraRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Player", wireType)
+			}
+			m.Player = 0
+			m.Player, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Context", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Context = &v
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

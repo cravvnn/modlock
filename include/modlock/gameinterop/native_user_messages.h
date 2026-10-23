@@ -12,8 +12,9 @@ class MessageLite;
 }
 
 namespace modlock::gameinterop::engine {
+class CameraController;
 enum ScreenEffectState : int;
-}
+}  // namespace modlock::gameinterop::engine
 
 namespace modlock::gameinterop {
 
@@ -54,6 +55,11 @@ class MODLOCK_API NativeUserMessages {
   // ClearScreenEffect ends every running instance of state on the player's view.
   std::expected<void, std::string> ClearScreenEffect(int32_t slot, int32_t owner,
                                                      engine::ScreenEffectState state) const;
+
+  // CameraController adds an operation to the addressed player's camera, or
+  // clears operations, as the message's action says.
+  std::expected<void, std::string> CameraController(int32_t slot,
+                                                    const engine::CameraController& message) const;
 
  private:
   NativeUserMessages(void* messages, void* events) : messages_(messages), events_(events) {}

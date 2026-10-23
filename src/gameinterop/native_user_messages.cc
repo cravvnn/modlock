@@ -11,6 +11,7 @@
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/virtual_slots.h"
 #include "native_network_messages.h"
+#include "src/gameinterop/engine/camera.pb.h"
 #include "src/gameinterop/engine/chat.pb.h"
 #include "src/gameinterop/engine/hud.pb.h"
 
@@ -109,6 +110,11 @@ std::expected<void, std::string> NativeUserMessages::ClearScreenEffect(
   message.set_clear_all_states(true);
   message.set_state(state);
   return Send(slot, kScreenEffectMessageId, message);
+}
+
+std::expected<void, std::string> NativeUserMessages::CameraController(
+    int32_t slot, const engine::CameraController& message) const {
+  return Send(slot, kCameraControllerMessageId, message);
 }
 
 std::expected<void, std::string> NativeUserMessages::Send(

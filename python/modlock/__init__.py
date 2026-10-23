@@ -165,6 +165,23 @@ _MovementAction: dict[Any, Any] = {
 }
 
 
+# CameraParam is one value of the camera that follows a hero, which the
+# game's abilities move as Mirage's Tornado pulls the camera back.
+type CameraParam = Literal["distance", "field_of_view", "target", "vertical_offset", "horizontal_offset"]
+_CameraParam: dict[Any, Any] = {
+    0: "distance",
+    "distance": 0,
+    1: "field_of_view",
+    "field_of_view": 1,
+    2: "target",
+    "target": 2,
+    3: "vertical_offset",
+    "vertical_offset": 3,
+    4: "horizontal_offset",
+    "horizontal_offset": 4,
+}
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
 class Ability:
     """Ability is one ability a hero owns."""
@@ -909,6 +926,124 @@ class Score:
     net_worth: int = 0
 
 
+# CameraValue is a value for a camera param: a number for every param but
+# the target, which takes a position.
+type CameraValue = float | Vector
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraMotion:
+    """CameraMotion is how an operation moves its param."""
+
+    # hold keeps the param where it is.
+    hold: CameraHold | None = None
+    # approach moves the param toward a value at a speed.
+    approach: CameraApproach | None = None
+    # spring pulls the param toward a value.
+    spring: CameraSpring | None = None
+    # lerp moves the param from one value to another over a time.
+    lerp: CameraLerp | None = None
+    # lag lets the param trail its usual value.
+    lag: CameraLag | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraHold:
+    """CameraHold keeps a param where it is."""
+
+    # duration is how long it holds, in seconds.
+    duration: float | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraApproach:
+    """CameraApproach moves a param toward a value."""
+
+    # value is the value it approaches.
+    value: CameraValue | None = None
+    # speed is the most the param moves each second; omitted, 600.
+    speed: float | None = None
+    # default_speed is the speed of the return to the usual value; omitted, 600.
+    default_speed: float | None = None
+    # acceleration is how fast the speed builds each second; omitted, 1000.
+    acceleration: float | None = None
+    # min_duration is the least time it runs, in seconds.
+    min_duration: float | None = None
+    # chase_default approaches the param's usual value instead of value.
+    chase_default: bool | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraSpring:
+    """CameraSpring pulls a param toward a value."""
+
+    # value is the value the spring pulls toward.
+    value: CameraValue | None = None
+    # strength is the spring's strength; omitted, 10.
+    strength: float | None = None
+    # min_speed is the least the param moves each second.
+    min_speed: float | None = None
+    # max_duration ends the spring after this many seconds, or never when zero.
+    max_duration: float | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraLerp:
+    """CameraLerp moves a param from one value to another over a time."""
+
+    # start is the value it starts from.
+    start: CameraValue | None = None
+    # end is the value it ends at.
+    end: CameraValue | None = None
+    # bias and gain shape the curve between them.
+    bias: float | None = None
+    gain: float | None = None
+    # duration is the time it takes, in seconds; omitted, 1.
+    duration: float | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraLag:
+    """CameraLag lets a param trail its usual value."""
+
+    # min_duration is the least time it runs, in seconds.
+    min_duration: float | None = None
+    # lag_time is how far behind the param trails, in seconds.
+    lag_time: float | None = None
+    # max_speed is the most the param moves each second.
+    max_speed: float | None = None
+    # spring_strength is the strength of the pull back to the usual value.
+    spring_strength: float | None = None
+    # keep_target_on_screen strengthens the pull when the target would leave the
+    # screen; omitted, true.
+    keep_target_on_screen: bool | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class CameraOptions:
+    """CameraOptions adds one operation to a player's camera."""
+
+    # context names a group of operations, which ClearCamera removes together.
+    context: str | None = None
+    # param is the camera value the operation moves.
+    param: CameraParam
+    # motion is how it moves.
+    motion: CameraMotion
+    # delay starts the operation after this many seconds.
+    delay: float | None = None
+    # relative adds the operation's values to the param's usual value instead
+    # of replacing it.
+    relative: bool | None = None
+    # priority decides between operations on one param; the higher wins.
+    # Omitted, 1.
+    priority: int | None = None
+    # shared lets operations of other contexts move the param at the same time.
+    shared: bool | None = None
+    # target is the entity handle of the hero whose camera moves, as
+    # Pawn.entity reports it; omitted, the player's own hero.
+    target: int | None = None
+
+
 @dataclasses.dataclass(slots=True, kw_only=True)
 class HeroTarget:
     """HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
@@ -1199,6 +1334,19 @@ class Player:
         Unwatch returns them to it; Watch follows a hero again.
         """
         return _call("FreeCamera", "FreeCameraRequest", {"player": self, "position": position, "facing": facing}) is not None
+
+    def move_camera(self, options: CameraOptions) -> bool:
+        """move_camera adds one operation to the player's camera, as the game's
+        abilities pull it back, widen its view or swing it to a point. Operations
+        run alongside the game's own until they end or ClearCamera removes them.
+        """
+        return _call("MoveCamera", "CameraOptions", _with(options, "player", self)) is not None
+
+    def clear_camera(self, context: str | None = None) -> bool:
+        """clear_camera removes a context's camera operations from the player's
+        camera, or every operation, and the camera returns to its usual place.
+        """
+        return _call("ClearCamera", "ClearCameraRequest", {"player": self, "context": context}) is not None
 
     def unwatch(self) -> bool:
         """unwatch returns a player watching or flying the free camera from their
@@ -2453,6 +2601,90 @@ _SCHEMA: wire.Schema = {
             wire.Field(1, "player", "int32", cls=Player, key="slot"),
             wire.Field(2, "position", "message", message="Vec3"),
             wire.Field(3, "facing", "message", message="EulerAngles"),
+        ],
+    ),
+    "CameraValue": (
+        None,
+        [
+            wire.Field(1, "number", "float", oneof="value"),
+            wire.Field(2, "position", "message", oneof="value", message="Vec3"),
+        ],
+    ),
+    "CameraMotion": (
+        CameraMotion,
+        [
+            wire.Field(1, "hold", "message", optional=True, message="CameraHold"),
+            wire.Field(2, "approach", "message", optional=True, message="CameraApproach"),
+            wire.Field(3, "spring", "message", optional=True, message="CameraSpring"),
+            wire.Field(4, "lerp", "message", optional=True, message="CameraLerp"),
+            wire.Field(5, "lag", "message", optional=True, message="CameraLag"),
+        ],
+    ),
+    "CameraHold": (
+        CameraHold,
+        [
+            wire.Field(1, "duration", "float", optional=True),
+        ],
+    ),
+    "CameraApproach": (
+        CameraApproach,
+        [
+            wire.Field(1, "value", "message", optional=True, message="CameraValue", union="value"),
+            wire.Field(2, "speed", "float", optional=True),
+            wire.Field(3, "default_speed", "float", optional=True),
+            wire.Field(4, "acceleration", "float", optional=True),
+            wire.Field(5, "min_duration", "float", optional=True),
+            wire.Field(6, "chase_default", "bool", optional=True),
+        ],
+    ),
+    "CameraSpring": (
+        CameraSpring,
+        [
+            wire.Field(1, "value", "message", optional=True, message="CameraValue", union="value"),
+            wire.Field(2, "strength", "float", optional=True),
+            wire.Field(3, "min_speed", "float", optional=True),
+            wire.Field(4, "max_duration", "float", optional=True),
+        ],
+    ),
+    "CameraLerp": (
+        CameraLerp,
+        [
+            wire.Field(1, "start", "message", message="CameraValue", union="value"),
+            wire.Field(2, "end", "message", message="CameraValue", union="value"),
+            wire.Field(3, "bias", "float", optional=True),
+            wire.Field(4, "gain", "float", optional=True),
+            wire.Field(5, "duration", "float", optional=True),
+        ],
+    ),
+    "CameraLag": (
+        CameraLag,
+        [
+            wire.Field(1, "min_duration", "float", optional=True),
+            wire.Field(2, "lag_time", "float", optional=True),
+            wire.Field(3, "max_speed", "float", optional=True),
+            wire.Field(4, "spring_strength", "float", optional=True),
+            wire.Field(5, "keep_target_on_screen", "bool", optional=True),
+        ],
+    ),
+    "CameraOptions": (
+        CameraOptions,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "context", "string", optional=True),
+            wire.Field(3, "param", "enum", enum=_CameraParam),
+            wire.Field(4, "motion", "message", message="CameraMotion"),
+            wire.Field(5, "delay", "float", optional=True),
+            wire.Field(6, "relative", "bool", optional=True),
+            wire.Field(7, "priority", "uint32", optional=True),
+            wire.Field(8, "shared", "bool", optional=True),
+            wire.Field(9, "target", "uint32", optional=True),
+        ],
+    ),
+    "ClearCameraRequest": (
+        None,
+        [
+            wire.Field(1, "player", "int32", cls=Player, key="slot"),
+            wire.Field(2, "context", "string", optional=True),
         ],
     ),
     "FreezeRequest": (

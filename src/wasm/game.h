@@ -372,6 +372,8 @@ class Game : public HostService {
   std::expected<void, std::string> Spectate(const players::PlayerRequest& request) override;
   std::expected<void, std::string> Watch(const players::WatchRequest& request) override;
   std::expected<void, std::string> FreeCamera(const players::FreeCameraRequest& request) override;
+  std::expected<void, std::string> MoveCamera(const players::CameraOptions& request) override;
+  std::expected<void, std::string> ClearCamera(const players::ClearCameraRequest& request) override;
   std::expected<void, std::string> Unwatch(const players::PlayerRequest& request) override;
   std::expected<void, std::string> Respawn(const players::PlayerRequest& request) override;
   std::expected<void, std::string> ClearItems(const players::PlayerRequest& request) override;

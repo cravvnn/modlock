@@ -597,6 +597,7 @@ whose `cancel` you call with a colon. In Python, `modlock.after`,
 | `player.selectHero`, `respawn`, `teleport`, `setVelocity`, `freeze`, `kill`            | Move the hero through the match.                                |
 | `player.spectate()`                                                                    | Move the player to the spectators, without a hero.              |
 | `player.watch(target, chase?)`, `freeCamera(position, facing)`, `unwatch()`            | Watch a hero, chase it or fly freely, and return to the hero.   |
+| `player.moveCamera(options)`, `clearCamera(context?)`                                  | Pull back, widen, offset or aim the camera, as abilities do.    |
 | `player.clearItems`, `giveItem`, `restoreStamina`, `setStamina`, `refreshAbility`      | Change what the hero carries.                                   |
 | `player.abilities()`, `setAbility`, `replaceAbility`, `holdModifier`                   | Read or change abilities, their timers and charges, modifiers.  |
 | `player.setting`, `setSetting`, `settingOn(player, key)`, `settingNumber(player, key)` | Read or change the player's settings.                           |

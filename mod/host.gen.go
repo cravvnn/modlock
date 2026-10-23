@@ -104,6 +104,24 @@ const (
 	MovementActionAbilityExecuted = movementpb.MovementAction_MOVEMENT_ACTION_ABILITY_EXECUTED
 )
 
+// CameraParam is one value of the camera that follows a hero, which the
+// game's abilities move as Mirage's Tornado pulls the camera back.
+type CameraParam = playerspb.CameraParam
+
+// The values of CameraParam.
+const (
+	// CameraParamDistance is how far behind the hero the camera sits.
+	CameraParamDistance = playerspb.CameraParam_CAMERA_PARAM_DISTANCE
+	// CameraParamFieldOfView is the view's field of view in degrees.
+	CameraParamFieldOfView = playerspb.CameraParam_CAMERA_PARAM_FIELD_OF_VIEW
+	// CameraParamTarget is the position the camera follows.
+	CameraParamTarget = playerspb.CameraParam_CAMERA_PARAM_TARGET
+	// CameraParamVerticalOffset raises the camera.
+	CameraParamVerticalOffset = playerspb.CameraParam_CAMERA_PARAM_VERTICAL_OFFSET
+	// CameraParamHorizontalOffset moves the camera to the side.
+	CameraParamHorizontalOffset = playerspb.CameraParam_CAMERA_PARAM_HORIZONTAL_OFFSET
+)
+
 // Ability is one ability a hero owns.
 type Ability = abilitiespb.Ability
 
@@ -229,6 +247,24 @@ type Pawn = playerspb.Pawn
 // game counts them.
 type Score = playerspb.Score
 
+// CameraHold keeps a param where it is.
+type CameraHold = playerspb.CameraHold
+
+// CameraApproach moves a param toward a value.
+type CameraApproach = playerspb.CameraApproach
+
+// CameraSpring pulls a param toward a value.
+type CameraSpring = playerspb.CameraSpring
+
+// CameraLerp moves a param from one value to another over a time.
+type CameraLerp = playerspb.CameraLerp
+
+// CameraLag lets a param trail its usual value.
+type CameraLag = playerspb.CameraLag
+
+// CameraOptions adds one operation to a player's camera.
+type CameraOptions = playerspb.CameraOptions
+
 // HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
 // hero's own.
 type HeroTarget = playerspb.HeroTarget
@@ -339,6 +375,34 @@ func toEntityValue(value any) (*entitiespb.EntityValue, error) {
 		return &entitiespb.EntityValue{Value: &entitiespb.EntityValue_Color{Color: value}}, nil
 	}
 	return nil, fmt.Errorf("a EntityValue is a bool, int32, float32, string, *Vector or uint32, not %T", value)
+}
+
+// toCameraValue encodes value as a CameraValue.
+func toCameraValue(value any) (*playerspb.CameraValue, error) {
+	switch value := value.(type) {
+	case float32:
+		return &playerspb.CameraValue{Value: &playerspb.CameraValue_Number{Number: value}}, nil
+	case *Vector:
+		return &playerspb.CameraValue{Value: &playerspb.CameraValue_Position{Position: value}}, nil
+	}
+	return nil, fmt.Errorf("a CameraValue is a float32 or *Vector, not %T", value)
+}
+
+// toCameraMotion encodes value as a CameraMotion.
+func toCameraMotion(value any) (*playerspb.CameraMotion, error) {
+	switch value := value.(type) {
+	case *CameraHold:
+		return &playerspb.CameraMotion{Motion: &playerspb.CameraMotion_Hold{Hold: value}}, nil
+	case *CameraApproach:
+		return &playerspb.CameraMotion{Motion: &playerspb.CameraMotion_Approach{Approach: value}}, nil
+	case *CameraSpring:
+		return &playerspb.CameraMotion{Motion: &playerspb.CameraMotion_Spring{Spring: value}}, nil
+	case *CameraLerp:
+		return &playerspb.CameraMotion{Motion: &playerspb.CameraMotion_Lerp{Lerp: value}}, nil
+	case *CameraLag:
+		return &playerspb.CameraMotion{Motion: &playerspb.CameraMotion_Lag{Lag: value}}, nil
+	}
+	return nil, fmt.Errorf("a CameraMotion is a *CameraHold, *CameraApproach, *CameraSpring, *CameraLerp or *CameraLag, not %T", value)
 }
 
 // Player addresses one connected player by their server slot.
@@ -485,6 +549,24 @@ func (p Player) Watch(target uint32, chase *bool) error {
 // Unwatch returns them to it; Watch follows a hero again.
 func (p Player) FreeCamera(position *Vector, facing *Angles) error {
 	return invoke("FreeCamera", &playerspb.FreeCameraRequest{Player: p.Slot, Position: position, Facing: facing}, nil)
+}
+
+// MoveCamera adds one operation to the player's camera, as the game's
+// abilities pull it back, widen its view or swing it to a point. Operations
+// run alongside the game's own until they end or ClearCamera removes them.
+func (p Player) MoveCamera(options *CameraOptions) error {
+	request := options.CloneVT()
+	if request == nil {
+		request = &CameraOptions{}
+	}
+	request.Player = p.Slot
+	return invoke("MoveCamera", request, nil)
+}
+
+// ClearCamera removes a context's camera operations from the player's
+// camera, or every operation, and the camera returns to its usual place.
+func (p Player) ClearCamera(context *string) error {
+	return invoke("ClearCamera", &playerspb.ClearCameraRequest{Player: p.Slot, Context: context}, nil)
 }
 
 // Unwatch returns a player watching or flying the free camera from their

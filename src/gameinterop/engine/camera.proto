@@ -1,0 +1,120 @@
+syntax = "proto2";
+
+// These messages copy the game's own, with its field numbers, from GameTracking:
+// https://github.com/SteamTracking/GameTracking-Deadlock/blob/master/Protobufs/citadel_usermessages.proto
+// https://github.com/SteamTracking/GameTracking-Deadlock/blob/master/Protobufs/networkbasetypes.proto
+
+package modlock.gameinterop.engine;
+
+option go_package = "github.com/paralin/modlock/src/gameinterop/engine;engine";
+
+// MsgVector matches the engine's CMsgVector.
+message MsgVector {
+  optional float x = 1;
+  optional float y = 2;
+  optional float z = 3;
+  optional float w = 4;
+}
+
+// CameraAction matches Deadlock CameraAction.
+enum CameraAction {
+  // CAMERA_ACTION_ADD_OP adds the message's operation.
+  CAMERA_ACTION_ADD_OP = 0;
+  // CAMERA_ACTION_CLEAR_ALL_OPS removes every operation.
+  CAMERA_ACTION_CLEAR_ALL_OPS = 1;
+  // CAMERA_ACTION_CLEAR_OPS_FOR_CONTEXT removes the context's operations.
+  CAMERA_ACTION_CLEAR_OPS_FOR_CONTEXT = 2;
+}
+
+// CameraOperation matches Deadlock CameraOperation.
+enum CameraOperation {
+  CAMERA_OPERATION_MAINTAIN = 2;
+  CAMERA_OPERATION_APPROACH = 3;
+  CAMERA_OPERATION_SPRING = 4;
+  CAMERA_OPERATION_LERP = 5;
+  CAMERA_OPERATION_LAG = 6;
+}
+
+// CameraParam matches Deadlock CameraParam.
+enum CameraParam {
+  CAMERA_PARAM_CLEAR_ALL_OPS = 0;
+  CAMERA_PARAM_CLEAR_ALL_OPS_FOR_CONTEXT = 1;
+  CAMERA_PARAM_DISTANCE = 2;
+  CAMERA_PARAM_FOV = 3;
+  CAMERA_PARAM_TARGET_POSITION = 4;
+  CAMERA_PARAM_VERT_OFFSET = 5;
+  CAMERA_PARAM_HORIZ_OFFSET = 6;
+}
+
+// CameraParamMode matches Deadlock CameraParamMode.
+enum CameraParamMode {
+  CAMERA_PARAM_MODE_ALLOW_IN_ONE_CONTEXT = 0;
+  CAMERA_PARAM_MODE_ALLOW_IN_MULTIPLE_CONTEXTS = 1;
+}
+
+// CameraController matches Deadlock CCitadelUserMsg_CameraController, message
+// 326, which adds one operation to the client's camera or clears operations.
+message CameraController {
+  message Maintain {
+    optional float duration = 1 [default = 0];
+  }
+
+  message Approach {
+    optional float speed = 1 [default = 600];
+    optional float default_speed = 2 [default = 600];
+    optional float acceleration = 3 [default = 1000];
+    optional float min_duration = 4 [default = 0];
+    optional float approach_float = 5;
+    optional MsgVector approach_vector = 6;
+    optional bool chase_default = 7;
+  }
+
+  message Spring {
+    optional float spring_strength = 1 [default = 10];
+    optional float min_speed = 4 [default = 0];
+    optional float max_duration = 5 [default = 0];
+    optional float target_float = 6;
+    optional MsgVector target_vector = 7;
+  }
+
+  message Lerp {
+    optional float start_float = 1;
+    optional MsgVector start_vector = 2;
+    optional float end_float = 3;
+    optional MsgVector end_vector = 4;
+    optional float bias = 5;
+    optional float gain = 6;
+    optional float duration = 7 [default = 1];
+  }
+
+  message Lag {
+    optional float min_duration = 1;
+    optional float lag_time = 2;
+    optional float max_speed = 3;
+    optional float spring_strength = 4;
+    optional bool increase_spring_strength_to_keep_target_on_screen = 5 [default = true];
+  }
+
+  optional CameraAction action = 1 [default = CAMERA_ACTION_ADD_OP];
+  optional CameraOperation operation = 2 [default = CAMERA_OPERATION_MAINTAIN];
+  optional CameraParam param = 3 [default = CAMERA_PARAM_CLEAR_ALL_OPS];
+  optional CameraParamMode param_mode = 12 [default = CAMERA_PARAM_MODE_ALLOW_IN_ONE_CONTEXT];
+  optional float delay = 4;
+  optional bool relative_values = 11;
+
+  // ContextSymbolId is the CUtlStringToken of the operation's context name.
+  optional uint32 context_symbol_id = 5;
+
+  // Priority decides between operations on one value; higher wins.
+  optional uint32 priority = 13 [default = 1];
+
+  // TargetPawn is a networked entity handle: the index in the low 14 bits
+  // and the serial in the 10 above; 16777215 names no entity.
+  optional uint32 target_pawn = 14 [default = 16777215];
+
+  optional Maintain maintain = 6;
+  optional Approach approach = 7;
+  optional Spring spring = 8;
+  optional Lerp lerp = 9;
+  optional Lag lag = 10;
+}

@@ -163,6 +163,20 @@ class HostService {
     return std::unexpected("this host does not support FreeCamera");
   }
 
+  // MoveCamera adds one operation to the player's camera, as the game's
+  // abilities pull it back, widen its view or swing it to a point. Operations
+  // run alongside the game's own until they end or ClearCamera removes them.
+  virtual std::expected<void, std::string> MoveCamera(const players::CameraOptions& /*request*/) {
+    return std::unexpected("this host does not support MoveCamera");
+  }
+
+  // ClearCamera removes a context's camera operations from the player's
+  // camera, or every operation, and the camera returns to its usual place.
+  virtual std::expected<void, std::string> ClearCamera(
+      const players::ClearCameraRequest& /*request*/) {
+    return std::unexpected("this host does not support ClearCamera");
+  }
+
   // Unwatch returns a player watching or flying the free camera from their
   // hero back to it. Stopping the mod returns every such player.
   virtual std::expected<void, std::string> Unwatch(const players::PlayerRequest& /*request*/) {
@@ -874,6 +888,22 @@ class HostService {
              return detail::Fail("the FreeCamera request is malformed");
            }
            return detail::Answer(host.FreeCamera(request));
+         }},
+        {"MoveCamera",
+         [](HostService& host, const std::string& bytes) {
+           players::CameraOptions request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the MoveCamera request is malformed");
+           }
+           return detail::Answer(host.MoveCamera(request));
+         }},
+        {"ClearCamera",
+         [](HostService& host, const std::string& bytes) {
+           players::ClearCameraRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ClearCamera request is malformed");
+           }
+           return detail::Answer(host.ClearCamera(request));
          }},
         {"Unwatch",
          [](HostService& host, const std::string& bytes) {

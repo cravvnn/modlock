@@ -150,6 +150,26 @@ const movementActionNames: Partial<Record<number, MovementAction>> = {
   11: 'abilityExecuted',
 }
 
+/**
+ * CameraParam is one value of the camera that follows a hero, which the
+ * game's abilities move as Mirage's Tornado pulls the camera back.
+ */
+export type CameraParam =
+  | 'distance'
+  | 'fieldOfView'
+  | 'target'
+  | 'verticalOffset'
+  | 'horizontalOffset'
+
+/** cameraParamValues encodes each CameraParam. */
+const cameraParamValues: Record<CameraParam, playersPb.CameraParam> = {
+  distance: 0,
+  fieldOfView: 1,
+  target: 2,
+  verticalOffset: 3,
+  horizontalOffset: 4,
+}
+
 /** Ability is one ability a hero owns. */
 export interface Ability {
   /** name is the ability's name, such as citadel_ability_hornet_snipe. */
@@ -1278,6 +1298,182 @@ function fromScore(message: playersPb.Score): Score {
 }
 
 /**
+ * CameraValue is a value for a camera param: a number for every param but
+ * the target, which takes a position.
+ */
+export type CameraValue = number | Vector
+
+/** toCameraValue encodes a CameraValue. */
+function toCameraValue(value: CameraValue): playersPb.CameraValue {
+  return { value: typeof value === 'number' ? { case: 'number' as const, value: value } : { case: 'position' as const, value: value } }
+}
+
+/** CameraMotion is how an operation moves its param. */
+export type CameraMotion =
+  | { readonly hold: CameraHold }
+  | { readonly approach: CameraApproach }
+  | { readonly spring: CameraSpring }
+  | { readonly lerp: CameraLerp }
+  | { readonly lag: CameraLag }
+
+/** toCameraMotion encodes a CameraMotion. */
+function toCameraMotion(value: CameraMotion): playersPb.CameraMotion {
+  if ('hold' in value) return { motion: { case: 'hold', value: value.hold } }
+  if ('approach' in value) return { motion: { case: 'approach', value: toCameraApproach(value.approach) } }
+  if ('spring' in value) return { motion: { case: 'spring', value: toCameraSpring(value.spring) } }
+  if ('lerp' in value) return { motion: { case: 'lerp', value: toCameraLerp(value.lerp) } }
+  return { motion: { case: 'lag', value: value.lag } }
+}
+
+/** CameraHold keeps a param where it is. */
+export interface CameraHold {
+  /** duration is how long it holds, in seconds. */
+  duration?: number
+}
+
+/** CameraApproach moves a param toward a value. */
+export interface CameraApproach {
+  /** value is the value it approaches. */
+  value?: CameraValue
+  /** speed is the most the param moves each second; omitted, 600. */
+  speed?: number
+  /**
+   * defaultSpeed is the speed of the return to the usual value; omitted, 600.
+   */
+  defaultSpeed?: number
+  /** acceleration is how fast the speed builds each second; omitted, 1000. */
+  acceleration?: number
+  /** minDuration is the least time it runs, in seconds. */
+  minDuration?: number
+  /** chaseDefault approaches the param's usual value instead of value. */
+  chaseDefault?: boolean
+}
+
+/** toCameraApproach encodes a CameraApproach. */
+function toCameraApproach(value: CameraApproach): playersPb.CameraApproach {
+  return {
+    value: value.value === undefined ? undefined : toCameraValue(value.value),
+    speed: value.speed,
+    defaultSpeed: value.defaultSpeed,
+    acceleration: value.acceleration,
+    minDuration: value.minDuration,
+    chaseDefault: value.chaseDefault,
+  }
+}
+
+/** CameraSpring pulls a param toward a value. */
+export interface CameraSpring {
+  /** value is the value the spring pulls toward. */
+  value?: CameraValue
+  /** strength is the spring's strength; omitted, 10. */
+  strength?: number
+  /** minSpeed is the least the param moves each second. */
+  minSpeed?: number
+  /**
+   * maxDuration ends the spring after this many seconds, or never when zero.
+   */
+  maxDuration?: number
+}
+
+/** toCameraSpring encodes a CameraSpring. */
+function toCameraSpring(value: CameraSpring): playersPb.CameraSpring {
+  return {
+    value: value.value === undefined ? undefined : toCameraValue(value.value),
+    strength: value.strength,
+    minSpeed: value.minSpeed,
+    maxDuration: value.maxDuration,
+  }
+}
+
+/** CameraLerp moves a param from one value to another over a time. */
+export interface CameraLerp {
+  /** start is the value it starts from. */
+  start: CameraValue
+  /** end is the value it ends at. */
+  end: CameraValue
+  /** bias and gain shape the curve between them. */
+  bias?: number
+  gain?: number
+  /** duration is the time it takes, in seconds; omitted, 1. */
+  duration?: number
+}
+
+/** toCameraLerp encodes a CameraLerp. */
+function toCameraLerp(value: CameraLerp): playersPb.CameraLerp {
+  return {
+    start: toCameraValue(value.start),
+    end: toCameraValue(value.end),
+    bias: value.bias,
+    gain: value.gain,
+    duration: value.duration,
+  }
+}
+
+/** CameraLag lets a param trail its usual value. */
+export interface CameraLag {
+  /** minDuration is the least time it runs, in seconds. */
+  minDuration?: number
+  /** lagTime is how far behind the param trails, in seconds. */
+  lagTime?: number
+  /** maxSpeed is the most the param moves each second. */
+  maxSpeed?: number
+  /** springStrength is the strength of the pull back to the usual value. */
+  springStrength?: number
+  /**
+   * keepTargetOnScreen strengthens the pull when the target would leave the
+   * screen; omitted, true.
+   */
+  keepTargetOnScreen?: boolean
+}
+
+/** CameraOptions adds one operation to a player's camera. */
+export interface CameraOptions {
+  /**
+   * context names a group of operations, which ClearCamera removes together.
+   */
+  context?: string
+  /** param is the camera value the operation moves. */
+  param: CameraParam
+  /** motion is how it moves. */
+  motion: CameraMotion
+  /** delay starts the operation after this many seconds. */
+  delay?: number
+  /**
+   * relative adds the operation's values to the param's usual value instead
+   * of replacing it.
+   */
+  relative?: boolean
+  /**
+   * priority decides between operations on one param; the higher wins.
+   * Omitted, 1.
+   */
+  priority?: number
+  /**
+   * shared lets operations of other contexts move the param at the same time.
+   */
+  shared?: boolean
+  /**
+   * target is the entity handle of the hero whose camera moves, as
+   * Pawn.entity reports it; omitted, the player's own hero.
+   */
+  target?: number
+}
+
+/** toCameraOptions encodes a CameraOptions. */
+function toCameraOptions(value: CameraOptions): playersPb.CameraOptions {
+  return {
+    context: value.context,
+    param: cameraParamValues[value.param],
+    motion: toCameraMotion(value.motion),
+    delay: value.delay,
+    relative: value.relative,
+    priority: value.priority,
+    shared: value.shared,
+    target: value.target,
+  }
+}
+
+/**
  * HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
  * hero's own.
  */
@@ -1679,6 +1875,23 @@ export class Player {
    */
   freeCamera(position: Vector, facing: Angles): boolean {
     return call('FreeCamera', playersPb.FreeCameraRequest.toBinary({ player: this.slot, position, facing })) !== undefined
+  }
+
+  /**
+   * moveCamera adds one operation to the player's camera, as the game's
+   * abilities pull it back, widen its view or swing it to a point. Operations
+   * run alongside the game's own until they end or ClearCamera removes them.
+   */
+  moveCamera(options: CameraOptions): boolean {
+    return call('MoveCamera', playersPb.CameraOptions.toBinary({ player: this.slot, ...toCameraOptions(options) })) !== undefined
+  }
+
+  /**
+   * clearCamera removes a context's camera operations from the player's
+   * camera, or every operation, and the camera returns to its usual place.
+   */
+  clearCamera(context?: string): boolean {
+    return call('ClearCamera', playersPb.ClearCameraRequest.toBinary({ player: this.slot, context })) !== undefined
   }
 
   /**

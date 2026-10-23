@@ -6,7 +6,10 @@
 #include <utility>
 
 #include "modlock/gameinterop/entity_abi.h"
+#include "modlock/gameinterop/keyvalues.h"
 #include "modlock/gameinterop/native_memory.h"
+#include "modlock/gameinterop/native_user_messages.h"
+#include "src/gameinterop/engine/camera.pb.h"
 #include "wasm/game.h"
 #include "wasm/game_internal.h"
 
@@ -161,6 +164,189 @@ std::expected<void, std::string> Game::Unwatch(const players::PlayerRequest& req
   }
   static_cast<void>((*world)->RemoveEntity(*camera));
   return {};
+}
+
+namespace {
+
+namespace engine = gameinterop::engine;
+
+// kCameraParams maps each CameraParam, in order, to the game's param.
+constexpr std::array kCameraParams = {
+    engine::CAMERA_PARAM_DISTANCE,        engine::CAMERA_PARAM_FOV,
+    engine::CAMERA_PARAM_TARGET_POSITION, engine::CAMERA_PARAM_VERT_OFFSET,
+    engine::CAMERA_PARAM_HORIZ_OFFSET,
+};
+
+// NetworkedHandle packs an entity handle as the game sends one in a message:
+// the index in the low 14 bits and the low 10 serial bits above it.
+constexpr uint32_t NetworkedHandle(uint32_t handle) {
+  const uint32_t serial = (handle >> gameinterop::kSerialShift) & 0x3FF;
+  return (gameinterop::EntityIndexOf(handle) & 0x3FFF) | (serial << 14);
+}
+
+// ContextId is the game's string token for a camera context's name.
+uint32_t ContextId(std::string_view context) {
+  return gameinterop::MakeMemberName(context).hash;
+}
+
+// SetValue writes a camera value as an operation's number or its vector.
+template <typename SetNumber, typename MutableVector>
+void SetValue(const players::CameraValue& value, SetNumber set_number,
+              MutableVector mutable_vector) {
+  if (!value.has_position()) {
+    set_number(value.number());
+    return;
+  }
+  engine::MsgVector* vector = mutable_vector();
+  vector->set_x(static_cast<float>(value.position().x()));
+  vector->set_y(static_cast<float>(value.position().y()));
+  vector->set_z(static_cast<float>(value.position().z()));
+}
+
+// SetMotion writes a camera motion as the message's operation and its fields.
+// Fields a mod omits stay unset, so the game's defaults apply.
+std::expected<void, std::string> SetMotion(const players::CameraMotion& motion,
+                                           engine::CameraController& message) {
+  switch (motion.motion_case()) {
+    case players::CameraMotion::kHold:
+      message.set_operation(engine::CAMERA_OPERATION_MAINTAIN);
+      message.mutable_maintain()->set_duration(motion.hold().duration());
+      return {};
+    case players::CameraMotion::kApproach: {
+      const auto& in = motion.approach();
+      auto* out = message.mutable_approach();
+      message.set_operation(engine::CAMERA_OPERATION_APPROACH);
+      SetValue(
+          in.value(), [&](float number) { out->set_approach_float(number); },
+          [&] { return out->mutable_approach_vector(); });
+      if (in.has_speed()) {
+        out->set_speed(in.speed());
+      }
+      if (in.has_default_speed()) {
+        out->set_default_speed(in.default_speed());
+      }
+      if (in.has_acceleration()) {
+        out->set_acceleration(in.acceleration());
+      }
+      out->set_min_duration(in.min_duration());
+      out->set_chase_default(in.chase_default());
+      return {};
+    }
+    case players::CameraMotion::kSpring: {
+      const auto& in = motion.spring();
+      auto* out = message.mutable_spring();
+      message.set_operation(engine::CAMERA_OPERATION_SPRING);
+      SetValue(
+          in.value(), [&](float number) { out->set_target_float(number); },
+          [&] { return out->mutable_target_vector(); });
+      if (in.has_strength()) {
+        out->set_spring_strength(in.strength());
+      }
+      out->set_min_speed(in.min_speed());
+      out->set_max_duration(in.max_duration());
+      return {};
+    }
+    case players::CameraMotion::kLerp: {
+      const auto& in = motion.lerp();
+      auto* out = message.mutable_lerp();
+      message.set_operation(engine::CAMERA_OPERATION_LERP);
+      SetValue(
+          in.start(), [&](float number) { out->set_start_float(number); },
+          [&] { return out->mutable_start_vector(); });
+      SetValue(
+          in.end(), [&](float number) { out->set_end_float(number); },
+          [&] { return out->mutable_end_vector(); });
+      out->set_bias(in.bias());
+      out->set_gain(in.gain());
+      if (in.has_duration()) {
+        out->set_duration(in.duration());
+      }
+      return {};
+    }
+    case players::CameraMotion::kLag: {
+      const auto& in = motion.lag();
+      auto* out = message.mutable_lag();
+      message.set_operation(engine::CAMERA_OPERATION_LAG);
+      out->set_min_duration(in.min_duration());
+      out->set_lag_time(in.lag_time());
+      out->set_max_speed(in.max_speed());
+      out->set_spring_strength(in.spring_strength());
+      if (in.has_keep_target_on_screen()) {
+        out->set_increase_spring_strength_to_keep_target_on_screen(in.keep_target_on_screen());
+      }
+      return {};
+    }
+    case players::CameraMotion::MOTION_NOT_SET:
+      break;
+  }
+  return std::unexpected("the camera operation has no motion");
+}
+
+}  // namespace
+
+std::expected<void, std::string> Game::MoveCamera(const players::CameraOptions& request) {
+  // Resolve the messages and the game's param.
+  auto messages = services_.Messages();
+  if (!messages) {
+    return std::unexpected(messages.error());
+  }
+  const auto param = static_cast<size_t>(request.param());
+  if (param >= kCameraParams.size()) {
+    return std::unexpected("the camera param is unknown");
+  }
+
+  // Describe the operation.
+  engine::CameraController message;
+  message.set_action(engine::CAMERA_ACTION_ADD_OP);
+  message.set_param(kCameraParams[param]);
+  if (auto motion = SetMotion(request.motion(), message); !motion) {
+    return motion;
+  }
+  message.set_context_symbol_id(ContextId(request.context()));
+  message.set_delay(request.delay());
+  message.set_relative_values(request.relative());
+  if (request.has_priority()) {
+    message.set_priority(request.priority());
+  }
+  if (request.shared()) {
+    message.set_param_mode(engine::CAMERA_PARAM_MODE_ALLOW_IN_MULTIPLE_CONTEXTS);
+  }
+
+  // Aim it at the named hero, or the player's own; the client drops an
+  // operation that names no hero.
+  uint32_t target = request.target();
+  if (request.has_target()) {
+    if (auto entity = Entity(target); !entity) {
+      return std::unexpected(entity.error());
+    }
+  } else {
+    auto sample = Live(request.player());
+    if (!sample) {
+      return std::unexpected(sample.error());
+    }
+    target = sample->pawn_handle;
+  }
+  message.set_target_pawn(NetworkedHandle(target));
+  return (*messages)->CameraController(request.player(), message);
+}
+
+std::expected<void, std::string> Game::ClearCamera(const players::ClearCameraRequest& request) {
+  auto messages = services_.Messages();
+  if (!messages) {
+    return std::unexpected(messages.error());
+  }
+
+  // Clear the named context, or everything.
+  engine::CameraController message;
+  if (request.has_context()) {
+    message.set_action(engine::CAMERA_ACTION_CLEAR_OPS_FOR_CONTEXT);
+    message.set_param(engine::CAMERA_PARAM_CLEAR_ALL_OPS_FOR_CONTEXT);
+    message.set_context_symbol_id(ContextId(request.context()));
+  } else {
+    message.set_action(engine::CAMERA_ACTION_CLEAR_ALL_OPS);
+    message.set_param(engine::CAMERA_PARAM_CLEAR_ALL_OPS);
+  }
+  return (*messages)->CameraController(request.player(), message);
 }
 
 std::expected<void, std::string> Game::Respawn(const players::PlayerRequest& request) {

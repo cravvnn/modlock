@@ -70,7 +70,11 @@ func devCommand(out *printer) *cli.Command {
 			rebuild := func() {
 				// Keep the running mod when the build fails.
 				if err := out.build(c.Context, opened, project.Dev); err != nil {
-					out.note("the build failed; fix it and save to try again")
+					if watch {
+						out.note("the build failed; fix it and save to try again")
+					} else {
+						out.note("the build failed; fix it and run again, or pass --watch to rebuild on each save")
+					}
 					return
 				}
 

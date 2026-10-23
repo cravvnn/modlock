@@ -128,6 +128,22 @@ local MovementAction: { [any]: any } = {
 	abilityExecuted = 11,
 }
 
+-- CameraParam is one value of the camera that follows a hero, which the
+-- game's abilities move as Mirage's Tornado pulls the camera back.
+export type CameraParam = "distance" | "fieldOfView" | "target" | "verticalOffset" | "horizontalOffset"
+local CameraParam: { [any]: any } = {
+	[0] = "distance",
+	distance = 0,
+	[1] = "fieldOfView",
+	fieldOfView = 1,
+	[2] = "target",
+	target = 2,
+	[3] = "verticalOffset",
+	verticalOffset = 3,
+	[4] = "horizontalOffset",
+	horizontalOffset = 4,
+}
+
 -- Ability is one ability a hero owns.
 export type Ability = {
 	-- name is the ability's name, such as citadel_ability_hornet_snipe.
@@ -778,6 +794,98 @@ export type Score = {
 	netWorth: number,
 }
 
+-- CameraValue is a value for a camera param: a number for every param but
+-- the target, which takes a position.
+export type CameraValue = number | Vector
+
+-- CameraMotion is how an operation moves its param.
+export type CameraMotion = { hold: CameraHold } | { approach: CameraApproach } | { spring: CameraSpring } | { lerp: CameraLerp } | { lag: CameraLag }
+
+-- CameraHold keeps a param where it is.
+export type CameraHold = {
+	-- duration is how long it holds, in seconds.
+	duration: number?,
+}
+
+-- CameraApproach moves a param toward a value.
+export type CameraApproach = {
+	-- value is the value it approaches.
+	value: CameraValue?,
+	-- speed is the most the param moves each second; omitted, 600.
+	speed: number?,
+	-- defaultSpeed is the speed of the return to the usual value; omitted, 600.
+	defaultSpeed: number?,
+	-- acceleration is how fast the speed builds each second; omitted, 1000.
+	acceleration: number?,
+	-- minDuration is the least time it runs, in seconds.
+	minDuration: number?,
+	-- chaseDefault approaches the param's usual value instead of value.
+	chaseDefault: boolean?,
+}
+
+-- CameraSpring pulls a param toward a value.
+export type CameraSpring = {
+	-- value is the value the spring pulls toward.
+	value: CameraValue?,
+	-- strength is the spring's strength; omitted, 10.
+	strength: number?,
+	-- minSpeed is the least the param moves each second.
+	minSpeed: number?,
+	-- maxDuration ends the spring after this many seconds, or never when zero.
+	maxDuration: number?,
+}
+
+-- CameraLerp moves a param from one value to another over a time.
+export type CameraLerp = {
+	-- start is the value it starts from.
+	start: CameraValue,
+	-- end is the value it ends at.
+	["end"]: CameraValue,
+	-- bias and gain shape the curve between them.
+	bias: number?,
+	gain: number?,
+	-- duration is the time it takes, in seconds; omitted, 1.
+	duration: number?,
+}
+
+-- CameraLag lets a param trail its usual value.
+export type CameraLag = {
+	-- minDuration is the least time it runs, in seconds.
+	minDuration: number?,
+	-- lagTime is how far behind the param trails, in seconds.
+	lagTime: number?,
+	-- maxSpeed is the most the param moves each second.
+	maxSpeed: number?,
+	-- springStrength is the strength of the pull back to the usual value.
+	springStrength: number?,
+	-- keepTargetOnScreen strengthens the pull when the target would leave the
+	-- screen; omitted, true.
+	keepTargetOnScreen: boolean?,
+}
+
+-- CameraOptions adds one operation to a player's camera.
+export type CameraOptions = {
+	-- context names a group of operations, which ClearCamera removes together.
+	context: string?,
+	-- param is the camera value the operation moves.
+	param: CameraParam,
+	-- motion is how it moves.
+	motion: CameraMotion,
+	-- delay starts the operation after this many seconds.
+	delay: number?,
+	-- relative adds the operation's values to the param's usual value instead
+	-- of replacing it.
+	relative: boolean?,
+	-- priority decides between operations on one param; the higher wins.
+	-- Omitted, 1.
+	priority: number?,
+	-- shared lets operations of other contexts move the param at the same time.
+	shared: boolean?,
+	-- target is the entity handle of the hero whose camera moves, as
+	-- Pawn.entity reports it; omitted, the player's own hero.
+	target: number?,
+}
+
 -- HeroTarget is the state RestoreHero gives one hero. Omitted parts keep the
 -- hero's own.
 export type HeroTarget = {
@@ -993,6 +1101,13 @@ export type Player = {
 	-- A player with a hero leaves it where it stands, as Watch does, until
 	-- Unwatch returns them to it; Watch follows a hero again.
 	freeCamera: (self: Player, position: Vector, facing: Angles) -> boolean,
+	-- moveCamera adds one operation to the player's camera, as the game's
+	-- abilities pull it back, widen its view or swing it to a point. Operations
+	-- run alongside the game's own until they end or ClearCamera removes them.
+	moveCamera: (self: Player, options: CameraOptions) -> boolean,
+	-- clearCamera removes a context's camera operations from the player's
+	-- camera, or every operation, and the camera returns to its usual place.
+	clearCamera: (self: Player, context: string?) -> boolean,
 	-- unwatch returns a player watching or flying the free camera from their
 	-- hero back to it. Stopping the mod returns every such player.
 	unwatch: (self: Player) -> boolean,
@@ -1190,6 +1305,19 @@ end
 -- Unwatch returns them to it; Watch follows a hero again.
 function Player.freeCamera(self: Player, position: Vector, facing: Angles): boolean
 	return call("FreeCamera", "FreeCameraRequest", { player = self, position = position, facing = facing }) ~= nil
+end
+
+-- moveCamera adds one operation to the player's camera, as the game's
+-- abilities pull it back, widen its view or swing it to a point. Operations
+-- run alongside the game's own until they end or ClearCamera removes them.
+function Player.moveCamera(self: Player, options: CameraOptions): boolean
+	return call("MoveCamera", "CameraOptions", with(options, "player", self)) ~= nil
+end
+
+-- clearCamera removes a context's camera operations from the player's
+-- camera, or every operation, and the camera returns to its usual place.
+function Player.clearCamera(self: Player, context: string?): boolean
+	return call("ClearCamera", "ClearCameraRequest", { player = self, context = context }) ~= nil
 end
 
 -- unwatch returns a player watching or flying the free camera from their
@@ -2178,6 +2306,63 @@ schema.FreeCameraRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
 	{ number = 2, name = "position", kind = "message", message = "Vec3" },
 	{ number = 3, name = "facing", kind = "message", message = "EulerAngles" },
+}
+schema.CameraValue = {
+	{ number = 1, name = "number", kind = "float", oneof = "value" },
+	{ number = 2, name = "position", kind = "message", oneof = "value", message = "Vec3" },
+}
+schema.CameraMotion = {
+	{ number = 1, name = "hold", kind = "message", optional = true, message = "CameraHold" },
+	{ number = 2, name = "approach", kind = "message", optional = true, message = "CameraApproach" },
+	{ number = 3, name = "spring", kind = "message", optional = true, message = "CameraSpring" },
+	{ number = 4, name = "lerp", kind = "message", optional = true, message = "CameraLerp" },
+	{ number = 5, name = "lag", kind = "message", optional = true, message = "CameraLag" },
+}
+schema.CameraHold = {
+	{ number = 1, name = "duration", kind = "float", optional = true },
+}
+schema.CameraApproach = {
+	{ number = 1, name = "value", kind = "message", optional = true, message = "CameraValue", union = "value" },
+	{ number = 2, name = "speed", kind = "float", optional = true },
+	{ number = 3, name = "defaultSpeed", kind = "float", optional = true },
+	{ number = 4, name = "acceleration", kind = "float", optional = true },
+	{ number = 5, name = "minDuration", kind = "float", optional = true },
+	{ number = 6, name = "chaseDefault", kind = "bool", optional = true },
+}
+schema.CameraSpring = {
+	{ number = 1, name = "value", kind = "message", optional = true, message = "CameraValue", union = "value" },
+	{ number = 2, name = "strength", kind = "float", optional = true },
+	{ number = 3, name = "minSpeed", kind = "float", optional = true },
+	{ number = 4, name = "maxDuration", kind = "float", optional = true },
+}
+schema.CameraLerp = {
+	{ number = 1, name = "start", kind = "message", message = "CameraValue", union = "value" },
+	{ number = 2, name = "end", kind = "message", message = "CameraValue", union = "value" },
+	{ number = 3, name = "bias", kind = "float", optional = true },
+	{ number = 4, name = "gain", kind = "float", optional = true },
+	{ number = 5, name = "duration", kind = "float", optional = true },
+}
+schema.CameraLag = {
+	{ number = 1, name = "minDuration", kind = "float", optional = true },
+	{ number = 2, name = "lagTime", kind = "float", optional = true },
+	{ number = 3, name = "maxSpeed", kind = "float", optional = true },
+	{ number = 4, name = "springStrength", kind = "float", optional = true },
+	{ number = 5, name = "keepTargetOnScreen", kind = "bool", optional = true },
+}
+schema.CameraOptions = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "context", kind = "string", optional = true },
+	{ number = 3, name = "param", kind = "enum", enum = CameraParam },
+	{ number = 4, name = "motion", kind = "message", message = "CameraMotion" },
+	{ number = 5, name = "delay", kind = "float", optional = true },
+	{ number = 6, name = "relative", kind = "bool", optional = true },
+	{ number = 7, name = "priority", kind = "uint32", optional = true },
+	{ number = 8, name = "shared", kind = "bool", optional = true },
+	{ number = 9, name = "target", kind = "uint32", optional = true },
+}
+schema.ClearCameraRequest = {
+	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },
+	{ number = 2, name = "context", kind = "string", optional = true },
 }
 schema.FreezeRequest = {
 	{ number = 1, name = "player", kind = "int32", class = Player, key = "slot" },

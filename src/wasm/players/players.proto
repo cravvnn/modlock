@@ -179,6 +179,171 @@ message FreeCameraRequest {
   modlock.geometry.EulerAngles facing = 3;
 }
 
+// CameraParam is one value of the camera that follows a hero, which the
+// game's abilities move as Mirage's Tornado pulls the camera back.
+enum CameraParam {
+  // CAMERA_PARAM_DISTANCE is how far behind the hero the camera sits.
+  CAMERA_PARAM_DISTANCE = 0;
+
+  // CAMERA_PARAM_FIELD_OF_VIEW is the view's field of view in degrees.
+  CAMERA_PARAM_FIELD_OF_VIEW = 1;
+
+  // CAMERA_PARAM_TARGET is the position the camera follows.
+  CAMERA_PARAM_TARGET = 2;
+
+  // CAMERA_PARAM_VERTICAL_OFFSET raises the camera.
+  CAMERA_PARAM_VERTICAL_OFFSET = 3;
+
+  // CAMERA_PARAM_HORIZONTAL_OFFSET moves the camera to the side.
+  CAMERA_PARAM_HORIZONTAL_OFFSET = 4;
+}
+
+// CameraValue is a value for a camera param: a number for every param but
+// the target, which takes a position.
+message CameraValue {
+  oneof value {
+    float number = 1;
+    modlock.geometry.Vec3 position = 2;
+  }
+}
+
+// CameraMotion is how an operation moves its param.
+message CameraMotion {
+  oneof motion {
+    // Hold keeps the param where it is.
+    CameraHold hold = 1;
+
+    // Approach moves the param toward a value at a speed.
+    CameraApproach approach = 2;
+
+    // Spring pulls the param toward a value.
+    CameraSpring spring = 3;
+
+    // Lerp moves the param from one value to another over a time.
+    CameraLerp lerp = 4;
+
+    // Lag lets the param trail its usual value.
+    CameraLag lag = 5;
+  }
+}
+
+// CameraHold keeps a param where it is.
+message CameraHold {
+  // Duration is how long it holds, in seconds.
+  optional float duration = 1;
+}
+
+// CameraApproach moves a param toward a value.
+message CameraApproach {
+  // Value is the value it approaches.
+  optional CameraValue value = 1;
+
+  // Speed is the most the param moves each second; omitted, 600.
+  optional float speed = 2;
+
+  // DefaultSpeed is the speed of the return to the usual value; omitted, 600.
+  optional float default_speed = 3;
+
+  // Acceleration is how fast the speed builds each second; omitted, 1000.
+  optional float acceleration = 4;
+
+  // MinDuration is the least time it runs, in seconds.
+  optional float min_duration = 5;
+
+  // ChaseDefault approaches the param's usual value instead of Value.
+  optional bool chase_default = 6;
+}
+
+// CameraSpring pulls a param toward a value.
+message CameraSpring {
+  // Value is the value the spring pulls toward.
+  optional CameraValue value = 1;
+
+  // Strength is the spring's strength; omitted, 10.
+  optional float strength = 2;
+
+  // MinSpeed is the least the param moves each second.
+  optional float min_speed = 3;
+
+  // MaxDuration ends the spring after this many seconds, or never when zero.
+  optional float max_duration = 4;
+}
+
+// CameraLerp moves a param from one value to another over a time.
+message CameraLerp {
+  // Start is the value it starts from.
+  CameraValue start = 1;
+
+  // End is the value it ends at.
+  CameraValue end = 2;
+
+  // Bias and Gain shape the curve between them.
+  optional float bias = 3;
+  optional float gain = 4;
+
+  // Duration is the time it takes, in seconds; omitted, 1.
+  optional float duration = 5;
+}
+
+// CameraLag lets a param trail its usual value.
+message CameraLag {
+  // MinDuration is the least time it runs, in seconds.
+  optional float min_duration = 1;
+
+  // LagTime is how far behind the param trails, in seconds.
+  optional float lag_time = 2;
+
+  // MaxSpeed is the most the param moves each second.
+  optional float max_speed = 3;
+
+  // SpringStrength is the strength of the pull back to the usual value.
+  optional float spring_strength = 4;
+
+  // KeepTargetOnScreen strengthens the pull when the target would leave the
+  // screen; omitted, true.
+  optional bool keep_target_on_screen = 5;
+}
+
+// CameraOptions adds one operation to a player's camera.
+message CameraOptions {
+  int32 player = 1;
+
+  // Context names a group of operations, which ClearCamera removes together.
+  optional string context = 2;
+
+  // Param is the camera value the operation moves.
+  CameraParam param = 3;
+
+  // Motion is how it moves.
+  CameraMotion motion = 4;
+
+  // Delay starts the operation after this many seconds.
+  optional float delay = 5;
+
+  // Relative adds the operation's values to the param's usual value instead
+  // of replacing it.
+  optional bool relative = 6;
+
+  // Priority decides between operations on one param; the higher wins.
+  // Omitted, 1.
+  optional uint32 priority = 7;
+
+  // Shared lets operations of other contexts move the param at the same time.
+  optional bool shared = 8;
+
+  // Target is the entity handle of the hero whose camera moves, as
+  // Pawn.entity reports it; omitted, the player's own hero.
+  optional uint32 target = 9;
+}
+
+// ClearCameraRequest removes operations from a player's camera.
+message ClearCameraRequest {
+  int32 player = 1;
+
+  // Context names the operations to remove; omitted, every operation.
+  optional string context = 2;
+}
+
 // FreezeRequest holds or releases one player's hero.
 message FreezeRequest {
   int32 player = 1;

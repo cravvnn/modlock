@@ -16,11 +16,12 @@ inline constexpr size_t kSerializerAllocateOffset = 0x8;
 inline constexpr size_t kSerializerMessageIdOffset = 0x18;
 
 // The user message ids the framework sends or reads: CUserMessageSayText2,
-// CUserMessageTextMsg, Deadlock's chat message, PostProcessingAnim and
-// HudGameAnnouncement.
+// CUserMessageTextMsg, Deadlock's chat message, CameraController,
+// PostProcessingAnim and HudGameAnnouncement.
 inline constexpr int16_t kPlayerChatMessageId = 118;
 inline constexpr int16_t kHudTextMessageId = 124;
 inline constexpr int16_t kChatMessageId = 314;
+inline constexpr int16_t kCameraControllerMessageId = 326;
 inline constexpr int16_t kScreenEffectMessageId = 332;
 inline constexpr int16_t kHudAnnouncementMessageId = 363;
 

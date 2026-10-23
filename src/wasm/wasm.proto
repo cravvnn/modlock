@@ -138,6 +138,15 @@ service Host {
   // Unwatch returns them to it; Watch follows a hero again.
   rpc FreeCamera(modlock.wasm.players.FreeCameraRequest) returns (Empty);
 
+  // MoveCamera adds one operation to the player's camera, as the game's
+  // abilities pull it back, widen its view or swing it to a point. Operations
+  // run alongside the game's own until they end or ClearCamera removes them.
+  rpc MoveCamera(modlock.wasm.players.CameraOptions) returns (Empty);
+
+  // ClearCamera removes a context's camera operations from the player's
+  // camera, or every operation, and the camera returns to its usual place.
+  rpc ClearCamera(modlock.wasm.players.ClearCameraRequest) returns (Empty);
+
   // Unwatch returns a player watching or flying the free camera from their
   // hero back to it. Stopping the mod returns every such player.
   rpc Unwatch(modlock.wasm.players.PlayerRequest) returns (Empty);

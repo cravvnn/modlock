@@ -1,5 +1,9 @@
 syntax = "proto2";
 
+// These messages copy the game's own, with its field numbers, from GameTracking:
+// https://github.com/SteamTracking/GameTracking-Deadlock/blob/master/Protobufs/usermessages.proto
+// https://github.com/SteamTracking/GameTracking-Deadlock/blob/master/Protobufs/citadel_usermessages.proto
+
 package modlock.gameinterop.engine;
 
 option go_package = "github.com/paralin/modlock/src/gameinterop/engine;engine";
