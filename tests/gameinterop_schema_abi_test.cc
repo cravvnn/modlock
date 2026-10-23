@@ -401,6 +401,79 @@ TEST(SchemaFieldOfPaths, FieldOnTheBaseClassResolvesThroughTheWalk) {
   EXPECT_TRUE(field->networked);
 }
 
+// g_classes maps each class name to its info for NamedScopeEntry.
+std::vector<std::pair<std::string, void*>> g_classes;
+
+// NamedScopeEntry finds a class by name in g_classes, or nothing.
+void NamedScopeEntry(void* /*self*/, void* out_handle, const char* class_name) {
+  void* found = nullptr;
+  for (const auto& [name, info] : g_classes) {
+    if (name == class_name) {
+      found = info;
+    }
+  }
+  *static_cast<void**>(out_handle) = found;
+}
+
+TEST(SchemaFieldOfPaths, DottedPathReachesInsideAnEmbeddedStructure) {
+  // A schema type is a vtable, then its name.
+  struct Type {
+    const void* vtable;
+    const char* name;
+  };
+  const Type collision_type{nullptr, "CCollisionProperty"};
+  const Type group_type{nullptr, "uint8"};
+  constexpr size_t kFieldType = 0x08;
+
+  // The entity embeds a CCollisionProperty at 0x610.
+  ClassInfoBuffers entity;
+  entity.set_class_size(0x878);
+  entity.set_field_count(1);
+  entity.set_field(0, "m_Collision", 0x610);
+  const Type* collision_pointer = &collision_type;
+  std::memcpy(entity.fields.data() + kFieldType, &collision_pointer, sizeof(collision_pointer));
+  entity.set_fields_pointer(entity.fields.data());
+
+  // CCollisionProperty holds a one-byte group at 94, before m_flBoundingRadius.
+  ClassInfoBuffers collision;
+  collision.set_class_size(0xB8);
+  collision.set_field_count(2);
+  collision.set_field(0, "m_CollisionGroup", 94);
+  collision.set_field(1, "m_flBoundingRadius", 96);
+  const Type* group_pointer = &group_type;
+  std::memcpy(collision.fields.data() + kFieldType, &group_pointer, sizeof(group_pointer));
+  collision.set_fields_pointer(collision.fields.data());
+
+  // A schema system finds both classes by name.
+  alignas(16) void* system_table[16];
+  std::memset(system_table, 0, sizeof(system_table));
+  system_table[kFindTypeScope] = reinterpret_cast<void*>(&SystemFindTypeScopeEntry);
+  FakeTypeScope system{system_table};
+  alignas(16) void* scope_table[3];
+  std::memset(scope_table, 0, sizeof(scope_table));
+  scope_table[kFindDeclaredClass] = reinterpret_cast<void*>(&NamedScopeEntry);
+  FakeTypeScope type_scope{scope_table};
+  g_persistent_scope = &type_scope;
+  g_classes = {{"CBaseModelEntity", entity.info.data()},
+               {"CCollisionProperty", collision.info.data()}};
+
+  // The path's offsets add up, and the span stops at the next nested field.
+  auto field = modlock::gameinterop::SchemaFieldOf(&system, "server.dll", "CBaseModelEntity",
+                                                   "m_Collision.m_CollisionGroup");
+  ASSERT_TRUE(field.has_value()) << field.error();
+  EXPECT_EQ(field->offset, static_cast<size_t>(0x610 + 94));
+  EXPECT_EQ(field->size, static_cast<size_t>(2));
+
+  // A path through a field that holds no structure names that field.
+  auto scalar = modlock::gameinterop::SchemaFieldOf(&system, "server.dll", "CBaseModelEntity",
+                                                    "m_Collision.m_CollisionGroup.m_x");
+  ASSERT_FALSE(scalar.has_value());
+  EXPECT_NE(scalar.error().find("m_CollisionGroup"), std::string::npos) << scalar.error();
+
+  g_persistent_scope = nullptr;
+  g_classes.clear();
+}
+
 TEST(SchemaFieldOfPaths, ZeroSizedStorageSpanIsAnError) {
   // A class whose only field sits at its end.
   ClassInfoBuffers buffers;

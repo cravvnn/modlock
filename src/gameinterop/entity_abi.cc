@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <span>
+#include <string_view>
 
 #include "modlock/gameinterop/mapped_module_image.h"
 #include "modlock/gameinterop/virtual_slots.h"
@@ -116,9 +117,11 @@ const schema::ClassInfo* FirstBaseOf(const schema::ClassInfo* info) {
 
 // FieldInClassInfo searches one class info's own fields, then its first base
 // class (single inheritance). A field's storage runs to the next field or the
-// end of its class.
+// end of its class. type receives the field's type name, as the schema spells
+// it.
 std::expected<SchemaField, std::string> FieldInClassInfo(const schema::ClassInfo* info,
-                                                         const char* field_name) {
+                                                         const char* field_name,
+                                                         const char** type) {
   for (; info != nullptr; info = FirstBaseOf(info)) {
     const std::span fields(info->fields, info->field_count);
     for (const auto& field : fields) {
@@ -135,6 +138,7 @@ std::expected<SchemaField, std::string> FieldInClassInfo(const schema::ClassInfo
       if (field.offset < 0 || boundary <= field.offset) {
         return std::unexpected("schema field storage span is invalid");
       }
+      *type = field.type == nullptr ? nullptr : field.type->name;
       return SchemaField{static_cast<size_t>(field.offset),
                          static_cast<size_t>(boundary - field.offset), IsFieldNetworked(field)};
     }
@@ -373,7 +377,36 @@ std::expected<SchemaField, std::string> SchemaFieldOf(void* schema_system, const
   if (!info) {
     return std::unexpected(info.error());
   }
-  return FieldInClassInfo(*info, field_name);
+
+  // A dotted path walks embedded structures: each segment is a field of the
+  // class the previous segment holds, and the offsets add up. The last
+  // segment's storage stays inside its own structure.
+  std::string_view path = field_name;
+  size_t base = 0;
+  bool networked = true;
+  for (;;) {
+    const auto dot = path.find('.');
+    const std::string segment(path.substr(0, dot));
+    const char* type = nullptr;
+    auto field = FieldInClassInfo(*info, segment.c_str(), &type);
+    if (!field) {
+      return std::unexpected(field.error());
+    }
+    networked = networked && field->networked;
+    if (dot == std::string_view::npos) {
+      return SchemaField{base + field->offset, field->size, networked};
+    }
+    if (type == nullptr) {
+      return std::unexpected("schema field '" + segment + "' has no type");
+    }
+    info = SchemaClassInfoOf(schema_system, module_name, type);
+    if (!info) {
+      return std::unexpected("schema field '" + segment + "' does not hold a structure: " +
+                             info.error());
+    }
+    base += field->offset;
+    path.remove_prefix(dot + 1);
+  }
 }
 
 std::expected<void, std::string> ResolveSchemaOffsets(void* schema_system, const char* module_name,

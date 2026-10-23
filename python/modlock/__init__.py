@@ -973,7 +973,8 @@ class FieldWrite:
 
     # class_name is the server class that declares the field, or a subclass.
     class_name: str = ""
-    # field is the field's schema name, such as m_iLane.
+    # field is the field's schema name, such as m_iLane. A dotted path, such as
+    # m_Collision.m_CollisionGroup, names a field inside an embedded structure.
     field: str = ""
     # type is how to write the field.
     type: FieldType

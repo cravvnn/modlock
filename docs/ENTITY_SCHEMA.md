@@ -209,6 +209,18 @@ of the named class or derives from it. A handle to a trooper named as a
 `CCitadelPlayerPawn` is refused with both class names, and nothing is written.
 A write marks the field changed so the server sends it to the players.
 
+A dotted field name reaches a field inside an embedded structure, such as the
+collision group of a model entity's collision property:
+
+```ts
+writeField(prop, 'CBaseModelEntity', 'm_Collision.m_CollisionGroup', 'uint8', 2)
+writeField(prop, 'CBaseModelEntity', 'm_Collision.m_collisionAttribute.m_nInteractsExclude', 'uint64', 0n)
+```
+
+Each segment names a field of the structure the segment before it holds, and
+the host refuses a path through a field that holds a number, a pointer or a
+handle.
+
 Field types cover booleans, signed and unsigned integers of 8 to 64 bits, 32
 and 64-bit floats, vectors, entity handles and strings. Angles travel as
 vectors. A typed field whose type is another entity class reads as that

@@ -4436,27 +4436,47 @@ export const Steering: MessageType<Steering> =
  * @generated from message modlock.wasm.DriveRequest
  */
 export interface DriveRequest {
-  player?: number;
-  command?: DriveCommand;
+  player?: number
+  command?: DriveCommand
 }
 
-export const DriveRequest: MessageType<DriveRequest> = /* @__PURE__ */ createMessageType<DriveRequest>("modlock.wasm.DriveRequest", () => [
-  [1, "player", 5],
-  [2, "command", 11, 0, DriveCommand.codec],
-], {
-  decode: (r: BinaryReader, end: number, m: DriveRequest): DriveRequest => {
-    while (r.pos < end) {
-      const t = r.tag();
-      if ((t & 7) === 4) return m;
-      switch (t >>> 3) {
-        case 1: m.player = r.int32(); break;
-        case 2: m.command = DriveCommand.decode(r, r.delimited(), m.command ?? {}); break;
-        default: r.skip(t);
-      }
-    }
-    return m;
-  },
-});
+export const DriveRequest: MessageType<DriveRequest> =
+  /* @__PURE__ */ createMessageType<DriveRequest>(
+    'modlock.wasm.DriveRequest',
+    () => [
+      [1, 'player', 5],
+      [2, 'command', 11, 0, DriveCommand.codec],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: DriveRequest): DriveRequest => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.player = r.int32()
+              break
+            case 2:
+              m.command = DriveCommand.decode(r, r.delimited(), m.command ?? {})
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DriveRequest, w: Writer): void => {
+        {
+          const v = m.player
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.command
+          if (v != null) DriveCommand.writeField(w, 2, v)
+        }
+      },
+    },
+  )
 
 /**
  * DriveCommand is a player's controls for one tick and the ticks after it.
@@ -4468,46 +4488,84 @@ export interface DriveCommand {
    * Facing is where the hero looks and aims; its yaw turns the body, as the
    * camera turns a player's hero.
    */
-  facing?: EulerAngles;
+  facing?: EulerAngles
   /**
    * Forward and Left are the movement axes, from -1 to 1, relative to the
    * facing's yaw.
    */
-  forward?: number;
-  left?: number;
+  forward?: number
+  left?: number
   /**
    * Held holds down these buttons on every tick.
    */
-  held?: bigint;
+  held?: bigint
   /**
    * Pressed presses these buttons on the next tick only, as a tap.
    */
-  pressed?: bigint;
+  pressed?: bigint
 }
 
-export const DriveCommand: MessageType<DriveCommand> = /* @__PURE__ */ createMessageType<DriveCommand>("modlock.wasm.DriveCommand", () => [
-  [1, "facing", 11, 0, EulerAngles.codec],
-  [2, "forward", 2],
-  [3, "left", 2],
-  [4, "held", 4],
-  [5, "pressed", 4],
-], {
-  decode: (r: BinaryReader, end: number, m: DriveCommand): DriveCommand => {
-    while (r.pos < end) {
-      const t = r.tag();
-      if ((t & 7) === 4) return m;
-      switch (t >>> 3) {
-        case 1: m.facing = EulerAngles.decode(r, r.delimited(), m.facing ?? {}); break;
-        case 2: m.forward = r.float(); break;
-        case 3: m.left = r.float(); break;
-        case 4: m.held = r.uint64(); break;
-        case 5: m.pressed = r.uint64(); break;
-        default: r.skip(t);
-      }
-    }
-    return m;
-  },
-});
+export const DriveCommand: MessageType<DriveCommand> =
+  /* @__PURE__ */ createMessageType<DriveCommand>(
+    'modlock.wasm.DriveCommand',
+    () => [
+      [1, 'facing', 11, 0, EulerAngles.codec],
+      [2, 'forward', 2],
+      [3, 'left', 2],
+      [4, 'held', 4],
+      [5, 'pressed', 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: DriveCommand): DriveCommand => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.facing = EulerAngles.decode(r, r.delimited(), m.facing ?? {})
+              break
+            case 2:
+              m.forward = r.float()
+              break
+            case 3:
+              m.left = r.float()
+              break
+            case 4:
+              m.held = r.uint64()
+              break
+            case 5:
+              m.pressed = r.uint64()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DriveCommand, w: Writer): void => {
+        {
+          const v = m.facing
+          if (v != null) EulerAngles.writeField(w, 1, v)
+        }
+        {
+          const v = m.forward
+          if (v != null && v !== 0) w.uint32(21).float(v)
+        }
+        {
+          const v = m.left
+          if (v != null && v !== 0) w.uint32(29).float(v)
+        }
+        {
+          const v = m.held
+          if (v) w.uint32(32).uint64(v)
+        }
+        {
+          const v = m.pressed
+          if (v) w.uint32(40).uint64(v)
+        }
+      },
+    },
+  )
 
 /**
  * AdjustSoulsRequest changes one player's souls.
@@ -5808,7 +5866,8 @@ export interface ReadFieldRequest {
    */
   className?: string
   /**
-   * Field is the field's schema name, such as m_iHealth.
+   * Field is the field's schema name, such as m_iHealth. A dotted path, such as
+   * m_Collision.m_CollisionGroup, names a field inside an embedded structure.
    */
   field?: string
   /**
@@ -6162,7 +6221,8 @@ export interface WriteFieldRequest {
    */
   className?: string
   /**
-   * Field is the field's schema name, such as m_iClip.
+   * Field is the field's schema name, such as m_iClip. A dotted path, such as
+   * m_Collision.m_CollisionGroup, names a field inside an embedded structure.
    */
   field?: string
   /**
@@ -8365,7 +8425,8 @@ export interface FieldWrite {
    */
   className?: string
   /**
-   * Field is the field's schema name, such as m_iLane.
+   * Field is the field's schema name, such as m_iLane. A dotted path, such as
+   * m_Collision.m_CollisionGroup, names a field inside an embedded structure.
    */
   field?: string
   /**

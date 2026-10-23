@@ -1343,7 +1343,10 @@ function toNpcOptions(value: NpcOptions): pb.NpcOptions {
 export interface FieldWrite {
   /** className is the server class that declares the field, or a subclass. */
   className: string
-  /** field is the field's schema name, such as m_iLane. */
+  /**
+   * field is the field's schema name, such as m_iLane. A dotted path, such as
+   * m_Collision.m_CollisionGroup, names a field inside an embedded structure.
+   */
   field: string
   /** type is how to write the field. */
   type: FieldType

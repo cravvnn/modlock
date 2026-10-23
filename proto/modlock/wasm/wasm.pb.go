@@ -3790,7 +3790,8 @@ type ReadFieldRequest struct {
 	Entity uint32 `protobuf:"varint,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	// ClassName is the server class that declares the field, or a subclass.
 	ClassName string `protobuf:"bytes,2,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
-	// Field is the field's schema name, such as m_iHealth.
+	// Field is the field's schema name, such as m_iHealth. A dotted path, such as
+	// m_Collision.m_CollisionGroup, names a field inside an embedded structure.
 	Field string `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`
 	// Type is how to read the field.
 	Type FieldType `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"`
@@ -4029,7 +4030,8 @@ type WriteFieldRequest struct {
 	Entity uint32 `protobuf:"varint,1,opt,name=entity,proto3" json:"entity,omitempty"`
 	// ClassName is the server class that declares the field, or a subclass.
 	ClassName string `protobuf:"bytes,2,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
-	// Field is the field's schema name, such as m_iClip.
+	// Field is the field's schema name, such as m_iClip. A dotted path, such as
+	// m_Collision.m_CollisionGroup, names a field inside an embedded structure.
 	Field string `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`
 	// Type is how to write the field.
 	Type FieldType `protobuf:"varint,4,opt,name=type,proto3" json:"type,omitempty"`
@@ -5356,7 +5358,8 @@ type FieldWrite struct {
 	unknownFields []byte
 	// ClassName is the server class that declares the field, or a subclass.
 	ClassName string `protobuf:"bytes,1,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
-	// Field is the field's schema name, such as m_iLane.
+	// Field is the field's schema name, such as m_iLane. A dotted path, such as
+	// m_Collision.m_CollisionGroup, names a field inside an embedded structure.
 	Field string `protobuf:"bytes,2,opt,name=field,proto3" json:"field,omitempty"`
 	// Type is how to write the field.
 	Type FieldType `protobuf:"varint,3,opt,name=type,proto3" json:"type,omitempty"`

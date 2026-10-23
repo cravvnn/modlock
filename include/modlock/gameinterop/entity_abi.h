@@ -205,8 +205,10 @@ struct SchemaField {
 [[nodiscard]] MODLOCK_API bool NotifyEntityStateChanged(void* entity);
 
 // SchemaFieldOf resolves class_name.field_name at runtime through the game's
-// schema system, walking base classes when the field
-// belongs to an ancestor. schema_system is the live ISchemaSystem instance.
+// schema system, walking base classes when the field belongs to an ancestor.
+// A dotted field_name, such as m_Collision.m_CollisionGroup, reaches a field
+// inside an embedded structure, with its offset from the entity's start.
+// schema_system is the live ISchemaSystem instance.
 [[nodiscard]] MODLOCK_API std::expected<SchemaField, std::string> SchemaFieldOf(
     void* schema_system, const char* module_name, const char* class_name, const char* field_name);
 

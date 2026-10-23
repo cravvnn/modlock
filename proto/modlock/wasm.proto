@@ -1630,7 +1630,8 @@ message ReadFieldRequest {
   // ClassName is the server class that declares the field, or a subclass.
   string class_name = 2;
 
-  // Field is the field's schema name, such as m_iHealth.
+  // Field is the field's schema name, such as m_iHealth. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
   string field = 3;
 
   // Type is how to read the field.
@@ -1688,7 +1689,8 @@ message WriteFieldRequest {
   // ClassName is the server class that declares the field, or a subclass.
   string class_name = 2;
 
-  // Field is the field's schema name, such as m_iClip.
+  // Field is the field's schema name, such as m_iClip. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
   string field = 3;
 
   // Type is how to write the field.
@@ -2083,7 +2085,8 @@ message FieldWrite {
   // ClassName is the server class that declares the field, or a subclass.
   string class_name = 1;
 
-  // Field is the field's schema name, such as m_iLane.
+  // Field is the field's schema name, such as m_iLane. A dotted path, such as
+  // m_Collision.m_CollisionGroup, names a field inside an embedded structure.
   string field = 2;
 
   // Type is how to write the field.
