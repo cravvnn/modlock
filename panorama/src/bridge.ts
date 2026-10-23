@@ -4,9 +4,14 @@
 // screen into its title in acknowledged parts.
 
 import { Screen } from '../../src/wasm/ui/ui.pb.js'
+import { unpackBytes } from './packed.js'
 
-/** titlePrefix marks a part of a screen in the state page's title. */
-const titlePrefix = 'modlock:snapshot:'
+/**
+ * titlePrefix marks a part of a packed screen in the state page's title:
+ * "<prefix><id>:<offset>:<total>:<sequence>:<chunk>", with the offset and
+ * total counted in characters.
+ */
+const titlePrefix = 'modlock:frame:'
 
 /** loadDeadline is how long a page may take to load before it is loaded again. */
 const loadDeadline = 10
@@ -19,6 +24,8 @@ export class Bridge {
   private lastTitle = ''
   /** loading is the deadline of the state page's load, if it is loading. */
   private loading: number | undefined
+  /** acked flips with each acknowledgment, between the fragments #0 and #1. */
+  private acked = false
 
   constructor(
     private readonly statePanel: Panel,
@@ -67,32 +74,38 @@ export class Bridge {
     }
     this.lastTitle = title
 
-    // Join the part to the screen it belongs to, and acknowledge it.
+    // Join the part to the screen it belongs to, and acknowledge it. The
+    // relay waits for the fragment to change; two fixed fragments keep the
+    // panel's history from growing with each part.
     let screen: Screen
     try {
-      const part = JSON.parse(title.slice(titlePrefix.length)) as {
-        id: number
-        offset: number
-        total: number
-        chunk: string
+      const fields = title.slice(titlePrefix.length).split(':', 4)
+      const [id, offset, total] = fields.map(Number)
+      const chunk = title.slice(
+        titlePrefix.length + fields.join(':').length + 1,
+      )
+      if (fields.length !== 4 || !id || !total) {
+        throw new Error('a part of the screen is malformed')
       }
-      if (part.offset === 0) {
-        this.parts = { id: part.id, total: part.total, text: '' }
+      if (offset === 0) {
+        this.parts = { id, total, text: '' }
       }
       const parts = this.parts
-      if (!parts || parts.id !== part.id || parts.text.length !== part.offset) {
+      if (!parts || parts.id !== id || parts.text.length !== offset) {
         throw new Error('a part of the screen is missing')
       }
-      parts.text += part.chunk
-      const reply = encodeURIComponent(
-        JSON.stringify({ frameAck: part.id, offset: parts.text.length }),
-      )
-      this.statePanel.SetURL(`${this.stateURL}#${reply}`)
+      parts.text += chunk
+      this.acked = !this.acked
+      this.statePanel.SetURL(`${this.stateURL}#${this.acked ? 1 : 0}`)
       if (parts.text.length < parts.total) {
         return false
       }
       this.parts = null
-      screen = Screen.fromJsonString(decodeURIComponent(parts.text))
+      const bytes = unpackBytes(parts.text)
+      if (!bytes) {
+        throw new Error('the screen is not packed bytes')
+      }
+      screen = Screen.fromBinary(bytes)
     } catch (error) {
       // The page times out the unacknowledged part and sends the screen again.
       $.Msg('[Modlock] could not read the screen: ', String(error))

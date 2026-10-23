@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/paralin/modlock/panorama"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/paralin/modlock/src/wasm/ui"
 )
@@ -28,8 +29,8 @@ const frameGap = 50 * time.Millisecond
 // Screens keeps what the mods show the local player and serves it to the
 // player's game on loopback. Deadlock loads only https pages into its HTML
 // panels, so the game's renderer reads through a relay page from another
-// origin: the page streams the screen from GET /panorama/stream, one JSON
-// ui.Screen per line. The game presses buttons with a console command to the
+// origin: the page streams the screen from GET /panorama/stream, one binary
+// ui.Screen per line, packed by panorama.AppendPackedLine. The game presses buttons with a console command to the
 // server, not through this page.
 type Screens struct {
 	// account is the local player's Steam ID, or zero to take the first
@@ -195,15 +196,17 @@ func (s *Screens) admit(w http.ResponseWriter, request *http.Request) bool {
 // the page goes away.
 func (s *Screens) stream(w http.ResponseWriter, request *http.Request) {
 	controller := http.NewResponseController(w)
-	w.Header().Set("Content-Type", "application/x-ndjson")
-	for {
-		// Send the current screen as one line.
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	var line []byte
+	for sequence := uint64(1); ; sequence++ {
+		// Send the current screen as one packed line.
 		screen, changed := s.Screen()
-		line, err := screen.MarshalJSON()
+		frame, err := screen.MarshalVT()
 		if err != nil {
 			return
 		}
-		if _, err := w.Write(append(line, '\n')); err != nil {
+		line = panorama.AppendPackedLine(line[:0], sequence, frame)
+		if _, err := w.Write(line); err != nil {
 			return
 		}
 		if controller.Flush() != nil {

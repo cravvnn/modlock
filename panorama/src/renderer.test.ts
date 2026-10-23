@@ -4,6 +4,7 @@ import { beforeEach, expect, test } from 'bun:test'
 import { Screen } from '../../src/wasm/ui/ui.pb.js'
 import { Bridge } from './bridge.js'
 import { Drawing, layoutDataChanged } from './draw.js'
+import { decodeUtf8 } from './packed.js'
 
 /** FakePanel records what the renderer does to one panel. */
 class FakePanel {
@@ -321,33 +322,39 @@ test('reads screens in acknowledged parts', () => {
   const title = (text: string) =>
     handlers.get(state)!.get('HTMLTitle')!(state.id, text)
 
-  // A screen in two parts shows once both arrive, each acknowledged.
-  const source = encodeURIComponent(
-    JSON.stringify({ trees: [{ mod: 'arena', nodes: [{ id: '' }] }] }),
+  // A screen in two parts shows once both arrive, each acknowledged. The
+  // packing writes printable ASCII as itself and other bytes above U+0100,
+  // as the controller does; the name is not ASCII, so the UTF-8 decoder runs.
+  const bytes = Screen.toBinary(
+    Screen.create({ trees: [{ mod: 'arène', nodes: [{ id: '' }] }] }),
   )
+  let source = ''
+  for (const byte of bytes)
+    source += String.fromCharCode(
+      byte > 0x20 && byte < 0x7f && byte !== 0x5c ? byte : 0x100 + byte,
+    )
   const half = Math.floor(source.length / 2)
-  const part = (offset: number, chunk: string) =>
-    `modlock:snapshot:${JSON.stringify({ id: 7, offset, total: source.length, chunk })}`
+  const part = (id: number, offset: number, chunk: string) =>
+    `modlock:frame:${id}:${offset}:${source.length}:3:${chunk}`
 
   // The ready title ends the page's load deadline.
   title('modlock:bridge-ready')
   expect(scheduled.size).toBe(0)
 
   // The first part is acknowledged but not shown.
-  title(part(0, source.slice(0, half)))
-  expect(JSON.parse(decodeURIComponent(state.url.split('#')[1]!))).toEqual({
-    frameAck: 7,
-    offset: half,
-  })
+  title(part(7, 0, source.slice(0, half)))
+  expect(state.url).toBe('https://relay/bridge.html#1')
   expect(shown).toEqual([])
 
-  // The second part shows the screen.
-  title(part(half, source.slice(half)))
+  // The second part shows the screen and flips the acknowledgment.
+  title(part(7, half, source.slice(half)))
+  expect(state.url).toBe('https://relay/bridge.html#0')
   expect(shown.length).toBe(1)
-  expect(shown[0]?.trees?.[0]?.mod).toBe('arena')
+  expect(shown[0]?.trees?.[0]?.mod).toBe('arène')
+  expect(decodeUtf8(new TextEncoder().encode('arène ✓'))).toBe('arène ✓')
 
   // A part out of order is dropped, and a closed stream clears the screen.
-  title(part(half, source.slice(half)).replace('"id":7', '"id":8'))
+  title(part(8, half, source.slice(half)))
   expect(shown.length).toBe(1)
   title('')
   expect(shown).toEqual([shown[0]!, null])

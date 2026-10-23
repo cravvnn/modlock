@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/paralin/modlock/src/host_app/control"
@@ -96,8 +97,19 @@ func next(t *testing.T, lines *bufio.Scanner) *ui.Screen {
 	if !lines.Scan() {
 		t.Fatalf("the stream ended: %v", lines.Err())
 	}
+	sequence, packed, ok := strings.Cut(strings.TrimPrefix(lines.Text(), "~"), ":")
+	if !ok || sequence == "" {
+		t.Fatalf("not a packed line: %q", lines.Text())
+	}
+	var frame []byte
+	for _, char := range packed {
+		if char >= 0x100 {
+			char -= 0x100
+		}
+		frame = append(frame, byte(char))
+	}
 	screen := &ui.Screen{}
-	if err := screen.UnmarshalJSON(lines.Bytes()); err != nil {
+	if err := screen.UnmarshalVT(frame); err != nil {
 		t.Fatal(err)
 	}
 	return screen
