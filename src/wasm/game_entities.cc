@@ -212,18 +212,18 @@ std::expected<void, std::string> Game::RemoveObject(const objects::ObjectRequest
 }
 
 std::expected<entities::EntityResponse, std::string> Game::ObjectEntity(const objects::ObjectRequest& request) {
-  // Find the object and check it is a model.
+  // Find the object and check it is a model or particle.
   auto found = objects_.find(request.object());
   if (found == objects_.end()) {
     return std::unexpected("no object has that identifier");
   }
-  auto* model = std::get_if<std::unique_ptr<render::WorldEffect>>(&found->second);
-  if (model == nullptr) {
+  auto* effect = std::get_if<std::unique_ptr<render::WorldEffect>>(&found->second);
+  if (effect == nullptr) {
     return std::unexpected("the object is text, which has no entity");
   }
 
-  // Answer the model's live entity.
-  auto handle = (*model)->Handle();
+  // Answer its live entity.
+  auto handle = (*effect)->Handle();
   if (!handle) {
     return std::unexpected("the object is no longer live");
   }

@@ -460,7 +460,8 @@ class HostService {
     return std::unexpected("this host does not support RemoveObject");
   }
 
-  // ObjectEntity returns the entity handle of a model, as traces report it.
+  // ObjectEntity returns the entity handle of a model or particle, as traces
+  // report it and particle anchors take it.
   virtual std::expected<entities::EntityResponse, std::string> ObjectEntity(
       const objects::ObjectRequest& /*request*/) {
     return std::unexpected("this host does not support ObjectEntity");

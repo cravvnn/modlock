@@ -78,6 +78,10 @@ class ObjectResponse;
 struct ObjectResponseDefaultTypeInternal;
 MODLOCK_API extern ObjectResponseDefaultTypeInternal _ObjectResponse_default_instance_;
 MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull ObjectResponse_class_data_;
+class ParticleAnchor;
+struct ParticleAnchorDefaultTypeInternal;
+MODLOCK_API extern ParticleAnchorDefaultTypeInternal _ParticleAnchor_default_instance_;
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull ParticleAnchor_class_data_;
 class ParticleOptions;
 struct ParticleOptionsDefaultTypeInternal;
 MODLOCK_API extern ParticleOptionsDefaultTypeInternal _ParticleOptions_default_instance_;
@@ -170,7 +174,7 @@ class MODLOCK_API SetTextRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const SetTextRequest*>(
         &_SetTextRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 8;
+  static constexpr int kIndexInFileMessages = 9;
   friend void swap(SetTextRequest& a, SetTextRequest& b) { a.Swap(&b); }
   inline void Swap(SetTextRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -377,7 +381,7 @@ class MODLOCK_API SetObjectHiddenRequest final : public ::google::protobuf::Mess
     return *reinterpret_cast<const SetObjectHiddenRequest*>(
         &_SetObjectHiddenRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 9;
+  static constexpr int kIndexInFileMessages = 10;
   friend void swap(SetObjectHiddenRequest& a, SetObjectHiddenRequest& b) { a.Swap(&b); }
   inline void Swap(SetObjectHiddenRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -536,6 +540,208 @@ class MODLOCK_API SetObjectHiddenRequest final : public ::google::protobuf::Mess
 MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull SetObjectHiddenRequest_class_data_;
 // -------------------------------------------------------------------
 
+class MODLOCK_API ParticleAnchor final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:modlock.wasm.objects.ParticleAnchor) */ {
+ public:
+  inline ParticleAnchor() : ParticleAnchor(nullptr) {}
+  ~ParticleAnchor() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(ParticleAnchor* PROTOBUF_NONNULL msg, ::std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(ParticleAnchor));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR ParticleAnchor(::google::protobuf::internal::ConstantInitialized);
+
+  inline ParticleAnchor(const ParticleAnchor& from) : ParticleAnchor(nullptr, from) {}
+  inline ParticleAnchor(ParticleAnchor&& from) noexcept
+      : ParticleAnchor(nullptr, ::std::move(from)) {}
+  inline ParticleAnchor& operator=(const ParticleAnchor& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ParticleAnchor& operator=(ParticleAnchor&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* PROTOBUF_NONNULL mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* PROTOBUF_NONNULL GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* PROTOBUF_NONNULL GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ParticleAnchor& default_instance() {
+    return *reinterpret_cast<const ParticleAnchor*>(
+        &_ParticleAnchor_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 3;
+  friend void swap(ParticleAnchor& a, ParticleAnchor& b) { a.Swap(&b); }
+  inline void Swap(ParticleAnchor* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ParticleAnchor* PROTOBUF_NONNULL other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ParticleAnchor* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<ParticleAnchor>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const ParticleAnchor& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const ParticleAnchor& from) { ParticleAnchor::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(::google::protobuf::MessageLite& to_msg,
+                        const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      const ::google::protobuf::MessageLite& msg, ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* PROTOBUF_NONNULL _InternalSerialize(
+      ::uint8_t* PROTOBUF_NONNULL target,
+      ::google::protobuf::io::EpsCopyOutputStream* PROTOBUF_NONNULL stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(ParticleAnchor* PROTOBUF_NONNULL other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "modlock.wasm.objects.ParticleAnchor"; }
+
+  explicit ParticleAnchor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  ParticleAnchor(::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const ParticleAnchor& from);
+  ParticleAnchor(
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, ParticleAnchor&& from) noexcept
+      : ParticleAnchor(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* PROTOBUF_NONNULL GetClassData() const PROTOBUF_FINAL;
+  static void* PROTOBUF_NONNULL PlacementNew_(
+      const void* PROTOBUF_NONNULL, void* PROTOBUF_NONNULL mem,
+      ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+  static constexpr auto InternalNewImpl_();
+
+ public:
+  static constexpr auto InternalGenerateClassData_();
+
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kIndexFieldNumber = 1,
+    kEntityFieldNumber = 2,
+  };
+  // int32 index = 1;
+  void clear_index() ;
+  ::int32_t index() const;
+  void set_index(::int32_t value);
+
+  private:
+  ::int32_t _internal_index() const;
+  void _internal_set_index(::int32_t value);
+
+  public:
+  // uint32 entity = 2;
+  void clear_entity() ;
+  ::uint32_t entity() const;
+  void set_entity(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_entity() const;
+  void _internal_set_entity(::uint32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:modlock.wasm.objects.ParticleAnchor)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<1, 2,
+                                   0, 0,
+                                   2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena);
+    inline explicit Impl_(
+        ::google::protobuf::internal::InternalVisibility visibility,
+        ::google::protobuf::Arena* PROTOBUF_NULLABLE arena, const Impl_& from,
+        const ParticleAnchor& from_msg);
+    ::google::protobuf::internal::HasBits<1> _has_bits_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    ::int32_t index_;
+    ::uint32_t entity_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_github_2ecom_2fparalin_2fmodlock_2fsrc_2fwasm_2fobjects_2fobjects_2eproto;
+};
+
+MODLOCK_API extern const ::google::protobuf::internal::ClassDataFull ParticleAnchor_class_data_;
+// -------------------------------------------------------------------
+
 class MODLOCK_API ObjectResponse final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:modlock.wasm.objects.ObjectResponse) */ {
  public:
@@ -591,7 +797,7 @@ class MODLOCK_API ObjectResponse final : public ::google::protobuf::Message
     return *reinterpret_cast<const ObjectResponse*>(
         &_ObjectResponse_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 5;
+  static constexpr int kIndexInFileMessages = 6;
   friend void swap(ObjectResponse& a, ObjectResponse& b) { a.Swap(&b); }
   inline void Swap(ObjectResponse* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -781,7 +987,7 @@ class MODLOCK_API ObjectRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const ObjectRequest*>(
         &_ObjectRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
+  static constexpr int kIndexInFileMessages = 7;
   friend void swap(ObjectRequest& a, ObjectRequest& b) { a.Swap(&b); }
   inline void Swap(ObjectRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1252,7 +1458,7 @@ class MODLOCK_API ParticlePoint final : public ::google::protobuf::Message
     return *reinterpret_cast<const ParticlePoint*>(
         &_ParticlePoint_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 3;
+  static constexpr int kIndexInFileMessages = 4;
   friend void swap(ParticlePoint& a, ParticlePoint& b) { a.Swap(&b); }
   inline void Swap(ParticlePoint* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1459,7 +1665,7 @@ class MODLOCK_API MoveObjectRequest final : public ::google::protobuf::Message
     return *reinterpret_cast<const MoveObjectRequest*>(
         &_MoveObjectRequest_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 7;
+  static constexpr int kIndexInFileMessages = 8;
   friend void swap(MoveObjectRequest& a, MoveObjectRequest& b) { a.Swap(&b); }
   inline void Swap(MoveObjectRequest* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -1964,7 +2170,7 @@ class MODLOCK_API FogOptions final : public ::google::protobuf::Message
     return *reinterpret_cast<const FogOptions*>(
         &_FogOptions_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 4;
+  static constexpr int kIndexInFileMessages = 5;
   friend void swap(FogOptions& a, FogOptions& b) { a.Swap(&b); }
   inline void Swap(FogOptions* PROTOBUF_NONNULL other) {
     if (other == this) return;
@@ -2321,6 +2527,7 @@ class MODLOCK_API ParticleOptions final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
+    kAnchorsFieldNumber = 8,
     kResourceFieldNumber = 1,
     kPositionFieldNumber = 2,
     kFacingFieldNumber = 3,
@@ -2328,7 +2535,25 @@ class MODLOCK_API ParticleOptions final : public ::google::protobuf::Message
     kColorFieldNumber = 4,
     kTintPointFieldNumber = 5,
     kParentFieldNumber = 7,
+    kInactiveFieldNumber = 9,
   };
+  // repeated .modlock.wasm.objects.ParticleAnchor anchors = 8;
+  int anchors_size() const;
+  private:
+  int _internal_anchors_size() const;
+
+  public:
+  void clear_anchors() ;
+  ::modlock::wasm::objects::ParticleAnchor* PROTOBUF_NONNULL mutable_anchors(int index);
+  ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>* PROTOBUF_NONNULL mutable_anchors();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>& _internal_anchors() const;
+  ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>* PROTOBUF_NONNULL _internal_mutable_anchors();
+  public:
+  const ::modlock::wasm::objects::ParticleAnchor& anchors(int index) const;
+  ::modlock::wasm::objects::ParticleAnchor* PROTOBUF_NONNULL add_anchors();
+  const ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>& anchors() const;
   // string resource = 1;
   void clear_resource() ;
   const ::std::string& resource() const;
@@ -2422,12 +2647,23 @@ class MODLOCK_API ParticleOptions final : public ::google::protobuf::Message
   void _internal_set_parent(::uint32_t value);
 
   public:
+  // optional bool inactive = 9;
+  bool has_inactive() const;
+  void clear_inactive() ;
+  bool inactive() const;
+  void set_inactive(bool value);
+
+  private:
+  bool _internal_inactive() const;
+  void _internal_set_inactive(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:modlock.wasm.objects.ParticleOptions)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<3, 7,
-                                   3, 53,
+  static const ::google::protobuf::internal::TcParseTable<4, 9,
+                                   4, 61,
                                    2>
       _table_;
 
@@ -2448,6 +2684,7 @@ class MODLOCK_API ParticleOptions final : public ::google::protobuf::Message
         const ParticleOptions& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::modlock::wasm::objects::ParticleAnchor > anchors_;
     ::google::protobuf::internal::ArenaStringPtr resource_;
     ::modlock::geometry::Vec3* PROTOBUF_NULLABLE position_;
     ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE facing_;
@@ -2455,6 +2692,7 @@ class MODLOCK_API ParticleOptions final : public ::google::protobuf::Message
     ::uint32_t color_;
     ::int32_t tint_point_;
     ::uint32_t parent_;
+    bool inactive_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
   union { Impl_ _impl_; };
@@ -3226,7 +3464,7 @@ inline void ParticleOptions::clear_resource() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.resource_.ClearToEmpty();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000001U);
+                  0x00000002U);
 }
 inline const ::std::string& ParticleOptions::resource() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
@@ -3236,13 +3474,13 @@ inline const ::std::string& ParticleOptions::resource() const
 template <typename Arg_, typename... Args_>
 PROTOBUF_ALWAYS_INLINE void ParticleOptions::set_resource(Arg_&& arg, Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
   _impl_.resource_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
   // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleOptions.resource)
 }
 inline ::std::string* PROTOBUF_NONNULL ParticleOptions::mutable_resource()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
   ::std::string* _s = _internal_mutable_resource();
   // @@protoc_insertion_point(field_mutable:modlock.wasm.objects.ParticleOptions.resource)
   return _s;
@@ -3262,10 +3500,10 @@ inline ::std::string* PROTOBUF_NONNULL ParticleOptions::_internal_mutable_resour
 inline ::std::string* PROTOBUF_NULLABLE ParticleOptions::release_resource() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.wasm.objects.ParticleOptions.resource)
-  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000001U)) {
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000002U)) {
     return nullptr;
   }
-  ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
   auto* released = _impl_.resource_.Release();
   if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
     _impl_.resource_.Set("", GetArena());
@@ -3275,9 +3513,9 @@ inline ::std::string* PROTOBUF_NULLABLE ParticleOptions::release_resource() {
 inline void ParticleOptions::set_allocated_resource(::std::string* PROTOBUF_NULLABLE value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000001U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
   }
   _impl_.resource_.SetAllocated(value, GetArena());
   if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.resource_.IsDefault()) {
@@ -3288,7 +3526,7 @@ inline void ParticleOptions::set_allocated_resource(::std::string* PROTOBUF_NULL
 
 // .modlock.geometry.Vec3 position = 2;
 inline bool ParticleOptions::has_position() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000002U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
   PROTOBUF_ASSUME(!value || _impl_.position_ != nullptr);
   return value;
 }
@@ -3309,16 +3547,16 @@ inline void ParticleOptions::unsafe_arena_set_allocated_position(
   }
   _impl_.position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.objects.ParticleOptions.position)
 }
 inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE ParticleOptions::release_position() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::modlock::geometry::Vec3* released = _impl_.position_;
   _impl_.position_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -3338,7 +3576,7 @@ inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE ParticleOptions::unsafe_aren
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.wasm.objects.ParticleOptions.position)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::modlock::geometry::Vec3* temp = _impl_.position_;
   _impl_.position_ = nullptr;
   return temp;
@@ -3353,7 +3591,7 @@ inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL ParticleOptions::_internal_mu
 }
 inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL ParticleOptions::mutable_position()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   ::modlock::geometry::Vec3* _msg = _internal_mutable_position();
   // @@protoc_insertion_point(field_mutable:modlock.wasm.objects.ParticleOptions.position)
   return _msg;
@@ -3370,9 +3608,9 @@ inline void ParticleOptions::set_allocated_position(::modlock::geometry::Vec3* P
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000002U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
   }
 
   _impl_.position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
@@ -3381,7 +3619,7 @@ inline void ParticleOptions::set_allocated_position(::modlock::geometry::Vec3* P
 
 // optional .modlock.geometry.EulerAngles facing = 3;
 inline bool ParticleOptions::has_facing() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000004U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
   PROTOBUF_ASSUME(!value || _impl_.facing_ != nullptr);
   return value;
 }
@@ -3402,16 +3640,16 @@ inline void ParticleOptions::unsafe_arena_set_allocated_facing(
   }
   _impl_.facing_ = reinterpret_cast<::modlock::geometry::EulerAngles*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.objects.ParticleOptions.facing)
 }
 inline ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE ParticleOptions::release_facing() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::modlock::geometry::EulerAngles* released = _impl_.facing_;
   _impl_.facing_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -3431,7 +3669,7 @@ inline ::modlock::geometry::EulerAngles* PROTOBUF_NULLABLE ParticleOptions::unsa
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.wasm.objects.ParticleOptions.facing)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::modlock::geometry::EulerAngles* temp = _impl_.facing_;
   _impl_.facing_ = nullptr;
   return temp;
@@ -3446,7 +3684,7 @@ inline ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL ParticleOptions::_inte
 }
 inline ::modlock::geometry::EulerAngles* PROTOBUF_NONNULL ParticleOptions::mutable_facing()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   ::modlock::geometry::EulerAngles* _msg = _internal_mutable_facing();
   // @@protoc_insertion_point(field_mutable:modlock.wasm.objects.ParticleOptions.facing)
   return _msg;
@@ -3463,9 +3701,9 @@ inline void ParticleOptions::set_allocated_facing(::modlock::geometry::EulerAngl
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000004U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000004U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
   }
 
   _impl_.facing_ = reinterpret_cast<::modlock::geometry::EulerAngles*>(value);
@@ -3474,14 +3712,14 @@ inline void ParticleOptions::set_allocated_facing(::modlock::geometry::EulerAngl
 
 // optional fixed32 color = 4;
 inline bool ParticleOptions::has_color() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
   return value;
 }
 inline void ParticleOptions::clear_color() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.color_ = 0u;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000020U);
 }
 inline ::uint32_t ParticleOptions::color() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleOptions.color)
@@ -3489,7 +3727,7 @@ inline ::uint32_t ParticleOptions::color() const {
 }
 inline void ParticleOptions::set_color(::uint32_t value) {
   _internal_set_color(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleOptions.color)
 }
 inline ::uint32_t ParticleOptions::_internal_color() const {
@@ -3503,14 +3741,14 @@ inline void ParticleOptions::_internal_set_color(::uint32_t value) {
 
 // optional int32 tint_point = 5;
 inline bool ParticleOptions::has_tint_point() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000020U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
   return value;
 }
 inline void ParticleOptions::clear_tint_point() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.tint_point_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000040U);
 }
 inline ::int32_t ParticleOptions::tint_point() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleOptions.tint_point)
@@ -3518,7 +3756,7 @@ inline ::int32_t ParticleOptions::tint_point() const {
 }
 inline void ParticleOptions::set_tint_point(::int32_t value) {
   _internal_set_tint_point(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleOptions.tint_point)
 }
 inline ::int32_t ParticleOptions::_internal_tint_point() const {
@@ -3532,7 +3770,7 @@ inline void ParticleOptions::_internal_set_tint_point(::int32_t value) {
 
 // optional .modlock.wasm.objects.ParticlePoint point = 6;
 inline bool ParticleOptions::has_point() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000008U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000010U);
   PROTOBUF_ASSUME(!value || _impl_.point_ != nullptr);
   return value;
 }
@@ -3540,7 +3778,7 @@ inline void ParticleOptions::clear_point() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.point_ != nullptr) _impl_.point_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000008U);
+                  0x00000010U);
 }
 inline const ::modlock::wasm::objects::ParticlePoint& ParticleOptions::_internal_point() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -3559,16 +3797,16 @@ inline void ParticleOptions::unsafe_arena_set_allocated_point(
   }
   _impl_.point_ = reinterpret_cast<::modlock::wasm::objects::ParticlePoint*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.objects.ParticleOptions.point)
 }
 inline ::modlock::wasm::objects::ParticlePoint* PROTOBUF_NULLABLE ParticleOptions::release_point() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::modlock::wasm::objects::ParticlePoint* released = _impl_.point_;
   _impl_.point_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -3588,7 +3826,7 @@ inline ::modlock::wasm::objects::ParticlePoint* PROTOBUF_NULLABLE ParticleOption
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.wasm.objects.ParticleOptions.point)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::modlock::wasm::objects::ParticlePoint* temp = _impl_.point_;
   _impl_.point_ = nullptr;
   return temp;
@@ -3603,7 +3841,7 @@ inline ::modlock::wasm::objects::ParticlePoint* PROTOBUF_NONNULL ParticleOptions
 }
 inline ::modlock::wasm::objects::ParticlePoint* PROTOBUF_NONNULL ParticleOptions::mutable_point()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   ::modlock::wasm::objects::ParticlePoint* _msg = _internal_mutable_point();
   // @@protoc_insertion_point(field_mutable:modlock.wasm.objects.ParticleOptions.point)
   return _msg;
@@ -3620,9 +3858,9 @@ inline void ParticleOptions::set_allocated_point(::modlock::wasm::objects::Parti
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000008U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000008U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
   }
 
   _impl_.point_ = reinterpret_cast<::modlock::wasm::objects::ParticlePoint*>(value);
@@ -3631,14 +3869,14 @@ inline void ParticleOptions::set_allocated_point(::modlock::wasm::objects::Parti
 
 // optional uint32 parent = 7;
 inline bool ParticleOptions::has_parent() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
   return value;
 }
 inline void ParticleOptions::clear_parent() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.parent_ = 0u;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
+                  0x00000080U);
 }
 inline ::uint32_t ParticleOptions::parent() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleOptions.parent)
@@ -3646,7 +3884,7 @@ inline ::uint32_t ParticleOptions::parent() const {
 }
 inline void ParticleOptions::set_parent(::uint32_t value) {
   _internal_set_parent(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleOptions.parent)
 }
 inline ::uint32_t ParticleOptions::_internal_parent() const {
@@ -3656,6 +3894,145 @@ inline ::uint32_t ParticleOptions::_internal_parent() const {
 inline void ParticleOptions::_internal_set_parent(::uint32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.parent_ = value;
+}
+
+// repeated .modlock.wasm.objects.ParticleAnchor anchors = 8;
+inline int ParticleOptions::_internal_anchors_size() const {
+  return _internal_anchors().size();
+}
+inline int ParticleOptions::anchors_size() const {
+  return _internal_anchors_size();
+}
+inline void ParticleOptions::clear_anchors() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.anchors_.Clear();
+  ClearHasBitForRepeated(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::modlock::wasm::objects::ParticleAnchor* PROTOBUF_NONNULL ParticleOptions::mutable_anchors(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:modlock.wasm.objects.ParticleOptions.anchors)
+  return _internal_mutable_anchors()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>* PROTOBUF_NONNULL ParticleOptions::mutable_anchors()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_mutable_list:modlock.wasm.objects.ParticleOptions.anchors)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_anchors();
+}
+inline const ::modlock::wasm::objects::ParticleAnchor& ParticleOptions::anchors(int index) const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleOptions.anchors)
+  return _internal_anchors().Get(index);
+}
+inline ::modlock::wasm::objects::ParticleAnchor* PROTOBUF_NONNULL ParticleOptions::add_anchors()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::modlock::wasm::objects::ParticleAnchor* _add =
+      _internal_mutable_anchors()->InternalAddWithArena(
+          ::google::protobuf::MessageLite::internal_visibility(), GetArena());
+  SetHasBitForRepeated(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_add:modlock.wasm.objects.ParticleOptions.anchors)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>& ParticleOptions::anchors() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:modlock.wasm.objects.ParticleOptions.anchors)
+  return _internal_anchors();
+}
+inline const ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>&
+ParticleOptions::_internal_anchors() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.anchors_;
+}
+inline ::google::protobuf::RepeatedPtrField<::modlock::wasm::objects::ParticleAnchor>* PROTOBUF_NONNULL
+ParticleOptions::_internal_mutable_anchors() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.anchors_;
+}
+
+// optional bool inactive = 9;
+inline bool ParticleOptions::has_inactive() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
+  return value;
+}
+inline void ParticleOptions::clear_inactive() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.inactive_ = false;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000100U);
+}
+inline bool ParticleOptions::inactive() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleOptions.inactive)
+  return _internal_inactive();
+}
+inline void ParticleOptions::set_inactive(bool value) {
+  _internal_set_inactive(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleOptions.inactive)
+}
+inline bool ParticleOptions::_internal_inactive() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.inactive_;
+}
+inline void ParticleOptions::_internal_set_inactive(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.inactive_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// ParticleAnchor
+
+// int32 index = 1;
+inline void ParticleAnchor::clear_index() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.index_ = 0;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000001U);
+}
+inline ::int32_t ParticleAnchor::index() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleAnchor.index)
+  return _internal_index();
+}
+inline void ParticleAnchor::set_index(::int32_t value) {
+  _internal_set_index(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000001U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleAnchor.index)
+}
+inline ::int32_t ParticleAnchor::_internal_index() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.index_;
+}
+inline void ParticleAnchor::_internal_set_index(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.index_ = value;
+}
+
+// uint32 entity = 2;
+inline void ParticleAnchor::clear_entity() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_ = 0u;
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000002U);
+}
+inline ::uint32_t ParticleAnchor::entity() const {
+  // @@protoc_insertion_point(field_get:modlock.wasm.objects.ParticleAnchor.entity)
+  return _internal_entity();
+}
+inline void ParticleAnchor::set_entity(::uint32_t value) {
+  _internal_set_entity(value);
+  SetHasBit(_impl_._has_bits_[0], 0x00000002U);
+  // @@protoc_insertion_point(field_set:modlock.wasm.objects.ParticleAnchor.entity)
+}
+inline ::uint32_t ParticleAnchor::_internal_entity() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.entity_;
+}
+inline void ParticleAnchor::_internal_set_entity(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.entity_ = value;
 }
 
 // -------------------------------------------------------------------

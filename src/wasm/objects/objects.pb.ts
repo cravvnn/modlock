@@ -274,6 +274,16 @@ export interface ParticleOptions {
    * Parent is the handle of an entity the effect follows, such as a hero's.
    */
   parent?: number
+  /**
+   * Anchors tie control points to entities, which the points follow as the
+   * entities move, such as both ends of a beam.
+   */
+  anchors?: ParticleAnchor[]
+  /**
+   * Inactive spawns the effect without starting it: it draws nothing, but
+   * other effects' anchors can follow it as it moves.
+   */
+  inactive?: boolean
 }
 
 export const ParticleOptions: MessageType<ParticleOptions> =
@@ -287,6 +297,8 @@ export const ParticleOptions: MessageType<ParticleOptions> =
       [5, 'tint_point', 5, 4],
       [6, 'point', 11, 0, ParticlePoint.codec],
       [7, 'parent', 13, 4],
+      [8, 'anchors', 11, 1, ParticleAnchor.codec],
+      [9, 'inactive', 8, 4],
     ],
     {
       decode: (
@@ -318,6 +330,14 @@ export const ParticleOptions: MessageType<ParticleOptions> =
               break
             case 7:
               m.parent = r.uint32()
+              break
+            case 8:
+              ;(m.anchors ??= []).push(
+                ParticleAnchor.decode(r, r.delimited(), {}),
+              )
+              break
+            case 9:
+              m.inactive = r.bool()
               break
             default:
               r.skip(t)
@@ -353,6 +373,72 @@ export const ParticleOptions: MessageType<ParticleOptions> =
         {
           const v = m.parent
           if (v != null) w.uint32(56).uint32(v)
+        }
+        {
+          const a = m.anchors
+          if (a != null) for (const e of a) ParticleAnchor.writeField(w, 8, e)
+        }
+        {
+          const v = m.inactive
+          if (v != null) w.uint32(72).bool(v)
+        }
+      },
+    },
+  )
+
+/**
+ * ParticleAnchor ties one control point of a particle effect to an entity.
+ *
+ * @generated from message modlock.wasm.objects.ParticleAnchor
+ */
+export interface ParticleAnchor {
+  /**
+   * Index is the control point's number.
+   */
+  index?: number
+  /**
+   * Entity is the handle of the entity the control point follows.
+   */
+  entity?: number
+}
+
+export const ParticleAnchor: MessageType<ParticleAnchor> =
+  /* @__PURE__ */ createMessageType<ParticleAnchor>(
+    'modlock.wasm.objects.ParticleAnchor',
+    () => [
+      [1, 'index', 5],
+      [2, 'entity', 13],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: ParticleAnchor,
+      ): ParticleAnchor => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.index = r.int32()
+              break
+            case 2:
+              m.entity = r.uint32()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: ParticleAnchor, w: Writer): void => {
+        {
+          const v = m.index
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.entity
+          if (v) w.uint32(16).uint32(v)
         }
       },
     },

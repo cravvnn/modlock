@@ -182,6 +182,12 @@ type ParticleOptions struct {
 	Point *ParticlePoint `protobuf:"bytes,6,opt,name=point,proto3,oneof" json:"point,omitempty"`
 	// Parent is the handle of an entity the effect follows, such as a hero's.
 	Parent *uint32 `protobuf:"varint,7,opt,name=parent,proto3,oneof" json:"parent,omitempty"`
+	// Anchors tie control points to entities, which the points follow as the
+	// entities move, such as both ends of a beam.
+	Anchors []*ParticleAnchor `protobuf:"bytes,8,rep,name=anchors,proto3" json:"anchors,omitempty"`
+	// Inactive spawns the effect without starting it: it draws nothing, but
+	// other effects' anchors can follow it as it moves.
+	Inactive *bool `protobuf:"varint,9,opt,name=inactive,proto3,oneof" json:"inactive,omitempty"`
 }
 
 func (x *ParticleOptions) Reset() {
@@ -235,6 +241,49 @@ func (x *ParticleOptions) GetPoint() *ParticlePoint {
 func (x *ParticleOptions) GetParent() uint32 {
 	if x != nil && x.Parent != nil {
 		return *x.Parent
+	}
+	return 0
+}
+
+func (x *ParticleOptions) GetAnchors() []*ParticleAnchor {
+	if x != nil {
+		return x.Anchors
+	}
+	return nil
+}
+
+func (x *ParticleOptions) GetInactive() bool {
+	if x != nil && x.Inactive != nil {
+		return *x.Inactive
+	}
+	return false
+}
+
+// ParticleAnchor ties one control point of a particle effect to an entity.
+type ParticleAnchor struct {
+	unknownFields []byte
+	// Index is the control point's number.
+	Index int32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	// Entity is the handle of the entity the control point follows.
+	Entity uint32 `protobuf:"varint,2,opt,name=entity,proto3" json:"entity,omitempty"`
+}
+
+func (x *ParticleAnchor) Reset() {
+	*x = ParticleAnchor{}
+}
+
+func (*ParticleAnchor) ProtoMessage() {}
+
+func (x *ParticleAnchor) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *ParticleAnchor) GetEntity() uint32 {
+	if x != nil {
+		return x.Entity
 	}
 	return 0
 }
@@ -530,6 +579,8 @@ func (m *ParticleOptions) CloneVT() *ParticleOptions {
 	r.TintPoint = protobuf_go_lite.ClonePtr(m.TintPoint)
 	r.Point = protobuf_go_lite.CloneVTValue(m.Point)
 	r.Parent = protobuf_go_lite.ClonePtr(m.Parent)
+	r.Anchors = protobuf_go_lite.CloneVTSlice(m.Anchors)
+	r.Inactive = protobuf_go_lite.ClonePtr(m.Inactive)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -537,6 +588,23 @@ func (m *ParticleOptions) CloneVT() *ParticleOptions {
 }
 
 func (m *ParticleOptions) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *ParticleAnchor) CloneVT() *ParticleAnchor {
+	if m == nil {
+		return (*ParticleAnchor)(nil)
+	}
+	r := new(ParticleAnchor)
+	r.Index = m.Index
+	r.Entity = m.Entity
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *ParticleAnchor) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -766,11 +834,40 @@ func (this *ParticleOptions) EqualVT(that *ParticleOptions) bool {
 	if !protobuf_go_lite.EqualPtr(this.Parent, that.Parent) {
 		return false
 	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Anchors, that.Anchors, func() *ParticleAnchor { return &ParticleAnchor{} }) {
+		return false
+	}
+	if !protobuf_go_lite.EqualPtr(this.Inactive, that.Inactive) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
 func (this *ParticleOptions) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*ParticleOptions)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *ParticleAnchor) EqualVT(that *ParticleAnchor) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Index != that.Index {
+		return false
+	}
+	if this.Entity != that.Entity {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ParticleAnchor) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*ParticleAnchor)
 	if !ok {
 		return false
 	}
@@ -1229,6 +1326,22 @@ func (x *ParticleOptions) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("parent")
 		s.WriteUint32(*x.Parent)
 	}
+	if len(x.Anchors) > 0 || s.HasField("anchors") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("anchors")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Anchors {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("anchors"))
+		}
+		s.WriteArrayEnd()
+	}
+	if x.Inactive != nil {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("inactive")
+		s.WriteBool(*x.Inactive)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1294,12 +1407,88 @@ func (x *ParticleOptions) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			t := s.ReadUint32()
 			x.Parent = &t
+		case "anchors":
+			s.AddField("anchors")
+			if s.ReadNil() {
+				x.Anchors = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Anchors = append(x.Anchors, nil)
+					return
+				}
+				v := &ParticleAnchor{}
+				v.UnmarshalProtoJSON(s.WithField("anchors", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Anchors = append(x.Anchors, v)
+			})
+		case "inactive":
+			s.AddField("inactive")
+			if s.ReadNil() {
+				x.Inactive = nil
+				return
+			}
+			t := s.ReadBool()
+			x.Inactive = &t
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the ParticleOptions from JSON.
 func (x *ParticleOptions) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ParticleAnchor message to JSON.
+func (x *ParticleAnchor) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Index != 0 || s.HasField("index") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("index")
+		s.WriteInt32(x.Index)
+	}
+	if x.Entity != 0 || s.HasField("entity") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("entity")
+		s.WriteUint32(x.Entity)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ParticleAnchor to JSON.
+func (x *ParticleAnchor) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ParticleAnchor message from JSON.
+func (x *ParticleAnchor) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "index":
+			s.AddField("index")
+			x.Index = s.ReadInt32()
+		case "entity":
+			s.AddField("entity")
+			x.Entity = s.ReadUint32()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ParticleAnchor from JSON.
+func (x *ParticleAnchor) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1896,6 +2085,23 @@ func (m *ParticleOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.Inactive != nil {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, *m.Inactive)
+		i--
+		dAtA[i] = 0x48
+	}
+	if len(m.Anchors) > 0 {
+		for iNdEx := len(m.Anchors) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Anchors[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x42
+		}
+	}
 	if m.Parent != nil {
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(*m.Parent))
 		i--
@@ -1945,6 +2151,48 @@ func (m *ParticleOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Resource)
 		i--
 		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ParticleAnchor) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ParticleAnchor) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ParticleAnchor) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Entity != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Entity))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Index != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Index))
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -2366,6 +2614,23 @@ func (m *ParticleOptions) SizeVT() (n int) {
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
 	n += protobuf_go_lite.SizeVarintPtr(1, m.Parent)
+	for _, e := range m.Anchors {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeBoolPtr(1, m.Inactive)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ParticleAnchor) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Index)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Entity)
 	n += len(m.unknownFields)
 	return n
 }
@@ -2586,10 +2851,44 @@ func (x *ParticleOptions) MarshalProtoText() string {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "parent")
 		protobuf_go_lite.TextWriteUint(&sb, *x.Parent)
 	}
+	if len(x.Anchors) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "anchors")
+		for i, v := range x.Anchors {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &ParticleAnchor{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if x.Inactive != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "inactive")
+		protobuf_go_lite.TextWriteBool(&sb, *x.Inactive)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *ParticleOptions) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *ParticleAnchor) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ParticleAnchor")
+	if x.Index != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "index")
+		protobuf_go_lite.TextWriteInt(&sb, x.Index)
+	}
+	if x.Entity != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "entity")
+		protobuf_go_lite.TextWriteUint(&sb, x.Entity)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ParticleAnchor) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -3104,6 +3403,91 @@ func (m *ParticleOptions) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Parent = &v
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Anchors", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Anchors = append(m.Anchors, &ParticleAnchor{})
+			if err := m.Anchors[len(m.Anchors)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Inactive", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.Inactive = &b
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *ParticleAnchor) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ParticleAnchor: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ParticleAnchor: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
+			}
+			m.Index = 0
+			m.Index, iNdEx, err = protobuf_go_lite.DecodeVarintInt32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Entity", wireType)
+			}
+			m.Entity = 0
+			m.Entity, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

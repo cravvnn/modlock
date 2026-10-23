@@ -78,6 +78,23 @@ message ParticleOptions {
 
   // Parent is the handle of an entity the effect follows, such as a hero's.
   optional uint32 parent = 7;
+
+  // Anchors tie control points to entities, which the points follow as the
+  // entities move, such as both ends of a beam.
+  repeated ParticleAnchor anchors = 8;
+
+  // Inactive spawns the effect without starting it: it draws nothing, but
+  // other effects' anchors can follow it as it moves.
+  optional bool inactive = 9;
+}
+
+// ParticleAnchor ties one control point of a particle effect to an entity.
+message ParticleAnchor {
+  // Index is the control point's number.
+  int32 index = 1;
+
+  // Entity is the handle of the entity the control point follows.
+  uint32 entity = 2;
 }
 
 // ParticlePoint places one control point of a particle effect.

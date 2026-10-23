@@ -652,6 +652,20 @@ export type ParticleOptions = {
 	point: ParticlePoint?,
 	-- parent is the handle of an entity the effect follows, such as a hero's.
 	parent: number?,
+	-- anchors tie control points to entities, which the points follow as the
+	-- entities move, such as both ends of a beam.
+	anchors: { ParticleAnchor }?,
+	-- inactive spawns the effect without starting it: it draws nothing, but
+	-- other effects' anchors can follow it as it moves.
+	inactive: boolean?,
+}
+
+-- ParticleAnchor ties one control point of a particle effect to an entity.
+export type ParticleAnchor = {
+	-- index is the control point's number.
+	index: number,
+	-- entity is the handle of the entity the control point follows.
+	entity: number,
 }
 
 -- ParticlePoint places one control point of a particle effect.
@@ -1404,7 +1418,8 @@ export type WorldObject = {
 	setHidden: (self: WorldObject, player: Player, hidden: boolean) -> boolean,
 	-- remove takes the object out of the world.
 	remove: (self: WorldObject) -> boolean,
-	-- entity returns the entity handle of a model, as traces report it.
+	-- entity returns the entity handle of a model or particle, as traces
+	-- report it and particle anchors take it.
 	entity: (self: WorldObject) -> number?,
 }
 local WorldObject = {}
@@ -1437,7 +1452,8 @@ function WorldObject.remove(self: WorldObject): boolean
 	return call("RemoveObject", "ObjectRequest", { object = self }) ~= nil
 end
 
--- entity returns the entity handle of a model, as traces report it.
+-- entity returns the entity handle of a model or particle, as traces
+-- report it and particle anchors take it.
 function WorldObject.entity(self: WorldObject): number?
 	local response = call("ObjectEntity", "ObjectRequest", { object = self }, "EntityResponse")
 	if response == nil then
@@ -2056,6 +2072,12 @@ schema.ParticleOptions = {
 	{ number = 5, name = "tintPoint", kind = "int32", optional = true },
 	{ number = 6, name = "point", kind = "message", optional = true, message = "ParticlePoint" },
 	{ number = 7, name = "parent", kind = "uint32", optional = true },
+	{ number = 8, name = "anchors", kind = "message", repeated = true, message = "ParticleAnchor" },
+	{ number = 9, name = "inactive", kind = "bool", optional = true },
+}
+schema.ParticleAnchor = {
+	{ number = 1, name = "index", kind = "int32" },
+	{ number = 2, name = "entity", kind = "uint32" },
 }
 schema.ParticlePoint = {
 	{ number = 1, name = "index", kind = "int32" },

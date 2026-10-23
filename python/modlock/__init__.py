@@ -766,6 +766,22 @@ class ParticleOptions:
     point: ParticlePoint | None = None
     # parent is the handle of an entity the effect follows, such as a hero's.
     parent: int | None = None
+    # anchors tie control points to entities, which the points follow as the
+    # entities move, such as both ends of a beam.
+    anchors: list[ParticleAnchor] = dataclasses.field(default_factory=lambda: list[ParticleAnchor]())
+    # inactive spawns the effect without starting it: it draws nothing, but
+    # other effects' anchors can follow it as it moves.
+    inactive: bool | None = None
+
+
+@dataclasses.dataclass(slots=True, kw_only=True)
+class ParticleAnchor:
+    """ParticleAnchor ties one control point of a particle effect to an entity."""
+
+    # index is the control point's number.
+    index: int = 0
+    # entity is the handle of the entity the control point follows.
+    entity: int = 0
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -1412,7 +1428,9 @@ class WorldObject:
         return _call("RemoveObject", "ObjectRequest", {"object": self}) is not None
 
     def entity(self) -> int | None:
-        """entity returns the entity handle of a model, as traces report it."""
+        """entity returns the entity handle of a model or particle, as traces
+        report it and particle anchors take it.
+        """
         response = _call("ObjectEntity", "ObjectRequest", {"object": self}, "EntityResponse")
         if response is None:
             return None
@@ -2272,6 +2290,15 @@ _SCHEMA: wire.Schema = {
             wire.Field(5, "tint_point", "int32", optional=True),
             wire.Field(6, "point", "message", optional=True, message="ParticlePoint"),
             wire.Field(7, "parent", "uint32", optional=True),
+            wire.Field(8, "anchors", "message", repeated=True, message="ParticleAnchor"),
+            wire.Field(9, "inactive", "bool", optional=True),
+        ],
+    ),
+    "ParticleAnchor": (
+        ParticleAnchor,
+        [
+            wire.Field(1, "index", "int32"),
+            wire.Field(2, "entity", "uint32"),
         ],
     ),
     "ParticlePoint": (

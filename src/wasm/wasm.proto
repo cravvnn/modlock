@@ -325,7 +325,8 @@ service Host {
   // RemoveObject takes the object out of the world.
   rpc RemoveObject(modlock.wasm.objects.ObjectRequest) returns (Empty);
 
-  // ObjectEntity returns the entity handle of a model, as traces report it.
+  // ObjectEntity returns the entity handle of a model or particle, as traces
+  // report it and particle anchors take it.
   rpc ObjectEntity(modlock.wasm.objects.ObjectRequest) returns (modlock.wasm.entities.EntityResponse);
 
   // AddBot adds a bot player and returns it. The bot leaves when the world

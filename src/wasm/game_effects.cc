@@ -82,11 +82,12 @@ std::expected<objects::ObjectResponse, std::string> Game::CreateParticle(const o
     return std::unexpected(effects.error());
   }
 
-  // Describe the particle with its optional tint, data and parent.
+  // Describe the particle with its optional tint, data, anchors and parent.
   render::ParticleSettings settings{
       .resource = request.resource(),
       .origin = request.position(),
       .angles = Floats(request.facing()),
+      .start_active = !request.inactive(),
   };
   if (request.color() != 0) {
     // The particle takes its color as 0xAABBGGRR.
@@ -96,6 +97,9 @@ std::expected<objects::ObjectResponse, std::string> Game::CreateParticle(const o
   if (request.has_point()) {
     settings.data = render::ParticleData{.control_point = request.point().index(),
                                          .value = Floats(request.point().position())};
+  }
+  for (const auto& anchor : request.anchors()) {
+    settings.control_points.emplace_back(anchor.index(), anchor.entity());
   }
   if (request.parent() != 0) {
     settings.parent = request.parent();

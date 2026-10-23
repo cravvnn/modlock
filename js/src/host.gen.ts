@@ -1055,6 +1055,39 @@ export interface ParticleOptions {
    * parent is the handle of an entity the effect follows, such as a hero's.
    */
   parent?: number
+  /**
+   * anchors tie control points to entities, which the points follow as the
+   * entities move, such as both ends of a beam.
+   */
+  anchors?: readonly ParticleAnchor[]
+  /**
+   * inactive spawns the effect without starting it: it draws nothing, but
+   * other effects' anchors can follow it as it moves.
+   */
+  inactive?: boolean
+}
+
+/** toParticleOptions encodes a ParticleOptions. */
+function toParticleOptions(value: ParticleOptions): objectsPb.ParticleOptions {
+  return {
+    resource: value.resource,
+    position: value.position,
+    facing: value.facing,
+    color: value.color,
+    tintPoint: value.tintPoint,
+    point: value.point,
+    parent: value.parent,
+    anchors: value.anchors?.slice(),
+    inactive: value.inactive,
+  }
+}
+
+/** ParticleAnchor ties one control point of a particle effect to an entity. */
+export interface ParticleAnchor {
+  /** index is the control point's number. */
+  index: number
+  /** entity is the handle of the entity the control point follows. */
+  entity: number
 }
 
 /** ParticlePoint places one control point of a particle effect. */
@@ -1938,7 +1971,10 @@ export class WorldObject {
     return call('RemoveObject', objectsPb.ObjectRequest.toBinary({ object: this.id })) !== undefined
   }
 
-  /** entity returns the entity handle of a model, as traces report it. */
+  /**
+   * entity returns the entity handle of a model or particle, as traces
+   * report it and particle anchors take it.
+   */
   entity(): number | undefined {
     const reply = call('ObjectEntity', objectsPb.ObjectRequest.toBinary({ object: this.id }))
     if (reply === undefined) return undefined
@@ -2176,7 +2212,7 @@ export function createText(options: TextOptions): WorldObject | undefined {
  * moving it moves the effect.
  */
 export function createParticle(options: ParticleOptions): WorldObject | undefined {
-  const reply = call('CreateParticle', objectsPb.ParticleOptions.toBinary(options))
+  const reply = call('CreateParticle', objectsPb.ParticleOptions.toBinary(toParticleOptions(options)))
   if (reply === undefined) return undefined
   const response = objectsPb.ObjectResponse.fromBinary(reply)
   return new WorldObject(response.object ?? 0)

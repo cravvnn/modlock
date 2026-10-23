@@ -204,6 +204,9 @@ type TextOptions = objectspb.TextOptions
 // ParticleOptions describes a particle effect.
 type ParticleOptions = objectspb.ParticleOptions
 
+// ParticleAnchor ties one control point of a particle effect to an entity.
+type ParticleAnchor = objectspb.ParticleAnchor
+
 // ParticlePoint places one control point of a particle effect.
 type ParticlePoint = objectspb.ParticlePoint
 
@@ -817,7 +820,8 @@ func (w WorldObject) Remove() error {
 	return invoke("RemoveObject", &objectspb.ObjectRequest{Object: w.ID}, nil)
 }
 
-// Entity returns the entity handle of a model, as traces report it.
+// Entity returns the entity handle of a model or particle, as traces
+// report it and particle anchors take it.
 func (w WorldObject) Entity() (uint32, error) {
 	request := &objectspb.ObjectRequest{Object: w.ID}
 	response := &entitiespb.EntityResponse{}
