@@ -12,3 +12,9 @@ import "embed"
 //
 //go:embed src/draw.ts browser/dom.ts browser/panels.css
 var Sources embed.FS
+
+// Layout is the renderer's layout, which a client content package installs
+// as panorama/layout/modlock/ui.xml beside the built renderer script.
+//
+//go:embed layout/modlock/ui.xml
+var Layout []byte

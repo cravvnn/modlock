@@ -31,6 +31,9 @@ type Config struct {
 	Interface string
 	// Relay is the origin of the https page the game reads them through.
 	Relay string
+	// Renderer is the built renderer script, which the session mounts in the
+	// game so it draws the interfaces, or nil to leave the game unchanged.
+	Renderer []byte
 	// Events receives each host event, on one goroutine.
 	Events func(*control.HostEvent)
 }

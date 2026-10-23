@@ -879,6 +879,13 @@ The game draws interfaces with the renderer in [`panorama/`](panorama):
   https pages, so the renderer reads them through a relay page at `--ui-relay`,
   `https://hyperline.gg` by default. The controller answers only that origin's
   page.
+- Both commands also install the renderer in the game for the session, so its
+  interfaces show with no setup. They write `game/citadel/modlock_dev`, a
+  package that adds the renderer to the stock news layout, and mount it
+  between `// MODLOCK DEV` markers in `gameinfo.gi`, removed when the session
+  ends. The game reads it at startup, so a game already running shows the
+  interfaces after a restart. When the Hyperline desktop's content is mounted,
+  the session leaves the game unchanged and says so.
 - A press runs the console command `modlockpress <mod> <node>` in the player's
   game. `pressCommand` in `panorama/src/draw.ts` builds it, so a host with its
   own renderer presses the same way. The server presses the node for the

@@ -33,6 +33,8 @@ type Session struct {
 	host *Host
 	// screens serves the mods' interfaces to the player's game, if it runs.
 	screens *http.Server
+	// unmount removes the renderer from the game, if the session mounted it.
+	unmount func() error
 	// controlled is closed when the control link ends.
 	controlled chan struct{}
 }
@@ -98,6 +100,16 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 		}
 	}
 
+	// Mount the renderer before the client starts, so the game draws them.
+	// Without it the interfaces show only in the browser preview.
+	if session.screens != nil && config.Renderer != nil {
+		if session.unmount, err = mountRenderer(gameDir, config.Renderer); err != nil {
+			config.Events(&control.HostEvent{Body: &control.HostEvent_Failed{Failed: &control.ModFailed{
+				Error: errors.Wrap(err, "mod interfaces show only in the browser preview").Error(),
+			}}})
+		}
+	}
+
 	// Pass events on, launching the client at the first ready server.
 	var launched atomic.Bool
 	handle := func(event *control.HostEvent) {
@@ -131,6 +143,9 @@ func (s *Session) Wait() error {
 	_ = s.control.Close()
 	if s.screens != nil {
 		_ = s.screens.Close()
+	}
+	if s.unmount != nil {
+		_ = s.unmount()
 	}
 	<-s.controlled
 	return err

@@ -10,6 +10,7 @@ import (
 
 	"github.com/aperturerobotics/cli"
 	modcli "github.com/paralin/modlock/cli"
+	"github.com/paralin/modlock/js"
 	"github.com/paralin/modlock/project"
 	"github.com/paralin/modlock/sandbox"
 	"github.com/paralin/modlock/session"
@@ -164,8 +165,13 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 	// Start the server, which launches the client once it is ready, serving
 	// the mods' interfaces unless they are off.
 	var ui string
+	var renderer []byte
 	if port := c.Uint("ui-port"); port != 0 {
 		ui = "127.0.0.1:" + strconv.Itoa(int(port))
+		renderer, err = readRenderer(c.Context)
+		if err != nil {
+			out.note("mod interfaces show only in the browser preview:", err)
+		}
 	}
 	running, err := session.Start(c.Context, session.Config{
 		Version:    Version,
@@ -178,6 +184,7 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 		HostOutput: log,
 		Interface:  ui,
 		Relay:      c.String("ui-relay"),
+		Renderer:   renderer,
 		Events:     out.host,
 	})
 	if err != nil {
@@ -189,6 +196,16 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 	out.note("starting the server; its console is in", logPath)
 	out.note("to join from a running game, enter in its console: connect 127.0.0.1:" + strconv.Itoa(int(c.Uint("port"))))
 	return running, nil
+}
+
+// readRenderer returns the built renderer script the game draws the mods'
+// interfaces with.
+func readRenderer(ctx context.Context) ([]byte, error) {
+	library, err := js.Library(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return os.ReadFile(filepath.Join(library, js.Renderer))
 }
 
 // settingsFile returns the file that keeps players' settings across
