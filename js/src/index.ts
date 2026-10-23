@@ -31,6 +31,8 @@ import {
 } from './host.gen.js'
 import { serveEvents } from './host.js'
 import { keepPlayers } from './players.js'
+import { advancePuppets } from './puppet.js'
+import { settleRestore } from './restore.js'
 import { advance, after } from './timer.js'
 import { press, tick } from './ui.js'
 
@@ -49,6 +51,19 @@ export {
 export * as curve from './curve.js'
 export * from './host.gen.js'
 export { players } from './players.js'
+export {
+  poseAt,
+  type Pose,
+  Puppet,
+  type PuppetOptions,
+  type PuppetState,
+  ghostStates,
+  ticksPerSecond,
+  type Track,
+  trackTicks,
+} from './puppet.js'
+export { type HeroSnapshot, restoreHero } from './restore.js'
+export { type ReplayedHit, replayDamage } from './replayed-damage.js'
 export { type CatalogEntry, Dropper, dropperButtons } from './dropper.js'
 export {
   decodeSpot,
@@ -284,6 +299,7 @@ const handlers: ModHandlers = {
   frame(event) {
     tick(event.timeSeconds)
     advance(event.timeSeconds)
+    advancePuppets(event.timeSeconds)
     for (const handler of frames) {
       handler(event)
     }
@@ -353,6 +369,7 @@ const handlers: ModHandlers = {
   },
 
   restored(event) {
+    settleRestore(event.player, event.error || undefined)
     for (const handler of restoreds) {
       handler(event.player, event.error || undefined)
     }
