@@ -59,6 +59,10 @@ class FakePanel {
   SetAttributeString(name: string, value: string) {
     this.attributes.set(name, value)
   }
+
+  GetAttributeString(name: string, fallback: string) {
+    return this.attributes.get(name) ?? fallback
+  }
   BLoadLayout(path: string) {
     this.layout = path
     return !path.includes('missing')
@@ -375,6 +379,65 @@ test('loads layouts a host allows and hands them data', () => {
   unloaded = 0
   drawing.draw(null)
   expect(unloaded).toBe(1)
+})
+
+test("hands a mod's routes to each of its layouts", () => {
+  // Draw one layout, with routes built the way the controller sends them.
+  const root = new FakePanel('Panel', 'ModlockUi')
+  const drawing = new Drawing($, root, () => {}, {
+    url: (mod, path) => `file://${mod}/${path}`,
+    unloaded: () => {},
+  })
+  const route = (name: string, data: string) => ({
+    id: `route:${name}`,
+    kind: 'KIND_ROUTE',
+    route: name,
+    data,
+  })
+  const shop = { id: 'a', kind: 'KIND_LAYOUT', layout: 'shop.xml' }
+
+  // A layout loads with the routes the mod already sends, and a route draws
+  // no panel.
+  drawing.draw(
+    screen({ id: '', children: ['a'] }, shop, route('scores', '{"red":3}')),
+  )
+  const panel = root.children[0]!.children[0]!
+  expect(root.children[0]!.children).toEqual([panel])
+  expect(panel.attributes.get('modlock_route_scores')).toBe('{"red":3}')
+  expect(dispatched).toEqual([])
+
+  // A changed route and a new one reach the loaded layout with one ping, an
+  // unchanged draw sends none, and a route with a name no attribute holds
+  // never arrives.
+  const both = (red: number) =>
+    screen(
+      { id: '', children: ['a'] },
+      shop,
+      route('scores', `{"red":${red}}`),
+      route('round', '2'),
+      route('bad name', '1'),
+    )
+  drawing.draw(both(4))
+  expect(panel.attributes.get('modlock_route_scores')).toBe('{"red":4}')
+  expect(panel.attributes.get('modlock_route_round')).toBe('2')
+  expect([...panel.attributes.keys()]).not.toContain('modlock_route_bad name')
+  expect(dispatched).toEqual([['PlaySoundEffect', layoutDataChanged]])
+
+  // Drawing the same routes again wakes no layout.
+  dispatched.length = 0
+  drawing.draw(both(4))
+  expect(dispatched).toEqual([])
+
+  // A route the mod stops sending empties, and a reset that drops the tree
+  // forgets its routes, so the next layout starts without them.
+  drawing.draw(screen({ id: '', children: ['a'] }, shop, route('round', '2')))
+  expect(panel.attributes.get('modlock_route_scores')).toBe('')
+  expect(dispatched).toEqual([['PlaySoundEffect', layoutDataChanged]])
+  drawing.draw(null)
+  drawing.draw(screen({ id: '', children: ['a'] }, shop))
+  expect(
+    root.children[0]!.children[0]!.attributes.has('modlock_route_round'),
+  ).toBe(false)
 })
 
 test('reads screens in acknowledged parts', () => {

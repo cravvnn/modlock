@@ -15,11 +15,15 @@
 // frame.
 //
 // A layout element loads a layout from the mod's content addon, such as
-// <layout src="shop.xml" data={JSON.stringify(stock)} />. Its script runs in
-// the player's game, so only a host that has reviewed the mod's content loads
-// it; elsewhere it draws nothing. The script reads data from its panel's
-// modlock_data attribute and reads it again on each unhandled PlaySoundEffect
-// event named modlock_data_changed.
+// <layout src="shop.xml" data={stock} />. Its script runs in the player's
+// game, so only a host that has reviewed the mod's content loads it; elsewhere
+// it draws nothing. The script includes the Panorama library
+// scripts/modlock/layout.js and reads data with Modlock.data.
+//
+// route sends a player a named JSON value that every layout of the mod reads
+// with Modlock.route, wherever it sits in the tree, such as
+// route(player, 'scores', { red: 3, blue: 1 }). The value stays until the
+// next call; undefined removes it.
 //
 // toast shows a player a short notice at the lower left, above the game's
 // health and stats, which fades after a few seconds; a mod answers a command
@@ -134,7 +138,7 @@ export interface Props {
   readonly style?: Style
   readonly children?: Child
   readonly src?: string
-  readonly data?: string
+  readonly data?: unknown
   readonly onPress?: (player: Player) => void
 }
 
@@ -169,12 +173,13 @@ export interface ButtonProps {
 
 /**
  * LayoutProps load a layout from the mod's content addon: src is its path
- * there, such as 'shop.xml', and data is the string its script reads.
+ * there, such as 'shop.xml', and data is the JSON value its script reads with
+ * Modlock.data.
  */
 export interface LayoutProps {
   style?: Style
   src: string
-  data?: string
+  data?: unknown
 }
 
 /** JSX types the elements a mod's JSX may use. */
@@ -242,7 +247,35 @@ export function hideHud(player: Player, parts: readonly HudPart[]): boolean {
   return draw(player)
 }
 
-/** hide removes the interface and the notices the mod shows player. */
+/**
+ * route sends player value under name, for every layout of the mod to read
+ * with Modlock.route, until the next call; undefined removes it. A name is
+ * letters, digits, '_', '-' and '.', and the value is anything JSON.stringify
+ * takes. A route with another name, or a value JSON cannot hold, sends nothing
+ * and returns false.
+ */
+export function route(player: Player, name: string, value: unknown): boolean {
+  // Refuse a name no attribute can carry and a value JSON cannot hold.
+  const routes = new Map(view(player).routes)
+  const encoded = value === undefined ? undefined : JSON.stringify(value)
+  if (!routeName.test(name) || (value !== undefined && encoded === undefined)) {
+    return false
+  }
+
+  // Store the value, or forget the route, and redraw.
+  if (encoded === undefined) {
+    routes.delete(name)
+  } else {
+    routes.set(name, encoded)
+  }
+  views.set(player.slot, { ...view(player), routes })
+  return draw(player)
+}
+
+/** routeName matches the name of a route, as the renderer accepts it. */
+const routeName = /^[\w.-]+$/
+
+/** hide removes the interface, the routes and the notices the mod shows player. */
 export function hide(player: Player): boolean {
   views.delete(player.slot)
   screens.delete(player.slot)
@@ -288,6 +321,8 @@ interface View {
   readonly player: Player
   readonly root: Child
   readonly hud: readonly HudPart[]
+  /** routes maps each route's name to its value as JSON. */
+  readonly routes: ReadonlyMap<string, string>
   notices: readonly Notice[]
 }
 
@@ -316,7 +351,13 @@ const fadeSeconds = 0.5
 /** view returns what the mod shows player, or an empty view. */
 function view(player: Player): View {
   return (
-    views.get(player.slot) ?? { player, root: undefined, hud: [], notices: [] }
+    views.get(player.slot) ?? {
+      player,
+      root: undefined,
+      hud: [],
+      routes: new Map(),
+      notices: [],
+    }
   )
 }
 
@@ -330,13 +371,13 @@ function draw(player: Player): boolean {
   ]
   const previous = screens.get(player.slot)
   const hud = current.hud.map((part) => hudParts[part])
-  const next = render(previous, root, hud)
+  const next = render(previous, root, hud, current.routes)
   const change = diff(previous, next)
 
   // Send the change; a failed send means the player may have left, so send
   // the screen whole.
   if (change && !send(player.slot, change)) {
-    const whole = render(undefined, root, hud)
+    const whole = render(undefined, root, hud, current.routes)
     if (!send(player.slot, diff(undefined, whole)!)) {
       screens.delete(player.slot)
       return false
@@ -410,11 +451,15 @@ interface Screen {
 /** screens holds each player's interface by slot. */
 const screens = new Map<number, Screen>()
 
-/** render lays root out as nodes, keeping the ids of elements that stayed in place. */
+/**
+ * render lays root out as nodes, keeping the ids of elements that stayed in
+ * place, beside a node for each route.
+ */
 function render(
   previous: Screen | undefined,
   root: Child,
   hud: readonly WireHudPart[],
+  routes: ReadonlyMap<string, string>,
 ): Screen {
   // The root is the full-screen panel the elements hang from, and it lists
   // the parts of the game's HUD to hide.
@@ -425,6 +470,11 @@ function render(
     children: place(layout, root, '/'),
     hideHud: [...hud],
   })
+
+  // A route's id holds a colon, which no element's id does.
+  for (const [name, data] of routes) {
+    layout.add({ id: `route:${name}`, kind: Kind.ROUTE, route: name, data })
+  }
   return layout.screen
 }
 
@@ -520,7 +570,8 @@ function place(layout: Layout, child: Child, at: string): string[] {
     case 'layout':
       node.kind = Kind.LAYOUT
       node.layout = props.src ?? ''
-      node.data = props.data ?? ''
+      node.data =
+        props.data === undefined ? '' : (JSON.stringify(props.data) ?? '')
       break
     default:
       node.kind = Kind.PANEL
