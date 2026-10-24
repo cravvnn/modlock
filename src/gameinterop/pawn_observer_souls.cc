@@ -244,14 +244,18 @@ std::expected<void, std::string> PawnObserver::SetPreparationFrozen(int32_t slot
   }
 
   // Remember the original state of a pawn this freeze takes. A pawn still
-  // spawning holds MOVETYPE_NONE until the engine gives it walking, so release
-  // it to walking rather than restore the stillness.
+  // spawning holds a passing mode, MOVETYPE_NONE or MOVETYPE_PUSH, until the
+  // engine gives it walking, so release restores only a player's own modes,
+  // flying and noclip, and walks otherwise.
   if (frozen && owned == frozen_pawns_.end()) {
-    const uint8_t move_type = pawn[movement->offset];
+    constexpr uint8_t kFlying = 3;
+    constexpr uint8_t kNoclip = 7;
+    const uint8_t current = pawn[movement->offset];
+    const uint8_t move_type =
+        current == kFlying || current == kNoclip ? current : MovementHook::kWalking;
     owned = frozen_pawns_
                 .emplace(slot, FrozenPawn{sample->pawn_handle, sample->steam_id, takes_damage,
-                                          move_type == 0 ? MovementHook::kWalking : move_type,
-                                          pawn[collision->offset]})
+                                          move_type, pawn[collision->offset]})
                 .first;
   }
 
