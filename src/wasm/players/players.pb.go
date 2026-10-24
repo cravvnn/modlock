@@ -487,7 +487,8 @@ func (x *Score) GetNetWorth() int32 {
 	return 0
 }
 
-// SelectHeroRequest gives a player a hero.
+// SelectHeroRequest gives a human player a hero; a bot keeps the hero AddBot
+// gave it.
 type SelectHeroRequest struct {
 	unknownFields []byte
 	Player        int32 `protobuf:"varint,1,opt,name=player,proto3" json:"player,omitempty"`

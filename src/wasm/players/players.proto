@@ -140,7 +140,8 @@ message Score {
   int32 net_worth = 8;
 }
 
-// SelectHeroRequest gives a player a hero.
+// SelectHeroRequest gives a human player a hero; a bot keeps the hero AddBot
+// gave it.
 message SelectHeroRequest {
   int32 player = 1;
 

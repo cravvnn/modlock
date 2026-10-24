@@ -748,7 +748,8 @@ export const Score: MessageType<Score> =
   )
 
 /**
- * SelectHeroRequest gives a player a hero.
+ * SelectHeroRequest gives a human player a hero; a bot keeps the hero AddBot
+ * gave it.
  *
  * @generated from message modlock.wasm.players.SelectHeroRequest
  */

@@ -36,6 +36,9 @@ std::expected<players::HeroResponse, std::string> Game::SelectHero(
   if (!state.occupied) {
     return std::unexpected("no player is in that slot");
   }
+  if (state.is_bot) {
+    return std::unexpected("a bot keeps the hero AddBot gave it");
+  }
   auto selected =
       observer_.SelectPlayer(request.player(), state.xuid, state.generation, request.team(),
                              hero->native_definition_pointer, **selection);
