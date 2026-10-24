@@ -37,7 +37,8 @@ TEST(ModFiles, WrittenOverShippedWithinTheMod) {
   // without a directory refuses every write.
   EXPECT_FALSE(files.Write("maps/areas.yaml", std::string(kFilesQuota + 1, 'x')).has_value());
   EXPECT_EQ(files.Read("maps/areas.yaml").value(), "written");
-  EXPECT_FALSE(ModFiles{.written = {}, .data = root / "data"}.Write("a", "x").has_value());
+  const ModFiles kept_nowhere{.written = {}, .data = root / "data"};
+  EXPECT_FALSE(kept_nowhere.Write("a", "x").has_value());
 }
 
 }  // namespace
