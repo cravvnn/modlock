@@ -2,11 +2,14 @@ package session
 
 import (
 	"bytes"
+	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing/fstest"
 
+	"github.com/paralin/modlock/check"
 	"github.com/paralin/modlock/panorama"
 	"github.com/paralin/modlock/source2/gameinfo"
 	s2panorama "github.com/paralin/modlock/source2/panorama"
@@ -46,40 +49,31 @@ type Renderer struct {
 }
 
 // mountRenderer mounts a package in the Deadlock installation at gameDir that
-// draws the mods' interfaces in the player's game, and returns the call that
-// unmounts it. The package shadows the
-// stock news layout, read from the installed game so it follows game updates,
-// with one script added, and outranks every other mounted package while the
-// session runs. A game already running loads it at its next start. A block
-// left by a session that did not end cleanly is replaced.
-func mountRenderer(gameDir string, renderer *Renderer) (func() error, error) {
-	// Build the package from the installed news layout.
+// draws the mods' interfaces in the player's game and carries each mod's
+// content addon, and returns the call that unmounts it. renderer is the built
+// renderer, or nil to leave the interfaces out, and mods are the built mods. The renderer shadows the stock news layout, read from the installed
+// game so it follows game updates, with one script added. The package
+// outranks every other mounted package while the session runs, and the server
+// and the game load it only when they start. A block left by a session that
+// did not end cleanly is replaced.
+func mountRenderer(gameDir string, renderer *Renderer, mods []string) (func() error, error) {
+	// Build the package from the renderer and the mods' content.
 	citadel := filepath.Join(gameDir, "game", "citadel")
-	stock, err := vpk.OpenArchive(filepath.Join(citadel, "pak01_dir.vpk"))
-	if err != nil {
-		return nil, err
+	files := fstest.MapFS{}
+	if renderer != nil {
+		compiled, err := rendererFiles(citadel, renderer)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(files, compiled)
 	}
-	compiled, err := stock.ReadFile(strings.TrimSuffix(newsLayout, ".xml") + ".vxml_c")
-	if err != nil {
-		return nil, errors.Wrap(err, "read the game's news layout")
+	for _, mod := range mods {
+		if err := addContent(files, mod); err != nil {
+			return nil, err
+		}
 	}
-	news, err := s2panorama.Decompile(compiled)
-	if err != nil {
-		return nil, errors.Wrap(err, "read the game's news layout")
-	}
-	news, err = withScript(news, "file://{resources}/scripts/modlock/boot.js")
-	if err != nil {
-		return nil, err
-	}
-	files, err := s2panorama.CompileTree("modlock_dev", fstest.MapFS{
-		newsLayout:                           {Data: []byte(news)},
-		bootScript:                           {Data: []byte(bootSource)},
-		"panorama/layout/modlock/ui.xml":     {Data: panorama.Layout},
-		"panorama/scripts/modlock/ui.js":     {Data: renderer.Script},
-		"panorama/scripts/modlock/layout.js": {Data: renderer.Layout},
-	})
-	if err != nil {
-		return nil, err
+	if len(files) == 0 {
+		return func() error { return nil }, nil
 	}
 
 	// Write the package, then mount it.
@@ -107,6 +101,61 @@ func mountRenderer(gameDir string, renderer *Renderer) (func() error, error) {
 		return nil, err
 	}
 	return func() error { return unmountRenderer(info) }, nil
+}
+
+// rendererFiles compiles the renderer's files: the installed news layout
+// with the boot script added, the boot script, and the renderer's layout and
+// scripts.
+func rendererFiles(citadel string, renderer *Renderer) (fstest.MapFS, error) {
+	stock, err := vpk.OpenArchive(filepath.Join(citadel, "pak01_dir.vpk"))
+	if err != nil {
+		return nil, err
+	}
+	compiled, err := stock.ReadFile(strings.TrimSuffix(newsLayout, ".xml") + ".vxml_c")
+	if err != nil {
+		return nil, errors.Wrap(err, "read the game's news layout")
+	}
+	news, err := s2panorama.Decompile(compiled)
+	if err != nil {
+		return nil, errors.Wrap(err, "read the game's news layout")
+	}
+	news, err = withScript(news, "file://{resources}/scripts/modlock/boot.js")
+	if err != nil {
+		return nil, err
+	}
+	return s2panorama.CompileTree("modlock_dev", fstest.MapFS{
+		newsLayout:                           {Data: []byte(news)},
+		bootScript:                           {Data: []byte(bootSource)},
+		"panorama/layout/modlock/ui.xml":     {Data: panorama.Layout},
+		"panorama/scripts/modlock/ui.js":     {Data: renderer.Script},
+		"panorama/scripts/modlock/layout.js": {Data: renderer.Layout},
+	})
+}
+
+// addContent adds the content addon of the mod built at dir to files: its
+// compiled Panorama content and assets, each already under the addon's name.
+func addContent(files fstest.MapFS, dir string) error {
+	built := os.DirFS(dir)
+	for _, kind := range check.AddonDirs() {
+		err := fs.WalkDir(built, kind, func(name string, entry fs.DirEntry, err error) error {
+			switch {
+			case name == kind && errors.Is(err, fs.ErrNotExist):
+				return nil
+			case err != nil || !entry.Type().IsRegular():
+				return err
+			}
+			data, err := fs.ReadFile(built, name)
+			if err != nil {
+				return err
+			}
+			files[name] = &fstest.MapFile{Data: data, Mode: 0o644}
+			return nil
+		})
+		if err != nil {
+			return errors.Wrap(err, "read the mod's content")
+		}
+	}
+	return nil
 }
 
 // unmountRenderer removes the session's block from the gameinfo.gi at info,

@@ -11,8 +11,8 @@ import (
 	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
 )
 
-// TestContent builds a project's content into its addon's directories with
-// the addon named in its paths, passes the publishing check, tells content
+// TestContent builds a project's content, compiled models included, into its
+// addon's directories with the addon named in its paths, passes the publishing check, tells content
 // that runs code from content that only draws, refuses a file outside a
 // kind's directory, and removes the content once the project has none.
 func TestContent(t *testing.T) {
@@ -32,6 +32,7 @@ func TestContent(t *testing.T) {
 	write("content/layout/panel.xml", `<root><scripts><include src="file://{resources}/scripts/{addon}/panel.js" /></scripts><Panel /></root>`)
 	write("content/scripts/panel.js", "$.Msg('{addon} stays as written outside a path');")
 	write("content/layout/.panel.xml.swp", "swap")
+	write("content/models/pawn.vmdl_c", "compiled")
 	manifest := &manifestpb.Manifest{Slug: "parry", Version: "1.2.0", Language: manifestpb.Manifest_LANGUAGE_TYPESCRIPT}
 	p := &Project{Dir: dir, Manifest: manifest}
 	addon := check.Addon(manifest)
@@ -50,6 +51,9 @@ func TestContent(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(built, "scripts", addon, "panel.vjs_c")); err != nil {
 		t.Error(err)
+	}
+	if model, err := os.ReadFile(filepath.Join(p.Output(), "models", addon, "pawn.vmdl_c")); err != nil || string(model) != "compiled" {
+		t.Errorf("model %q, %v; want the compiled resource as written under models/%s", model, err, addon)
 	}
 	if _, err := os.Stat(filepath.Join(built, "layout", addon, ".panel.xml.swp")); err == nil {
 		t.Error("a hidden file shipped")
@@ -101,7 +105,9 @@ func TestContent(t *testing.T) {
 	if err := p.buildContent(); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(built); !os.IsNotExist(err) {
-		t.Errorf("content remains: %v", err)
+	for _, dir := range check.AddonDirs() {
+		if _, err := os.Stat(filepath.Join(p.Output(), dir)); !os.IsNotExist(err) {
+			t.Errorf("%s remains: %v", dir, err)
+		}
 	}
 }

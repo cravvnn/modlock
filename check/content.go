@@ -18,6 +18,18 @@ import (
 // plays the mod.
 const ContentDir = "panorama"
 
+// AssetDirs are the built mod's directories of compiled game resources that
+// its content addon carries beside the Panorama content, each under the
+// addon's name, as models/<addon>/pawn.vmdl_c. A mod names them with {addon}
+// in the path, such as models/{addon}/pawn.vmdl.
+var AssetDirs = []string{"models", "materials", "particles"}
+
+// AddonDirs returns every directory of a built mod that goes into its content
+// addon: the Panorama content and the asset directories.
+func AddonDirs() []string {
+	return append([]string{ContentDir}, AssetDirs...)
+}
+
 // versionPattern matches a version that can name a directory.
 var versionPattern = regexp.MustCompile(`^[0-9A-Za-z][0-9A-Za-z.+-]{0,63}$`)
 
@@ -39,26 +51,36 @@ func Addon(manifest *manifestpb.Manifest) string {
 	return manifest.GetSlug() + "-" + manifest.GetVersion()
 }
 
-// Content checks that every file in dist's content directory lies in the
-// addon's directory of its kind, panorama/<kind>/<addon>/, so one mod's
+// Content checks that every file in dist's addon directories lies under the
+// addon's name, panorama/<kind>/<addon>/ or <asset dir>/<addon>/, so one mod's
 // content never replaces another's or the game's.
 func Content(dist fs.FS, addon string) error {
-	return fs.WalkDir(dist, ContentDir, func(name string, entry fs.DirEntry, err error) error {
-		// A mod without client content has no directory.
-		if name == ContentDir && errors.Is(err, fs.ErrNotExist) {
-			return nil
+	for _, dir := range AddonDirs() {
+		// The addon's name follows the kind below panorama, and the asset
+		// directory itself elsewhere.
+		depth, want := 1, dir+"/"+addon+"/"
+		if dir == ContentDir {
+			depth, want = 2, dir+"/<kind>/"+addon+"/"
 		}
-		if err != nil || entry.IsDir() {
+		err := fs.WalkDir(dist, dir, func(name string, entry fs.DirEntry, err error) error {
+			// A mod without this kind of content has no directory.
+			if name == dir && errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
+			if err != nil || entry.IsDir() {
+				return err
+			}
+			parts := strings.SplitN(name, "/", depth+2)
+			if len(parts) < depth+2 || parts[depth] != addon {
+				return errors.Errorf("%s is outside the addon's directories; client content goes in %s", name, want)
+			}
+			return nil
+		})
+		if err != nil {
 			return err
 		}
-
-		// Each file sits below its kind and the addon's name.
-		parts := strings.SplitN(name, "/", 4)
-		if len(parts) < 4 || parts[2] != addon {
-			return errors.Errorf("%s is outside the addon's directories; client content goes in %s/<kind>/%s/", name, ContentDir, addon)
-		}
-		return nil
-	})
+	}
+	return nil
 }
 
 // Scripted returns the first file of dist's client content that runs code in

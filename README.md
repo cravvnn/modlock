@@ -555,6 +555,22 @@ Ship style sheets and images compiled by Valve's resource compiler, as
 `.vcss_c` and `.vtex_c`. The publishing check refuses a build with client files
 outside the addon's directories.
 
+Compiled models, materials and particles go in `content/models/`,
+`content/materials/` and `content/particles/`, and build to
+`models/SLUG-VERSION/` and so on. Name them with `{addon}` wherever a path
+goes, in `precache`, `createModel`, `createParticle` and entity key values:
+
+```ts
+precache({ resources: ['models/{addon}/pawn.vmdl'] })
+createModel({ resource: 'models/{addon}/pawn.vmdl', position })
+```
+
+`modlock dev` and `modlock play` mount each mod's content in the game before
+the server starts, so the server and the player's game both load it. The game
+reads the package only when it starts, so restart it after changing content. A
+path inside a compiled resource is not rewritten: point it at the game's own
+resources, or at the addon's name for the version you build.
+
 ## The TypeScript library
 
 A TypeScript or JavaScript mod imports `modlock` and registers its handlers when

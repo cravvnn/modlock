@@ -39,7 +39,7 @@ func (m *Mod) Files() ([]string, error) {
 	}
 
 	// Add the client content and the data.
-	for _, dir := range []string{check.ContentDir, check.DataDir} {
+	for _, dir := range append(check.AddonDirs(), check.DataDir) {
 		err := fs.WalkDir(os.DirFS(m.Dir), dir, func(name string, entry fs.DirEntry, err error) error {
 			switch {
 			case name == dir && errors.Is(err, fs.ErrNotExist):

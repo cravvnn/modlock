@@ -327,9 +327,15 @@ class Game : public HostService {
   void StartFreeForAll(bool enabled) { free_for_all_ = enabled; }
 
   // StartContentAddon names the content addon of the mod that starts, which
-  // CreateEntity writes in place of {addon} in a text key value, so a world
-  // panel names its layout as file://{resources}/layout/{addon}/panel.xml.
+  // CreateEntity writes in place of {addon} in a text key value, and
+  // CreateModel and CreateParticle in a resource path, so a world panel names
+  // its layout as file://{resources}/layout/{addon}/panel.xml and a model its
+  // resource as models/{addon}/pawn.vmdl.
   void StartContentAddon(std::string addon) { addon_ = std::move(addon); }
+
+  // WithAddon returns text with the mod's content addon in place of each
+  // {addon}.
+  std::string WithAddon(std::string text) const;
 
   // FreeForAllCommand reports whether free-for-all consumes a player's console
   // line. Seating is the host's, so it drops the team commands.

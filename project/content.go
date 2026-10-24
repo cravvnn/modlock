@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing/fstest"
 
@@ -14,10 +15,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ContentDir is a project's directory of client content: the panorama
-// directory of the mod's content addon, without the addon's name. A file at
+// ContentDir is a project's directory of client content: the files of the
+// mod's content addon, without the addon's name. A file at
 // content/<kind>/<path>, such as content/layout/inventory.xml, builds to
-// panorama/<kind>/<addon>/<path> in the built mod.
+// panorama/<kind>/<addon>/<path> in the built mod, and one in an asset kind,
+// such as content/models/pawn.vmdl_c, to models/<addon>/pawn.vmdl_c.
 const ContentDir = "content"
 
 // addonToken matches a path to one of the addon's own files, which a layout,
@@ -55,7 +57,7 @@ func (p *Project) buildContent() error {
 		name = filepath.ToSlash(name)
 		kind, rest, ok := strings.Cut(name, "/")
 		if !ok {
-			return errors.Errorf("%s/%s: put it in a directory for its kind, such as %s/layout/", ContentDir, name, ContentDir)
+			return errors.Errorf("%s/%s: put it in a directory for its kind, such as %s/layout/ or %s/models/", ContentDir, name, ContentDir, ContentDir)
 		}
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -65,7 +67,11 @@ func (p *Project) buildContent() error {
 		case ".xml", ".js", ".css":
 			data = addonToken.ReplaceAll(data, []byte("${1}"+addon+"/"))
 		}
-		sources[path.Join(check.ContentDir, kind, addon, rest)] = &fstest.MapFile{Data: data}
+		place := path.Join(check.ContentDir, kind, addon, rest)
+		if slices.Contains(check.AssetDirs, kind) {
+			place = path.Join(kind, addon, rest)
+		}
+		sources[place] = &fstest.MapFile{Data: data}
 		return nil
 	})
 	if err != nil {
@@ -77,14 +83,13 @@ func (p *Project) buildContent() error {
 	}
 
 	// Stage the compiled content, then replace the previous content with it.
-	final := filepath.Join(p.Output(), check.ContentDir)
-	staged := final + ".tmp"
+	staged := filepath.Join(p.Output(), ".content.tmp")
 	if err := os.RemoveAll(staged); err != nil {
 		return errors.Wrap(err, "write the content")
 	}
 	defer os.RemoveAll(staged)
 	for name, file := range compiled {
-		target := filepath.Join(staged, filepath.FromSlash(strings.TrimPrefix(name, check.ContentDir+"/")))
+		target := filepath.Join(staged, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 			return errors.Wrap(err, "write the content")
 		}
@@ -92,11 +97,15 @@ func (p *Project) buildContent() error {
 			return errors.Wrap(err, "write the content")
 		}
 	}
-	if err := os.RemoveAll(final); err != nil {
-		return errors.Wrap(err, "write the content")
+	for _, dir := range check.AddonDirs() {
+		final := filepath.Join(p.Output(), dir)
+		if err := os.RemoveAll(final); err != nil {
+			return errors.Wrap(err, "write the content")
+		}
+		err := os.Rename(filepath.Join(staged, dir), final)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return errors.Wrap(err, "write the content")
+		}
 	}
-	if len(compiled) == 0 {
-		return nil
-	}
-	return errors.Wrap(os.Rename(staged, final), "write the content")
+	return nil
 }

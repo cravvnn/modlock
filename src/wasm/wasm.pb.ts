@@ -690,7 +690,8 @@ export interface PrecacheOptions {
    */
   heroes?: string[]
   /**
-   * Resources are model and particle paths, such as models/props/crate.vmdl.
+   * Resources are model and particle paths, such as models/props/crate.vmdl,
+   * with {addon} for the mod's content addon, as in models/{addon}/pawn.vmdl.
    */
   resources?: string[]
 }

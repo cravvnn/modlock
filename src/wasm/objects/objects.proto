@@ -8,7 +8,8 @@ import "github.com/paralin/modlock/src/geometry/geometry.proto";
 
 // ModelOptions describes a model placed in the world.
 message ModelOptions {
-  // Resource is the model's path, which the mod precached.
+  // Resource is the model's path, which the mod precached, with {addon} for
+  // the mod's content addon, as in models/{addon}/pawn.vmdl.
   string resource = 1;
 
   // Position is the model's origin.
@@ -59,7 +60,8 @@ message TextOptions {
 // ParticleOptions describes a particle effect.
 message ParticleOptions {
   // Resource is the particle system's path, which the mod precached, such
-  // as particles/abilities/assassinate_laser_targetting.vpcf.
+  // as particles/abilities/assassinate_laser_targetting.vpcf, with {addon}
+  // for the mod's content addon, as in particles/{addon}/glow.vpcf.
   string resource = 1;
 
   // Position is the effect's origin.

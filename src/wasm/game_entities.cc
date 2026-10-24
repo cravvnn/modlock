@@ -43,14 +43,16 @@ std::optional<gameinterop::EntityValue> Value(const entities::EntityValue& value
   return std::nullopt;
 }
 
-// KeyValues converts spawn key values to the world's form, writing addon in
-// place of each {addon} in a text value. The result borrows the text of pairs,
-// and of filled, which holds each text value it rewrote.
+// addonToken stands for the mod's content addon in a text value or path.
+constexpr std::string_view addonToken = "{addon}";
+
+// KeyValues converts spawn key values to the world's form, writing the mod's
+// content addon in place of each {addon} in a text value. The result borrows
+// the text of pairs, and of filled, which holds each text value it rewrote.
 std::expected<std::vector<gameinterop::EntityKeyValue>, std::string> KeyValues(
-    const google::protobuf::RepeatedPtrField<entities::KeyValue>& pairs, std::string_view addon,
+    const google::protobuf::RepeatedPtrField<entities::KeyValue>& pairs, const Game& game,
     std::deque<std::string>& filled) {
   // Convert each pair, failing on a pair with no value.
-  constexpr std::string_view token = "{addon}";
   std::vector<gameinterop::EntityKeyValue> result;
   result.reserve(pairs.size());
   for (const auto& pair : pairs) {
@@ -62,13 +64,8 @@ std::expected<std::vector<gameinterop::EntityKeyValue>, std::string> KeyValues(
 
     // Name the mod's content addon in a text value.
     const auto* text = std::get_if<std::string_view>(&*value);
-    if (text && !addon.empty() && text->find(token) != std::string_view::npos) {
-      auto& rewritten = filled.emplace_back(*text);
-      for (auto at = rewritten.find(token); at != std::string::npos;
-           at = rewritten.find(token, at + addon.size())) {
-        rewritten.replace(at, token.size(), addon);
-      }
-      *value = std::string_view(rewritten);
+    if (text && text->find(addonToken) != std::string_view::npos) {
+      *value = std::string_view(filled.emplace_back(game.WithAddon(std::string(*text))));
     }
     result.push_back({.key = pair.key(), .value = *value});
   }
@@ -87,6 +84,17 @@ std::expected<entities::AliveResponse, std::string> Alive(std::expected<bool, st
 
 }  // namespace
 
+std::string Game::WithAddon(std::string text) const {
+  if (addon_.empty()) {
+    return text;
+  }
+  for (auto at = text.find(addonToken); at != std::string::npos;
+       at = text.find(addonToken, at + addon_.size())) {
+    text.replace(at, addonToken.size(), addon_);
+  }
+  return text;
+}
+
 std::expected<objects::ObjectResponse, std::string> Game::CreateModel(const objects::ModelOptions& request) {
   // Resolve the effect factory.
   auto effects = services_.Effects();
@@ -96,7 +104,7 @@ std::expected<objects::ObjectResponse, std::string> Game::CreateModel(const obje
 
   // Create the model and keep it as one of the mod's objects.
   render::WorldModelSettings settings{
-      .resource = request.resource(),
+      .resource = WithAddon(request.resource()),
       .origin = request.position(),
       .angles = Floats(request.facing()),
       .scale = request.scale() == 0 ? 1 : request.scale(),
@@ -280,8 +288,12 @@ std::expected<void, std::string> Game::RemoveBot(const players::PlayerRequest& r
 }
 
 std::expected<void, std::string> Game::Precache(const PrecacheOptions& request) {
-  return engine_->Precache({request.heroes().begin(), request.heroes().end()},
-                           {request.resources().begin(), request.resources().end()});
+  std::vector<std::string> resources;
+  resources.reserve(request.resources().size());
+  for (const auto& resource : request.resources()) {
+    resources.push_back(WithAddon(resource));
+  }
+  return engine_->Precache({request.heroes().begin(), request.heroes().end()}, std::move(resources));
 }
 
 // The input calls replace the mod's changes; the shared hook applies them.
@@ -342,7 +354,7 @@ std::expected<entities::EntityResponse, std::string> Game::CreateEntity(const en
     return std::unexpected(world.error());
   }
   std::deque<std::string> filled;
-  auto key_values = KeyValues(request.key_values(), addon_, filled);
+  auto key_values = KeyValues(request.key_values(), *this, filled);
   if (!key_values) {
     return std::unexpected(key_values.error());
   }

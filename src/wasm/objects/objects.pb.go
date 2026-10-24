@@ -18,7 +18,8 @@ import (
 // ModelOptions describes a model placed in the world.
 type ModelOptions struct {
 	unknownFields []byte
-	// Resource is the model's path, which the mod precached.
+	// Resource is the model's path, which the mod precached, with {addon} for
+	// the mod's content addon, as in models/{addon}/pawn.vmdl.
 	Resource string `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// Position is the model's origin.
 	Position *geometry.Vec3 `protobuf:"bytes,2,opt,name=position,proto3" json:"position,omitempty"`
@@ -169,7 +170,8 @@ func (x *TextOptions) GetScale() float32 {
 type ParticleOptions struct {
 	unknownFields []byte
 	// Resource is the particle system's path, which the mod precached, such
-	// as particles/abilities/assassinate_laser_targetting.vpcf.
+	// as particles/abilities/assassinate_laser_targetting.vpcf, with {addon}
+	// for the mod's content addon, as in particles/{addon}/glow.vpcf.
 	Resource string `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	// Position is the effect's origin.
 	Position *geometry.Vec3 `protobuf:"bytes,2,opt,name=position,proto3" json:"position,omitempty"`

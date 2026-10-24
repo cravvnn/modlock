@@ -17,7 +17,8 @@ import type {
  */
 export interface ModelOptions {
   /**
-   * Resource is the model's path, which the mod precached.
+   * Resource is the model's path, which the mod precached, with {addon} for
+   * the mod's content addon, as in models/{addon}/pawn.vmdl.
    */
   resource?: string
   /**
@@ -248,7 +249,8 @@ export const TextOptions: MessageType<TextOptions> =
 export interface ParticleOptions {
   /**
    * Resource is the particle system's path, which the mod precached, such
-   * as particles/abilities/assassinate_laser_targetting.vpcf.
+   * as particles/abilities/assassinate_laser_targetting.vpcf, with {addon}
+   * for the mod's content addon, as in particles/{addon}/glow.vpcf.
    */
   resource?: string
   /**

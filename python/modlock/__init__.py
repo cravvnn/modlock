@@ -727,7 +727,8 @@ class NpcTarget:
 class ModelOptions:
     """ModelOptions describes a model placed in the world."""
 
-    # resource is the model's path, which the mod precached.
+    # resource is the model's path, which the mod precached, with {addon} for
+    # the mod's content addon, as in models/{addon}/pawn.vmdl.
     resource: str = ""
     # position is the model's origin.
     position: Vector
@@ -770,7 +771,8 @@ class ParticleOptions:
     """ParticleOptions describes a particle effect."""
 
     # resource is the particle system's path, which the mod precached, such
-    # as particles/abilities/assassinate_laser_targetting.vpcf.
+    # as particles/abilities/assassinate_laser_targetting.vpcf, with {addon}
+    # for the mod's content addon, as in particles/{addon}/glow.vpcf.
     resource: str = ""
     # position is the effect's origin.
     position: Vector
@@ -1257,7 +1259,8 @@ class PrecacheOptions:
 
     # heroes are hero names, such as hero_wraith.
     heroes: list[str] = dataclasses.field(default_factory=lambda: list[str]())
-    # resources are model and particle paths, such as models/props/crate.vmdl.
+    # resources are model and particle paths, such as models/props/crate.vmdl,
+    # with {addon} for the mod's content addon, as in models/{addon}/pawn.vmdl.
     resources: list[str] = dataclasses.field(default_factory=lambda: list[str]())
 
 

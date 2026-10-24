@@ -65,6 +65,14 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Mount the mods' interfaces and content before the host starts, so the
+	// server loads the content too.
+	screens := NewScreens(steam.Account())
+	iface := Interface{GameDir: gameDir, Mods: config.Mods, Screen: screens.Screen, Events: config.Events}
+	if config.Interface != "" {
+		iface.Address, iface.Relay, iface.Renderer = config.Interface, config.Relay, config.Renderer
+	}
+	stopInterface := StartInterface(iface)
 	host, err := StartHost(ctx, HostConfig{
 		Executable: executable,
 		GameDir:    gameDir,
@@ -79,24 +87,12 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 		Output:     config.HostOutput,
 	})
 	if err != nil {
+		stopInterface()
 		_ = link.Close()
 		return nil, err
 	}
 
-	// Serve the mods' interfaces to the game.
-	session := &Session{Executable: executable, control: link, host: host, controlled: make(chan struct{})}
-	screens := NewScreens(steam.Account())
-	if config.Interface != "" {
-		session.stopInterface = StartInterface(Interface{
-			Address:  config.Interface,
-			Relay:    config.Relay,
-			Renderer: config.Renderer,
-			GameDir:  gameDir,
-			Screen:   screens.Screen,
-			Events:   config.Events,
-		})
-	}
-
+	session := &Session{Executable: executable, control: link, host: host, controlled: make(chan struct{}), stopInterface: stopInterface}
 	// Pass events on, launching the client at the first ready server.
 	var launched atomic.Bool
 	handle := func(event *control.HostEvent) {

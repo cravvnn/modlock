@@ -8,15 +8,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Interface configures serving a player's mod interfaces to their game.
+// Interface configures serving a player's mod interfaces and content to
+// their game.
 type Interface struct {
-	// Address is the loopback address the relay page reads from.
+	// Address is the loopback address the relay page reads from, or empty to
+	// serve no interfaces.
 	Address string
 	// Relay is the relay page's origin.
 	Relay string
 	// Renderer is the built renderer; nil leaves the game without it, so the
 	// interfaces show only in the browser preview.
 	Renderer *Renderer
+	// Mods are the built mods whose content addons the game loads.
+	Mods []string
 	// GameDir is the Deadlock installation the renderer mounts in.
 	GameDir string
 	// Screen is the player's screen.
@@ -25,30 +29,33 @@ type Interface struct {
 	Events func(*control.HostEvent)
 }
 
-// StartInterface serves the screen to the relay page and mounts the renderer
-// in the game, and returns the call that stops both. Each part is optional:
-// another program on the address or a game that cannot take the renderer
-// reports a failure and leaves the session running. Start it before the game
-// launches, which loads the renderer only at its start.
+// StartInterface mounts the renderer and the mods' content in the game and
+// serves the screen to the relay page, and returns the call that stops both.
+// Each part is optional: a game that cannot take the package or another
+// program on the address reports a failure and leaves the session running.
+// Start it before the server and the game, which load the package only when
+// they start.
 func StartInterface(config Interface) (stop func()) {
+	// Mount the renderer and the content, so the game draws the screen and
+	// the server and the game load the mods' resources.
+	unmount := func() error { return nil }
+	if mounted, err := mountRenderer(config.GameDir, config.Renderer, config.Mods); err != nil {
+		config.fail(errors.Wrap(err, "the game shows no mod interfaces or content"))
+	} else {
+		unmount = mounted
+	}
+	if config.Address == "" {
+		return func() { _ = unmount() }
+	}
+
 	// Serve the screen. Without it the renderer has nothing to draw.
 	listener, err := net.Listen("tcp", config.Address)
 	if err != nil {
 		config.fail(errors.Wrap(err, "mod interfaces are off"))
-		return func() {}
+		return func() { _ = unmount() }
 	}
 	server := &http.Server{Handler: NewRelay(config.Relay, config.Screen)}
 	go func() { _ = server.Serve(listener) }()
-	if config.Renderer == nil {
-		return func() { _ = server.Close() }
-	}
-
-	// Mount the renderer, so the game draws the screen.
-	unmount, err := mountRenderer(config.GameDir, config.Renderer)
-	if err != nil {
-		config.fail(errors.Wrap(err, "mod interfaces show only in the browser preview"))
-		return func() { _ = server.Close() }
-	}
 	return func() {
 		_ = server.Close()
 		_ = unmount()

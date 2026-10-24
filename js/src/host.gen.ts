@@ -1018,7 +1018,10 @@ export interface NpcTarget {
 
 /** ModelOptions describes a model placed in the world. */
 export interface ModelOptions {
-  /** resource is the model's path, which the mod precached. */
+  /**
+   * resource is the model's path, which the mod precached, with {addon} for
+   * the mod's content addon, as in models/{addon}/pawn.vmdl.
+   */
   resource: string
   /** position is the model's origin. */
   position: Vector
@@ -1062,7 +1065,8 @@ export interface TextOptions {
 export interface ParticleOptions {
   /**
    * resource is the particle system's path, which the mod precached, such
-   * as particles/abilities/assassinate_laser_targetting.vpcf.
+   * as particles/abilities/assassinate_laser_targetting.vpcf, with {addon}
+   * for the mod's content addon, as in particles/{addon}/glow.vpcf.
    */
   resource: string
   /** position is the effect's origin. */
@@ -1777,7 +1781,8 @@ export interface PrecacheOptions {
   /** heroes are hero names, such as hero_wraith. */
   heroes?: readonly string[]
   /**
-   * resources are model and particle paths, such as models/props/crate.vmdl.
+   * resources are model and particle paths, such as models/props/crate.vmdl,
+   * with {addon} for the mod's content addon, as in models/{addon}/pawn.vmdl.
    */
   resources?: readonly string[]
 }

@@ -84,7 +84,7 @@ std::expected<objects::ObjectResponse, std::string> Game::CreateParticle(const o
 
   // Describe the particle with its optional tint, data, anchors and parent.
   render::ParticleSettings settings{
-      .resource = request.resource(),
+      .resource = WithAddon(request.resource()),
       .origin = request.position(),
       .angles = Floats(request.facing()),
       .start_active = !request.inactive(),

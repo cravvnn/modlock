@@ -381,7 +381,8 @@ type PrecacheOptions struct {
 	unknownFields []byte
 	// Heroes are hero names, such as hero_wraith.
 	Heroes []string `protobuf:"bytes,1,rep,name=heroes,proto3" json:"heroes,omitempty"`
-	// Resources are model and particle paths, such as models/props/crate.vmdl.
+	// Resources are model and particle paths, such as models/props/crate.vmdl,
+	// with {addon} for the mod's content addon, as in models/{addon}/pawn.vmdl.
 	Resources []string `protobuf:"bytes,2,rep,name=resources,proto3" json:"resources,omitempty"`
 }
 
