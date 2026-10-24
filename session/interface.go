@@ -38,27 +38,33 @@ type Interface struct {
 func StartInterface(config Interface) (stop func()) {
 	// Mount the renderer and the content, so the game draws the screen and
 	// the server and the game load the mods' resources.
-	unmount := func() error { return nil }
+	// A block left in gameinfo.gi outranks every package the game loads after
+	// the session, so report a failure to remove it.
+	unmount := func() {}
 	if mounted, err := mountRenderer(config.GameDir, config.Renderer, config.Mods); err != nil {
 		config.fail(errors.Wrap(err, "the game shows no mod interfaces or content"))
 	} else {
-		unmount = mounted
+		unmount = func() {
+			if err := mounted(); err != nil {
+				config.fail(errors.Wrapf(err, "remove the %s block from gameinfo.gi; the next session replaces it", rendererMount))
+			}
+		}
 	}
 	if config.Address == "" {
-		return func() { _ = unmount() }
+		return unmount
 	}
 
 	// Serve the screen. Without it the renderer has nothing to draw.
 	listener, err := net.Listen("tcp", config.Address)
 	if err != nil {
 		config.fail(errors.Wrap(err, "mod interfaces are off"))
-		return func() { _ = unmount() }
+		return unmount
 	}
 	server := &http.Server{Handler: NewRelay(config.Relay, config.Screen)}
 	go func() { _ = server.Serve(listener) }()
 	return func() {
 		_ = server.Close()
-		_ = unmount()
+		unmount()
 	}
 }
 
