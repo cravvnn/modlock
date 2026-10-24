@@ -418,7 +418,7 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
     return std::unexpected("model scale must be finite and positive");
   }
 
-  // Spawn a prop with the model, color and glow.
+  // The override accepts models with propdata without turning scenery into physics props.
   const auto rgba = settings.color_rgba;
   const gameinterop::KeyValueColor color{
       static_cast<uint8_t>(rgba), static_cast<uint8_t>(rgba >> 8), static_cast<uint8_t>(rgba >> 16),
@@ -439,7 +439,7 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
       {.key = "disableshadows", .value = true},
       {.key = "use_animgraph", .value = false},
   };
-  return CreateEntity("prop_dynamic", settings.origin, settings.angles, properties);
+  return CreateEntity("prop_dynamic_override", settings.origin, settings.angles, properties);
 }
 
 std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory::Create(
