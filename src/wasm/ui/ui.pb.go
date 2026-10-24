@@ -15,6 +15,49 @@ import (
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
 )
 
+// HudPart is a part of the game's own HUD a mod may hide from a player.
+type HudPart int32
+
+const (
+	// HUD_PART_UNKNOWN names no part.
+	HudPart_HUD_PART_UNKNOWN HudPart = 0
+	// HUD_PART_LEVEL_UP is the notice the game shows for each boon, ability
+	// point and power increase.
+	HudPart_HUD_PART_LEVEL_UP HudPart = 1
+	// HUD_PART_OWN_HEALTH is the player's own health bar, with its shields and
+	// regeneration, beside their abilities. The abilities, held items, status
+	// icons and crosshair stay.
+	HudPart_HUD_PART_OWN_HEALTH HudPart = 2
+)
+
+// Enum value maps for HudPart.
+var (
+	HudPart_name = map[int32]string{
+		0: "HUD_PART_UNKNOWN",
+		1: "HUD_PART_LEVEL_UP",
+		2: "HUD_PART_OWN_HEALTH",
+	}
+	HudPart_value = map[string]int32{
+		"HUD_PART_UNKNOWN":    0,
+		"HUD_PART_LEVEL_UP":   1,
+		"HUD_PART_OWN_HEALTH": 2,
+	}
+)
+
+func (x HudPart) Enum() *HudPart {
+	p := new(HudPart)
+	*p = x
+	return p
+}
+
+func (x HudPart) String() string {
+	name, valid := HudPart_name[int32(x)]
+	if valid {
+		return name
+	}
+	return strconv.Itoa(int(x))
+}
+
 // Kind selects the panel a node draws.
 type Kind int32
 
@@ -220,6 +263,11 @@ type Node struct {
 	// which no sound has, so a script that registers for the unhandled
 	// PlaySoundEffect event hears it and reads the attribute again.
 	Data string `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
+	// HideHud lists the parts of the game's own HUD the renderer hides while
+	// the root holds them; only the root's list counts. A part shows again once
+	// no mod's root lists it, so a mod that stops, a reset and a player who
+	// leaves all bring it back.
+	HideHud []HudPart `protobuf:"varint,9,rep,packed,name=hide_hud,json=hideHud,proto3" json:"hideHud,omitempty"`
 }
 
 func (x *Node) Reset() {
@@ -282,6 +330,13 @@ func (x *Node) GetData() string {
 		return x.Data
 	}
 	return ""
+}
+
+func (x *Node) GetHideHud() []HudPart {
+	if x != nil {
+		return x.HideHud
+	}
+	return nil
 }
 
 // Style is the closed set of layout and paint properties a node may set. A
@@ -770,6 +825,7 @@ func (m *Node) CloneVT() *Node {
 	r.Data = m.Data
 	r.Children = protobuf_go_lite.CloneSlice(m.Children)
 	r.Style = protobuf_go_lite.CloneVTValue(m.Style)
+	r.HideHud = protobuf_go_lite.CloneSlice(m.HideHud)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -1017,6 +1073,9 @@ func (this *Node) EqualVT(that *Node) bool {
 		return false
 	}
 	if this.Data != that.Data {
+		return false
+	}
+	if !protobuf_go_lite.EqualSlice(this.HideHud, that.HideHud) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -1346,6 +1405,46 @@ func (this *UiRequest) EqualMessageVT(thatMsg any) bool {
 	return this.EqualVT(that)
 }
 
+// MarshalProtoJSON marshals the HudPart to JSON.
+func (x HudPart) MarshalProtoJSON(s *json.MarshalState) {
+	s.WriteEnum(int32(x), HudPart_name)
+}
+
+// MarshalText marshals the HudPart to text.
+func (x HudPart) MarshalText() ([]byte, error) {
+	return []byte(json.GetEnumString(int32(x), HudPart_name)), nil
+}
+
+// MarshalJSON marshals the HudPart to JSON.
+func (x HudPart) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the HudPart from JSON.
+func (x *HudPart) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	v := s.ReadEnum(HudPart_value)
+	if err := s.Err(); err != nil {
+		s.SetErrorf("could not read HudPart enum: %v", err)
+		return
+	}
+	*x = HudPart(v)
+}
+
+// UnmarshalText unmarshals the HudPart from text.
+func (x *HudPart) UnmarshalText(b []byte) error {
+	i, err := json.ParseEnumString(string(b), HudPart_value)
+	if err != nil {
+		return err
+	}
+	*x = HudPart(i)
+	return nil
+}
+
+// UnmarshalJSON unmarshals the HudPart from JSON.
+func (x *HudPart) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 // MarshalProtoJSON marshals the Kind to JSON.
 func (x Kind) MarshalProtoJSON(s *json.MarshalState) {
 	s.WriteEnum(int32(x), Kind_name)
@@ -1554,6 +1653,17 @@ func (x *Node) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("data")
 		s.WriteString(x.Data)
 	}
+	if len(x.HideHud) > 0 || s.HasField("hideHud") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("hideHud")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.HideHud {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s)
+		}
+		s.WriteArrayEnd()
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1603,6 +1713,17 @@ func (x *Node) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "data":
 			s.AddField("data")
 			x.Data = s.ReadString()
+		case "hide_hud", "hideHud":
+			s.AddField("hide_hud")
+			if s.ReadNil() {
+				x.HideHud = nil
+				return
+			}
+			s.ReadArray(func() {
+				var v HudPart
+				v.UnmarshalProtoJSON(s)
+				x.HideHud = append(x.HideHud, v)
+			})
 		}
 	})
 }
@@ -2317,6 +2438,11 @@ func (m *Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if len(m.HideHud) > 0 {
+		i = protobuf_go_lite.EncodeVarintPacked(dAtA, i, m.HideHud)
+		i--
+		dAtA[i] = 0x4a
+	}
 	if len(m.Data) > 0 {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Data)
 		i--
@@ -2929,6 +3055,7 @@ func (m *Node) SizeVT() (n int) {
 	}
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Layout)
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Data)
+	n += protobuf_go_lite.SizeVarintPacked(1, m.HideHud)
 	n += len(m.unknownFields)
 	return n
 }
@@ -3114,6 +3241,10 @@ func (m *UiRequest) SizeVT() (n int) {
 	return n
 }
 
+func (x HudPart) MarshalProtoText() string {
+	return x.String()
+}
+
 func (x Kind) MarshalProtoText() string {
 	return x.String()
 }
@@ -3168,6 +3299,14 @@ func (x *Node) MarshalProtoText() string {
 	if x.Data != "" {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "data")
 		protobuf_go_lite.TextWriteString(&sb, x.Data)
+	}
+	if len(x.HideHud) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "hide_hud")
+		for i, v := range x.HideHud {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			protobuf_go_lite.TextWriteStringer(&sb, HudPart(v))
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3540,6 +3679,40 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Data = v
+		case 9:
+			if wireType == 0 {
+				var v HudPart
+				var _v uint64
+				_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+				v = HudPart(_v)
+				if err != nil {
+					return err
+				}
+				m.HideHud = append(m.HideHud, v)
+			} else if wireType == 2 {
+				packedStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+				if err != nil {
+					return err
+				}
+				iNdEx = packedStart
+				var elementCount int
+				elementCount = protobuf_go_lite.PackedVarintElementCount(dAtA[iNdEx:postIndex])
+				if elementCount != 0 && len(m.HideHud) == 0 {
+					m.HideHud = make([]HudPart, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v HudPart
+					var _v uint64
+					_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+					v = HudPart(_v)
+					if err != nil {
+						return err
+					}
+					m.HideHud = append(m.HideHud, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field HideHud", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

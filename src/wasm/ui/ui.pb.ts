@@ -11,6 +11,40 @@ import type {
 } from '@aptre/protobuf-es-lite/binary-encoding'
 
 /**
+ * HudPart is a part of the game's own HUD a mod may hide from a player.
+ *
+ * @generated from enum modlock.wasm.ui.HudPart
+ */
+export enum HudPart {
+  /**
+   * HUD_PART_UNKNOWN names no part.
+   */
+  UNKNOWN = 0,
+
+  /**
+   * HUD_PART_LEVEL_UP is the notice the game shows for each boon, ability
+   * point and power increase.
+   */
+  LEVEL_UP = 1,
+
+  /**
+   * HUD_PART_OWN_HEALTH is the player's own health bar, with its shields and
+   * regeneration, beside their abilities. The abilities, held items, status
+   * icons and crosshair stay.
+   */
+  OWN_HEALTH = 2,
+}
+
+export const HudPart_Enum = /* @__PURE__ */ createEnumType(
+  'modlock.wasm.ui.HudPart',
+  [
+    [0, 'HUD_PART_UNKNOWN'],
+    [1, 'HUD_PART_LEVEL_UP'],
+    [2, 'HUD_PART_OWN_HEALTH'],
+  ],
+)
+
+/**
  * Kind selects the panel a node draws.
  *
  * @generated from enum modlock.wasm.ui.Kind
@@ -204,6 +238,13 @@ export interface Node {
    * PlaySoundEffect event hears it and reads the attribute again.
    */
   data?: string
+  /**
+   * HideHud lists the parts of the game's own HUD the renderer hides while
+   * the root holds them; only the root's list counts. A part shows again once
+   * no mod's root lists it, so a mod that stops, a reset and a player who
+   * leaves all bring it back.
+   */
+  hideHud?: HudPart[]
 }
 
 export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
@@ -217,6 +258,7 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
     [6, 'style', 11, 0, Style.codec],
     [7, 'layout', 9],
     [8, 'data', 9],
+    [9, 'hide_hud', 14, 3, HudPart_Enum],
   ],
   {
     decode: (r: BinaryReader, end: number, m: Node): Node => {
@@ -247,6 +289,10 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
             break
           case 8:
             m.data = r.string()
+            break
+          case 9:
+            for (const e = r.run(t), a = (m.hideHud ??= []); r.pos < e;)
+              a.push(r.int32())
             break
           default:
             r.skip(t)
@@ -286,6 +332,14 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
       {
         const v = m.data
         if (v) w.uint32(66).string(v)
+      }
+      {
+        const a = m.hideHud
+        if (a != null && a.length > 0) {
+          const s = w.uint32(74).fork()
+          for (const e of a) w.int32(e)
+          w.join(s)
+        }
       }
     },
   },

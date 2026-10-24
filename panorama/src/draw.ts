@@ -23,7 +23,7 @@ export interface Panel {
   readonly paneltype: string
   hittest: boolean
   text: string
-  readonly style: Record<string, string>
+  readonly style: Record<string, string | null>
   IsValid(): boolean
   GetChild(index: number): Panel | null
   MoveChildBefore(child: Panel, before: Panel): void

@@ -6,7 +6,7 @@ interface Panel {
   readonly paneltype: string
   hittest: boolean
   text: string
-  readonly style: Record<string, string>
+  readonly style: Record<string, string | null>
   IsValid(): boolean
   GetParent(): Panel | null
   GetChildCount(): number
@@ -23,6 +23,7 @@ interface Panel {
     partial: boolean,
   ): boolean
   FindChildTraverse(id: string): Panel | null
+  FindChildrenWithClassTraverse(name: string): Panel[]
   DeleteAsync(seconds: number): void
 }
 

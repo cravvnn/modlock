@@ -82,6 +82,8 @@ export {
   type Edges,
   Fragment,
   hide,
+  hideHud,
+  type HudPart,
   type ImageProps,
   type JSX,
   jsx,

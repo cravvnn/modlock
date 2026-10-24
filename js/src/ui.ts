@@ -24,12 +24,17 @@
 // toast shows a player a short notice at the lower left, above the game's
 // health and stats, which fades after a few seconds; a mod answers a command
 // or refuses one with it.
+//
+// hideHud hides parts of the game's own HUD from a player, such as their
+// health bar or the notice for each boon, until the mod lists them no more,
+// hides the player's interface, or stops.
 
 import {
   Align,
   type Change,
   Face,
   Flow,
+  HudPart as WireHudPart,
   Kind,
   type Edges as WireEdges,
   type Length as WireLength,
@@ -89,6 +94,14 @@ export interface Style {
   borderWidth?: number
   borderColor?: string
 }
+
+/**
+ * HudPart is a part of the game's own HUD: 'levelUp' the notice for each boon,
+ * ability point and power increase, 'ownHealth' the player's health bar with
+ * its shields and regeneration. The abilities, items, status icons and
+ * crosshair stay.
+ */
+export type HudPart = 'levelUp' | 'ownHealth'
 
 /** Child is anything an element may hold. Text becomes a label. */
 export type Child =
@@ -220,6 +233,15 @@ export function show(player: Player, root: Child): boolean {
   return draw(player)
 }
 
+/**
+ * hideHud hides parts of the game's own HUD from player until the next call;
+ * an empty list shows them all again.
+ */
+export function hideHud(player: Player, parts: readonly HudPart[]): boolean {
+  views.set(player.slot, { ...view(player), hud: parts })
+  return draw(player)
+}
+
 /** hide removes the interface and the notices the mod shows player. */
 export function hide(player: Player): boolean {
   views.delete(player.slot)
@@ -265,6 +287,7 @@ export function tick(seconds: number): void {
 interface View {
   readonly player: Player
   readonly root: Child
+  readonly hud: readonly HudPart[]
   notices: readonly Notice[]
 }
 
@@ -292,7 +315,9 @@ const fadeSeconds = 0.5
 
 /** view returns what the mod shows player, or an empty view. */
 function view(player: Player): View {
-  return views.get(player.slot) ?? { player, root: undefined, notices: [] }
+  return (
+    views.get(player.slot) ?? { player, root: undefined, hud: [], notices: [] }
+  )
 }
 
 /** draw sends what changed in player's interface and notices. */
@@ -304,13 +329,14 @@ function draw(player: Player): boolean {
     current.notices.length !== 0 && notices(current.notices),
   ]
   const previous = screens.get(player.slot)
-  const next = render(previous, root)
+  const hud = current.hud.map((part) => hudParts[part])
+  const next = render(previous, root, hud)
   const change = diff(previous, next)
 
   // Send the change; a failed send means the player may have left, so send
   // the screen whole.
   if (change && !send(player.slot, change)) {
-    const whole = render(undefined, root)
+    const whole = render(undefined, root, hud)
     if (!send(player.slot, diff(undefined, whole)!)) {
       screens.delete(player.slot)
       return false
@@ -385,10 +411,20 @@ interface Screen {
 const screens = new Map<number, Screen>()
 
 /** render lays root out as nodes, keeping the ids of elements that stayed in place. */
-function render(previous: Screen | undefined, root: Child): Screen {
-  // The root is the full-screen panel the elements hang from.
+function render(
+  previous: Screen | undefined,
+  root: Child,
+  hud: readonly WireHudPart[],
+): Screen {
+  // The root is the full-screen panel the elements hang from, and it lists
+  // the parts of the game's HUD to hide.
   const layout = new Layout(previous)
-  layout.add({ id: '', kind: Kind.PANEL, children: place(layout, root, '/') })
+  layout.add({
+    id: '',
+    kind: Kind.PANEL,
+    children: place(layout, root, '/'),
+    hideHud: [...hud],
+  })
   return layout.screen
 }
 
@@ -556,6 +592,12 @@ const aligns = {
 function align(value: keyof typeof aligns | undefined): Align | undefined {
   return value === undefined ? undefined : aligns[value]
 }
+
+/** hudParts maps each part of the game's HUD to its wire value. */
+const hudParts = {
+  levelUp: WireHudPart.LEVEL_UP,
+  ownHealth: WireHudPart.OWN_HEALTH,
+} as const
 
 /** faces maps each typeface to its wire value. */
 const faces = {

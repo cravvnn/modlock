@@ -46,6 +46,27 @@ message Node {
   // which no sound has, so a script that registers for the unhandled
   // PlaySoundEffect event hears it and reads the attribute again.
   string data = 8;
+
+  // HideHud lists the parts of the game's own HUD the renderer hides while
+  // the root holds them; only the root's list counts. A part shows again once
+  // no mod's root lists it, so a mod that stops, a reset and a player who
+  // leaves all bring it back.
+  repeated HudPart hide_hud = 9;
+}
+
+// HudPart is a part of the game's own HUD a mod may hide from a player.
+enum HudPart {
+  // HUD_PART_UNKNOWN names no part.
+  HUD_PART_UNKNOWN = 0;
+
+  // HUD_PART_LEVEL_UP is the notice the game shows for each boon, ability
+  // point and power increase.
+  HUD_PART_LEVEL_UP = 1;
+
+  // HUD_PART_OWN_HEALTH is the player's own health bar, with its shields and
+  // regeneration, beside their abilities. The abilities, held items, status
+  // icons and crosshair stay.
+  HUD_PART_OWN_HEALTH = 2;
 }
 
 // Kind selects the panel a node draws.

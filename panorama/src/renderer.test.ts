@@ -4,6 +4,7 @@ import { beforeEach, expect, test } from 'bun:test'
 import { Screen } from '../../src/wasm/ui/ui.pb.js'
 import { Bridge } from './bridge.js'
 import { Drawing, layoutDataChanged } from './draw.js'
+import { Hud } from './hud.js'
 import { decodeUtf8 } from './packed.js'
 
 /** FakePanel records what the renderer does to one panel. */
@@ -16,9 +17,10 @@ class FakePanel {
   url = ''
   layout = ''
   valid = true
-  style: Record<string, string> = {}
+  style: Record<string, string | null> = {}
   events = new Map<string, () => void>()
   attributes = new Map<string, string>()
+  classes: string[] = []
 
   constructor(
     readonly paneltype: string,
@@ -61,8 +63,14 @@ class FakePanel {
     this.layout = path
     return !path.includes('missing')
   }
-  FindChildTraverse() {
-    return null
+  FindChildTraverse(id: string): FakePanel | null {
+    return this.descendants().find((panel) => panel.id === id) ?? null
+  }
+  FindChildrenWithClassTraverse(name: string) {
+    return this.descendants().filter((panel) => panel.classes.includes(name))
+  }
+  descendants(): FakePanel[] {
+    return this.children.flatMap((child) => [child, ...child.descendants()])
   }
   DeleteAsync() {
     this.valid = false
@@ -123,6 +131,15 @@ beforeEach(() => {
     },
   })
 })
+
+/** runScheduled runs each callback $.Schedule holds now, once. */
+function runScheduled() {
+  const callbacks = [...scheduled.values()]
+  scheduled.clear()
+  for (const callback of callbacks) {
+    callback()
+  }
+}
 
 /** screen builds a screen with one mod's tree. */
 function screen(...nodes: JsonObject[]): Screen {
@@ -258,6 +275,54 @@ test("draws the game's faces, capitals, shadows and borders", () => {
   // A border needs both its width and its color; the default face sets none.
   expect(pill!.style.border).toBe('2px solid rgba(255, 239, 215, 0.102)')
   expect(bare!.style).toEqual({})
+})
+
+test("hides the game's HUD parts while a root lists them", () => {
+  // Build the game's HUD: the health beside the abilities, and the
+  // announcements that hold a level-up notice.
+  const game = new FakePanel('CitadelHud', 'Hud')
+  const add = (parent: FakePanel, id: string, ...classes: string[]) => {
+    const panel = $.CreatePanel('Panel', parent, id) as unknown as FakePanel
+    panel.classes = classes
+    return panel
+  }
+
+  // Lay out the panels the parts name, and one that stays.
+  const health = add(game, 'health_and_abilities_container')
+  const bars = add(health, 'hud_health_bars')
+  const shields = add(health, 'HudShieldsContainer')
+  const held = add(health, 'hud_held')
+  const announcements = add(game, 'CitadelHudGameAnnouncements')
+  const boon = add(announcements, '', 'LevelUpBlock', 'AbilityUnlockBlock')
+
+  // Sweep through the fake $.Schedule.
+  const hud = new Hud(game, (_, callback) => $.Schedule(0, callback))
+
+  // Hiding the player's health collapses its panels and keeps the rest.
+  hud.draw(screen({ id: '', hideHud: ['HUD_PART_OWN_HEALTH'] }))
+  expect(bars.style.visibility).toBe('collapse')
+  expect(shields.style.visibility).toBe('collapse')
+  expect(held.style.visibility).toBeUndefined()
+  expect(boon.style.visibility).toBeUndefined()
+
+  // A level-up notice the game shows later collapses on the next sweep.
+  hud.draw(
+    screen({ id: '', hideHud: ['HUD_PART_OWN_HEALTH', 'HUD_PART_LEVEL_UP'] }),
+  )
+  expect(boon.style.visibility).toBe('collapse')
+  const later = add(announcements, '', 'LevelUpBlock', 'PowerIncreaseBlock')
+  expect(scheduled.size).toBe(1)
+  runScheduled()
+  expect(later.style.visibility).toBe('collapse')
+
+  // Once no root lists them, the parts show again and the sweeps stop.
+  hud.draw(screen({ id: '', hideHud: ['HUD_PART_LEVEL_UP'] }))
+  expect(bars.style.visibility).toBeNull()
+  expect(later.style.visibility).toBe('collapse')
+  hud.draw(null)
+  expect(later.style.visibility).toBeNull()
+  runScheduled()
+  expect(scheduled.size).toBe(0)
 })
 
 test('loads layouts a host allows and hands them data', () => {

@@ -889,6 +889,7 @@ vector or a color has no typed setter; set it with `serverCommand`.
 | --------------------------------------- | -------------------------------------------------------- |
 | `show(player, element)`, `hide(player)` | Show a player an interface written in JSX, or remove it. |
 | `toast(player, text, seconds?)`         | Show a player a short notice that fades.                 |
+| `hideHud(player, parts)`                | Hide `'levelUp'` notices or `'ownHealth'`; `[]` restores. |
 
 Style `panel`, `label`, `image`, `button` and `layout` with `width`,
 `height`, `flow`, `horizontalAlign`, `verticalAlign`, `margin`, `padding`,

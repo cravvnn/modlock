@@ -1,9 +1,9 @@
 import { expect, test } from 'bun:test'
 
-import { Face, UiRequest } from '../../src/wasm/ui/ui.pb.js'
+import { Face, HudPart, UiRequest } from '../../src/wasm/ui/ui.pb.js'
 import { Call, Reply } from '../../src/wasm/wasm.pb.js'
 import { bind } from '../src/host.js'
-import { jsx, show } from '../src/index.js'
+import { hideHud, jsx, show } from '../src/index.js'
 
 // The library sends each interface change through the transport, which
 // records it.
@@ -52,6 +52,18 @@ test('a redraw sends only the nodes that changed, under their first ids', () => 
   const count = sent.length
   show(player, keys('A'))
   expect(sent.length).toBe(count)
+
+  // Hiding parts of the game's HUD changes only the root, which lists them,
+  // and an empty list shows them again.
+  hideHud(player, ['ownHealth', 'levelUp'])
+  const hidden = sent.at(-1)!.change!
+  expect(hidden.set!.map((node) => node.id ?? '')).toEqual([''])
+  expect(hidden.set![0]!.hideHud).toEqual([
+    HudPart.OWN_HEALTH,
+    HudPart.LEVEL_UP,
+  ])
+  hideHud(player, [])
+  expect(sent.at(-1)!.change!.set![0]!.hideHud ?? []).toEqual([])
 })
 
 test("a style names the game's faces and edge lines on the wire", () => {
