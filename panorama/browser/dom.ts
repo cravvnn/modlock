@@ -369,15 +369,35 @@ function applyStyle(element: HTMLElement, kebab: string, value: string): void {
 
 // shrink fits a label set to text-overflow: shrink, as Panorama does, by
 // stepping its font size down from the declared one until the text fits its
-// box. It waits a frame so the label is laid out at its final width.
-const shrinking = new Set<HTMLElement>()
+// box. It waits a frame so the label is laid out, and fits it again whenever
+// its box resizes, so a label measured before its row had a width, or before
+// the window changed size, does not stay shrunk. A label that leaves shrink
+// gets its declared size back.
+const shrinking = new WeakSet<HTMLElement>()
+const fitted = new WeakSet<HTMLElement>()
+const resized = new ResizeObserver((entries) => {
+  for (const entry of entries) shrink(entry.target as HTMLElement)
+})
 function shrink(element: HTMLElement): void {
-  if (!element.classList.contains('shrink') || shrinking.has(element)) return
+  const wants = element.classList.contains('shrink')
+  if ((!wants && !fitted.has(element)) || shrinking.has(element)) return
   shrinking.add(element)
   requestAnimationFrame(() => {
-    // Start from the declared size and step down until the text fits.
+    // Start from the declared size; a label that left shrink stops there.
     shrinking.delete(element)
     element.style.fontSize = element.dataset.fontSize ?? ''
+    if (!element.classList.contains('shrink')) {
+      fitted.delete(element)
+      resized.unobserve(element)
+      return
+    }
+    if (!fitted.has(element)) {
+      fitted.add(element)
+      resized.observe(element)
+    }
+
+    // A label with no box yet keeps its size until the observer sees one.
+    if (!element.clientWidth) return
     const fits = () =>
       element.scrollWidth <= element.clientWidth &&
       element.scrollHeight <= element.clientHeight
