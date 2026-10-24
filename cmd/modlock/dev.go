@@ -82,18 +82,18 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 
 	// Build now and, with --watch, after each save. The first good
 	// build starts the server and each later one reloads the mod; a
-	// failed build keeps the running one. Watch calls rebuild on one
-	// goroutine.
+	// failed build keeps the running one, and without --watch ends the
+	// command. Watch calls rebuild on one goroutine.
 	var running server
 	started := make(chan error, 1)
 	rebuild := func() {
 		// Keep the running mod when the build fails.
 		if err := out.build(c.Context, opened, project.Dev); err != nil {
-			if watch {
-				out.mark("✗", red, "the build failed; fix it and save to try again")
-			} else {
-				out.mark("✗", red, "the build failed; fix it and run again, or pass --watch to rebuild on each save")
+			if !watch {
+				started <- errors.Wrap(err, "the build failed; fix it and run again, or pass --watch to rebuild on each save")
+				return
 			}
+			out.mark("✗", red, "the build failed; fix it and save to try again")
 			return
 		}
 
