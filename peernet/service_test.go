@@ -15,6 +15,7 @@ import (
 
 	"github.com/aperturerobotics/go-websocket"
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/paralin/modlock/publish"
 	"github.com/paralin/modlock/session"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/paralin/modlock/src/wasm/ui"
@@ -44,12 +45,27 @@ type fakeSignaling struct {
 	admitted map[peer.ID]int
 	// tickets maps each unused ticket to its peer.
 	tickets map[string]peer.ID
+	// lobby is the open dev lobby socket, if any.
+	lobby *websocket.Conn
+
+	// lobbyOpens receives each dev lobby socket's request.
+	lobbyOpens chan *publish.DevLobbyOpen
+	// lobbyCloses receives how each dev lobby socket closed.
+	lobbyCloses chan websocket.StatusCode
 }
 
-// newFakeSignaling serves signaling that accepts the token good.
-func newFakeSignaling(t *testing.T, good string) *httptest.Server {
+// newFakeSignaling serves signaling and dev lobbies that accept the token
+// good.
+func newFakeSignaling(t *testing.T, good string) (*httptest.Server, *fakeSignaling) {
 	// Name each socket's caller by its ticket's peer.
-	f := &fakeSignaling{good: good, mux: srpc.NewMux(), admitted: make(map[peer.ID]int), tickets: make(map[string]peer.ID)}
+	f := &fakeSignaling{
+		good:        good,
+		mux:         srpc.NewMux(),
+		admitted:    make(map[peer.ID]int),
+		tickets:     make(map[string]peer.ID),
+		lobbyOpens:  make(chan *publish.DevLobbyOpen, 4),
+		lobbyCloses: make(chan websocket.StatusCode, 4),
+	}
 	server := signaling_server.NewServerWithIdentify(logrus.NewEntry(logrus.New()), func(ctx context.Context) (peer.ID, error) {
 		return ctx.Value(signalPeerKey{}).(peer.ID), nil
 	})
@@ -62,10 +78,55 @@ func newFakeSignaling(t *testing.T, good string) *httptest.Server {
 	routes.HandleFunc("GET "+AdmitPath, f.serveAdmit)
 	routes.HandleFunc("POST /api/signal/ticket", f.serveTicket)
 	routes.HandleFunc("GET /api/signal/ws", f.serveSocket)
+	routes.HandleFunc("GET "+DevLobbyPath, f.serveDevLobby)
 	service := httptest.NewServer(routes)
 	t.Cleanup(service.Close)
-	return service
+	return service, f
 }
+
+// serveDevLobby opens a lobby for the good token and holds it while the
+// socket stays open, reporting the request and how the socket closed.
+func (f *fakeSignaling) serveDevLobby(w http.ResponseWriter, r *http.Request) {
+	// Refuse any other sign-in.
+	if r.Header.Get("Authorization") != "Bearer "+f.good {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	conn, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.CloseNow()
+
+	// Answer the request with the lobby's page.
+	_, data, err := conn.Read(r.Context())
+	open := &publish.DevLobbyOpen{}
+	if err != nil || open.UnmarshalVT(data) != nil {
+		return
+	}
+	f.lobbyOpens <- open
+	state, _ := (&publish.DevLobbyState{State: &publish.DevLobbyState_Url{Url: testLobbyURL}}).MarshalVT()
+	if conn.Write(r.Context(), websocket.MessageBinary, state) != nil {
+		return
+	}
+
+	// Hold it until it closes.
+	f.mtx.Lock()
+	f.lobby = conn
+	f.mtx.Unlock()
+	_, _, err = conn.Read(r.Context())
+	f.lobbyCloses <- websocket.CloseStatus(err)
+}
+
+// dropLobby drops the open dev lobby socket without a close.
+func (f *fakeSignaling) dropLobby() {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.lobby.CloseNow()
+}
+
+// testLobbyURL is the page of the fake service's dev lobby.
+const testLobbyURL = "https://hyperline.test/play?lobby=dev"
 
 // serveAdmit admits the peer while its socket with the good token is open.
 func (f *fakeSignaling) serveAdmit(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +225,8 @@ func TestServiceProbe(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
 	defer cancel()
 	le := logrus.NewEntry(logrus.New())
-	origin := newFakeSignaling(t, "good").URL
+	service, signaling := newFakeSignaling(t, "good")
+	origin := service.URL
 
 	// Give each PC a key file and a sign-in; the guest's has expired.
 	keyPath := filepath.Join(t.TempDir(), "peer.pem")
@@ -204,7 +266,7 @@ func TestServiceProbe(t *testing.T) {
 	}
 
 	// The guest joins the host's session and its game reaches the server.
-	joinSession(ctx, t, host, guest)
+	joinSession(ctx, t, host, guest, signaling)
 
 	// Signing the guest out drops its admitted socket.
 	guestToken.Store("")
@@ -222,7 +284,7 @@ func TestServiceProbe(t *testing.T) {
 
 // joinSession hosts a game server on host, refuses a guest with the wrong
 // session, and walks guest's game through joining it.
-func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
+func joinSession(ctx context.Context, t *testing.T, host, guest *Service, signaling *fakeSignaling) {
 	// Run a game server.
 	server, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
@@ -232,12 +294,15 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 	server.SetDeadline(time.Now().Add(10 * time.Second))
 
 	// Host it on its port.
+	hostCtx, endHost := context.WithCancel(ctx)
+	defer endHost()
 	hostClient := NewSRPCPeerNetClient(rpcClient(t, host))
-	hosted, err := hostClient.Host(ctx)
+	hosted, err := hostClient.Host(hostCtx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	start := &HostRequest{Port: uint32(server.LocalAddr().(*net.UDPAddr).Port)}
+	lobby := &LobbyRequest{ModName: "Chess", Version: "0.1.0"}
+	start := &HostRequest{Port: uint32(server.LocalAddr().(*net.UDPAddr).Port), Lobby: lobby}
 	if err := hosted.Send(&HostInput{Body: &HostInput_Start{Start: start}}); err != nil {
 		t.Fatal(err)
 	}
@@ -263,6 +328,31 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// The session's dev lobby opens with its secret, and a dropped socket
+	// reconnects to the same lobby.
+	open := <-signaling.lobbyOpens
+	if open.GetModName() != "Chess" || open.GetVersion() != "0.1.0" || open.GetSecret() != code.Session {
+		t.Fatalf("lobby request %v", open)
+	}
+	// requireLobby reads the next lobby state: the page url, or reconnecting
+	// when url is empty.
+	requireLobby := func(url string) {
+		t.Helper()
+		event, err := hosted.Recv()
+		state := event.GetLobby()
+		if err != nil || state.GetUrl() != url || (url == "" && state.GetReconnecting() == "") {
+			t.Fatalf("lobby event %v: %v, want %q", event, err, url)
+		}
+	}
+	requireLobby(testLobbyURL)
+	signaling.dropLobby()
+	if status := <-signaling.lobbyCloses; status != -1 {
+		t.Fatalf("dropped lobby closed with %v", status)
+	}
+	requireLobby("")
+	<-signaling.lobbyOpens
+	requireLobby(testLobbyURL)
 	guestClient := NewSRPCPeerNetClient(rpcClient(t, guest))
 	wrong := JoinCode{Host: code.Host, Session: code.Session + 1}
 	if refused, err := guestClient.Join(ctx, &JoinRequest{Code: wrong.String()}); err == nil {
@@ -324,6 +414,12 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 		if line = event.GetChat(); line != nil && line.GetName()+": "+line.GetText() != "Host: gg" {
 			t.Fatalf("chat line %v", line)
 		}
+	}
+
+	// Ending the session closes its lobby normally.
+	endHost()
+	if status := <-signaling.lobbyCloses; status != websocket.StatusNormalClosure {
+		t.Fatalf("ended lobby closed with %v", status)
 	}
 }
 

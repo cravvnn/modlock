@@ -30,6 +30,10 @@ func hostCommand(out *printer) *cli.Command {
 				Value: previewPort,
 				Usage: "the loopback port of the page that draws the mod's interface; 0 turns it off",
 			},
+			&cli.BoolFlag{
+				Name:  "no-lobby",
+				Usage: "host by join code alone, without a lobby on hyperline.gg",
+			},
 		),
 		Action: func(c *cli.Context) error {
 			out.brief = true
@@ -38,11 +42,13 @@ func hostCommand(out *printer) *cli.Command {
 	}
 }
 
-// hostSession serves running to guests until the command ends, printing the
-// join code, and sends the daemon each player's interface and chat from feed.
-// The server itself reports each player who joins or leaves. Hosting is optional: when it cannot start,
-// the session keeps running for this PC alone.
-func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
+// hostSession serves running to guests until the command ends, and sends the
+// daemon each player's interface and chat from feed. With lobby set it puts
+// the session on hyperline.gg as a dev lobby and prints its link, falling back
+// to the join code when no lobby opens; with lobby nil it prints the join code.
+// The server itself reports each player who joins or leaves. Hosting is
+// optional: when it cannot start, the session keeps running for this PC alone.
+func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed, lobby *peernet.LobbyRequest) {
 	// Only a game server can take guests.
 	if _, sandboxed := running.(*sandbox.Sandbox); sandboxed {
 		out.mark("!", yellow, "guests join only a game server, not the sandbox")
@@ -58,7 +64,7 @@ func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
 	defer client.Close()
 	stream, err := peernet.NewSRPCPeerNetClient(client.RPC()).Host(c.Context)
 	if err == nil {
-		start := &peernet.HostRequest{Port: uint32(c.Uint("port"))}
+		start := &peernet.HostRequest{Port: uint32(c.Uint("port")), Lobby: lobby}
 		err = stream.Send(&peernet.HostInput{Body: &peernet.HostInput_Start{Start: start}})
 	}
 	if err != nil {
@@ -68,6 +74,7 @@ func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
 	go feed.send(c.Context, stream)
 
 	// Print each change until the session ends.
+	shown := &hostOutput{out: out, lobby: lobby != nil}
 	for {
 		event, err := stream.Recv()
 		if err != nil {
@@ -76,9 +83,76 @@ func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
 			}
 			return
 		}
-		if code := event.GetJoinCode(); code != "" {
-			out.mark("●", green, "hosting; on the other PC run: modlock join "+code)
+		shown.show(event)
+	}
+}
+
+// hostOutput prints a hosted session's join code and lobby as they change.
+type hostOutput struct {
+	// out prints the lines.
+	out *printer
+	// lobby is true while the session may still get a dev lobby, so the join
+	// code waits for its answer.
+	lobby bool
+	// code is the session's join code, once the daemon sent it.
+	code string
+	// codeShown is true once the join code was printed.
+	codeShown bool
+	// url is the open lobby's page, once one opened.
+	url string
+	// reconnecting is true while the lobby's socket is down.
+	reconnecting bool
+}
+
+// show prints what event changed.
+func (o *hostOutput) show(event *peernet.HostEvent) {
+	// Print the join code unless a lobby may replace it.
+	if code := event.GetJoinCode(); code != "" {
+		o.code = code
+		if !o.lobby {
+			o.showCode()
 		}
+		return
+	}
+	lobby := event.GetLobby()
+	if lobby == nil {
+		return
+	}
+
+	// Print the lobby's link, or why there is none.
+	switch state := lobby.GetState().(type) {
+	case *peernet.LobbyState_Url:
+		switch {
+		case state.Url == o.url:
+			o.out.mark("●", green, "lobby: back")
+		case o.url != "":
+			o.out.mark("!", yellow, "lobby closed: the connection to hyperline.gg was lost")
+			fallthrough
+		default:
+			o.out.mark("●", green, "hosting at "+state.Url+"; invite friends there")
+		}
+		o.url, o.reconnecting = state.Url, false
+	case *peernet.LobbyState_Reconnecting:
+		if !o.reconnecting {
+			o.out.mark("…", yellow, "lobby: reconnecting")
+		}
+		o.reconnecting = true
+	case *peernet.LobbyState_Refused:
+		o.lobby = false
+		o.showCode()
+		o.out.mark("!", yellow, state.Refused)
+	case *peernet.LobbyState_SignedOut:
+		o.lobby = false
+		o.showCode()
+		o.out.note("modlock login puts it on hyperline.gg")
+	}
+}
+
+// showCode prints the join code once.
+func (o *hostOutput) showCode() {
+	if o.code != "" && !o.codeShown {
+		o.out.mark("●", green, "hosting; on the other PC run: modlock join "+o.code)
+		o.codeShown = true
 	}
 }
 

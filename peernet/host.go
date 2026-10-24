@@ -147,7 +147,8 @@ func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStr
 // Host serves the local game server to guests holding the join code it sends
 // first, until the call ends. The caller names the server, then sends its
 // players and interfaces, which the host streams to each guest as their own
-// screen.
+// screen. When the caller asks for a dev lobby, the host holds it open at the
+// signaling service and reports where it stands; the call ending closes it.
 func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 	// Read the server's port.
 	ctx, cancel := context.WithCancel(strm.Context())
@@ -215,6 +216,21 @@ func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 		return err
 	}
 	defer release()
+
+	// Hold the dev lobby beside the session, when asked for.
+	if lobby := start.GetStart().GetLobby(); lobby != nil {
+		lobbyDone := make(chan struct{})
+		defer func() {
+			cancel()
+			<-lobbyDone
+		}()
+		go func() {
+			defer close(lobbyDone)
+			s.holdLobby(ctx, lobby, code.Session, func(state *LobbyState) {
+				h.events(&HostEvent{Body: &HostEvent_Lobby{Lobby: state}})
+			})
+		}()
+	}
 
 	// Send events until the call ends.
 	for {

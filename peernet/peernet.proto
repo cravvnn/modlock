@@ -97,6 +97,34 @@ message HostInput {
 message HostRequest {
   // port is the server's UDP game port on loopback.
   uint32 port = 1;
+  // lobby asks the signaling service for a dev lobby running the session's
+  // mod, which the creator's friends join; unset hosts by join code alone.
+  LobbyRequest lobby = 2;
+}
+
+// LobbyRequest names the mod a dev lobby runs.
+message LobbyRequest {
+  // mod_name is the mod's display name.
+  string mod_name = 1;
+  // version is the build's version label.
+  string version = 2;
+}
+
+// LobbyState is where a hosted session's dev lobby stands.
+message LobbyState {
+  oneof state {
+    // url is the open lobby's page. A url that differs from the one before
+    // is a new lobby, after the service closed the earlier one.
+    string url = 1;
+    // refused says why the service opened no lobby; the session runs
+    // without one.
+    string refused = 2;
+    // signed_out means there is no saved sign-in, so there is no lobby.
+    bool signed_out = 3;
+    // reconnecting says why the socket that holds the lobby dropped. The
+    // lobby stays open for a minute while the daemon opens it again.
+    string reconnecting = 4;
+  }
 }
 
 // HostEvent is one change to a hosted session.
@@ -109,6 +137,9 @@ message HostEvent {
     string joined = 2;
     // left is the peer of a guest whose game stream ended.
     string left = 3;
+    // lobby is where the dev lobby stands, after join_code and on each
+    // change, when start asked for one.
+    LobbyState lobby = 4;
   }
 }
 

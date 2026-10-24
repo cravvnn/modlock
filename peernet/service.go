@@ -6,6 +6,7 @@ import (
 
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
+	"github.com/s4wave/spacewave/net/crypto"
 	"github.com/s4wave/spacewave/net/peer"
 	"github.com/sirupsen/logrus"
 )
@@ -23,6 +24,8 @@ type Service struct {
 
 	// started closes once Run loaded the key and set local and admission.
 	started chan struct{}
+	// key is the peer's key, which signs its sockets to the service.
+	key crypto.PrivKey
 	// local is the peer, derived from its key.
 	local peer.ID
 	// admission holds the peer's admission to signaling.
@@ -62,6 +65,7 @@ func (s *Service) Run(ctx context.Context, le *logrus.Entry) error {
 	if err != nil {
 		return err
 	}
+	s.key = key
 	s.local, err = peer.IDFromPrivateKey(key)
 	if err != nil {
 		return err

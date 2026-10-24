@@ -168,26 +168,9 @@ func (a *Admission) holdUntilChanged(ctx context.Context, token string, admitted
 // hold opens key's admission socket at origin with the bearer token, calls
 // admitted once it is open, and pings it until it drops or ctx ends.
 func hold(ctx context.Context, origin, token string, key crypto.PrivKey, admitted func()) error {
-	// Sign the socket's request with the peer's key and carry the sign-in.
-	pid, err := peer.IDFromPrivateKey(key)
+	// Open the socket.
+	conn, err := dialSigned(ctx, origin+AdmitPath, token, key)
 	if err != nil {
-		return err
-	}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, origin+AdmitPath, nil)
-	if err != nil {
-		return err
-	}
-	if err := transport.SignHTTPRequest(request, nil, key, pid, SigningEnv); err != nil {
-		return err
-	}
-	request.Header.Set("Authorization", "Bearer "+token)
-
-	// Open the socket; the service answers 401 to a sign-in it refuses.
-	conn, response, err := websocket.Dial(ctx, origin+AdmitPath, &websocket.DialOptions{HTTPHeader: request.Header})
-	if err != nil {
-		if response != nil && response.StatusCode == http.StatusUnauthorized {
-			return errRefused
-		}
 		return err
 	}
 	defer conn.CloseNow()
@@ -207,4 +190,30 @@ func hold(ctx context.Context, origin, token string, key crypto.PrivKey, admitte
 			}
 		}
 	}
+}
+
+// dialSigned opens a socket to url whose request key signed, carrying the
+// bearer token. It returns errRefused when the service refuses the sign-in.
+// The socket outlives ctx, which bounds only the handshake.
+func dialSigned(ctx context.Context, url, token string, key crypto.PrivKey) (*websocket.Conn, error) {
+	// Sign the request with the peer's key and carry the sign-in.
+	pid, err := peer.IDFromPrivateKey(key)
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := transport.SignHTTPRequest(request, nil, key, pid, SigningEnv); err != nil {
+		return nil, err
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	// Open the socket; the service answers 401 to a sign-in it refuses.
+	conn, response, err := websocket.Dial(ctx, url, &websocket.DialOptions{HTTPHeader: request.Header})
+	if err != nil && response != nil && response.StatusCode == http.StatusUnauthorized {
+		return nil, errRefused
+	}
+	return conn, err
 }

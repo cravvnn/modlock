@@ -13,6 +13,7 @@ import (
 	"github.com/aperturerobotics/cli"
 	modcli "github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/js"
+	"github.com/paralin/modlock/peernet"
 	"github.com/paralin/modlock/preview"
 	"github.com/paralin/modlock/project"
 	"github.com/paralin/modlock/sandbox"
@@ -135,7 +136,11 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 	}
 	defer running.Stop()
 	if host {
-		go hostSession(c, out, running, feed)
+		var lobby *peernet.LobbyRequest
+		if !c.Bool("no-lobby") {
+			lobby = &peernet.LobbyRequest{ModName: opened.Manifest.GetName(), Version: opened.Manifest.GetVersion()}
+		}
+		go hostSession(c, out, running, feed, lobby)
 	}
 	return waitSession(c, out, running)
 }

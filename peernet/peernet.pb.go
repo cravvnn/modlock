@@ -234,6 +234,9 @@ type HostRequest struct {
 	unknownFields []byte
 	// port is the server's UDP game port on loopback.
 	Port uint32 `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+	// lobby asks the signaling service for a dev lobby running the session's
+	// mod, which the creator's friends join; unset hosts by join code alone.
+	Lobby *LobbyRequest `protobuf:"bytes,2,opt,name=lobby,proto3" json:"lobby,omitempty"`
 }
 
 func (x *HostRequest) Reset() {
@@ -249,6 +252,129 @@ func (x *HostRequest) GetPort() uint32 {
 	return 0
 }
 
+func (x *HostRequest) GetLobby() *LobbyRequest {
+	if x != nil {
+		return x.Lobby
+	}
+	return nil
+}
+
+// LobbyRequest names the mod a dev lobby runs.
+type LobbyRequest struct {
+	unknownFields []byte
+	// mod_name is the mod's display name.
+	ModName string `protobuf:"bytes,1,opt,name=mod_name,json=modName,proto3" json:"modName,omitempty"`
+	// version is the build's version label.
+	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+}
+
+func (x *LobbyRequest) Reset() {
+	*x = LobbyRequest{}
+}
+
+func (*LobbyRequest) ProtoMessage() {}
+
+func (x *LobbyRequest) GetModName() string {
+	if x != nil {
+		return x.ModName
+	}
+	return ""
+}
+
+func (x *LobbyRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+// LobbyState is where a hosted session's dev lobby stands.
+type LobbyState struct {
+	unknownFields []byte
+	// Types that are assignable to State:
+	//	*LobbyState_Url
+	//	*LobbyState_Refused
+	//	*LobbyState_SignedOut
+	//	*LobbyState_Reconnecting
+	State isLobbyState_State `protobuf_oneof:"state"`
+}
+
+func (x *LobbyState) Reset() {
+	*x = LobbyState{}
+}
+
+func (*LobbyState) ProtoMessage() {}
+
+func (m *LobbyState) GetState() isLobbyState_State {
+	if m != nil {
+		return m.State
+	}
+	return nil
+}
+
+func (x *LobbyState) GetUrl() string {
+	if x, ok := x.GetState().(*LobbyState_Url); ok {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *LobbyState) GetRefused() string {
+	if x, ok := x.GetState().(*LobbyState_Refused); ok {
+		return x.Refused
+	}
+	return ""
+}
+
+func (x *LobbyState) GetSignedOut() bool {
+	if x, ok := x.GetState().(*LobbyState_SignedOut); ok {
+		return x.SignedOut
+	}
+	return false
+}
+
+func (x *LobbyState) GetReconnecting() string {
+	if x, ok := x.GetState().(*LobbyState_Reconnecting); ok {
+		return x.Reconnecting
+	}
+	return ""
+}
+
+type isLobbyState_State interface {
+	isLobbyState_State()
+}
+
+type LobbyState_Url struct {
+	// url is the open lobby's page. A url that differs from the one before
+	// is a new lobby, after the service closed the earlier one.
+	Url string `protobuf:"bytes,1,opt,name=url,proto3,oneof"`
+}
+
+type LobbyState_Refused struct {
+	// refused says why the service opened no lobby; the session runs
+	// without one.
+	Refused string `protobuf:"bytes,2,opt,name=refused,proto3,oneof"`
+}
+
+type LobbyState_SignedOut struct {
+	// signed_out means there is no saved sign-in, so there is no lobby.
+	SignedOut bool `protobuf:"varint,3,opt,name=signed_out,json=signedOut,proto3,oneof"`
+}
+
+type LobbyState_Reconnecting struct {
+	// reconnecting says why the socket that holds the lobby dropped. The
+	// lobby stays open for a minute while the daemon opens it again.
+	Reconnecting string `protobuf:"bytes,4,opt,name=reconnecting,proto3,oneof"`
+}
+
+func (*LobbyState_Url) isLobbyState_State() {}
+
+func (*LobbyState_Refused) isLobbyState_State() {}
+
+func (*LobbyState_SignedOut) isLobbyState_State() {}
+
+func (*LobbyState_Reconnecting) isLobbyState_State() {}
+
 // HostEvent is one change to a hosted session.
 type HostEvent struct {
 	unknownFields []byte
@@ -256,6 +382,7 @@ type HostEvent struct {
 	//	*HostEvent_JoinCode
 	//	*HostEvent_Joined
 	//	*HostEvent_Left
+	//	*HostEvent_Lobby
 	Body isHostEvent_Body `protobuf_oneof:"body"`
 }
 
@@ -293,6 +420,13 @@ func (x *HostEvent) GetLeft() string {
 	return ""
 }
 
+func (x *HostEvent) GetLobby() *LobbyState {
+	if x, ok := x.GetBody().(*HostEvent_Lobby); ok {
+		return x.Lobby
+	}
+	return nil
+}
+
 type isHostEvent_Body interface {
 	isHostEvent_Body()
 }
@@ -313,11 +447,19 @@ type HostEvent_Left struct {
 	Left string `protobuf:"bytes,3,opt,name=left,proto3,oneof"`
 }
 
+type HostEvent_Lobby struct {
+	// lobby is where the dev lobby stands, after join_code and on each
+	// change, when start asked for one.
+	Lobby *LobbyState `protobuf:"bytes,4,opt,name=lobby,proto3,oneof"`
+}
+
 func (*HostEvent_JoinCode) isHostEvent_Body() {}
 
 func (*HostEvent_Joined) isHostEvent_Body() {}
 
 func (*HostEvent_Left) isHostEvent_Body() {}
+
+func (*HostEvent_Lobby) isHostEvent_Body() {}
 
 // JoinRequest names the session to join.
 type JoinRequest struct {
@@ -691,6 +833,7 @@ func (m *HostRequest) CloneVT() *HostRequest {
 	}
 	r := new(HostRequest)
 	r.Port = m.Port
+	r.Lobby = protobuf_go_lite.CloneVTValue(m.Lobby)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -698,6 +841,93 @@ func (m *HostRequest) CloneVT() *HostRequest {
 }
 
 func (m *HostRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *LobbyRequest) CloneVT() *LobbyRequest {
+	if m == nil {
+		return (*LobbyRequest)(nil)
+	}
+	r := new(LobbyRequest)
+	r.ModName = m.ModName
+	r.Version = m.Version
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *LobbyRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *LobbyState) CloneVT() *LobbyState {
+	if m == nil {
+		return (*LobbyState)(nil)
+	}
+	r := new(LobbyState)
+	if m.State != nil {
+		r.State = m.State.(interface{ CloneOneofVT() isLobbyState_State }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *LobbyState) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *LobbyState_Url) CloneVT() *LobbyState_Url {
+	if m == nil {
+		return (*LobbyState_Url)(nil)
+	}
+	r := new(LobbyState_Url)
+	r.Url = m.Url
+	return r
+}
+
+func (m *LobbyState_Url) CloneOneofVT() isLobbyState_State {
+	return m.CloneVT()
+}
+
+func (m *LobbyState_Refused) CloneVT() *LobbyState_Refused {
+	if m == nil {
+		return (*LobbyState_Refused)(nil)
+	}
+	r := new(LobbyState_Refused)
+	r.Refused = m.Refused
+	return r
+}
+
+func (m *LobbyState_Refused) CloneOneofVT() isLobbyState_State {
+	return m.CloneVT()
+}
+
+func (m *LobbyState_SignedOut) CloneVT() *LobbyState_SignedOut {
+	if m == nil {
+		return (*LobbyState_SignedOut)(nil)
+	}
+	r := new(LobbyState_SignedOut)
+	r.SignedOut = m.SignedOut
+	return r
+}
+
+func (m *LobbyState_SignedOut) CloneOneofVT() isLobbyState_State {
+	return m.CloneVT()
+}
+
+func (m *LobbyState_Reconnecting) CloneVT() *LobbyState_Reconnecting {
+	if m == nil {
+		return (*LobbyState_Reconnecting)(nil)
+	}
+	r := new(LobbyState_Reconnecting)
+	r.Reconnecting = m.Reconnecting
+	return r
+}
+
+func (m *LobbyState_Reconnecting) CloneOneofVT() isLobbyState_State {
 	return m.CloneVT()
 }
 
@@ -755,6 +985,19 @@ func (m *HostEvent_Left) CloneVT() *HostEvent_Left {
 }
 
 func (m *HostEvent_Left) CloneOneofVT() isHostEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *HostEvent_Lobby) CloneVT() *HostEvent_Lobby {
+	if m == nil {
+		return (*HostEvent_Lobby)(nil)
+	}
+	r := new(HostEvent_Lobby)
+	r.Lobby = protobuf_go_lite.CloneVTValue(m.Lobby)
+	return r
+}
+
+func (m *HostEvent_Lobby) CloneOneofVT() isHostEvent_Body {
 	return m.CloneVT()
 }
 
@@ -1082,6 +1325,9 @@ func (this *HostRequest) EqualVT(that *HostRequest) bool {
 	if this.Port != that.Port {
 		return false
 	}
+	if !protobuf_go_lite.IsEqualVT(this.Lobby, that.Lobby) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -1091,6 +1337,124 @@ func (this *HostRequest) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+func (this *LobbyRequest) EqualVT(that *LobbyRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.ModName != that.ModName {
+		return false
+	}
+	if this.Version != that.Version {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *LobbyRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*LobbyRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *LobbyState) EqualVT(that *LobbyState) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.State == nil && that.State != nil {
+		return false
+	} else if this.State != nil {
+		if that.State == nil {
+			return false
+		}
+		if !this.State.(interface{ EqualVT(isLobbyState_State) bool }).EqualVT(that.State) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *LobbyState) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*LobbyState)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *LobbyState_Url) EqualVT(thatIface isLobbyState_State) bool {
+	that, ok := thatIface.(*LobbyState_Url)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Url != that.Url {
+		return false
+	}
+	return true
+}
+
+func (this *LobbyState_Refused) EqualVT(thatIface isLobbyState_State) bool {
+	that, ok := thatIface.(*LobbyState_Refused)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Refused != that.Refused {
+		return false
+	}
+	return true
+}
+
+func (this *LobbyState_SignedOut) EqualVT(thatIface isLobbyState_State) bool {
+	that, ok := thatIface.(*LobbyState_SignedOut)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.SignedOut != that.SignedOut {
+		return false
+	}
+	return true
+}
+
+func (this *LobbyState_Reconnecting) EqualVT(thatIface isLobbyState_State) bool {
+	that, ok := thatIface.(*LobbyState_Reconnecting)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Reconnecting != that.Reconnecting {
+		return false
+	}
+	return true
 }
 
 func (this *HostEvent) EqualVT(that *HostEvent) bool {
@@ -1166,6 +1530,23 @@ func (this *HostEvent_Left) EqualVT(thatIface isHostEvent_Body) bool {
 		return false
 	}
 	if this.Left != that.Left {
+		return false
+	}
+	return true
+}
+
+func (this *HostEvent_Lobby) EqualVT(thatIface isHostEvent_Body) bool {
+	that, ok := thatIface.(*HostEvent_Lobby)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Lobby, that.Lobby, func() *LobbyState { return &LobbyState{} }) {
 		return false
 	}
 	return true
@@ -1703,6 +2084,11 @@ func (x *HostRequest) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("port")
 		s.WriteUint32(x.Port)
 	}
+	if x.Lobby != nil || s.HasField("lobby") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("lobby")
+		x.Lobby.MarshalProtoJSON(s.WithField("lobby"))
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1723,12 +2109,143 @@ func (x *HostRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "port":
 			s.AddField("port")
 			x.Port = s.ReadUint32()
+		case "lobby":
+			if s.ReadNil() {
+				x.Lobby = nil
+				return
+			}
+			x.Lobby = &LobbyRequest{}
+			x.Lobby.UnmarshalProtoJSON(s.WithField("lobby", true))
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the HostRequest from JSON.
 func (x *HostRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the LobbyRequest message to JSON.
+func (x *LobbyRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.ModName != "" || s.HasField("modName") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("modName")
+		s.WriteString(x.ModName)
+	}
+	if x.Version != "" || s.HasField("version") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("version")
+		s.WriteString(x.Version)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the LobbyRequest to JSON.
+func (x *LobbyRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the LobbyRequest message from JSON.
+func (x *LobbyRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "mod_name", "modName":
+			s.AddField("mod_name")
+			x.ModName = s.ReadString()
+		case "version":
+			s.AddField("version")
+			x.Version = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the LobbyRequest from JSON.
+func (x *LobbyRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the LobbyState message to JSON.
+func (x *LobbyState) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.State != nil {
+		switch ov := x.State.(type) {
+		case *LobbyState_Url:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("url")
+			s.WriteString(ov.Url)
+		case *LobbyState_Refused:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("refused")
+			s.WriteString(ov.Refused)
+		case *LobbyState_SignedOut:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("signedOut")
+			s.WriteBool(ov.SignedOut)
+		case *LobbyState_Reconnecting:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("reconnecting")
+			s.WriteString(ov.Reconnecting)
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the LobbyState to JSON.
+func (x *LobbyState) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the LobbyState message from JSON.
+func (x *LobbyState) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "url":
+			s.AddField("url")
+			ov := &LobbyState_Url{}
+			x.State = ov
+			ov.Url = s.ReadString()
+		case "refused":
+			s.AddField("refused")
+			ov := &LobbyState_Refused{}
+			x.State = ov
+			ov.Refused = s.ReadString()
+		case "signed_out", "signedOut":
+			s.AddField("signed_out")
+			ov := &LobbyState_SignedOut{}
+			x.State = ov
+			ov.SignedOut = s.ReadBool()
+		case "reconnecting":
+			s.AddField("reconnecting")
+			ov := &LobbyState_Reconnecting{}
+			x.State = ov
+			ov.Reconnecting = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the LobbyState from JSON.
+func (x *LobbyState) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1754,6 +2271,10 @@ func (x *HostEvent) MarshalProtoJSON(s *json.MarshalState) {
 			s.WriteMoreIf(&wroteField)
 			s.WriteObjectField("left")
 			s.WriteString(ov.Left)
+		case *HostEvent_Lobby:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("lobby")
+			ov.Lobby.MarshalProtoJSON(s.WithField("lobby"))
 		}
 	}
 	s.WriteObjectEnd()
@@ -1788,6 +2309,15 @@ func (x *HostEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			ov := &HostEvent_Left{}
 			x.Body = ov
 			ov.Left = s.ReadString()
+		case "lobby":
+			ov := &HostEvent_Lobby{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Lobby = nil
+				return
+			}
+			ov.Lobby = &LobbyState{}
+			ov.Lobby.UnmarshalProtoJSON(s.WithField("lobby", true))
 		}
 	})
 }
@@ -2445,11 +2975,156 @@ func (m *HostRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.Lobby != nil {
+		size, err := m.Lobby.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
 	if m.Port != 0 {
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Port))
 		i--
 		dAtA[i] = 0x8
 	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LobbyRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Version) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Version)
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ModName) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.ModName)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyState) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LobbyState) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyState) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.State.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyState_Url) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyState_Url) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Url)
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyState_Refused) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyState_Refused) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Refused)
+	i--
+	dAtA[i] = 0x12
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyState_SignedOut) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyState_SignedOut) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeBool(dAtA, i, m.SignedOut)
+	i--
+	dAtA[i] = 0x18
+	return len(dAtA) - i, nil
+}
+
+func (m *LobbyState_Reconnecting) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *LobbyState_Reconnecting) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Reconnecting)
+	i--
+	dAtA[i] = 0x22
 	return len(dAtA) - i, nil
 }
 
@@ -2530,6 +3205,30 @@ func (m *HostEvent_Left) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i = protobuf_go_lite.EncodeString(dAtA, i, m.Left)
 	i--
 	dAtA[i] = 0x1a
+	return len(dAtA) - i, nil
+}
+
+func (m *HostEvent_Lobby) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostEvent_Lobby) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Lobby != nil {
+		size, err := m.Lobby.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x22
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -2975,7 +3674,76 @@ func (m *HostRequest) SizeVT() (n int) {
 	var l int
 	_ = l
 	n += protobuf_go_lite.SizeVarintNonZero(1, m.Port)
+	if m.Lobby != nil {
+		l = m.Lobby.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
 	n += len(m.unknownFields)
+	return n
+}
+
+func (m *LobbyRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.ModName)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Version)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *LobbyState) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.State.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *LobbyState_Url) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Url)
+	return n
+}
+
+func (m *LobbyState_Refused) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Refused)
+	return n
+}
+
+func (m *LobbyState_SignedOut) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeBoolValue(1)
+	return n
+}
+
+func (m *LobbyState_Reconnecting) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Reconnecting)
 	return n
 }
 
@@ -3019,6 +3787,21 @@ func (m *HostEvent_Left) SizeVT() (n int) {
 	var l int
 	_ = l
 	n += protobuf_go_lite.SizeStringValue(1, m.Left)
+	return n
+}
+
+func (m *HostEvent_Lobby) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Lobby != nil {
+		l = m.Lobby.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
 	return n
 }
 
@@ -3278,10 +4061,56 @@ func (x *HostRequest) MarshalProtoText() string {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "port")
 		protobuf_go_lite.TextWriteUint(&sb, x.Port)
 	}
+	if x.Lobby != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lobby")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Lobby)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *HostRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *LobbyRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "LobbyRequest")
+	if x.ModName != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "mod_name")
+		protobuf_go_lite.TextWriteString(&sb, x.ModName)
+	}
+	if x.Version != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "version")
+		protobuf_go_lite.TextWriteString(&sb, x.Version)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *LobbyRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *LobbyState) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "LobbyState")
+	switch body := x.State.(type) {
+	case *LobbyState_Url:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "url")
+		protobuf_go_lite.TextWriteString(&sb, body.Url)
+	case *LobbyState_Refused:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "refused")
+		protobuf_go_lite.TextWriteString(&sb, body.Refused)
+	case *LobbyState_SignedOut:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "signed_out")
+		protobuf_go_lite.TextWriteBool(&sb, body.SignedOut)
+	case *LobbyState_Reconnecting:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "reconnecting")
+		protobuf_go_lite.TextWriteString(&sb, body.Reconnecting)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *LobbyState) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -3298,6 +4127,13 @@ func (x *HostEvent) MarshalProtoText() string {
 	case *HostEvent_Left:
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "left")
 		protobuf_go_lite.TextWriteString(&sb, body.Left)
+	case *HostEvent_Lobby:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lobby")
+		if body.Lobby == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &LobbyState{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Lobby)
+		}
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3801,6 +4637,168 @@ func (m *HostRequest) UnmarshalVT(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lobby", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Lobby == nil {
+				m.Lobby = &LobbyRequest{}
+			}
+			if err := m.Lobby.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *LobbyRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LobbyRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LobbyRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ModName", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.ModName = v
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Version", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Version = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *LobbyState) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LobbyState: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LobbyState: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Url", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.State = &LobbyState_Url{Url: v}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Refused", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.State = &LobbyState_Refused{Refused: v}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SignedOut", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.State = &LobbyState_SignedOut{SignedOut: b}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reconnecting", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.State = &LobbyState_Reconnecting{Reconnecting: v}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
@@ -3874,6 +4872,26 @@ func (m *HostEvent) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Body = &HostEvent_Left{Left: v}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lobby", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*HostEvent_Lobby); ok {
+				if err := oneof.Lobby.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &LobbyState{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &HostEvent_Lobby{Lobby: v}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
