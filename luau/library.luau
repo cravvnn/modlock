@@ -30,6 +30,8 @@ modlock.Buttons = {
 	ability1 = 2 ^ 33,
 	ability2 = 2 ^ 34,
 	ability3 = 2 ^ 35,
+	-- ultimate is the hero's ultimate ability key, the fourth.
+	ultimate = 2 ^ 36,
 	-- parry is the melee parry button.
 	parry = 2 ^ 42,
 }

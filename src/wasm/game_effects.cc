@@ -71,7 +71,7 @@ std::expected<combat::TraceResponse, std::string> Game::Trace(const combat::Trac
   SetVector(hit->mutable_position(), result->position);
   SetVector(hit->mutable_normal(), result->normal);
   hit->set_start_solid(result->start_in_solid);
-  hit->set_entity(result->entity_handle.value_or(0));
+  hit->set_entity(HitEntity(result->entity_handle));
   return response;
 }
 

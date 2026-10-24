@@ -3427,6 +3427,8 @@ class Buttons(enum.IntFlag):
     ABILITY1 = 1 << 33
     ABILITY2 = 1 << 34
     ABILITY3 = 1 << 35
+    # ULTIMATE is the hero's ultimate ability key, the fourth.
+    ULTIMATE = 1 << 36
     # PARRY is the melee parry button.
     PARRY = 1 << 42
 

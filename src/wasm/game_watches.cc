@@ -309,7 +309,7 @@ std::optional<combat::ImpactEvent> Game::Watching(void* entity, const gameintero
   SetVector(event.mutable_start(), contact.start);
   SetVector(event.mutable_end(), contact.end);
   SetVector(event.mutable_position(), contact.position);
-  event.set_hit(contact.entity_handle.value_or(0));
+  event.set_hit(HitEntity(contact.entity_handle));
   return event;
 }
 

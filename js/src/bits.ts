@@ -16,6 +16,8 @@ export const Buttons = {
   ability1: 1n << 33n,
   ability2: 1n << 34n,
   ability3: 1n << 35n,
+  /** ultimate is the hero's ultimate ability key, the fourth. */
+  ultimate: 1n << 36n,
   /** parry is the melee parry button. */
   parry: 1n << 42n,
 } as const

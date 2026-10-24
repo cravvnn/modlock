@@ -3,6 +3,7 @@
 #include <array>
 #include <cstring>
 #include <expected>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -40,6 +41,12 @@ inline void SetVector(geometry::Vec3* out, const std::array<float, 3>& vector) {
   out->set_x(vector[0]);
   out->set_y(vector[1]);
   out->set_z(vector[2]);
+}
+
+// HitEntity is what a trace or impact reports as struck: the entity's handle,
+// or zero for the world, entity index 0, and for nothing.
+inline uint32_t HitEntity(const std::optional<uint32_t>& handle) {
+  return handle && gameinterop::EntityIndexOf(*handle) != 0 ? *handle : 0;
 }
 
 // DesignerName returns an entity's designer name, such as player, or an
