@@ -17,9 +17,12 @@ namespace {
 
 // CMoveData has no schema. These offsets were observed in both modules of the
 // September 18 2026 build by recording scripted input, prediction replays and
-// solver output against schema-resolved pawn state.
+// solver output against schema-resolved pawn state. The step copies the
+// command's axes to the last impulses at +0x20, but the walk reads the move
+// axes at +0x2c (build 6819 CCitadelPlayer_MovementServices::ProcessMovement).
 constexpr size_t kMoveAngles = 0x08;
-constexpr size_t kMoveInput = 0x20;
+constexpr size_t kMoveImpulses = 0x20;
+constexpr size_t kMoveAxes = 0x2c;
 constexpr size_t kMoveVelocity = 0x38;
 constexpr size_t kMoveOrigin = 0xc8;
 constexpr size_t kMoveTicks = 0xd4;
@@ -138,7 +141,7 @@ void Dispatch(Hook& hook, void* services, void* data) {
   Read(move, kMoveAngles, call.angles);
   const auto angles = call.angles;
   std::array<float, 3> input;
-  Read(move, kMoveInput, input);
+  Read(move, kMoveAxes, input);
   call.forward = input[0];
   call.left = input[1];
   call.up = input[2];
@@ -175,7 +178,8 @@ void Dispatch(Hook& hook, void* services, void* data) {
   }
   const std::array<float, 3> axes{call.forward, call.left, call.up};
   if (axes != input) {
-    std::memcpy(move + kMoveInput, axes.data(), sizeof(axes));
+    std::memcpy(move + kMoveImpulses, axes.data(), sizeof(axes));
+    std::memcpy(move + kMoveAxes, axes.data(), sizeof(axes));
   }
 
   // Run the native step, then write a replacement's motion over it.
