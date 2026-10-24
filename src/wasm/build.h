@@ -24,6 +24,9 @@ struct Build {
   // collision holds the map's Quake collision when the manifest's movement
   // model needs it.
   std::vector<uint8_t> collision;
+  // data is the build's data/ directory, the files the mod ships, or empty
+  // for a bare .wasm file.
+  std::filesystem::path data;
 };
 
 // ReadBuild reads a built mod directory through its mod.json, or a bare

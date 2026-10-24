@@ -23,7 +23,7 @@ func TestMetrics(t *testing.T) {
 	}}}
 	add := func(name, label string) {
 		request, _ := (&metricspb.AddMetricRequest{Name: name, Label: &label}).MarshalVT()
-		s.answer(manifest, &wasm.Call{Method: "AddMetric", Request: request})
+		s.answer(&Build{Manifest: manifest}, &wasm.Call{Method: "AddMetric", Request: request})
 	}
 
 	// Count the declared label and refuse an undeclared label and metric.

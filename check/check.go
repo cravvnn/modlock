@@ -22,6 +22,9 @@ import (
 // ManifestFile is the manifest's file name in a built mod.
 const ManifestFile = sandbox.ManifestFile
 
+// DataDir is the built mod's directory of the files the mod reads.
+const DataDir = sandbox.DataDir
+
 // slugPattern matches a valid slug.
 var slugPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package modlock.wasm.files;
+
+option go_package = "github.com/paralin/modlock/src/wasm/files;files";
+
+// ReadFileRequest names one of the mod's files.
+message ReadFileRequest {
+  // Name is the file's path below the mod's directories, such as
+  // "areas.yaml" or "maps/dl_midtown.json": relative, with "/" between
+  // segments, and no "." or ".." segment.
+  string name = 1;
+}
+
+// ReadFileResponse holds a file's text.
+message ReadFileResponse {
+  // Text is the file's UTF-8 text, or unset when neither directory holds
+  // the file.
+  optional string text = 1;
+}
+
+// WriteFileRequest replaces one of the mod's files.
+message WriteFileRequest {
+  // Name is the file's path, as ReadFileRequest names it.
+  string name = 1;
+
+  // Text is the file's new UTF-8 text.
+  string text = 2;
+}

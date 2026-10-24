@@ -77,7 +77,7 @@ std::expected<Build, std::string> ReadBuild(const std::filesystem::path& path,
   if (!entry) {
     return std::unexpected(entry.error());
   }
-  Build build{.name = manifest.slug()};
+  Build build{.name = manifest.slug(), .data = path / "data"};
   if (manifest.movement().model() == wasm::manifest::Movement::MODEL_QUAKEWORLD) {
     auto collision = ReadFile(path / "maps" / (manifest.map() + ".bsp"));
     if (!collision) {

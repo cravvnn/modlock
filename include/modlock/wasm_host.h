@@ -117,6 +117,11 @@ class MODLOCK_API WasmHost {
   // metrics, each mod logs its players' totals.
   void KeepMetrics(WasmMetrics* metrics);
 
+  // KeepFiles keeps the files mods write in dir, one directory per mod
+  // named by its slug. Without a directory, mods read only the files their
+  // builds ship and every write is refused.
+  void KeepFiles(std::filesystem::path dir);
+
   // SettingChanged tells mod that a player changed a setting outside it,
   // such as on the player's profile, when the player is in the game. The
   // settings already hold the new value.

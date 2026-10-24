@@ -23,6 +23,9 @@ type Config struct {
 	// Settings is the file that keeps the player's settings, or empty to
 	// keep them for the session only.
 	Settings string
+	// Files is the directory that keeps the files mods write, or empty to
+	// refuse their writes.
+	Files string
 	// Compiled is the directory that keeps compiled modules across sessions,
 	// so a later session loads the interpreters and an unchanged mod without
 	// compiling them, or empty to compile each module once per session.

@@ -5,6 +5,7 @@ import * as combatPb from '../../src/wasm/combat/combat.pb.js'
 import * as effectsPb from '../../src/wasm/effects/effects.pb.js'
 import * as entitiesPb from '../../src/wasm/entities/entities.pb.js'
 import * as fieldsPb from '../../src/wasm/fields/fields.pb.js'
+import * as filesPb from '../../src/wasm/files/files.pb.js'
 import * as inputPb from '../../src/wasm/input/input.pb.js'
 import * as matchPb from '../../src/wasm/match/match.pb.js'
 import * as metricsPb from '../../src/wasm/metrics/metrics.pb.js'
@@ -2317,6 +2318,30 @@ export function serverCommand(command: string): boolean {
  */
 export function precache(options: PrecacheOptions): boolean {
   return call('Precache', wasmPb.PrecacheOptions.toBinary(toPrecacheOptions(options))) !== undefined
+}
+
+/**
+ * readFile reads one of the mod's files: the host's copy, which the mod
+ * wrote or the server's operator placed, else the one the mod ships under
+ * data/. A file in neither reads as unset. Names that leave the mod's
+ * directories are refused.
+ */
+export function readFile(name: string): string | undefined {
+  const reply = call('ReadFile', filesPb.ReadFileRequest.toBinary({ name }))
+  if (reply === undefined) return undefined
+  const response = filesPb.ReadFileResponse.fromBinary(reply)
+  return response.text
+}
+
+/**
+ * writeFile replaces one of the mod's files in the host's copy, which
+ * outlives a restart and an update of the mod; the files the mod ships stay
+ * as they are. The write is whole or not at all, and the host refuses one
+ * past its quota of 4 MiB per mod. A host that keeps no files refuses every
+ * write.
+ */
+export function writeFile(name: string, text: string): boolean {
+  return call('WriteFile', filesPb.WriteFileRequest.toBinary({ name, text })) !== undefined
 }
 
 /**

@@ -10,6 +10,9 @@ import (
 // ManifestFile is the manifest's file name in a built mod.
 const ManifestFile = "mod.json"
 
+// DataDir is the built mod's directory of the files the mod reads.
+const DataDir = "data"
+
 // Build is a built mod as the host reads it.
 type Build struct {
 	// Manifest is the mod's mod.json.
@@ -17,6 +20,8 @@ type Build struct {
 	// Entry is the file the manifest names: the module of a WebAssembly mod,
 	// or the source an interpreter runs.
 	Entry []byte
+	// Data holds the files the mod ships in its data/ directory.
+	Data fs.FS
 }
 
 // ReadBuild reads the built mod in dist through its manifest.
@@ -40,7 +45,11 @@ func ReadBuild(dist fs.FS) (*Build, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "read the entry")
 	}
-	return &Build{Manifest: manifest, Entry: source}, nil
+	shipped, err := fs.Sub(dist, DataDir)
+	if err != nil {
+		return nil, err
+	}
+	return &Build{Manifest: manifest, Entry: source, Data: shipped}, nil
 }
 
 // Interpreter names the module in Modlock's host package that runs an

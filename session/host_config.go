@@ -21,6 +21,9 @@ type HostConfig struct {
 	// Settings is the file that keeps players' settings, or empty to keep
 	// them for the run only.
 	Settings string
+	// Files is the directory that keeps the files mods write, or empty to
+	// refuse their writes.
+	Files string
 	// Steam is the Steam installation; on Linux its Proton runs the host.
 	Steam *Steam
 	// Output receives the host's console output.

@@ -2127,6 +2127,25 @@ _SCHEMA: wire.Schema = {
             wire.Field(1, "count", "int32"),
         ],
     ),
+    "ReadFileRequest": (
+        None,
+        [
+            wire.Field(1, "name", "string"),
+        ],
+    ),
+    "ReadFileResponse": (
+        None,
+        [
+            wire.Field(1, "text", "string", optional=True),
+        ],
+    ),
+    "WriteFileRequest": (
+        None,
+        [
+            wire.Field(1, "name", "string"),
+            wire.Field(2, "text", "string"),
+        ],
+    ),
     "InputEvent": (
         InputEvent,
         [
@@ -2948,6 +2967,28 @@ def precache(options: PrecacheOptions) -> bool:
     start, before the first world loads.
     """
     return _call("Precache", "PrecacheOptions", options) is not None
+
+
+def read_file(name: str) -> str | None:
+    """read_file reads one of the mod's files: the host's copy, which the mod
+    wrote or the server's operator placed, else the one the mod ships under
+    data/. A file in neither reads as unset. Names that leave the mod's
+    directories are refused.
+    """
+    response = _call("ReadFile", "ReadFileRequest", {"name": name}, "ReadFileResponse")
+    if response is None:
+        return None
+    return response["text"]
+
+
+def write_file(name: str, text: str) -> bool:
+    """write_file replaces one of the mod's files in the host's copy, which
+    outlives a restart and an update of the mod; the files the mod ships stay
+    as they are. The write is whole or not at all, and the host refuses one
+    past its quota of 4 MiB per mod. A host that keeps no files refuses every
+    write.
+    """
+    return _call("WriteFile", "WriteFileRequest", {"name": name, "text": text}) is not None
 
 
 def hold_reload(held: bool) -> bool:

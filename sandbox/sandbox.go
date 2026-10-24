@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/paralin/modlock/files"
 	"github.com/paralin/modlock/metrics"
 	"github.com/paralin/modlock/settings"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/paralin/modlock/src/wasm"
 	"github.com/paralin/modlock/src/wasm/effects"
+	filespb "github.com/paralin/modlock/src/wasm/files"
 	manifestpb "github.com/paralin/modlock/src/wasm/manifest"
 	metricspb "github.com/paralin/modlock/src/wasm/metrics"
 	"github.com/paralin/modlock/src/wasm/players"
@@ -241,7 +243,7 @@ func (s *Sandbox) start(ctx context.Context, name string, build *Build) (*Mod, *
 
 	// Load it with the sandbox answering its host calls.
 	mod, err := Load(ctx, module, Options{
-		Calls:  func(call *wasm.Call) *wasm.Reply { return s.answer(build.Manifest, call) },
+		Calls:  func(call *wasm.Call) *wasm.Reply { return s.answer(build, call) },
 		Output: &lines{write: func(line string) { s.log(name, line) }},
 		Cache:  s.cache,
 	})
@@ -357,8 +359,9 @@ func (s *Sandbox) deliver(ctx context.Context, mod *running, method string, requ
 // stand-in player, keeps the player's settings, refuses service calls as a
 // host without extensions does, and answers the rest empty, as for a player
 // without a hero.
-func (s *Sandbox) answer(manifest *manifestpb.Manifest, call *wasm.Call) *wasm.Reply {
+func (s *Sandbox) answer(build *Build, call *wasm.Call) *wasm.Reply {
 	// Decode the requests the sandbox reports.
+	manifest := build.Manifest
 	mod := manifest.GetSlug()
 	switch call.GetMethod() {
 	case "Log":
@@ -414,6 +417,8 @@ func (s *Sandbox) answer(manifest *manifestpb.Manifest, call *wasm.Call) *wasm.R
 		if request.UnmarshalVT(call.GetRequest()) == nil {
 			s.addMetric(manifest, request)
 		}
+	case "ReadFile", "WriteFile":
+		return s.file(build, call)
 	case "CallService":
 		request := &wasm.ServiceCall{}
 		_ = request.UnmarshalVT(call.GetRequest())
@@ -421,6 +426,42 @@ func (s *Sandbox) answer(manifest *manifestpb.Manifest, call *wasm.Call) *wasm.R
 	}
 
 	return &wasm.Reply{}
+}
+
+// file answers a call that reads or writes one of build's files, kept in a
+// directory named by its slug.
+func (s *Sandbox) file(build *Build, call *wasm.Call) *wasm.Reply {
+	// Find the mod's files.
+	mod := &files.Mod{Data: build.Data}
+	if s.config.Files != "" {
+		mod.Written = filepath.Join(s.config.Files, build.Manifest.GetSlug())
+	}
+
+	// Write the file, or read it and leave the text unset when it is missing.
+	if call.GetMethod() == "WriteFile" {
+		request := &filespb.WriteFileRequest{}
+		if err := request.UnmarshalVT(call.GetRequest()); err != nil {
+			return &wasm.Reply{Error: "the WriteFile request is malformed"}
+		}
+		if err := mod.Write(request.GetName(), request.GetText()); err != nil {
+			return &wasm.Reply{Error: err.Error()}
+		}
+		return &wasm.Reply{}
+	}
+	request := &filespb.ReadFileRequest{}
+	if err := request.UnmarshalVT(call.GetRequest()); err != nil {
+		return &wasm.Reply{Error: "the ReadFile request is malformed"}
+	}
+	text, found, err := mod.Read(request.GetName())
+	if err != nil {
+		return &wasm.Reply{Error: err.Error()}
+	}
+	response := &filespb.ReadFileResponse{}
+	if found {
+		response.Text = &text
+	}
+	data, _ := response.MarshalVT()
+	return &wasm.Reply{Response: data}
 }
 
 // message reports a message mod showed the player in slot.

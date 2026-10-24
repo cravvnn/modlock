@@ -302,13 +302,34 @@ std::expected<void, std::string> PluginGame::SetPlayerSetting(
   return plugin_.SetPlayerSetting(request.player(), request.key(), request.value());
 }
 
-std::expected<void, std::string> PluginGame::AddMetric(const wasm::metrics::AddMetricRequest& request) {
+std::expected<void, std::string> PluginGame::AddMetric(
+    const wasm::metrics::AddMetricRequest& request) {
   return plugin_.AddMetric(request.player(), request.name(), request.value(), request.label());
 }
 
-std::expected<void, std::string> PluginGame::HoldReload(const wasm::abilities::HoldReloadRequest& request) {
+std::expected<void, std::string> PluginGame::HoldReload(
+    const wasm::abilities::HoldReloadRequest& request) {
   plugin_.Hold(request.held());
   return {};
+}
+
+std::expected<wasm::files::ReadFileResponse, std::string> PluginGame::ReadFile(
+    const wasm::files::ReadFileRequest& request) {
+  // Read the file and wrap it, leaving the text unset for a missing file.
+  auto text = plugin_.Files().Read(request.name());
+  if (!text) {
+    return std::unexpected(text.error());
+  }
+  wasm::files::ReadFileResponse response;
+  if (*text) {
+    response.set_text(std::move(**text));
+  }
+  return response;
+}
+
+std::expected<void, std::string> PluginGame::WriteFile(
+    const wasm::files::WriteFileRequest& request) {
+  return plugin_.Files().Write(request.name(), request.text());
 }
 
 void PluginGame::Impacted(const wasm::combat::ImpactEvent& event) {

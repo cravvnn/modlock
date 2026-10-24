@@ -37,6 +37,7 @@
 #include "effects/effects.pb.h"
 #include "entities/entities.pb.h"
 #include "fields/fields.pb.h"
+#include "files/files.pb.h"
 #include "input/input.pb.h"
 #include "match/match.pb.h"
 #include "metrics/metrics.pb.h"

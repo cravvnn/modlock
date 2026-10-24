@@ -944,6 +944,43 @@ The game draws interfaces with the renderer in [`panorama/`](panorama):
 `serve(service, handler)` answers the host's calls to one the mod serves. See
 [How mods reach the game](#how-mods-reach-the-game) for the protocol.
 
+### Files
+
+A mod keeps text files, such as its configuration or areas a player drew in
+the game. It ships defaults in its project's `data/` directory, which
+`modlock build` copies into the build and `modlock publish` releases with it:
+
+```ts
+import { parse, stringify } from 'yaml'
+import { command, readFile, writeFile } from 'modlock'
+
+// data/areas.yaml ships the default areas; a host's own copy replaces it.
+const areas = parse(readFile('areas.yaml') ?? 'spawn: []')
+
+command('savearea', (player) => {
+  const pawn = player.pawn()
+  if (!pawn) return
+  areas.spawn.push(pawn.position)
+  if (!writeFile('areas.yaml', stringify(areas)))
+    player.chat('The area was not saved.')
+})
+```
+
+| Call                    | Effect                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| `readFile(name)`        | The file's text: the host's copy, then the build's `data/`; `undefined` if neither has it. |
+| `writeFile(name, text)` | Replace the host's copy, whole or not at all; `false` when the host refuses it.            |
+
+A name is a relative path such as `maps/dl_midtown.json`, with `/` between
+segments and no `.` or `..`; any other name is refused. The host keeps each
+mod's copies in a directory of its own, named by the slug, and they outlive an
+update of the mod. `modlock dev` and `modlock play` keep them in Modlock's
+configuration directory, such as `~/.config/modlock/files/<slug>/`, so a server
+operator replaces a shipped file by placing one of the same name there. A
+mod's copies hold up to 4 MiB together. The host moves text, and the format is
+the mod's own: a YAML mod bundles a YAML parser, as above. Files are local to
+the host that runs the mod, so a missing one is a default, not a failure.
+
 ### Spots
 
 A spot is a base map and the solid objects players placed on it.

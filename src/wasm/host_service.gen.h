@@ -121,6 +121,24 @@ class HostService {
     return std::unexpected("this host does not support AddMetric");
   }
 
+  // ReadFile reads one of the mod's files: the host's copy, which the mod
+  // wrote or the server's operator placed, else the one the mod ships under
+  // data/. A file in neither reads as unset. Names that leave the mod's
+  // directories are refused.
+  virtual std::expected<files::ReadFileResponse, std::string> ReadFile(
+      const files::ReadFileRequest& /*request*/) {
+    return std::unexpected("this host does not support ReadFile");
+  }
+
+  // WriteFile replaces one of the mod's files in the host's copy, which
+  // outlives a restart and an update of the mod; the files the mod ships stay
+  // as they are. The write is whole or not at all, and the host refuses one
+  // past its quota of 4 MiB per mod. A host that keeps no files refuses every
+  // write.
+  virtual std::expected<void, std::string> WriteFile(const files::WriteFileRequest& /*request*/) {
+    return std::unexpected("this host does not support WriteFile");
+  }
+
   // HoldReload keeps the running build through a reload while held is true,
   // such as while a player is partway through something a new build would
   // lose. A reload that arrives meanwhile waits, and the newest one applies
@@ -848,6 +866,22 @@ class HostService {
              return detail::Fail("the AddMetric request is malformed");
            }
            return detail::Answer(host.AddMetric(request));
+         }},
+        {"ReadFile",
+         [](HostService& host, const std::string& bytes) {
+           files::ReadFileRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ReadFile request is malformed");
+           }
+           return detail::Answer(host.ReadFile(request));
+         }},
+        {"WriteFile",
+         [](HostService& host, const std::string& bytes) {
+           files::WriteFileRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the WriteFile request is malformed");
+           }
+           return detail::Answer(host.WriteFile(request));
          }},
         {"HoldReload",
          [](HostService& host, const std::string& bytes) {

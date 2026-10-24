@@ -35,6 +35,8 @@ void Help() {
                "  --connect ADDRESS   Run a game client that joins ADDRESS instead of a server\n"
                "  --engine-args ARGS  Append engine command-line arguments\n"
                "  --settings PATH     Keep players' mod settings in the JSON file PATH\n"
+               "  --files DIRECTORY   Keep the files mods write in DIRECTORY, one\n"
+               "                      directory per mod\n"
                "  --game-data PATH    Read signatures and virtual slots from PATH instead\n"
                "                      of the game_signatures.txtpb beside the host\n"
                "  --control ADDRESS   Report to and take reloads from the controller at\n"
@@ -109,6 +111,7 @@ struct Options {
   std::filesystem::path game_dir;
   std::string_view control;
   std::filesystem::path settings_file;
+  std::filesystem::path files_directory;
   std::filesystem::path dump_directory;
   std::filesystem::path game_data;
   modlock::net::LaunchConfig launch;
@@ -143,6 +146,8 @@ std::expected<void, ExitCode> SetOption(Options& options, std::string_view argum
     options.control = value;
   } else if (argument == "--settings") {
     options.settings_file = value;
+  } else if (argument == "--files") {
+    options.files_directory = value;
   } else if (argument == "--dump") {
     options.dump_directory = value;
   } else if (argument == "--game-data") {
@@ -218,8 +223,8 @@ std::expected<Options, ExitCode> ParseOptions(int argc, char** argv) {
     // Every other option takes one.
     if (argument != "--plugin" && argument != "--game-dir" && argument != "--hostport" &&
         argument != "--map" && argument != "--connect" && argument != "--engine-args" &&
-        argument != "--control" && argument != "--settings" && argument != "--dump" &&
-        argument != "--game-data") {
+        argument != "--control" && argument != "--settings" && argument != "--files" &&
+        argument != "--dump" && argument != "--game-data") {
       std::cerr << "Unknown option: " << argument << ". Use --help for usage.\n";
       return std::unexpected(2);
     }
@@ -281,6 +286,7 @@ int main(int argc, char** argv) {
   if (!options.settings_file.empty()) {
     mods.KeepSettings(&settings.emplace(options.settings_file));
   }
+  mods.KeepFiles(options.files_directory);
   FailureRecorder failures;
   mods.Observe(&failures);
   std::unique_ptr<modlock::host_app::ControlLink> link;

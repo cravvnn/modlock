@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/paralin/modlock/check"
 	"github.com/paralin/modlock/metrics"
 	"github.com/paralin/modlock/settings"
 	"github.com/paralin/modlock/src/wasm/manifest"
@@ -51,6 +52,9 @@ func (p *Project) Build(ctx context.Context, output io.Writer, mode Mode) error 
 		return err
 	}
 	if err := p.shipMap(); err != nil {
+		return err
+	}
+	if err := p.shipData(); err != nil {
 		return err
 	}
 	if err := p.buildContent(); err != nil {
@@ -135,6 +139,39 @@ func (p *Project) shipMap() error {
 		}
 	}
 	return nil
+}
+
+// shipData copies the project's data directory, the files the mod reads
+// with readFile such as data/areas.yaml, into the built mod's,
+// replacing the previous one; a failed copy leaves it in place. A project
+// without data ships none.
+func (p *Project) shipData() error {
+	// Stage a copy of the project's data.
+	final := filepath.Join(p.Output(), check.DataDir)
+	staged := final + ".tmp"
+	if err := os.RemoveAll(staged); err != nil {
+		return errors.Wrap(err, "copy the data")
+	}
+	defer os.RemoveAll(staged)
+	source := filepath.Join(p.Dir, check.DataDir)
+	_, err := os.Stat(source)
+	shipped := err == nil
+	if shipped {
+		if err := os.CopyFS(staged, os.DirFS(source)); err != nil {
+			return errors.Wrap(err, "copy the data")
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return errors.Wrap(err, "read the data")
+	}
+
+	// Replace the previous data with it.
+	if err := os.RemoveAll(final); err != nil {
+		return errors.Wrap(err, "copy the data")
+	}
+	if !shipped {
+		return nil
+	}
+	return errors.Wrap(os.Rename(staged, final), "copy the data")
 }
 
 // shipMapFile copies one map file, when the project has it.

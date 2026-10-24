@@ -143,7 +143,8 @@ func startSession(c *cli.Context, out *printer, mods []string, logPath string) (
 		Mods:     mods,
 		Map:      mapName,
 		Args:     c.StringSlice("arg"),
-		Settings: settingsFile(),
+		Settings: configPath("settings.json"),
+		Files:    configPath("files"),
 		Compiled: compiled,
 		Interpreters: func(ctx context.Context) (string, error) {
 			host, err := session.FindHost(ctx, Version)
@@ -184,7 +185,8 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 		Port:       uint16(c.Uint("port")),
 		Map:        mapName,
 		Args:       c.StringSlice("arg"),
-		Settings:   settingsFile(),
+		Settings:   configPath("settings.json"),
+		Files:      configPath("files"),
 		Launch:     !c.Bool("no-game"),
 		HostOutput: log,
 		Interface:  ui,
@@ -215,15 +217,15 @@ func readRenderer(ctx context.Context) ([]byte, error) {
 	return os.ReadFile(filepath.Join(library, js.Renderer))
 }
 
-// settingsFile returns the file that keeps players' settings across
-// sessions, or empty to keep them for the session when this computer names no
-// configuration directory.
-func settingsFile() string {
+// configPath returns name in Modlock's configuration directory, which keeps
+// players' settings and the files mods write across sessions, or empty when
+// this computer names no configuration directory.
+func configPath(name string) string {
 	config, err := os.UserConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(config, "modlock", "settings.json")
+	return filepath.Join(config, "modlock", name)
 }
 
 // waitSession waits for the session to end, or ends it on Ctrl-C. In the

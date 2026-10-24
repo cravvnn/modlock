@@ -164,6 +164,10 @@ void WasmHost::KeepMetrics(WasmMetrics* metrics) {
   impl_->metrics = metrics;
 }
 
+void WasmHost::KeepFiles(std::filesystem::path dir) {
+  impl_->files = std::move(dir);
+}
+
 void WasmHost::SettingChanged(std::string_view mod, uint64_t steam_id, std::string_view key,
                               std::string_view value) {
   if (auto found = impl_->plugins.find(mod); found != impl_->plugins.end()) {

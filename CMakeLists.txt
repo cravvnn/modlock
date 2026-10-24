@@ -193,6 +193,7 @@ add_library(modlock_sdk SHARED
   src/wasm/settings.cc
   src/wasm/metrics.cc
   src/wasm/file_settings.cc
+  src/wasm/files.cc
   src/wasm/build.cc
   src/wasm/wasm_plugin.cc
   src/wasm/wasm_plugin_calls.cc
@@ -636,6 +637,10 @@ if(BUILD_TESTING)
   target_include_directories(wasm_settings_test PRIVATE src)
   target_link_libraries(wasm_settings_test PRIVATE modlock::sdk gtest_main)
   add_test(NAME wasm_settings_test COMMAND wasm_settings_test)
+  add_executable(wasm_files_test tests/wasm_files_test.cc src/wasm/files.cc)
+  target_include_directories(wasm_files_test PRIVATE src)
+  target_link_libraries(wasm_files_test PRIVATE modlock::sdk gtest_main)
+  add_test(NAME wasm_files_test COMMAND wasm_files_test)
   add_executable(wasm_metrics_test tests/wasm_metrics_test.cc src/wasm/metrics.cc)
   target_include_directories(wasm_metrics_test PRIVATE src)
   target_link_libraries(wasm_metrics_test PRIVATE modlock::sdk gtest_main)

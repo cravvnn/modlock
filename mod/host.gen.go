@@ -12,6 +12,7 @@ import (
 	effectspb "github.com/paralin/modlock/src/wasm/effects"
 	entitiespb "github.com/paralin/modlock/src/wasm/entities"
 	fieldspb "github.com/paralin/modlock/src/wasm/fields"
+	filespb "github.com/paralin/modlock/src/wasm/files"
 	inputpb "github.com/paralin/modlock/src/wasm/input"
 	matchpb "github.com/paralin/modlock/src/wasm/match"
 	metricspb "github.com/paralin/modlock/src/wasm/metrics"
@@ -497,6 +498,28 @@ func (p Player) SetSetting(key, value string) error {
 // when the player leaves or the mod stops; a bot keeps none.
 func (p Player) AddMetric(name string, value float64, label *string) error {
 	return invoke("AddMetric", &metricspb.AddMetricRequest{Player: p.Slot, Name: name, Value: value, Label: label}, nil)
+}
+
+// ReadFile reads one of the mod's files: the host's copy, which the mod
+// wrote or the server's operator placed, else the one the mod ships under
+// data/. A file in neither reads as unset. Names that leave the mod's
+// directories are refused.
+func ReadFile(name string) (*string, error) {
+	request := &filespb.ReadFileRequest{Name: name}
+	response := &filespb.ReadFileResponse{}
+	if err := invoke("ReadFile", request, response); err != nil {
+		return nil, err
+	}
+	return response.Text, nil
+}
+
+// WriteFile replaces one of the mod's files in the host's copy, which
+// outlives a restart and an update of the mod; the files the mod ships stay
+// as they are. The write is whole or not at all, and the host refuses one
+// past its quota of 4 MiB per mod. A host that keeps no files refuses every
+// write.
+func WriteFile(name, text string) error {
+	return invoke("WriteFile", &filespb.WriteFileRequest{Name: name, Text: text}, nil)
 }
 
 // HoldReload keeps the running build through a reload while held is true,

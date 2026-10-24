@@ -22,7 +22,7 @@ type Mod struct {
 }
 
 // Files lists the files a release holds: the manifest, the entry, and the map
-// files and client content the mod ships, if any. Other files in the
+// files, client content and data the mod ships, if any. Other files in the
 // directory, such as a session's log, stay out.
 func (m *Mod) Files() ([]string, error) {
 	// Every release holds the manifest and its entry.
@@ -38,17 +38,22 @@ func (m *Mod) Files() ([]string, error) {
 		}
 	}
 
-	// Add the client content.
-	err := fs.WalkDir(os.DirFS(m.Dir), check.ContentDir, func(name string, entry fs.DirEntry, err error) error {
-		switch {
-		case name == check.ContentDir && errors.Is(err, fs.ErrNotExist):
+	// Add the client content and the data.
+	for _, dir := range []string{check.ContentDir, check.DataDir} {
+		err := fs.WalkDir(os.DirFS(m.Dir), dir, func(name string, entry fs.DirEntry, err error) error {
+			switch {
+			case name == dir && errors.Is(err, fs.ErrNotExist):
+				return nil
+			case err != nil:
+				return err
+			case entry.Type().IsRegular():
+				files = append(files, name)
+			}
 			return nil
-		case err != nil:
-			return err
-		case entry.Type().IsRegular():
-			files = append(files, name)
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "list the shipped files")
 		}
-		return nil
-	})
-	return files, errors.Wrap(err, "list the client content")
+	}
+	return files, nil
 }

@@ -19,6 +19,7 @@
 #include "modlock/wasm_settings.h"
 #include "quake/player_movement.h"
 #include "wasm/build.h"
+#include "wasm/files.h"
 #include "wasm/game.h"
 #include "wasm/instance.h"
 #include "wasm/metrics.h"
@@ -47,6 +48,9 @@ struct Mods {
   // metrics receives players' metric totals; without one, each mod logs
   // them.
   WasmMetrics* metrics = nullptr;
+  // files holds a directory per mod for the files mods write, or is empty
+  // when the host keeps none.
+  std::filesystem::path files;
 
   // Notify calls report with each observer. An observer may stop observing
   // from its callback.
@@ -61,7 +65,8 @@ struct Mods {
 // Tune writes manifest's ability tuning into the loaded game module and
 // returns whether that is done. A module whose ability data has not loaded
 // yet is tried again on a later call.
-bool Tune(std::wstring_view module, const char* module_name, const wasm::manifest::Manifest& manifest,
+bool Tune(std::wstring_view module, const char* module_name,
+          const wasm::manifest::Manifest& manifest,
           const std::function<void(std::string_view)>& log);
 
 // PluginGame is one mod's game with the calls that reach its plugin: its log,
@@ -80,8 +85,13 @@ class PluginGame final : public wasm::Game {
       const wasm::settings::PlayerSettingRequest& request) override;
   std::expected<void, std::string> SetPlayerSetting(
       const wasm::settings::SetPlayerSettingRequest& request) override;
-  std::expected<void, std::string> AddMetric(const wasm::metrics::AddMetricRequest& request) override;
-  std::expected<void, std::string> HoldReload(const wasm::abilities::HoldReloadRequest& request) override;
+  std::expected<void, std::string> AddMetric(
+      const wasm::metrics::AddMetricRequest& request) override;
+  std::expected<void, std::string> HoldReload(
+      const wasm::abilities::HoldReloadRequest& request) override;
+  std::expected<wasm::files::ReadFileResponse, std::string> ReadFile(
+      const wasm::files::ReadFileRequest& request) override;
+  std::expected<void, std::string> WriteFile(const wasm::files::WriteFileRequest& request) override;
   void Impacted(const wasm::combat::ImpactEvent& event) override;
 
   // plugin_ owns the game.
@@ -129,6 +139,7 @@ class WasmPlugin final : public Plugin {
     source_ = std::move(build.source);
     manifest_ = std::move(build.manifest);
     collision_ = std::move(build.collision);
+    data_ = std::move(build.data);
     tuned_ = false;
     Withdraw();
   }
@@ -187,6 +198,12 @@ class WasmPlugin final : public Plugin {
   // slot.
   std::expected<void, std::string> AddMetric(int32_t slot, std::string_view name, double value,
                                              std::string_view label);
+
+  // Files returns the mod's files: those it wrote over those the running
+  // build ships.
+  ModFiles Files() const {
+    return {.written = host_.files.empty() ? host_.files : host_.files / name_, .data = data_};
+  }
 
   // Impacted delivers a watched projectile's impact to the mod.
   void Impacted(const wasm::combat::ImpactEvent& event) {
@@ -288,6 +305,8 @@ class WasmPlugin final : public Plugin {
   wasm::manifest::Manifest manifest_;
   std::vector<uint8_t> collision_;
   bool tuned_ = false;
+  // data_ is the running build's data/ directory.
+  std::filesystem::path data_;
   // clock_error_ is the last reason the server clock could not be read, so
   // each new reason is logged once.
   std::string clock_error_;

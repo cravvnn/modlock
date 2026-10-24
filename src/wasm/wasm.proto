@@ -9,6 +9,7 @@ import "github.com/paralin/modlock/src/wasm/combat/combat.proto";
 import "github.com/paralin/modlock/src/wasm/effects/effects.proto";
 import "github.com/paralin/modlock/src/wasm/entities/entities.proto";
 import "github.com/paralin/modlock/src/wasm/fields/fields.proto";
+import "github.com/paralin/modlock/src/wasm/files/files.proto";
 import "github.com/paralin/modlock/src/wasm/input/input.proto";
 import "github.com/paralin/modlock/src/wasm/match/match.proto";
 import "github.com/paralin/modlock/src/wasm/metrics/metrics.proto";
@@ -108,6 +109,19 @@ service Host {
   // The host keeps each player's totals in memory and hands them on once,
   // when the player leaves or the mod stops; a bot keeps none.
   rpc AddMetric(modlock.wasm.metrics.AddMetricRequest) returns (Empty);
+
+  // ReadFile reads one of the mod's files: the host's copy, which the mod
+  // wrote or the server's operator placed, else the one the mod ships under
+  // data/. A file in neither reads as unset. Names that leave the mod's
+  // directories are refused.
+  rpc ReadFile(modlock.wasm.files.ReadFileRequest) returns (modlock.wasm.files.ReadFileResponse);
+
+  // WriteFile replaces one of the mod's files in the host's copy, which
+  // outlives a restart and an update of the mod; the files the mod ships stay
+  // as they are. The write is whole or not at all, and the host refuses one
+  // past its quota of 4 MiB per mod. A host that keeps no files refuses every
+  // write.
+  rpc WriteFile(modlock.wasm.files.WriteFileRequest) returns (Empty);
 
   // HoldReload keeps the running build through a reload while held is true,
   // such as while a player is partway through something a new build would
