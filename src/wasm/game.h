@@ -211,6 +211,8 @@ class GameServices {
   std::set<Game*> games_;
   std::optional<gameinterop::AbilityInputHook> input_;
   bool input_wanted_ = false;
+  // held_ is each player's held buttons before blocking, for blocked edges.
+  std::array<uint64_t, gameinterop::kMaxPlayerSlots> held_{};
   std::optional<gameinterop::ProjectileImpactHook> impacts_;
   bool impacts_wanted_ = false;
   // transmit_ filters what each player's client receives once a mod hides

@@ -86,17 +86,27 @@ void GameServices::Input() {
 }
 
 uint64_t GameServices::Filter(gameinterop::AbilityInputHook::Input& input) {
-  // A press is a button held now that changed for this input; a release is
-  // one that changed and is up.
-  const uint64_t pressed = input.buttons[0] & input.buttons[1];
-  const uint64_t released = ~input.buttons[0] & input.buttons[1];
+  // Merge every game's blocks for this player.
   uint64_t blocked = 0;
   for (auto* game : games_) {
-    // Merge the game's blocks and record its watched changes.
     blocked |= game->blocked_;
     if (auto found = game->slot_blocked_.find(input.slot); found != game->slot_blocked_.end()) {
       blocked |= found->second;
     }
+  }
+
+  // A press is a button held now that changed for this input; a release is
+  // one that changed and is up. Blocking clears a button from the stored
+  // state, so the engine reads every later command's button as changed; a
+  // blocked button's edges come from the player's last real held mask.
+  const uint64_t held = input.buttons[0];
+  auto& last = held_[static_cast<size_t>(input.slot)];
+  const uint64_t changed = (input.buttons[1] & ~blocked) | ((held ^ last) & blocked);
+  last = held;
+  const uint64_t pressed = held & changed;
+  const uint64_t released = ~held & changed;
+  for (auto* game : games_) {
+    // Record the game's watched changes.
     if ((pressed | released) & game->watched_ && game->changes_.size() < kMaxChanges) {
       game->changes_.push_back({input.slot, pressed & game->watched_, released & game->watched_});
     }
