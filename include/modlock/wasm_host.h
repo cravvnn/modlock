@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 
@@ -102,6 +104,16 @@ class MODLOCK_API WasmHost {
   // Held reports whether the running mod named mod holds its build through
   // reloads.
   [[nodiscard]] bool Held(std::string_view mod) const;
+
+  // Scope limits the running mod named mod to the players in the given
+  // slots, or lets it serve every player when players is nullopt, as when one
+  // mod runs a game for some of the server's players beside another. A
+  // limited mod sees only its players, hears no event about another player,
+  // and is refused a request that addresses another player or changes the
+  // whole server. Each player it stops serving leaves it as a disconnected
+  // player does.
+  [[nodiscard]] std::expected<void, std::string> Scope(std::string_view mod,
+                                                       std::optional<std::set<int32_t>> players);
 
   // Provide answers mods' calls to service with extension, replacing the
   // service's earlier extension. An empty extension withdraws the service.

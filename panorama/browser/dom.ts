@@ -329,6 +329,13 @@ function applyStyle(element: HTMLElement, kebab: string, value: string): void {
       css.overflowY = value ? map(y) : ''
       return
     }
+    case 'x':
+    case 'y': {
+      // A panel outside its parent's flow sits at its offset.
+      css.position = value ? 'absolute' : ''
+      css[name === 'x' ? 'left' : 'top'] = value
+      return
+    }
     case 'textShadow': {
       // Panorama adds a strength term after the blur radius.
       css.textShadow = value.replace(/^(\S+ \S+ \S+) [\d.]+ (\S+)$/, '$1 $2')

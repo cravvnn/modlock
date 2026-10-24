@@ -877,6 +877,12 @@ export interface Tree {
    * Nodes holds every node, the root included.
    */
   nodes?: Node[]
+  /**
+   * Region is the box the renderer places the root in, for a mod that shares
+   * the screen with another, such as a game one mod runs inside another's.
+   * Without one, the root fills the screen.
+   */
+  region?: Region
 }
 
 export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType<Tree>(
@@ -884,6 +890,7 @@ export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType<Tree>(
   () => [
     [1, 'mod', 9],
     [2, 'nodes', 11, 1, Node.codec],
+    [3, 'region', 11, 0, Region.codec],
   ],
   {
     decode: (r: BinaryReader, end: number, m: Tree): Tree => {
@@ -896,6 +903,9 @@ export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType<Tree>(
             break
           case 2:
             ;(m.nodes ??= []).push(Node.decode(r, r.delimited(), {}))
+            break
+          case 3:
+            m.region = Region.decode(r, r.delimited(), m.region ?? {})
             break
           default:
             r.skip(t)
@@ -912,9 +922,92 @@ export const Tree: MessageType<Tree> = /* @__PURE__ */ createMessageType<Tree>(
         const a = m.nodes
         if (a != null) for (const e of a) Node.writeField(w, 2, e)
       }
+      {
+        const v = m.region
+        if (v != null) Region.writeField(w, 3, v)
+      }
     },
   },
 )
+
+/**
+ * Region is a box on the screen, each side a fraction of the screen's width or
+ * height from its left or top edge.
+ *
+ * @generated from message modlock.wasm.ui.Region
+ */
+export interface Region {
+  /**
+   * Left is the box's left edge, from 0 to 1.
+   */
+  left?: number
+  /**
+   * Top is the box's top edge, from 0 to 1.
+   */
+  top?: number
+  /**
+   * Width is the box's width, from 0 to 1.
+   */
+  width?: number
+  /**
+   * Height is the box's height, from 0 to 1.
+   */
+  height?: number
+}
+
+export const Region: MessageType<Region> =
+  /* @__PURE__ */ createMessageType<Region>(
+    'modlock.wasm.ui.Region',
+    () => [
+      [1, 'left', 2],
+      [2, 'top', 2],
+      [3, 'width', 2],
+      [4, 'height', 2],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: Region): Region => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.left = r.float()
+              break
+            case 2:
+              m.top = r.float()
+              break
+            case 3:
+              m.width = r.float()
+              break
+            case 4:
+              m.height = r.float()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Region, w: Writer): void => {
+        {
+          const v = m.left
+          if (v != null && v !== 0) w.uint32(13).float(v)
+        }
+        {
+          const v = m.top
+          if (v != null && v !== 0) w.uint32(21).float(v)
+        }
+        {
+          const v = m.width
+          if (v != null && v !== 0) w.uint32(29).float(v)
+        }
+        {
+          const v = m.height
+          if (v != null && v !== 0) w.uint32(37).float(v)
+        }
+      },
+    },
+  )
 
 /**
  * Screen is everything one player's renderer draws: each mod's tree.

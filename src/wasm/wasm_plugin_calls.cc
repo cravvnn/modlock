@@ -26,6 +26,11 @@ std::expected<wasm::Reply, std::string> WasmPlugin::Send(const wasm::Call& call)
   if (!instance_) {
     return std::unexpected(name_ + " is not running");
   }
+
+  // An event about a player the mod does not serve never reaches it.
+  if (!scope_.Hears(call)) {
+    return wasm::Reply();
+  }
   const bool nested = std::exchange(sending_, true);
   auto reply = instance_->Deliver(call);
   sending_ = nested;
@@ -71,12 +76,19 @@ void WasmPlugin::ReportPlayers() {
   if (!players) {
     return;
   }
+  scope_.Keep(*players->mutable_players());
   wasm::players::PlayersChangedEvent event;
   *event.mutable_players() = std::move(*players->mutable_players());
   static_cast<void>(mod_.PlayersChanged(event));
 }
 
 bool WasmPlugin::Command(int32_t slot, std::string_view line) {
+  // A player the mod does not serve neither presses its buttons nor reaches
+  // its commands.
+  if (!scope_.Serves(slot)) {
+    return false;
+  }
+
   // A press names its mod; the other mods leave it alone and never see it.
   if (line.starts_with(kPressCommand)) {
     // A press names this mod, then its command.
@@ -120,15 +132,43 @@ void WasmPlugin::Leave(int32_t slot) {
   ShowUi(slot, reset);
 }
 
+void WasmPlugin::Scope(std::optional<std::set<int32_t>> players) {
+  // Each occupied slot the old scope served and the new one does not leaves
+  // the mod.
+  PlayerScope next;
+  next.Limit(std::move(players));
+  for (int32_t slot = 0; slot < gameinterop::kMaxPlayerSlots; ++slot) {
+    if (scope_.Serves(slot) && !next.Serves(slot) &&
+        gameinterop::ConnectionTracker::StateForSlot(slot).occupied) {
+      Leave(slot);
+    }
+  }
+
+  // The mod hears its new players before its next event.
+  scope_ = std::move(next);
+  reported_.reset();
+}
+
 wasm::Reply WasmPlugin::Call(const wasm::Call& call) {
-  // A check runs no game; the mod may still log, reach the host's services
-  // and hold its build.
+  // A mod that serves some players reaches only them. A check runs no game;
+  // the mod may still log, reach the host's services and hold its build.
   wasm::Reply reply;
-  if (!check_only_ || call.method() == "Log" || call.method() == "CallService" ||
-      call.method() == "HoldReload") {
+  if (auto refused = scope_.Refuse(call); !refused.empty()) {
+    reply.set_error(std::move(refused));
+  } else if (!check_only_ || call.method() == "Log" || call.method() == "CallService" ||
+             call.method() == "HoldReload") {
     reply = game_.Dispatch(call);
   } else {
     reply.set_error("no game is running");
+  }
+
+  // Its player list holds only its players.
+  if (scope_.Limited() && call.method() == "Players" && reply.error().empty()) {
+    players::PlayersResponse players;
+    if (players.ParseFromString(reply.response())) {
+      scope_.Keep(*players.mutable_players());
+      reply.set_response(players.SerializeAsString());
+    }
   }
 
   // Report a failed call in the server log too.

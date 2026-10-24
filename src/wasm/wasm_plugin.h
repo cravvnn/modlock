@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -23,6 +24,7 @@
 #include "wasm/game.h"
 #include "wasm/instance.h"
 #include "wasm/metrics.h"
+#include "wasm/player_scope.h"
 #include "wasm/runtime.h"
 #include "wasm/settings.h"
 #include "wasm/ui.h"
@@ -154,6 +156,11 @@ class WasmPlugin final : public Plugin {
 
   // Held reports whether the running instance keeps itself through reloads.
   bool Held() const { return held_; }
+
+  // Scope limits the mod to players, or serves every player when players is
+  // nullopt. Each player it stops serving leaves it as a disconnected player
+  // does, and the mod hears its new player list before its next event.
+  void Scope(std::optional<std::set<int32_t>> players);
 
   // AskRestart restarts the running build in a new instance on the next
   // frame, while the plugin offers that: after the instance stopped or ran a
@@ -349,6 +356,8 @@ class WasmPlugin final : public Plugin {
   std::optional<uint64_t> reported_;
   // wants_ is the running instance's start answer: the events it consumes.
   wasm::StartResult wants_;
+  // scope_ is the players the mod serves, across instances.
+  PlayerScope scope_;
   // game_ answers the running instance's calls and holds what it placed in
   // the game.
   PluginGame game_;

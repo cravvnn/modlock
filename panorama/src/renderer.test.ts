@@ -233,6 +233,28 @@ test('draws a tree, keeps panels that stay and reports presses', () => {
   expect(tree.children.length).toBe(1)
   expect(tree.children[0]!.style).toEqual({})
 
+  // A second mod's tree drawn in a region fills that box beside the first.
+  drawing.draw(
+    Screen.fromJson({
+      trees: [
+        { mod: 'arena', nodes: [{ id: '' }] },
+        {
+          mod: 'duel',
+          nodes: [{ id: '' }],
+          region: { left: 0.25, top: 0.5, width: 0.5, height: 0.25 },
+        },
+      ],
+    }),
+  )
+  const placed = root.children[1]!
+  expect(tree.style.x).toBeUndefined()
+  expect(placed.style).toMatchObject({
+    x: '25%',
+    y: '50%',
+    width: '50%',
+    height: '25%',
+  })
+
   // A cycle draws each node once, and an empty screen removes the tree.
   drawing.draw(
     screen({ id: '', children: ['a'] }, { id: 'a', children: ['a', ''] }),

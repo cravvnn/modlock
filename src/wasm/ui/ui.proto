@@ -262,6 +262,27 @@ message Tree {
 
   // Nodes holds every node, the root included.
   repeated Node nodes = 2;
+
+  // Region is the box the renderer places the root in, for a mod that shares
+  // the screen with another, such as a game one mod runs inside another's.
+  // Without one, the root fills the screen.
+  Region region = 3;
+}
+
+// Region is a box on the screen, each side a fraction of the screen's width or
+// height from its left or top edge.
+message Region {
+  // Left is the box's left edge, from 0 to 1.
+  float left = 1;
+
+  // Top is the box's top edge, from 0 to 1.
+  float top = 2;
+
+  // Width is the box's width, from 0 to 1.
+  float width = 3;
+
+  // Height is the box's height, from 0 to 1.
+  float height = 4;
 }
 
 // Screen is everything one player's renderer draws: each mod's tree.

@@ -731,6 +731,10 @@ type Tree struct {
 	Mod string `protobuf:"bytes,1,opt,name=mod,proto3" json:"mod,omitempty"`
 	// Nodes holds every node, the root included.
 	Nodes []*Node `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	// Region is the box the renderer places the root in, for a mod that shares
+	// the screen with another, such as a game one mod runs inside another's.
+	// Without one, the root fills the screen.
+	Region *Region `protobuf:"bytes,3,opt,name=region,proto3" json:"region,omitempty"`
 }
 
 func (x *Tree) Reset() {
@@ -751,6 +755,61 @@ func (x *Tree) GetNodes() []*Node {
 		return x.Nodes
 	}
 	return nil
+}
+
+func (x *Tree) GetRegion() *Region {
+	if x != nil {
+		return x.Region
+	}
+	return nil
+}
+
+// Region is a box on the screen, each side a fraction of the screen's width or
+// height from its left or top edge.
+type Region struct {
+	unknownFields []byte
+	// Left is the box's left edge, from 0 to 1.
+	Left float32 `protobuf:"fixed32,1,opt,name=left,proto3" json:"left,omitempty"`
+	// Top is the box's top edge, from 0 to 1.
+	Top float32 `protobuf:"fixed32,2,opt,name=top,proto3" json:"top,omitempty"`
+	// Width is the box's width, from 0 to 1.
+	Width float32 `protobuf:"fixed32,3,opt,name=width,proto3" json:"width,omitempty"`
+	// Height is the box's height, from 0 to 1.
+	Height float32 `protobuf:"fixed32,4,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (x *Region) Reset() {
+	*x = Region{}
+}
+
+func (*Region) ProtoMessage() {}
+
+func (x *Region) GetLeft() float32 {
+	if x != nil {
+		return x.Left
+	}
+	return 0
+}
+
+func (x *Region) GetTop() float32 {
+	if x != nil {
+		return x.Top
+	}
+	return 0
+}
+
+func (x *Region) GetWidth() float32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *Region) GetHeight() float32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
 }
 
 // Screen is everything one player's renderer draws: each mod's tree.
@@ -1004,6 +1063,7 @@ func (m *Tree) CloneVT() *Tree {
 	r := new(Tree)
 	r.Mod = m.Mod
 	r.Nodes = protobuf_go_lite.CloneVTSlice(m.Nodes)
+	r.Region = protobuf_go_lite.CloneVTValue(m.Region)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -1011,6 +1071,25 @@ func (m *Tree) CloneVT() *Tree {
 }
 
 func (m *Tree) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *Region) CloneVT() *Region {
+	if m == nil {
+		return (*Region)(nil)
+	}
+	r := new(Region)
+	r.Left = m.Left
+	r.Top = m.Top
+	r.Width = m.Width
+	r.Height = m.Height
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Region) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -1350,11 +1429,43 @@ func (this *Tree) EqualVT(that *Tree) bool {
 	if !protobuf_go_lite.EqualVTSliceImplicit(this.Nodes, that.Nodes, func() *Node { return &Node{} }) {
 		return false
 	}
+	if !protobuf_go_lite.IsEqualVT(this.Region, that.Region) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
 func (this *Tree) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*Tree)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *Region) EqualVT(that *Region) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Left != that.Left {
+		return false
+	}
+	if this.Top != that.Top {
+		return false
+	}
+	if this.Width != that.Width {
+		return false
+	}
+	if this.Height != that.Height {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Region) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Region)
 	if !ok {
 		return false
 	}
@@ -2225,6 +2336,11 @@ func (x *Tree) MarshalProtoJSON(s *json.MarshalState) {
 		}
 		s.WriteArrayEnd()
 	}
+	if x.Region != nil || s.HasField("region") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("region")
+		x.Region.MarshalProtoJSON(s.WithField("region"))
+	}
 	s.WriteObjectEnd()
 }
 
@@ -2263,12 +2379,85 @@ func (x *Tree) UnmarshalProtoJSON(s *json.UnmarshalState) {
 				}
 				x.Nodes = append(x.Nodes, v)
 			})
+		case "region":
+			if s.ReadNil() {
+				x.Region = nil
+				return
+			}
+			x.Region = &Region{}
+			x.Region.UnmarshalProtoJSON(s.WithField("region", true))
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the Tree from JSON.
 func (x *Tree) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Region message to JSON.
+func (x *Region) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Left != 0 || s.HasField("left") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("left")
+		s.WriteFloat32(x.Left)
+	}
+	if x.Top != 0 || s.HasField("top") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("top")
+		s.WriteFloat32(x.Top)
+	}
+	if x.Width != 0 || s.HasField("width") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("width")
+		s.WriteFloat32(x.Width)
+	}
+	if x.Height != 0 || s.HasField("height") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("height")
+		s.WriteFloat32(x.Height)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Region to JSON.
+func (x *Region) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Region message from JSON.
+func (x *Region) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "left":
+			s.AddField("left")
+			x.Left = s.ReadFloat32()
+		case "top":
+			s.AddField("top")
+			x.Top = s.ReadFloat32()
+		case "width":
+			s.AddField("width")
+			x.Width = s.ReadFloat32()
+		case "height":
+			s.AddField("height")
+			x.Height = s.ReadFloat32()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Region from JSON.
+func (x *Region) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -2920,6 +3109,16 @@ func (m *Tree) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.Region != nil {
+		size, err := m.Region.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Nodes) > 0 {
 		for iNdEx := len(m.Nodes) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.Nodes[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -2936,6 +3135,58 @@ func (m *Tree) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Mod)
 		i--
 		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Region) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Region) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Region) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Height != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Height))))
+		i--
+		dAtA[i] = 0x25
+	}
+	if m.Width != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Width))))
+		i--
+		dAtA[i] = 0x1d
+	}
+	if m.Top != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Top))))
+		i--
+		dAtA[i] = 0x15
+	}
+	if m.Left != 0 {
+		i = protobuf_go_lite.EncodeFixed32(dAtA, i, uint32(math.Float32bits(float32(m.Left))))
+		i--
+		dAtA[i] = 0xd
 	}
 	return len(dAtA) - i, nil
 }
@@ -3232,6 +3483,24 @@ func (m *Tree) SizeVT() (n int) {
 		l = e.SizeVT()
 		n += protobuf_go_lite.SizeMessage(1, l)
 	}
+	if m.Region != nil {
+		l = m.Region.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *Region) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Left)
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Top)
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Width)
+	n += protobuf_go_lite.SizeFixed32NonZero(1, m.Height)
 	n += len(m.unknownFields)
 	return n
 }
@@ -3548,10 +3817,40 @@ func (x *Tree) MarshalProtoText() string {
 		}
 		protobuf_go_lite.TextWriteListEnd(&sb)
 	}
+	if x.Region != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "region")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Region)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *Tree) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Region) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Region")
+	if x.Left != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "left")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Left)
+	}
+	if x.Top != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "top")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Top)
+	}
+	if x.Width != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "width")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Width)
+	}
+	if x.Height != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "height")
+		protobuf_go_lite.TextWriteFloat32(&sb, x.Height)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Region) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -4368,6 +4667,112 @@ func (m *Tree) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Region", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Region == nil {
+				m.Region = &Region{}
+			}
+			if err := m.Region.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Region) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Region: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Region: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Left", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Left = float32(math.Float32frombits(v))
+		case 2:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Top", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Top = float32(math.Float32frombits(v))
+		case 3:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Width", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Width = float32(math.Float32frombits(v))
+		case 4:
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			var v uint32
+			var _v32 uint32
+			_v32, iNdEx, err = protobuf_go_lite.DecodeFixed32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			v = uint32(_v32)
+			m.Height = float32(math.Float32frombits(v))
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

@@ -195,6 +195,7 @@ add_library(modlock_sdk SHARED
   src/wasm/file_settings.cc
   src/wasm/files.cc
   src/wasm/build.cc
+  src/wasm/player_scope.cc
   src/wasm/wasm_plugin.cc
   src/wasm/wasm_plugin_calls.cc
   src/wasm/wasm_plugin_events.cc

@@ -148,6 +148,16 @@ bool WasmHost::Held(std::string_view mod) const {
   return found != impl_->plugins.end() && found->second->Held();
 }
 
+std::expected<void, std::string> WasmHost::Scope(std::string_view mod,
+                                                 std::optional<std::set<int32_t>> players) {
+  auto found = impl_->plugins.find(mod);
+  if (found == impl_->plugins.end()) {
+    return std::unexpected("no running mod is named " + std::string(mod));
+  }
+  found->second->Scope(std::move(players));
+  return {};
+}
+
 void WasmHost::Provide(std::string service, WasmExtension extension) {
   if (extension) {
     impl_->extensions.insert_or_assign(std::move(service), std::move(extension));

@@ -16,8 +16,10 @@ import {
   Kind,
   type Length,
   type Node,
+  type Region,
   type Screen,
   type Style,
+  type Tree,
 } from '../../src/wasm/ui/ui.pb.js'
 import {
   isRouteName,
@@ -154,7 +156,7 @@ export class Drawing {
   draw(screen: Screen | null): void {
     // Delete the trees of mods the screen no longer holds.
     const trees = new Map(
-      (screen?.trees ?? []).map((tree) => [tree.mod ?? '', tree.nodes ?? []]),
+      (screen?.trees ?? []).map((tree) => [tree.mod ?? '', tree]),
     )
     for (const [mod, drawn] of this.mods) {
       if (!trees.has(mod)) {
@@ -168,8 +170,8 @@ export class Drawing {
     }
 
     // Draw each mod's tree.
-    for (const [mod, nodes] of trees) {
-      this.drawTree(mod, new Map(nodes.map((node) => [node.id ?? '', node])))
+    for (const [mod, tree] of trees) {
+      this.drawTree(mod, tree)
     }
 
     // Tell the layouts to read again, and let the host bind its keys again
@@ -184,8 +186,13 @@ export class Drawing {
     }
   }
 
-  /** drawTree draws one mod's nodes from its root down. */
-  private drawTree(mod: string, nodes: Map<string, Node>): void {
+  /** drawTree draws one mod's nodes from its root down, in its region. */
+  private drawTree(mod: string, tree: Tree): void {
+    // Index the mod's nodes by id.
+    const nodes = new Map(
+      (tree.nodes ?? []).map((node) => [node.id ?? '', node]),
+    )
+
     // Read the mod's routes; a layout that loads now starts with them all.
     const routes = new Map<string, string>()
     for (const node of nodes.values()) {
@@ -200,7 +207,7 @@ export class Drawing {
     const previous = this.mods.get(mod) ?? new Map<string, Drawn>()
     const drawn = new Map<string, Drawn>()
     const root = nodes.get('') ?? { id: '' }
-    this.drawNode(mod, root, this.parent, previous, drawn, nodes)
+    this.drawNode(mod, root, this.parent, previous, drawn, nodes, tree.region)
 
     // Hand each layout loaded before this draw the routes that changed, an
     // empty value for one the mod no longer sends.
@@ -239,7 +246,10 @@ export class Drawing {
     this.unloaded ||= drawn.layout !== null
   }
 
-  /** drawNode draws node under parent, then its children in order. */
+  /**
+   * drawNode draws node under parent, then its children in order. A root
+   * drawn in a region fills that box instead of the screen.
+   */
   private drawNode(
     mod: string,
     node: Node,
@@ -247,12 +257,16 @@ export class Drawing {
     previous: Map<string, Drawn>,
     drawn: Map<string, Drawn>,
     nodes: Map<string, Node>,
+    region?: Region,
   ): Panel {
     // Resolve the node's id, panel type, style, and the URL of its layout.
     const id = node.id ?? ''
     const kind = id === '' ? Kind.PANEL : (node.kind ?? Kind.PANEL)
     const type = panelTypes[kind] ?? 'Panel'
-    const style = styleOf(node.style, id === '')
+    const style = {
+      ...styleOf(node.style, id === ''),
+      ...(region ? placed(region) : {}),
+    }
     const path = node.layout ?? ''
     const layout =
       kind === Kind.LAYOUT && isLayoutPath(path)
@@ -387,6 +401,18 @@ const faces: Partial<Record<Face, string>> = {
  * them, so text reads over a bright sky.
  */
 const textShadow = '0px 1px 3px 1 #000000d0'
+
+/** placed returns the style properties that fill region, in screen percents. */
+function placed(region: Region): Record<string, string> {
+  const percent = (value: number | undefined) =>
+    `${clamp((value ?? 0) * 100, 0, 100)}%`
+  return {
+    x: percent(region.left),
+    y: percent(region.top),
+    width: percent(region.width),
+    height: percent(region.height),
+  }
+}
 
 /** styleOf returns the style properties to write; a root fills the screen by default. */
 function styleOf(

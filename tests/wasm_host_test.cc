@@ -7,6 +7,7 @@
 
 #include <cctype>
 #include <expected>
+#include <set>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -76,6 +77,24 @@ TEST(WasmHost, ModsAndHostCallEachOthersServices) {
   ASSERT_FALSE(missing);
   EXPECT_EQ(missing.error(), "the mod serves no service missing");
   EXPECT_FALSE(host.Call("absent", "echo", "say", ""));
+
+  // A mod limited to some players is refused a request that addresses
+  // another player or the whole server, ahead of the check's own refusal.
+  ASSERT_TRUE(host.Scope("extension-go", std::set<int32_t>{1}));
+  auto served = host.Call("extension-go", "reach", "show", "1");
+  ASSERT_FALSE(served);
+  EXPECT_EQ(served.error(), "no game is running");
+  auto other = host.Call("extension-go", "reach", "show", "2");
+  ASSERT_FALSE(other);
+  EXPECT_EQ(other.error(), "this mod does not serve the player ShowEntityOnlyTo names");
+  auto server = host.Call("extension-go", "reach", "command", "");
+  ASSERT_FALSE(server);
+  EXPECT_EQ(server.error(), "this mod serves only some players and may not call ServerCommand");
+  ASSERT_TRUE(host.Scope("extension-go", std::nullopt));
+  auto unlimited = host.Call("extension-go", "reach", "show", "2");
+  ASSERT_FALSE(unlimited);
+  EXPECT_EQ(unlimited.error(), "no game is running");
+  EXPECT_FALSE(host.Scope("absent", std::nullopt));
 
   // A withdrawn service fails the mod's call.
   host.Provide("shout", nullptr);
