@@ -1,4 +1,4 @@
-#include "modlock/gameinterop/bot_drive.h"
+#include "modlock/gameinterop/command_hook.h"
 
 #include <cstddef>
 #include <cstdio>
@@ -25,6 +25,12 @@ constexpr size_t kCommandStride = 0xa8;
 // the base message, is at +0x20, and its base message pointer at +0x48.
 constexpr size_t kCommandHasBits = 0x20;
 constexpr size_t kCommandBase = 0x48;
+// Build 6819, through the CCitadelUserCmdPB merge: has-bit 2 marks
+// vec_camera_position, a CMsgVector whose pointer is at +0x50 and whose x, y
+// and z are floats from +0x18.
+constexpr uint32_t kCameraBit = 0x2;
+constexpr size_t kCommandCamera = 0x50;
+constexpr size_t kVectorXyz = 0x18;
 // CBaseUserCmdPB: has-bits, the view angles message, forwardmove (has-bit
 // 0x40) and leftmove (has-bit 0x80).
 constexpr size_t kBaseHasBits = 0x10;
@@ -39,10 +45,12 @@ constexpr size_t kAnglesXyz = 0x18;
 constexpr size_t kCommandButtons = 0x78;
 
 safetyhook::InlineHook* g_hook = nullptr;
-BotDrive::Decide* g_decide = nullptr;
+CommandHook::Decide* g_decide = nullptr;
 // g_held is each slot's buttons in the last command driven, so a button that
 // goes up or down reads as changed.
 std::array<uint64_t, kMaxPlayerSlots> g_held{};
+// g_cameras is each slot's camera position in its latest commands.
+std::array<std::optional<std::array<float, 3>>, kMaxPlayerSlots> g_cameras{};
 bool g_reported_bare = false;
 
 template <typename T>
@@ -60,7 +68,7 @@ void Store(std::byte* base, size_t offset, const T& value) {
 // Write puts the drive's controls in one command. A bot's brain builds its
 // base message on its first tick; a command without one keeps its own axes and
 // view this tick.
-void Write(std::byte* command, const BotDrive::Command& drive, uint64_t& last_held) {
+void Write(std::byte* command, const CommandHook::Command& drive, uint64_t& last_held) {
   // Write the held and pressed buttons.
   const uint64_t held = drive.held | drive.pressed;
   const std::array<uint64_t, 3> buttons{held, (held ^ last_held) | drive.pressed, 0};
@@ -84,10 +92,25 @@ void Write(std::byte* command, const BotDrive::Command& drive, uint64_t& last_he
   }
 }
 
+// Camera returns the camera position the batch's last command carries.
+std::optional<std::array<float, 3>> Camera(const std::byte* commands, int count) {
+  for (int i = count - 1; i >= 0; --i) {
+    const auto* command = commands + static_cast<size_t>(i) * kCommandStride;
+    if (!(Load<uint32_t>(command, kCommandHasBits) & kCameraBit)) {
+      continue;
+    }
+    if (const auto* vector = Load<const std::byte*>(command, kCommandCamera)) {
+      return Load<std::array<float, 3>>(vector, kVectorXyz);
+    }
+  }
+  return std::nullopt;
+}
+
 int ProcessThunk(void* controller, std::byte* commands, int count, bool paused, float margin) {
   const auto handle = controller ? ReferenceHandleOf(controller) : std::nullopt;
   const int32_t slot = handle ? static_cast<int32_t>(EntityIndexOf(*handle)) - 1 : -1;
   if (IsPlayerSlot(slot) && commands && count > 0) {
+    g_cameras[slot] = Camera(commands, count);
     if (auto drive = (*g_decide)(slot)) {
       for (int i = 0; i < count; ++i) {
         Write(commands + static_cast<size_t>(i) * kCommandStride, *drive, g_held[slot]);
@@ -104,7 +127,7 @@ int ProcessThunk(void* controller, std::byte* commands, int count, bool paused, 
 
 }  // namespace
 
-struct BotDrive::Impl {
+struct CommandHook::Impl {
 #if defined(_WIN32)
   safetyhook::InlineHook hook;
   Decide decide;
@@ -118,21 +141,22 @@ struct BotDrive::Impl {
     g_hook = nullptr;
     g_decide = nullptr;
     g_held = {};
+    g_cameras = {};
   }
 #endif
 };
 
-BotDrive::BotDrive(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
+CommandHook::CommandHook(std::unique_ptr<Impl> impl) : impl_(std::move(impl)) {}
 
-BotDrive::BotDrive(BotDrive&&) noexcept = default;
-BotDrive& BotDrive::operator=(BotDrive&&) noexcept = default;
-BotDrive::~BotDrive() = default;
+CommandHook::CommandHook(CommandHook&&) noexcept = default;
+CommandHook& CommandHook::operator=(CommandHook&&) noexcept = default;
+CommandHook::~CommandHook() = default;
 
-std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server, Decide decide) {
+std::expected<CommandHook, std::string> CommandHook::Install(const ModuleImage& server, Decide decide) {
 #if defined(_WIN32)
   // Install once.
   if (g_hook || !decide) {
-    return std::unexpected("bot drive is already installed or unbound");
+    return std::unexpected("command hook is already installed or unbound");
   }
 
   // Resolve the target and create the hook disabled.
@@ -143,7 +167,7 @@ std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server
   auto hook = safetyhook::create_inline(*target, reinterpret_cast<void*>(&ProcessThunk),
                                         safetyhook::InlineHook::StartDisabled);
   if (!hook) {
-    return std::unexpected("bot drive hook creation failed");
+    return std::unexpected("command hook creation failed");
   }
 
   // Publish the thunk state and enable.
@@ -153,9 +177,9 @@ std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server
   g_hook = &impl->hook;
   g_decide = &impl->decide;
   if (auto enabled = impl->hook.enable(); !enabled) {
-    return std::unexpected("bot drive hook activation failed");
+    return std::unexpected("command hook activation failed");
   }
-  return BotDrive(std::move(impl));
+  return CommandHook(std::move(impl));
 
 #else
   // Other platforms have no native server.
@@ -163,6 +187,17 @@ std::expected<BotDrive, std::string> BotDrive::Install(const ModuleImage& server
   (void)decide;
   return std::unexpected("native bot control requires the Windows host");
 #endif
+}
+
+std::optional<std::array<float, 3>> CommandHook::CameraPosition(int32_t slot) const {
+#if defined(_WIN32)
+  if (IsPlayerSlot(slot)) {
+    return g_cameras[slot];
+  }
+#else
+  (void)slot;
+#endif
+  return std::nullopt;
 }
 
 }  // namespace modlock::gameinterop

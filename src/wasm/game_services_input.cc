@@ -158,25 +158,35 @@ std::expected<void, std::string> GameServices::Transmit() {
   return {};
 }
 
-std::expected<void, std::string> GameServices::Drive() {
+std::expected<void, std::string> GameServices::Commands() {
   // Install once, against the server image.
-  if (drive_) {
+  if (usercmds_) {
     return {};
   }
-  auto image = Image();
-  if (!image) {
-    return std::unexpected(image.error());
+  if (usercmds_error_) {
+    return std::unexpected(*usercmds_error_);
   }
-  auto hook =
-      gameinterop::BotDrive::Install(**image, [this](int32_t slot) { return Driven(slot); });
+  // Pawn reads ask every frame, so a hook that cannot install is not retried.
+  auto image = Image();
+  auto hook = image ? gameinterop::CommandHook::Install(
+                          **image, [this](int32_t slot) { return Driven(slot); })
+                    : std::unexpected(image.error());
   if (!hook) {
+    usercmds_error_ = hook.error();
     return std::unexpected(hook.error());
   }
-  drive_ = std::move(*hook);
+  usercmds_ = std::move(*hook);
   return {};
 }
 
-std::optional<gameinterop::BotDrive::Command> GameServices::Driven(int32_t slot) {
+std::optional<std::array<float, 3>> GameServices::CameraPosition(int32_t slot) {
+  if (!Commands()) {
+    return std::nullopt;
+  }
+  return usercmds_->CameraPosition(slot);
+}
+
+std::optional<gameinterop::CommandHook::Command> GameServices::Driven(int32_t slot) {
   for (auto* game : games_) {
     // The first game driving the slot answers; its press counts once.
     auto found = game->drives_.find(slot);

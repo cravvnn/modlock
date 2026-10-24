@@ -4901,6 +4901,7 @@ class MODLOCK_API Pawn final : public ::google::protobuf::Message
     kEyePositionFieldNumber = 13,
     kVelocityFieldNumber = 14,
     kScoreFieldNumber = 16,
+    kCameraPositionFieldNumber = 17,
     kEntityFieldNumber = 1,
     kHeroFieldNumber = 2,
     kTeamFieldNumber = 3,
@@ -5000,6 +5001,21 @@ class MODLOCK_API Pawn final : public ::google::protobuf::Message
   private:
   const ::modlock::wasm::players::Score& _internal_score() const;
   ::modlock::wasm::players::Score* PROTOBUF_NONNULL _internal_mutable_score();
+
+  public:
+  // optional .modlock.geometry.Vec3 camera_position = 17;
+  bool has_camera_position() const;
+  void clear_camera_position() ;
+  const ::modlock::geometry::Vec3& camera_position() const;
+  [[nodiscard]] ::modlock::geometry::Vec3* PROTOBUF_NULLABLE release_camera_position();
+  ::modlock::geometry::Vec3* PROTOBUF_NONNULL mutable_camera_position();
+  void set_allocated_camera_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value);
+  void unsafe_arena_set_allocated_camera_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value);
+  ::modlock::geometry::Vec3* PROTOBUF_NULLABLE unsafe_arena_release_camera_position();
+
+  private:
+  const ::modlock::geometry::Vec3& _internal_camera_position() const;
+  ::modlock::geometry::Vec3* PROTOBUF_NONNULL _internal_mutable_camera_position();
 
   public:
   // uint32 entity = 1;
@@ -5109,8 +5125,8 @@ class MODLOCK_API Pawn final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 16,
-                                   6, 0,
+  static const ::google::protobuf::internal::TcParseTable<5, 17,
+                                   7, 0,
                                    2>
       _table_;
 
@@ -5137,6 +5153,7 @@ class MODLOCK_API Pawn final : public ::google::protobuf::Message
     ::modlock::geometry::Vec3* PROTOBUF_NULLABLE eye_position_;
     ::modlock::geometry::Vec3* PROTOBUF_NULLABLE velocity_;
     ::modlock::wasm::players::Score* PROTOBUF_NULLABLE score_;
+    ::modlock::geometry::Vec3* PROTOBUF_NULLABLE camera_position_;
     ::uint32_t entity_;
     ::uint32_t hero_;
     ::int32_t team_;
@@ -8545,7 +8562,7 @@ inline void Pawn::clear_entity() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.entity_ = 0u;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
+                  0x00000080U);
 }
 inline ::uint32_t Pawn::entity() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.entity)
@@ -8553,7 +8570,7 @@ inline ::uint32_t Pawn::entity() const {
 }
 inline void Pawn::set_entity(::uint32_t value) {
   _internal_set_entity(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.entity)
 }
 inline ::uint32_t Pawn::_internal_entity() const {
@@ -8570,7 +8587,7 @@ inline void Pawn::clear_hero() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.hero_ = 0u;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
+                  0x00000100U);
 }
 inline ::uint32_t Pawn::hero() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.hero)
@@ -8578,7 +8595,7 @@ inline ::uint32_t Pawn::hero() const {
 }
 inline void Pawn::set_hero(::uint32_t value) {
   _internal_set_hero(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.hero)
 }
 inline ::uint32_t Pawn::_internal_hero() const {
@@ -8595,7 +8612,7 @@ inline void Pawn::clear_team() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.team_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000100U);
+                  0x00000200U);
 }
 inline ::int32_t Pawn::team() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.team)
@@ -8603,7 +8620,7 @@ inline ::int32_t Pawn::team() const {
 }
 inline void Pawn::set_team(::int32_t value) {
   _internal_set_team(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.team)
 }
 inline ::int32_t Pawn::_internal_team() const {
@@ -8620,7 +8637,7 @@ inline void Pawn::clear_health() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.health_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000200U);
+                  0x00000400U);
 }
 inline ::int32_t Pawn::health() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.health)
@@ -8628,7 +8645,7 @@ inline ::int32_t Pawn::health() const {
 }
 inline void Pawn::set_health(::int32_t value) {
   _internal_set_health(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.health)
 }
 inline ::int32_t Pawn::_internal_health() const {
@@ -8645,7 +8662,7 @@ inline void Pawn::clear_max_health() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.max_health_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000400U);
+                  0x00000800U);
 }
 inline ::int32_t Pawn::max_health() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.max_health)
@@ -8653,7 +8670,7 @@ inline ::int32_t Pawn::max_health() const {
 }
 inline void Pawn::set_max_health(::int32_t value) {
   _internal_set_max_health(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.max_health)
 }
 inline ::int32_t Pawn::_internal_max_health() const {
@@ -8946,14 +8963,14 @@ inline void Pawn::set_allocated_camera_angles(::modlock::geometry::EulerAngles* 
 
 // optional float stamina = 9;
 inline bool Pawn::has_stamina() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000800U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00001000U);
   return value;
 }
 inline void Pawn::clear_stamina() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.stamina_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000800U);
+                  0x00001000U);
 }
 inline float Pawn::stamina() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.stamina)
@@ -8961,7 +8978,7 @@ inline float Pawn::stamina() const {
 }
 inline void Pawn::set_stamina(float value) {
   _internal_set_stamina(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
+  SetHasBit(_impl_._has_bits_[0], 0x00001000U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.stamina)
 }
 inline float Pawn::_internal_stamina() const {
@@ -8975,14 +8992,14 @@ inline void Pawn::_internal_set_stamina(float value) {
 
 // optional float max_stamina = 10;
 inline bool Pawn::has_max_stamina() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00001000U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00002000U);
   return value;
 }
 inline void Pawn::clear_max_stamina() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.max_stamina_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00001000U);
+                  0x00002000U);
 }
 inline float Pawn::max_stamina() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.max_stamina)
@@ -8990,7 +9007,7 @@ inline float Pawn::max_stamina() const {
 }
 inline void Pawn::set_max_stamina(float value) {
   _internal_set_max_stamina(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00001000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00002000U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.max_stamina)
 }
 inline float Pawn::_internal_max_stamina() const {
@@ -9007,7 +9024,7 @@ inline void Pawn::clear_generation() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.generation_ = 0u;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00002000U);
+                  0x00004000U);
 }
 inline ::uint32_t Pawn::generation() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.generation)
@@ -9015,7 +9032,7 @@ inline ::uint32_t Pawn::generation() const {
 }
 inline void Pawn::set_generation(::uint32_t value) {
   _internal_set_generation(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00002000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00004000U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.generation)
 }
 inline ::uint32_t Pawn::_internal_generation() const {
@@ -9032,7 +9049,7 @@ inline void Pawn::clear_souls() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.souls_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00004000U);
+                  0x00008000U);
 }
 inline ::int32_t Pawn::souls() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.souls)
@@ -9040,7 +9057,7 @@ inline ::int32_t Pawn::souls() const {
 }
 inline void Pawn::set_souls(::int32_t value) {
   _internal_set_souls(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00004000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00008000U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.souls)
 }
 inline ::int32_t Pawn::_internal_souls() const {
@@ -9240,14 +9257,14 @@ inline void Pawn::set_allocated_velocity(::modlock::geometry::Vec3* PROTOBUF_NUL
 
 // optional bool carrying_urn = 15;
 inline bool Pawn::has_carrying_urn() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00008000U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00010000U);
   return value;
 }
 inline void Pawn::clear_carrying_urn() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.carrying_urn_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00008000U);
+                  0x00010000U);
 }
 inline bool Pawn::carrying_urn() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.carrying_urn)
@@ -9255,7 +9272,7 @@ inline bool Pawn::carrying_urn() const {
 }
 inline void Pawn::set_carrying_urn(bool value) {
   _internal_set_carrying_urn(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00008000U);
+  SetHasBit(_impl_._has_bits_[0], 0x00010000U);
   // @@protoc_insertion_point(field_set:modlock.wasm.players.Pawn.carrying_urn)
 }
 inline bool Pawn::_internal_carrying_urn() const {
@@ -9364,6 +9381,99 @@ inline void Pawn::set_allocated_score(::modlock::wasm::players::Score* PROTOBUF_
 
   _impl_.score_ = reinterpret_cast<::modlock::wasm::players::Score*>(value);
   // @@protoc_insertion_point(field_set_allocated:modlock.wasm.players.Pawn.score)
+}
+
+// optional .modlock.geometry.Vec3 camera_position = 17;
+inline bool Pawn::has_camera_position() const {
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000040U);
+  PROTOBUF_ASSUME(!value || _impl_.camera_position_ != nullptr);
+  return value;
+}
+inline const ::modlock::geometry::Vec3& Pawn::_internal_camera_position() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  const ::modlock::geometry::Vec3* p = _impl_.camera_position_;
+  return p != nullptr ? *p : reinterpret_cast<const ::modlock::geometry::Vec3&>(::modlock::geometry::_Vec3_default_instance_);
+}
+inline const ::modlock::geometry::Vec3& Pawn::camera_position() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.wasm.players.Pawn.camera_position)
+  return _internal_camera_position();
+}
+inline void Pawn::unsafe_arena_set_allocated_camera_position(
+    ::modlock::geometry::Vec3* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (GetArena() == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.camera_position_);
+  }
+  _impl_.camera_position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.players.Pawn.camera_position)
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE Pawn::release_camera_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
+  ::modlock::geometry::Vec3* released = _impl_.camera_position_;
+  _impl_.camera_position_ = nullptr;
+  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
+    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
+    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    if (GetArena() == nullptr) {
+      delete old;
+    }
+  } else {
+    if (GetArena() != nullptr) {
+      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
+    }
+  }
+  return released;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NULLABLE Pawn::unsafe_arena_release_camera_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.wasm.players.Pawn.camera_position)
+
+  ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
+  ::modlock::geometry::Vec3* temp = _impl_.camera_position_;
+  _impl_.camera_position_ = nullptr;
+  return temp;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL Pawn::_internal_mutable_camera_position() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.camera_position_ == nullptr) {
+    auto* p = ::google::protobuf::Message::DefaultConstruct<::modlock::geometry::Vec3>(GetArena());
+    _impl_.camera_position_ = reinterpret_cast<::modlock::geometry::Vec3*>(p);
+  }
+  return _impl_.camera_position_;
+}
+inline ::modlock::geometry::Vec3* PROTOBUF_NONNULL Pawn::mutable_camera_position()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  ::modlock::geometry::Vec3* _msg = _internal_mutable_camera_position();
+  // @@protoc_insertion_point(field_mutable:modlock.wasm.players.Pawn.camera_position)
+  return _msg;
+}
+inline void Pawn::set_allocated_camera_position(::modlock::geometry::Vec3* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::Arena* message_arena = GetArena();
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (message_arena == nullptr) {
+    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.camera_position_);
+  }
+
+  if (value != nullptr) {
+    ::google::protobuf::Arena* submessage_arena = reinterpret_cast<::google::protobuf::Message*>(value)->GetArena();
+    if (message_arena != submessage_arena) {
+      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
+    }
+    SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000040U);
+  }
+
+  _impl_.camera_position_ = reinterpret_cast<::modlock::geometry::Vec3*>(value);
+  // @@protoc_insertion_point(field_set_allocated:modlock.wasm.players.Pawn.camera_position)
 }
 
 // -------------------------------------------------------------------

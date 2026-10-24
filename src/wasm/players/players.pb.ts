@@ -451,6 +451,13 @@ export interface Pawn {
    * cannot be read.
    */
   score?: Score
+  /**
+   * CameraPosition is where the player's camera was in their latest command,
+   * shoulder offset included; a ray from it along camera_angles passes
+   * through the reticle. Absent for a bot and on hosts that cannot read
+   * commands.
+   */
+  cameraPosition?: Vec3
 }
 
 export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType<Pawn>(
@@ -472,6 +479,7 @@ export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType<Pawn>(
     [14, 'velocity', 11, 0, Vec3.codec],
     [15, 'carrying_urn', 8, 4],
     [16, 'score', 11, 0, Score.codec],
+    [17, 'camera_position', 11, 0, Vec3.codec],
   ],
   {
     decode: (r: BinaryReader, end: number, m: Pawn): Pawn => {
@@ -534,6 +542,13 @@ export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType<Pawn>(
             break
           case 16:
             m.score = Score.decode(r, r.delimited(), m.score ?? {})
+            break
+          case 17:
+            m.cameraPosition = Vec3.decode(
+              r,
+              r.delimited(),
+              m.cameraPosition ?? {},
+            )
             break
           default:
             r.skip(t)
@@ -605,6 +620,10 @@ export const Pawn: MessageType<Pawn> = /* @__PURE__ */ createMessageType<Pawn>(
       {
         const v = m.score
         if (v != null) Score.writeField(w, 16, v)
+      }
+      {
+        const v = m.cameraPosition
+        if (v != null) Vec3.writeField(w, 17, v)
       }
     },
   },

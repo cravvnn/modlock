@@ -774,6 +774,11 @@ export type Pawn = {
 	-- score is the player's scoreboard, absent when the game's scoreboard
 	-- cannot be read.
 	score: Score?,
+	-- cameraPosition is where the player's camera was in their latest command,
+	-- shoulder offset included; a ray from it along camera_angles passes
+	-- through the reticle. Absent for a bot and on hosts that cannot read
+	-- commands.
+	cameraPosition: Vector?,
 }
 
 -- Score is one player's scoreboard counters since the match began, as the
@@ -2282,6 +2287,7 @@ schema.Pawn = {
 	{ number = 14, name = "velocity", kind = "message", message = "Vec3" },
 	{ number = 15, name = "carryingUrn", kind = "bool", optional = true },
 	{ number = 16, name = "score", kind = "message", optional = true, message = "Score" },
+	{ number = 17, name = "cameraPosition", kind = "message", optional = true, message = "Vec3" },
 }
 schema.Score = {
 	{ number = 1, name = "kills", kind = "int32" },

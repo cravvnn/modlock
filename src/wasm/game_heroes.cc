@@ -837,7 +837,7 @@ std::expected<void, std::string> Game::Drive(const movement::DriveRequest& reque
   if (!gameinterop::ConnectionTracker::StateForSlot(slot).is_bot) {
     return std::unexpected("no bot plays in that slot");
   }
-  if (auto installed = services_.Drive(); !installed) {
+  if (auto installed = services_.Commands(); !installed) {
     return std::unexpected(installed.error());
   }
 

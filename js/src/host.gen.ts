@@ -1237,6 +1237,13 @@ export interface Pawn {
    * cannot be read.
    */
   readonly score?: Score
+  /**
+   * cameraPosition is where the player's camera was in their latest command,
+   * shoulder offset included; a ray from it along camera_angles passes
+   * through the reticle. Absent for a bot and on hosts that cannot read
+   * commands.
+   */
+  readonly cameraPosition?: Vector
 }
 
 /** fromPawn decodes a Pawn. */
@@ -1258,6 +1265,7 @@ function fromPawn(message: playersPb.Pawn): Pawn {
     velocity: vector(message.velocity),
     carryingUrn: message.carryingUrn,
     score: message.score === undefined ? undefined : fromScore(message.score),
+    cameraPosition: message.cameraPosition === undefined ? undefined : vector(message.cameraPosition),
   }
 }
 

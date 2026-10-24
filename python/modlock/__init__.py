@@ -903,6 +903,11 @@ class Pawn:
     # score is the player's scoreboard, absent when the game's scoreboard
     # cannot be read.
     score: Score | None = None
+    # camera_position is where the player's camera was in their latest command,
+    # shoulder offset included; a ray from it along camera_angles passes
+    # through the reticle. Absent for a bot and on hosts that cannot read
+    # commands.
+    camera_position: Vector | None = None
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -2562,6 +2567,7 @@ _SCHEMA: wire.Schema = {
             wire.Field(14, "velocity", "message", message="Vec3"),
             wire.Field(15, "carrying_urn", "bool", optional=True),
             wire.Field(16, "score", "message", optional=True, message="Score"),
+            wire.Field(17, "camera_position", "message", optional=True, message="Vec3"),
         ],
     ),
     "Score": (

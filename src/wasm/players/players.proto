@@ -109,6 +109,12 @@ message Pawn {
   // Score is the player's scoreboard, absent when the game's scoreboard
   // cannot be read.
   optional Score score = 16;
+
+  // CameraPosition is where the player's camera was in their latest command,
+  // shoulder offset included; a ray from it along camera_angles passes
+  // through the reticle. Absent for a bot and on hosts that cannot read
+  // commands.
+  optional modlock.geometry.Vec3 camera_position = 17;
 }
 
 // Score is one player's scoreboard counters since the match began, as the

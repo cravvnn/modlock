@@ -274,6 +274,11 @@ type Pawn struct {
 	// Score is the player's scoreboard, absent when the game's scoreboard
 	// cannot be read.
 	Score *Score `protobuf:"bytes,16,opt,name=score,proto3,oneof" json:"score,omitempty"`
+	// CameraPosition is where the player's camera was in their latest command,
+	// shoulder offset included; a ray from it along camera_angles passes
+	// through the reticle. Absent for a bot and on hosts that cannot read
+	// commands.
+	CameraPosition *geometry.Vec3 `protobuf:"bytes,17,opt,name=camera_position,json=cameraPosition,proto3,oneof" json:"cameraPosition,omitempty"`
 }
 
 func (x *Pawn) Reset() {
@@ -390,6 +395,13 @@ func (x *Pawn) GetCarryingUrn() bool {
 func (x *Pawn) GetScore() *Score {
 	if x != nil {
 		return x.Score
+	}
+	return nil
+}
+
+func (x *Pawn) GetCameraPosition() *geometry.Vec3 {
+	if x != nil {
+		return x.CameraPosition
 	}
 	return nil
 }
@@ -1815,6 +1827,7 @@ func (m *Pawn) CloneVT() *Pawn {
 	r.Velocity = protobuf_go_lite.CloneVTValue(m.Velocity)
 	r.CarryingUrn = protobuf_go_lite.ClonePtr(m.CarryingUrn)
 	r.Score = protobuf_go_lite.CloneVTValue(m.Score)
+	r.CameraPosition = protobuf_go_lite.CloneVTValue(m.CameraPosition)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -2650,6 +2663,9 @@ func (this *Pawn) EqualVT(that *Pawn) bool {
 		return false
 	}
 	if !protobuf_go_lite.IsEqualVT(this.Score, that.Score) {
+		return false
+	}
+	if !protobuf_go_lite.IsEqualVT(this.CameraPosition, that.CameraPosition) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -4076,6 +4092,11 @@ func (x *Pawn) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("score")
 		x.Score.MarshalProtoJSON(s.WithField("score"))
 	}
+	if x.CameraPosition != nil || s.HasField("cameraPosition") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("cameraPosition")
+		x.CameraPosition.MarshalProtoJSON(s.WithField("cameraPosition"))
+	}
 	s.WriteObjectEnd()
 }
 
@@ -4180,6 +4201,13 @@ func (x *Pawn) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			x.Score = &Score{}
 			x.Score.UnmarshalProtoJSON(s.WithField("score", true))
+		case "camera_position", "cameraPosition":
+			if s.ReadNil() {
+				x.CameraPosition = nil
+				return
+			}
+			x.CameraPosition = &geometry.Vec3{}
+			x.CameraPosition.UnmarshalProtoJSON(s.WithField("camera_position", true))
 		}
 	})
 }
@@ -6512,6 +6540,18 @@ func (m *Pawn) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.CameraPosition != nil {
+		size, err := m.CameraPosition.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8a
+	}
 	if m.Score != nil {
 		size, err := m.Score.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -8345,6 +8385,10 @@ func (m *Pawn) SizeVT() (n int) {
 		l = m.Score.SizeVT()
 		n += protobuf_go_lite.SizeMessage(2, l)
 	}
+	if m.CameraPosition != nil {
+		l = m.CameraPosition.SizeVT()
+		n += protobuf_go_lite.SizeMessage(2, l)
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -9085,6 +9129,10 @@ func (x *Pawn) MarshalProtoText() string {
 	if x.Score != nil {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "score")
 		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Score)
+	}
+	if x.CameraPosition != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "camera_position")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.CameraPosition)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -10389,6 +10437,21 @@ func (m *Pawn) UnmarshalVT(dAtA []byte) error {
 				m.Score = &Score{}
 			}
 			if err := m.Score.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 17:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CameraPosition", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.CameraPosition == nil {
+				m.CameraPosition = &geometry.Vec3{}
+			}
+			if err := m.CameraPosition.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

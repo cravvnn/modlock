@@ -21,8 +21,8 @@
 #include "modlock/gameinterop/ability_modifier.h"
 #include "modlock/gameinterop/ability_slots.h"
 #include "modlock/gameinterop/bot_creation.h"
-#include "modlock/gameinterop/bot_drive.h"
 #include "modlock/gameinterop/bot_hero_guard.h"
+#include "modlock/gameinterop/command_hook.h"
 #include "modlock/gameinterop/engine_server.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/game_rules.h"
@@ -152,12 +152,16 @@ class GameServices {
   // Transmit installs the shared transmit hook on first use.
   std::expected<void, std::string> Transmit();
 
-  // Drive installs the shared bot command hook on first use.
-  std::expected<void, std::string> Drive();
+  // Commands installs the shared user command hook on first use.
+  std::expected<void, std::string> Commands();
+
+  // CameraPosition is the camera position of the player in slot, as the
+  // command hook last read it; the first call installs the hook.
+  std::optional<std::array<float, 3>> CameraPosition(int32_t slot);
 
   // Driven returns the command the first mod that drives slot gives it, and
   // spends that command's presses.
-  std::optional<gameinterop::BotDrive::Command> Driven(int32_t slot);
+  std::optional<gameinterop::CommandHook::Command> Driven(int32_t slot);
 
   // Withhold keeps from one player every object a mod hid from them and
   // every entity a mod shows only to others.
@@ -212,8 +216,10 @@ class GameServices {
   // transmit_ filters what each player's client receives once a mod hides
   // an object from someone.
   std::optional<gameinterop::TransmitHook> transmit_;
-  // drive_ rewrites the bots' commands once a mod drives a bot.
-  std::optional<gameinterop::BotDrive> drive_;
+  // usercmds_ reads the players' cameras and rewrites driven bots' commands
+  // once a mod reads a pawn or drives a bot.
+  std::optional<gameinterop::CommandHook> usercmds_;
+  std::optional<std::string> usercmds_error_;
   // steps_ is the server movement hook, held while step_ runs or a mod
   // watches or steers a hero. commands_ folds each pawn's commands since its
   // last sample, and ground_ is the last entity any hero stood on.
@@ -667,7 +673,7 @@ class Game : public HostService {
   // steers_ maps each steered player to the command its hero replays.
   std::map<int32_t, movement::Steering> steers_;
   // drives_ maps each driven bot's slot to the command its hero runs.
-  std::map<int32_t, gameinterop::BotDrive::Command> drives_;
+  std::map<int32_t, gameinterop::CommandHook::Command> drives_;
   // held_ is the modifier states the mod holds, by entity handle and name;
   // ApplyHolds sets them again.
   std::set<std::pair<uint32_t, std::string>> held_;

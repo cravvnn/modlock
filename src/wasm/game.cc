@@ -367,6 +367,9 @@ std::expected<players::PawnResponse, std::string> Game::Pawn(const players::Play
   if (sample->eye_position) {
     SetVector(pawn->mutable_eye_position(), *sample->eye_position);
   }
+  if (const auto camera = services_.CameraPosition(request.player())) {
+    SetVector(pawn->mutable_camera_position(), *camera);
+  }
   if (sample->movement && sample->movement->abs_velocity) {
     SetVector(pawn->mutable_velocity(), *sample->movement->abs_velocity);
   }
