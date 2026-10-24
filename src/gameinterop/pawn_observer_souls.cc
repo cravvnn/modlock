@@ -5,6 +5,7 @@
 
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
+#include "modlock/gameinterop/movement_hook.h"
 #include "modlock/gameinterop/pawn_observer.h"
 #include "pawn_observer_internal.h"
 
@@ -242,11 +243,15 @@ std::expected<void, std::string> PawnObserver::SetPreparationFrozen(int32_t slot
     return std::unexpected("invalid native preparation damage Boolean");
   }
 
-  // Remember the original state of a pawn this freeze takes.
+  // Remember the original state of a pawn this freeze takes. A pawn still
+  // spawning holds MOVETYPE_NONE until the engine gives it walking, so release
+  // it to walking rather than restore the stillness.
   if (frozen && owned == frozen_pawns_.end()) {
+    const uint8_t move_type = pawn[movement->offset];
     owned = frozen_pawns_
                 .emplace(slot, FrozenPawn{sample->pawn_handle, sample->steam_id, takes_damage,
-                                          pawn[movement->offset], pawn[collision->offset]})
+                                          move_type == 0 ? MovementHook::kWalking : move_type,
+                                          pawn[collision->offset]})
                 .first;
   }
 
