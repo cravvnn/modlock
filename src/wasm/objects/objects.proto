@@ -20,7 +20,8 @@ message ModelOptions {
   // Scale multiplies the model's size; the default is 1.
   optional float scale = 4;
 
-  // Color tints the model as 0xRRGGBBAA.
+  // Color tints the model as 0xRRGGBBAA; an alpha below 0xff draws it
+  // translucent.
   optional fixed32 color = 5;
 
   // Glow outlines the model through walls.

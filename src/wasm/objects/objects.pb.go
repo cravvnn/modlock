@@ -26,7 +26,8 @@ type ModelOptions struct {
 	Facing *geometry.EulerAngles `protobuf:"bytes,3,opt,name=facing,proto3,oneof" json:"facing,omitempty"`
 	// Scale multiplies the model's size; the default is 1.
 	Scale *float32 `protobuf:"fixed32,4,opt,name=scale,proto3,oneof" json:"scale,omitempty"`
-	// Color tints the model as 0xRRGGBBAA.
+	// Color tints the model as 0xRRGGBBAA; an alpha below 0xff draws it
+	// translucent.
 	Color *uint32 `protobuf:"fixed32,5,opt,name=color,proto3,oneof" json:"color,omitempty"`
 	// Glow outlines the model through walls.
 	Glow *bool `protobuf:"varint,6,opt,name=glow,proto3,oneof" json:"glow,omitempty"`

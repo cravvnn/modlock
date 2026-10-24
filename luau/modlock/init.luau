@@ -624,7 +624,8 @@ export type ModelOptions = {
 	facing: Angles?,
 	-- scale multiplies the model's size; the default is 1.
 	scale: number?,
-	-- color tints the model as 0xRRGGBBAA.
+	-- color tints the model as 0xRRGGBBAA; an alpha below 0xff draws it
+	-- translucent.
 	color: number?,
 	-- glow outlines the model through walls.
 	glow: boolean?,

@@ -735,7 +735,8 @@ class ModelOptions:
     facing: Angles | None = None
     # scale multiplies the model's size; the default is 1.
     scale: float | None = None
-    # color tints the model as 0xRRGGBBAA.
+    # color tints the model as 0xRRGGBBAA; an alpha below 0xff draws it
+    # translucent.
     color: int | None = None
     # glow outlines the model through walls.
     glow: bool | None = None

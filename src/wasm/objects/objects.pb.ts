@@ -33,7 +33,8 @@ export interface ModelOptions {
    */
   scale?: number
   /**
-   * Color tints the model as 0xRRGGBBAA.
+   * Color tints the model as 0xRRGGBBAA; an alpha below 0xff draws it
+   * translucent.
    */
   color?: number
   /**

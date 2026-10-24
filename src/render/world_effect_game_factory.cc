@@ -453,7 +453,11 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
       {.key = "spawnflags", .value = (settings.solid ? 0 : 256) | 512 | 1024},
       {.key = "scales",
        .value = gameinterop::KeyValueVector{settings.scale, settings.scale, settings.scale}},
+      // rendercolor carries only red, green and blue; the alpha applies as
+      // renderamt, and only under kRenderTransAlpha.
       {.key = "rendercolor", .value = color},
+      {.key = "rendermode", .value = color.alpha == 0xff ? 0 : 1},
+      {.key = "renderamt", .value = int{color.alpha}},
       {.key = "glowcolor", .value = color},
       {.key = "glowstate", .value = settings.glow ? 3 : 0},
       {.key = "glowrange", .value = 0},

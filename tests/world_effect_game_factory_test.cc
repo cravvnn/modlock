@@ -249,11 +249,11 @@ TEST_F(EffectTest, ConfiguredParticleAcceptsOtherGameResourcesButRejectsPathTrav
 }
 
 TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
-  // Create a glowing model with collision off.
+  // Create a glowing, half translucent model with collision off.
   const modlock::render::WorldModelSettings settings{
       .resource = "models/npc/boss_tier_01_brazier_guardian/boss_tier_01_brazier_guardian.vmdl",
       .scale = 0.22f,
-      .color_rgba = 0xff20ff40u,
+      .color_rgba = 0x8020ff40u,
       .glow = true};
   auto model = factory->CreateModel(settings);
   ASSERT_TRUE(model) << model.error();
@@ -261,7 +261,8 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   // Each keyvalue was set before the spawn.
   for (const auto* expected :
        {"create:prop_dynamic_override", "kv:classname=prop_dynamic_override", "kv:solid=0",
-        "kv:spawnflags=1792", "kv:scales=0.220000", "kv:glowstate=3", "kv:glowrange=0"}) {
+        "kv:spawnflags=1792", "kv:scales=0.220000", "kv:rendermode=1", "kv:renderamt=128", "kv:glowstate=3",
+        "kv:glowrange=0"}) {
     EXPECT_NE(std::find(steps.begin(), steps.end(), expected), steps.end()) << expected;
   }
   EXPECT_EQ(steps.back(), "execute");
