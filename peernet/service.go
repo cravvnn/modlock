@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync/atomic"
 
-	"github.com/aperturerobotics/controllerbus/core"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/pkg/errors"
 	"github.com/s4wave/spacewave/net/peer"
@@ -70,20 +69,9 @@ func (s *Service) Run(ctx context.Context, le *logrus.Entry) error {
 	s.admission = NewAdmission(s.origin, key, s.signIn)
 	close(s.started)
 
-	// Supply relay credentials to the peer's links from a bus of its own.
-	parent, _, err := core.NewCoreBus(ctx, le)
-	if err != nil {
-		return err
-	}
-	release, err := parent.AddController(ctx, NewRelay(le, s.local, s.origin, s.signIn), nil)
-	if err != nil {
-		return err
-	}
-	defer release()
-
 	// Hold the admission beside the peer.
 	go s.admission.Run(ctx)
-	return Run(ctx, le, parent, key, s.origin, func(ctx context.Context, node *Node) error {
+	return Run(ctx, le, key, s.origin, func(ctx context.Context, node *Node) error {
 		// Answer probes, then publish the node to the service's calls.
 		release, err := node.GetBus().AddController(ctx, NewEcho(s.local), nil)
 		if err != nil {

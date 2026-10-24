@@ -35,7 +35,7 @@ const probeWait = 2 * time.Second
 const echoLimit = 15 * time.Second
 
 // Probe opens a probe stream from local to remote on b and returns the
-// shortest round trip of its packets and whether the link is relayed.
+// shortest round trip of its packets.
 func Probe(ctx context.Context, b bus.Bus, local, remote peer.ID) (*ProbeResponse, error) {
 	// Open the stream, which links the two peers when they are not linked.
 	mounted, release, err := link.OpenStreamWithPeerEx(ctx, b, ProbeProtocolID, local, remote, 0, stream.OpenOpts{Unreliable: true})
@@ -49,7 +49,6 @@ func Probe(ctx context.Context, b bus.Bus, local, remote peer.ID) (*ProbeRespons
 		return nil, errors.New("probe stream carries no messages")
 	}
 	defer messages.Close()
-	relayed := link.GetPath(mounted.GetLink()) == link.PathRelay
 
 	// Send each packet and wait for its echo, ignoring stale ones.
 	var best time.Duration
@@ -68,7 +67,7 @@ func Probe(ctx context.Context, b bus.Bus, local, remote peer.ID) (*ProbeRespons
 			best = rtt
 		}
 	}
-	return &ProbeResponse{RttUs: uint32(best.Microseconds()), Relayed: relayed}, nil
+	return &ProbeResponse{RttUs: uint32(best.Microseconds())}, nil
 }
 
 // awaitEcho reads messages until packet comes back and returns its round trip

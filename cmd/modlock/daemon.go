@@ -122,11 +122,6 @@ func daemonCommand(out *printer) *cli.Command {
 						return err
 					}
 					out.field("round trip", (time.Duration(probe.GetRttUs()) * time.Microsecond).String())
-					path := "direct"
-					if probe.GetRelayed() {
-						path = "relayed"
-					}
-					out.field("path", path)
 					return nil
 				},
 			},

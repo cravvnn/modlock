@@ -1,9 +1,8 @@
 // Package peernet runs a modlock peer: a PC's key on Spacewave's peer network,
-// which links to other PCs directly when it can and through a relay when it
-// cannot. A signaling service, hyperline.gg by default, introduces two peers
-// that cannot reach each other on their own network. It admits a peer while
-// that peer holds a socket signed by its key and carrying the creator's
-// sign-in, and issues relay credentials to the same sign-in.
+// which links directly to other PCs over WebRTC. A signaling service,
+// hyperline.gg by default, introduces two peers so they can open the link; no
+// traffic passes through it. It admits a peer while that peer holds a socket
+// signed by its key and carrying the creator's sign-in.
 package peernet
 
 import (
@@ -39,20 +38,18 @@ func (n *Node) GetPeerId() peer.ID {
 }
 
 // Run starts a peer for key that signals through the service at origin and
-// runs serve with it until serve returns or the peer stops. The node's bus
-// resolves directives it does not own, such as relay credentials, on parent.
+// runs serve with it until serve returns or the peer stops.
 // A peer the service does not admit yet retries signaling without delaying
 // serve; links that need no signaling keep working meanwhile.
 func Run(
 	ctx context.Context,
 	le *logrus.Entry,
-	parent bus.Bus,
 	key crypto.PrivKey,
 	origin string,
 	serve func(ctx context.Context, node *Node) error,
 ) error {
 	// Build the transport; its Execute owns the child bus and every link.
-	t, err := transport.NewSessionTransport(le, parent, key, origin, SigningEnv)
+	t, err := transport.NewSessionTransport(le, nil, key, origin, SigningEnv)
 	if err != nil {
 		return errors.Wrap(err, "start peer")
 	}

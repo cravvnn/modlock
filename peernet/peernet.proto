@@ -79,28 +79,6 @@ message ProbeResponse {
   // rtt_us is the shortest round trip of the probe's packets, in
   // microseconds.
   uint32 rtt_us = 1;
-  // relayed reports that the link runs through the service's relay rather
-  // than directly between the PCs.
-  bool relayed = 2;
-}
-
-// RelayCredentials answers GET /api/turn-credentials, which issues
-// short-lived relay credentials to a signed-in creator.
-message RelayCredentials {
-  // servers are the relay servers the peer may use.
-  repeated RelayServer servers = 1;
-  // expires_at is when the credentials stop working, in Unix milliseconds.
-  int64 expires_at = 2;
-}
-
-// RelayServer is one relay and its credential.
-message RelayServer {
-  // urls are the server's STUN and TURN addresses.
-  repeated string urls = 1;
-  // username is the credential's identifier.
-  string username = 2;
-  // credential is the credential's secret.
-  string credential = 3;
 }
 
 // HostInput is one message of a Host call.

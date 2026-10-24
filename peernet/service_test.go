@@ -199,7 +199,7 @@ func TestServiceProbe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if probe.GetRttUs() == 0 || probe.GetRelayed() {
+	if probe.GetRttUs() == 0 {
 		t.Fatalf("probe is %v", probe)
 	}
 

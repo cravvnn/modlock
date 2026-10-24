@@ -117,8 +117,9 @@ joins the host's server, so both players play each reload. The guest's game
 shows the mod's interface for the guest's own player, which the host streams to
 it over the same link. The two PCs find each
 other through hyperline.gg's signaling, which needs the sign in that
-`modlock publish` saves on both, and then link directly, or through its relay
-when their routers block a direct link. The code carries the session's secret:
+`modlock publish` saves on both, and then link directly over WebRTC; no game
+traffic passes through hyperline.gg, and two PCs whose routers block a direct
+link cannot play together. The code carries the session's secret:
 anyone holding it can join until the host stops.
 
 ### Without the game
