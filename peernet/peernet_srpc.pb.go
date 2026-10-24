@@ -322,9 +322,10 @@ type SRPCSessionClient interface {
 	// SRPCClient returns the underlying SRPC client.
 	SRPCClient() srpc.Client
 
-	// WatchScreen streams what the mods show the guest: the whole screen
-	// first, then only what changed.
-	WatchScreen(ctx context.Context, in *WatchScreenRequest) (SRPCSession_WatchScreenClient, error)
+	// Watch streams what the guest sees: what the mods show them, the whole
+	// screen first and then only what changed, and each chat line said from
+	// the call on.
+	Watch(ctx context.Context, in *WatchRequest) (SRPCSession_WatchClient, error)
 }
 
 type srpcSessionClient struct {
@@ -345,43 +346,44 @@ func NewSRPCSessionClientWithServiceID(cc srpc.Client, serviceID string) SRPCSes
 
 func (c *srpcSessionClient) SRPCClient() srpc.Client { return c.cc }
 
-func (c *srpcSessionClient) WatchScreen(ctx context.Context, in *WatchScreenRequest) (SRPCSession_WatchScreenClient, error) {
-	stream, err := c.cc.NewStream(ctx, c.serviceID, "WatchScreen", in)
+func (c *srpcSessionClient) Watch(ctx context.Context, in *WatchRequest) (SRPCSession_WatchClient, error) {
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "Watch", in)
 	if err != nil {
 		return nil, err
 	}
-	strm := &srpcSession_WatchScreenClient{stream}
+	strm := &srpcSession_WatchClient{stream}
 	// A failed half-close means the call ended; MsgRecv reports its outcome.
 	_ = strm.CloseSend()
 	return strm, nil
 }
 
-type SRPCSession_WatchScreenClient interface {
+type SRPCSession_WatchClient interface {
 	srpc.Stream
-	Recv() (*ScreenFrame, error)
-	RecvTo(*ScreenFrame) error
+	Recv() (*SessionEvent, error)
+	RecvTo(*SessionEvent) error
 }
 
-type srpcSession_WatchScreenClient struct {
+type srpcSession_WatchClient struct {
 	srpc.Stream
 }
 
-func (x *srpcSession_WatchScreenClient) Recv() (*ScreenFrame, error) {
-	m := new(ScreenFrame)
+func (x *srpcSession_WatchClient) Recv() (*SessionEvent, error) {
+	m := new(SessionEvent)
 	if err := x.MsgRecv(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (x *srpcSession_WatchScreenClient) RecvTo(m *ScreenFrame) error {
+func (x *srpcSession_WatchClient) RecvTo(m *SessionEvent) error {
 	return x.MsgRecv(m)
 }
 
 type SRPCSessionServer interface {
-	// WatchScreen streams what the mods show the guest: the whole screen
-	// first, then only what changed.
-	WatchScreen(*WatchScreenRequest, SRPCSession_WatchScreenStream) error
+	// Watch streams what the guest sees: what the mods show them, the whole
+	// screen first and then only what changed, and each chat line said from
+	// the call on.
+	Watch(*WatchRequest, SRPCSession_WatchStream) error
 }
 
 const SRPCSessionServiceID = "modlock.peernet.Session"
@@ -410,7 +412,7 @@ func (d *SRPCSessionHandler) GetServiceID() string { return d.serviceID }
 
 func (SRPCSessionHandler) GetMethodIDs() []string {
 	return []string{
-		"WatchScreen",
+		"Watch",
 	}
 }
 
@@ -423,37 +425,37 @@ func (d *SRPCSessionHandler) InvokeMethod(
 	}
 
 	switch methodID {
-	case "WatchScreen":
-		return true, d.InvokeMethod_WatchScreen(d.impl, strm)
+	case "Watch":
+		return true, d.InvokeMethod_Watch(d.impl, strm)
 	default:
 		return false, nil
 	}
 }
 
-func (SRPCSessionHandler) InvokeMethod_WatchScreen(impl SRPCSessionServer, strm srpc.Stream) error {
-	req := new(WatchScreenRequest)
+func (SRPCSessionHandler) InvokeMethod_Watch(impl SRPCSessionServer, strm srpc.Stream) error {
+	req := new(WatchRequest)
 	if err := strm.MsgRecv(req); err != nil {
 		return err
 	}
-	serverStrm := &srpcSession_WatchScreenStream{strm}
-	return impl.WatchScreen(req, serverStrm)
+	serverStrm := &srpcSession_WatchStream{strm}
+	return impl.Watch(req, serverStrm)
 }
 
-type SRPCSession_WatchScreenStream interface {
+type SRPCSession_WatchStream interface {
 	srpc.Stream
-	Send(*ScreenFrame) error
-	SendAndClose(*ScreenFrame) error
+	Send(*SessionEvent) error
+	SendAndClose(*SessionEvent) error
 }
 
-type srpcSession_WatchScreenStream struct {
+type srpcSession_WatchStream struct {
 	srpc.Stream
 }
 
-func (x *srpcSession_WatchScreenStream) Send(m *ScreenFrame) error {
+func (x *srpcSession_WatchStream) Send(m *SessionEvent) error {
 	return x.MsgSend(m)
 }
 
-func (x *srpcSession_WatchScreenStream) SendAndClose(m *ScreenFrame) error {
+func (x *srpcSession_WatchStream) SendAndClose(m *SessionEvent) error {
 	if m != nil {
 		if err := x.MsgSend(m); err != nil {
 			return err

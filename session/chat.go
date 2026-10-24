@@ -30,6 +30,7 @@ func NewChat() *Chat {
 
 // Add records a line and wakes every stream.
 func (c *Chat) Add(line *control.PlayerChat) {
+	// Keep the newest lines, then wake every stream.
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.lines = append(c.lines, line)
@@ -45,6 +46,7 @@ func (c *Chat) Add(line *control.PlayerChat) {
 // line, and a channel that closes when another line is said. A stream that
 // starts at the next line passes the largest number.
 func (c *Chat) Since(from uint64) ([]*control.PlayerChat, uint64, <-chan struct{}) {
+	// Clamp from to the lines kept.
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	first := c.next - uint64(len(c.lines))

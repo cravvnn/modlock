@@ -165,6 +165,7 @@ export interface HostEvent {
     | { value: UiChanged; case: 'ui' }
     | { value: PlayerLeft; case: 'left' }
     | { value: PlayerMessage; case: 'message' }
+    | { value: PlayerChat; case: 'chat' }
 }
 
 export const HostEvent: MessageType<HostEvent> =
@@ -179,6 +180,7 @@ export const HostEvent: MessageType<HostEvent> =
       [6, 'ui', 11, 0, UiChanged.codec, 'body'],
       [7, 'left', 11, 0, PlayerLeft.codec, 'body'],
       [8, 'message', 11, 0, PlayerMessage.codec, 'body'],
+      [9, 'chat', 11, 0, PlayerChat.codec, 'body'],
     ],
     {
       decode: (r: BinaryReader, end: number, m: HostEvent): HostEvent => {
@@ -266,6 +268,16 @@ export const HostEvent: MessageType<HostEvent> =
                 ),
               }
               break
+            case 9:
+              m.body = {
+                case: 'chat',
+                value: PlayerChat.decode(
+                  r,
+                  r.delimited(),
+                  m.body?.case === 'chat' ? m.body.value : {},
+                ),
+              }
+              break
             default:
               r.skip(t)
           }
@@ -312,6 +324,77 @@ export const HostEvent: MessageType<HostEvent> =
           const o = m.body
           if (o?.case === 'message' && o.value != null)
             PlayerMessage.writeField(w, 8, o.value)
+        }
+        {
+          const o = m.body
+          if (o?.case === 'chat' && o.value != null)
+            PlayerChat.writeField(w, 9, o.value)
+        }
+      },
+    },
+  )
+
+/**
+ * PlayerChat is a line a player said in chat, to everyone or to their team.
+ *
+ * @generated from message modlock.host_app.control.PlayerChat
+ */
+export interface PlayerChat {
+  /**
+   * Slot is the speaker's slot.
+   */
+  slot?: number
+  /**
+   * Name is the speaker's name.
+   */
+  name?: string
+  /**
+   * Text is what they said.
+   */
+  text?: string
+}
+
+export const PlayerChat: MessageType<PlayerChat> =
+  /* @__PURE__ */ createMessageType<PlayerChat>(
+    'modlock.host_app.control.PlayerChat',
+    () => [
+      [1, 'slot', 5],
+      [2, 'name', 9],
+      [3, 'text', 9],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: PlayerChat): PlayerChat => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.slot = r.int32()
+              break
+            case 2:
+              m.name = r.string()
+              break
+            case 3:
+              m.text = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: PlayerChat, w: Writer): void => {
+        {
+          const v = m.slot
+          if (v) w.uint32(8).int32(v)
+        }
+        {
+          const v = m.name
+          if (v) w.uint32(18).string(v)
+        }
+        {
+          const v = m.text
+          if (v) w.uint32(26).string(v)
         }
       },
     },

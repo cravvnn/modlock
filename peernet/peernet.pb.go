@@ -434,6 +434,7 @@ type JoinEvent struct {
 	//	*JoinEvent_Address
 	//	*JoinEvent_Arrived
 	//	*JoinEvent_Screen
+	//	*JoinEvent_Chat
 	Body isJoinEvent_Body `protobuf_oneof:"body"`
 }
 
@@ -471,6 +472,13 @@ func (x *JoinEvent) GetScreen() *ScreenFrame {
 	return nil
 }
 
+func (x *JoinEvent) GetChat() *control.PlayerChat {
+	if x, ok := x.GetBody().(*JoinEvent_Chat); ok {
+		return x.Chat
+	}
+	return nil
+}
+
 type isJoinEvent_Body interface {
 	isJoinEvent_Body()
 }
@@ -492,14 +500,21 @@ type JoinEvent_Screen struct {
 	Screen *ScreenFrame `protobuf:"bytes,3,opt,name=screen,proto3,oneof"`
 }
 
+type JoinEvent_Chat struct {
+	// chat is a line a player said in the game.
+	Chat *control.PlayerChat `protobuf:"bytes,4,opt,name=chat,proto3,oneof"`
+}
+
 func (*JoinEvent_Address) isJoinEvent_Body() {}
 
 func (*JoinEvent_Arrived) isJoinEvent_Body() {}
 
 func (*JoinEvent_Screen) isJoinEvent_Body() {}
 
-// WatchScreenRequest names the guest whose screen to stream.
-type WatchScreenRequest struct {
+func (*JoinEvent_Chat) isJoinEvent_Body() {}
+
+// WatchRequest names the guest whose session to stream.
+type WatchRequest struct {
 	unknownFields []byte
 	// session is the join code's secret.
 	Session uint64 `protobuf:"fixed64,1,opt,name=session,proto3" json:"session,omitempty"`
@@ -507,20 +522,20 @@ type WatchScreenRequest struct {
 	SteamId uint64 `protobuf:"fixed64,2,opt,name=steam_id,json=steamId,proto3" json:"steamId,omitempty"`
 }
 
-func (x *WatchScreenRequest) Reset() {
-	*x = WatchScreenRequest{}
+func (x *WatchRequest) Reset() {
+	*x = WatchRequest{}
 }
 
-func (*WatchScreenRequest) ProtoMessage() {}
+func (*WatchRequest) ProtoMessage() {}
 
-func (x *WatchScreenRequest) GetSession() uint64 {
+func (x *WatchRequest) GetSession() uint64 {
 	if x != nil {
 		return x.Session
 	}
 	return 0
 }
 
-func (x *WatchScreenRequest) GetSteamId() uint64 {
+func (x *WatchRequest) GetSteamId() uint64 {
 	if x != nil {
 		return x.SteamId
 	}
@@ -556,6 +571,60 @@ func (x *ScreenFrame) GetReset_() bool {
 	}
 	return false
 }
+
+// SessionEvent is one thing a guest sees in a hosted session.
+type SessionEvent struct {
+	unknownFields []byte
+	// Types that are assignable to Body:
+	//	*SessionEvent_Screen
+	//	*SessionEvent_Chat
+	Body isSessionEvent_Body `protobuf_oneof:"body"`
+}
+
+func (x *SessionEvent) Reset() {
+	*x = SessionEvent{}
+}
+
+func (*SessionEvent) ProtoMessage() {}
+
+func (m *SessionEvent) GetBody() isSessionEvent_Body {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetScreen() *ScreenFrame {
+	if x, ok := x.GetBody().(*SessionEvent_Screen); ok {
+		return x.Screen
+	}
+	return nil
+}
+
+func (x *SessionEvent) GetChat() *control.PlayerChat {
+	if x, ok := x.GetBody().(*SessionEvent_Chat); ok {
+		return x.Chat
+	}
+	return nil
+}
+
+type isSessionEvent_Body interface {
+	isSessionEvent_Body()
+}
+
+type SessionEvent_Screen struct {
+	// screen changes what the mods show the guest.
+	Screen *ScreenFrame `protobuf:"bytes,1,opt,name=screen,proto3,oneof"`
+}
+
+type SessionEvent_Chat struct {
+	// chat is a line a player said in the game.
+	Chat *control.PlayerChat `protobuf:"bytes,2,opt,name=chat,proto3,oneof"`
+}
+
+func (*SessionEvent_Screen) isSessionEvent_Body() {}
+
+func (*SessionEvent_Chat) isSessionEvent_Body() {}
 
 type ScreenFrame_ChangesEntry struct {
 	unknownFields []byte
@@ -877,11 +946,24 @@ func (m *JoinEvent_Screen) CloneOneofVT() isJoinEvent_Body {
 	return m.CloneVT()
 }
 
-func (m *WatchScreenRequest) CloneVT() *WatchScreenRequest {
+func (m *JoinEvent_Chat) CloneVT() *JoinEvent_Chat {
 	if m == nil {
-		return (*WatchScreenRequest)(nil)
+		return (*JoinEvent_Chat)(nil)
 	}
-	r := new(WatchScreenRequest)
+	r := new(JoinEvent_Chat)
+	r.Chat = protobuf_go_lite.CloneVTValue(m.Chat)
+	return r
+}
+
+func (m *JoinEvent_Chat) CloneOneofVT() isJoinEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *WatchRequest) CloneVT() *WatchRequest {
+	if m == nil {
+		return (*WatchRequest)(nil)
+	}
+	r := new(WatchRequest)
 	r.Session = m.Session
 	r.SteamId = m.SteamId
 	if len(m.unknownFields) > 0 {
@@ -890,7 +972,7 @@ func (m *WatchScreenRequest) CloneVT() *WatchScreenRequest {
 	return r
 }
 
-func (m *WatchScreenRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+func (m *WatchRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -908,6 +990,50 @@ func (m *ScreenFrame) CloneVT() *ScreenFrame {
 }
 
 func (m *ScreenFrame) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *SessionEvent) CloneVT() *SessionEvent {
+	if m == nil {
+		return (*SessionEvent)(nil)
+	}
+	r := new(SessionEvent)
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneOneofVT() isSessionEvent_Body }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *SessionEvent) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *SessionEvent_Screen) CloneVT() *SessionEvent_Screen {
+	if m == nil {
+		return (*SessionEvent_Screen)(nil)
+	}
+	r := new(SessionEvent_Screen)
+	r.Screen = protobuf_go_lite.CloneVTValue(m.Screen)
+	return r
+}
+
+func (m *SessionEvent_Screen) CloneOneofVT() isSessionEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *SessionEvent_Chat) CloneVT() *SessionEvent_Chat {
+	if m == nil {
+		return (*SessionEvent_Chat)(nil)
+	}
+	r := new(SessionEvent_Chat)
+	r.Chat = protobuf_go_lite.CloneVTValue(m.Chat)
+	return r
+}
+
+func (m *SessionEvent_Chat) CloneOneofVT() isSessionEvent_Body {
 	return m.CloneVT()
 }
 
@@ -1312,7 +1438,24 @@ func (this *JoinEvent_Screen) EqualVT(thatIface isJoinEvent_Body) bool {
 	return true
 }
 
-func (this *WatchScreenRequest) EqualVT(that *WatchScreenRequest) bool {
+func (this *JoinEvent_Chat) EqualVT(thatIface isJoinEvent_Body) bool {
+	that, ok := thatIface.(*JoinEvent_Chat)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Chat, that.Chat, func() *control.PlayerChat { return &control.PlayerChat{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *WatchRequest) EqualVT(that *WatchRequest) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
@@ -1327,8 +1470,8 @@ func (this *WatchScreenRequest) EqualVT(that *WatchScreenRequest) bool {
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *WatchScreenRequest) EqualMessageVT(thatMsg any) bool {
-	that, ok := thatMsg.(*WatchScreenRequest)
+func (this *WatchRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*WatchRequest)
 	if !ok {
 		return false
 	}
@@ -1356,6 +1499,69 @@ func (this *ScreenFrame) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+func (this *SessionEvent) EqualVT(that *SessionEvent) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Body == nil && that.Body != nil {
+		return false
+	} else if this.Body != nil {
+		if that.Body == nil {
+			return false
+		}
+		if !this.Body.(interface {
+			EqualVT(isSessionEvent_Body) bool
+		}).EqualVT(that.Body) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *SessionEvent) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*SessionEvent)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *SessionEvent_Screen) EqualVT(thatIface isSessionEvent_Body) bool {
+	that, ok := thatIface.(*SessionEvent_Screen)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Screen, that.Screen, func() *ScreenFrame { return &ScreenFrame{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *SessionEvent_Chat) EqualVT(thatIface isSessionEvent_Body) bool {
+	that, ok := thatIface.(*SessionEvent_Chat)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Chat, that.Chat, func() *control.PlayerChat { return &control.PlayerChat{} }) {
+		return false
+	}
+	return true
 }
 
 // MarshalProtoJSON marshals the AdmissionState to JSON.
@@ -1970,6 +2176,10 @@ func (x *JoinEvent) MarshalProtoJSON(s *json.MarshalState) {
 			s.WriteMoreIf(&wroteField)
 			s.WriteObjectField("screen")
 			ov.Screen.MarshalProtoJSON(s.WithField("screen"))
+		case *JoinEvent_Chat:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("chat")
+			ov.Chat.MarshalProtoJSON(s.WithField("chat"))
 		}
 	}
 	s.WriteObjectEnd()
@@ -2008,6 +2218,15 @@ func (x *JoinEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			ov.Screen = &ScreenFrame{}
 			ov.Screen.UnmarshalProtoJSON(s.WithField("screen", true))
+		case "chat":
+			ov := &JoinEvent_Chat{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Chat = nil
+				return
+			}
+			ov.Chat = &control.PlayerChat{}
+			ov.Chat.UnmarshalProtoJSON(s.WithField("chat", true))
 		}
 	})
 }
@@ -2017,8 +2236,8 @@ func (x *JoinEvent) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
-// MarshalProtoJSON marshals the WatchScreenRequest message to JSON.
-func (x *WatchScreenRequest) MarshalProtoJSON(s *json.MarshalState) {
+// MarshalProtoJSON marshals the WatchRequest message to JSON.
+func (x *WatchRequest) MarshalProtoJSON(s *json.MarshalState) {
 	if x == nil {
 		s.WriteNil()
 		return
@@ -2038,13 +2257,13 @@ func (x *WatchScreenRequest) MarshalProtoJSON(s *json.MarshalState) {
 	s.WriteObjectEnd()
 }
 
-// MarshalJSON marshals the WatchScreenRequest to JSON.
-func (x *WatchScreenRequest) MarshalJSON() ([]byte, error) {
+// MarshalJSON marshals the WatchRequest to JSON.
+func (x *WatchRequest) MarshalJSON() ([]byte, error) {
 	return json.DefaultMarshalerConfig.Marshal(x)
 }
 
-// UnmarshalProtoJSON unmarshals the WatchScreenRequest message from JSON.
-func (x *WatchScreenRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+// UnmarshalProtoJSON unmarshals the WatchRequest message from JSON.
+func (x *WatchRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 	if s.ReadNil() {
 		return
 	}
@@ -2062,8 +2281,8 @@ func (x *WatchScreenRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 	})
 }
 
-// UnmarshalJSON unmarshals the WatchScreenRequest from JSON.
-func (x *WatchScreenRequest) UnmarshalJSON(b []byte) error {
+// UnmarshalJSON unmarshals the WatchRequest from JSON.
+func (x *WatchRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -2185,6 +2404,70 @@ func (x *ScreenFrame) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the ScreenFrame from JSON.
 func (x *ScreenFrame) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the SessionEvent message to JSON.
+func (x *SessionEvent) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Body != nil {
+		switch ov := x.Body.(type) {
+		case *SessionEvent_Screen:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("screen")
+			ov.Screen.MarshalProtoJSON(s.WithField("screen"))
+		case *SessionEvent_Chat:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("chat")
+			ov.Chat.MarshalProtoJSON(s.WithField("chat"))
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the SessionEvent to JSON.
+func (x *SessionEvent) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the SessionEvent message from JSON.
+func (x *SessionEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "screen":
+			ov := &SessionEvent_Screen{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Screen = nil
+				return
+			}
+			ov.Screen = &ScreenFrame{}
+			ov.Screen.UnmarshalProtoJSON(s.WithField("screen", true))
+		case "chat":
+			ov := &SessionEvent_Chat{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Chat = nil
+				return
+			}
+			ov.Chat = &control.PlayerChat{}
+			ov.Chat.UnmarshalProtoJSON(s.WithField("chat", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the SessionEvent from JSON.
+func (x *SessionEvent) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -2793,7 +3076,31 @@ func (m *JoinEvent_Screen) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *WatchScreenRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *JoinEvent_Chat) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinEvent_Chat) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Chat != nil {
+		size, err := m.Chat.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x22
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *WatchRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -2806,12 +3113,12 @@ func (m *WatchScreenRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *WatchScreenRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *WatchRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *WatchScreenRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *WatchRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2888,6 +3195,95 @@ func (m *ScreenFrame) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i--
 			dAtA[i] = 0xa
 		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SessionEvent) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SessionEvent) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *SessionEvent) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Body.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SessionEvent_Screen) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *SessionEvent_Screen) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Screen != nil {
+		size, err := m.Screen.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SessionEvent_Chat) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *SessionEvent_Chat) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Chat != nil {
+		size, err := m.Chat.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x12
 	}
 	return len(dAtA) - i, nil
 }
@@ -3125,7 +3521,22 @@ func (m *JoinEvent_Screen) SizeVT() (n int) {
 	return n
 }
 
-func (m *WatchScreenRequest) SizeVT() (n int) {
+func (m *JoinEvent_Chat) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Chat != nil {
+		l = m.Chat.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *WatchRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -3155,6 +3566,49 @@ func (m *ScreenFrame) SizeVT() (n int) {
 	}
 	n += protobuf_go_lite.SizeBoolNonZero(1, m.Reset_)
 	n += len(m.unknownFields)
+	return n
+}
+
+func (m *SessionEvent) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Body.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *SessionEvent_Screen) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Screen != nil {
+		l = m.Screen.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *SessionEvent_Chat) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Chat != nil {
+		l = m.Chat.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
 	return n
 }
 
@@ -3382,6 +3836,13 @@ func (x *JoinEvent) MarshalProtoText() string {
 		} else {
 			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Screen)
 		}
+	case *JoinEvent_Chat:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "chat")
+		if body.Chat == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &control.PlayerChat{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Chat)
+		}
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3390,9 +3851,9 @@ func (x *JoinEvent) String() string {
 	return x.MarshalProtoText()
 }
 
-func (x *WatchScreenRequest) MarshalProtoText() string {
+func (x *WatchRequest) MarshalProtoText() string {
 	var sb protobuf_go_lite.TextBuilder
-	initialLen := protobuf_go_lite.TextStartMessage(&sb, "WatchScreenRequest")
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "WatchRequest")
 	if x.Session != 0 {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "session")
 		protobuf_go_lite.TextWriteUint(&sb, x.Session)
@@ -3404,7 +3865,7 @@ func (x *WatchScreenRequest) MarshalProtoText() string {
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
-func (x *WatchScreenRequest) String() string {
+func (x *WatchRequest) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -3452,6 +3913,32 @@ func (x *ScreenFrame) MarshalProtoText() string {
 }
 
 func (x *ScreenFrame) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *SessionEvent) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "SessionEvent")
+	switch body := x.Body.(type) {
+	case *SessionEvent_Screen:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "screen")
+		if body.Screen == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &ScreenFrame{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Screen)
+		}
+	case *SessionEvent_Chat:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "chat")
+		if body.Chat == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &control.PlayerChat{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Chat)
+		}
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *SessionEvent) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -4178,6 +4665,26 @@ func (m *JoinEvent) UnmarshalVT(dAtA []byte) error {
 				m.Body = &JoinEvent_Screen{Screen: v}
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Chat", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*JoinEvent_Chat); ok {
+				if err := oneof.Chat.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &control.PlayerChat{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &JoinEvent_Chat{Chat: v}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
@@ -4201,7 +4708,7 @@ func (m *JoinEvent) UnmarshalVT(dAtA []byte) error {
 	return nil
 }
 
-func (m *WatchScreenRequest) UnmarshalVT(dAtA []byte) error {
+func (m *WatchRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	var err error
@@ -4215,10 +4722,10 @@ func (m *WatchScreenRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: WatchScreenRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: WatchRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: WatchScreenRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: WatchRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4343,6 +4850,89 @@ func (m *ScreenFrame) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Reset_ = bool(v)
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *SessionEvent) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SessionEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SessionEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Screen", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*SessionEvent_Screen); ok {
+				if err := oneof.Screen.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &ScreenFrame{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &SessionEvent_Screen{Screen: v}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Chat", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*SessionEvent_Chat); ok {
+				if err := oneof.Chat.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &control.PlayerChat{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &SessionEvent_Chat{Chat: v}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
