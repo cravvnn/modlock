@@ -95,3 +95,29 @@ message Session {
   // Name is the signed-in player's name.
   string name = 4;
 }
+
+// DevLobbyOpen asks for a dev lobby running the mod a modlock host session
+// serves, as the first message on the dev lobby socket. The socket's signing
+// key names the host's peer, and the lobby stays open while the socket does.
+// A socket from the same peer with the same secret resumes the lobby.
+message DevLobbyOpen {
+  // ModName is the mod's display name.
+  string mod_name = 1;
+
+  // Version is the build's version label.
+  string version = 2;
+
+  // Secret admits a guest's game to the host session.
+  uint64 secret = 3;
+}
+
+// DevLobbyState is the service's answer on the dev lobby socket.
+message DevLobbyState {
+  oneof state {
+    // Url is the open lobby's page.
+    string url = 1;
+
+    // Refused explains why no lobby opened; the socket closes after it.
+    Error refused = 2;
+  }
+}

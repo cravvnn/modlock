@@ -447,3 +447,137 @@ export const Session: MessageType<Session> =
       },
     },
   )
+
+/**
+ * DevLobbyOpen asks for a dev lobby running the mod a modlock host session
+ * serves, as the first message on the dev lobby socket. The socket's signing
+ * key names the host's peer, and the lobby stays open while the socket does.
+ * A socket from the same peer with the same secret resumes the lobby.
+ *
+ * @generated from message modlock.publish.DevLobbyOpen
+ */
+export interface DevLobbyOpen {
+  /**
+   * ModName is the mod's display name.
+   */
+  modName?: string
+  /**
+   * Version is the build's version label.
+   */
+  version?: string
+  /**
+   * Secret admits a guest's game to the host session.
+   */
+  secret?: bigint
+}
+
+export const DevLobbyOpen: MessageType<DevLobbyOpen> =
+  /* @__PURE__ */ createMessageType<DevLobbyOpen>(
+    'modlock.publish.DevLobbyOpen',
+    () => [
+      [1, 'mod_name', 9],
+      [2, 'version', 9],
+      [3, 'secret', 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: DevLobbyOpen): DevLobbyOpen => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.modName = r.string()
+              break
+            case 2:
+              m.version = r.string()
+              break
+            case 3:
+              m.secret = r.uint64()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DevLobbyOpen, w: Writer): void => {
+        {
+          const v = m.modName
+          if (v) w.uint32(10).string(v)
+        }
+        {
+          const v = m.version
+          if (v) w.uint32(18).string(v)
+        }
+        {
+          const v = m.secret
+          if (v) w.uint32(24).uint64(v)
+        }
+      },
+    },
+  )
+
+/**
+ * DevLobbyState is the service's answer on the dev lobby socket.
+ *
+ * @generated from message modlock.publish.DevLobbyState
+ */
+export interface DevLobbyState {
+  /**
+   * @generated from oneof modlock.publish.DevLobbyState.state
+   */
+  state?:
+    | { value?: undefined; case: undefined }
+    | { value: string; case: 'url' }
+    | { value: Error; case: 'refused' }
+}
+
+export const DevLobbyState: MessageType<DevLobbyState> =
+  /* @__PURE__ */ createMessageType<DevLobbyState>(
+    'modlock.publish.DevLobbyState',
+    () => [
+      [1, 'url', 9, 0, 0, 'state'],
+      [2, 'refused', 11, 0, Error.codec, 'state'],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: DevLobbyState,
+      ): DevLobbyState => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.state = { case: 'url', value: r.string() }
+              break
+            case 2:
+              m.state = {
+                case: 'refused',
+                value: Error.decode(
+                  r,
+                  r.delimited(),
+                  m.state?.case === 'refused' ? m.state.value : {},
+                ),
+              }
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DevLobbyState, w: Writer): void => {
+        {
+          const o = m.state
+          if (o?.case === 'url' && o.value != null) w.uint32(10).string(o.value)
+        }
+        {
+          const o = m.state
+          if (o?.case === 'refused' && o.value != null)
+            Error.writeField(w, 2, o.value)
+        }
+      },
+    },
+  )
