@@ -158,7 +158,7 @@ func awaitAdmission(ctx context.Context, t *testing.T, s *Service, want Admissio
 
 // TestServiceProbe walks two PCs' peers through signing in, a refused
 // sign-in that a new one replaces, a probe that needs signaling to link them,
-// and a guest joining the host's game.
+// a guest joining the host's game, and the guest signing out.
 func TestServiceProbe(t *testing.T) {
 	// Serve signaling.
 	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
@@ -205,6 +205,10 @@ func TestServiceProbe(t *testing.T) {
 
 	// The guest joins the host's session and its game reaches the server.
 	joinSession(ctx, t, host, guest)
+
+	// Signing the guest out drops its admitted socket.
+	guestToken.Store("")
+	awaitAdmission(ctx, t, guest, AdmissionState_ADMISSION_STATE_SIGNED_OUT)
 
 	// The host's key stays the same for its next run.
 	key, err := LoadKey(keyPath)

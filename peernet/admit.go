@@ -105,14 +105,17 @@ func (a *Admission) Run(ctx context.Context) {
 			}
 		}
 
-		// Hold the socket until it drops.
+		// Hold the socket until it drops or the saved sign-in changes.
 		a.set(AdmissionState_ADMISSION_STATE_CONNECTING, in.Account, "")
-		err := hold(ctx, a.origin, in.Token, a.key, func() {
+		changed, err := a.holdUntilChanged(ctx, in.Token, func() {
 			a.set(AdmissionState_ADMISSION_STATE_ADMITTED, in.Account, "")
 			retry = time.Second
 		})
 		if ctx.Err() != nil {
 			return
+		}
+		if changed {
+			continue
 		}
 		if errors.Is(err, errRefused) {
 			refused = in.Token
@@ -130,6 +133,36 @@ func (a *Admission) Run(ctx context.Context) {
 		}
 		retry = min(retry*2, admitRetryMax)
 	}
+}
+
+// holdUntilChanged holds the admission socket with token, and reports changed
+// when a Wake finds a different saved sign-in, such as after a sign-out, so
+// Run attempts again at once with the new one.
+func (a *Admission) holdUntilChanged(ctx context.Context, token string, admitted func()) (bool, error) {
+	// Cancel the socket when a Wake reads a different sign-in.
+	holdCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	watched := make(chan bool, 1)
+	go func() {
+		for {
+			select {
+			case <-a.wake:
+				if a.signIn().Token != token {
+					watched <- true
+					cancel()
+					return
+				}
+			case <-holdCtx.Done():
+				watched <- false
+				return
+			}
+		}
+	}()
+
+	// Hold the socket, then wait for the watch to stop reading wakes.
+	err := hold(holdCtx, a.origin, token, a.key, admitted)
+	cancel()
+	return <-watched, err
 }
 
 // hold opens key's admission socket at origin with the bearer token, calls

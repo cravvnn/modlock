@@ -152,23 +152,45 @@ func (h *Hyperline) token(ctx context.Context, refused bool) (string, error) {
 	if saved := SavedSession(h.SessionFile, h.Origin); saved != nil && !refused {
 		return saved.GetToken(), nil
 	}
-	session, err := h.signIn(ctx)
+	session, err := h.SignIn(ctx)
 	if err != nil {
 		return "", err
-	}
-
-	// Save the new session for the next publish.
-	data, err := session.MarshalJSON()
-	if err != nil {
-		return "", err
-	}
-	if err := os.MkdirAll(filepath.Dir(h.SessionFile), 0o700); err != nil {
-		return "", errors.Wrap(err, "save the sign-in")
-	}
-	if err := os.WriteFile(h.SessionFile, append(data, '\n'), 0o600); err != nil {
-		return "", errors.Wrap(err, "save the sign-in")
 	}
 	return session.GetToken(), nil
+}
+
+// SignIn signs the creator in through the browser and saves the session for
+// every later command, replacing any saved one.
+func (h *Hyperline) SignIn(ctx context.Context) (*Session, error) {
+	// Sign in only to a service that keeps the session private.
+	if err := checkOrigin(h.Origin); err != nil {
+		return nil, err
+	}
+
+	// Sign in, then save the session beside modlock's other state.
+	session, err := h.signIn(ctx)
+	if err != nil {
+		return nil, err
+	}
+	data, err := session.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(filepath.Dir(h.SessionFile), 0o700); err != nil {
+		return nil, errors.Wrap(err, "save the sign-in")
+	}
+	if err := os.WriteFile(h.SessionFile, append(data, '\n'), 0o600); err != nil {
+		return nil, errors.Wrap(err, "save the sign-in")
+	}
+	return session, nil
+}
+
+// SignOut removes the saved session. Signing out when signed out does nothing.
+func (h *Hyperline) SignOut() error {
+	if err := os.Remove(h.SessionFile); err != nil && !os.IsNotExist(err) {
+		return errors.Wrap(err, "remove the sign-in")
+	}
+	return nil
 }
 
 // signIn sends the creator to the service's sign-in page and trades the

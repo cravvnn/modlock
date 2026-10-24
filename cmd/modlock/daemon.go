@@ -167,7 +167,7 @@ func connectDaemon(ctx context.Context) (*daemon.Client, error) {
 }
 
 // newPeer constructs the daemon's peer in dir, signaling at origin with the
-// sign-in modlock publish saves.
+// sign-in modlock login saves.
 func newPeer(dir, origin string) (*peernet.Service, error) {
 	sessionFile, err := hyperlineSessionFile()
 	if err != nil {
@@ -217,8 +217,8 @@ func admissionText(peer *peernet.GetPeerResponse) string {
 		}
 		return "connecting to " + peer.GetOrigin()
 	case peernet.AdmissionState_ADMISSION_STATE_REFUSED:
-		return peer.GetOrigin() + " refused the saved sign-in; modlock publish signs in again"
+		return peer.GetOrigin() + " refused the saved sign-in; modlock login signs in again"
 	default:
-		return "signed out; modlock publish signs in to " + peer.GetOrigin()
+		return "signed out; modlock login signs in to " + peer.GetOrigin()
 	}
 }

@@ -116,8 +116,8 @@ On another PC, `modlock join CODE` links to the host, launches Deadlock and
 joins the host's server, so both players play each reload. The guest's game
 shows the mod's interface for the guest's own player, which the host streams to
 it over the same link. The two PCs find each
-other through hyperline.gg's signaling, which needs the sign in that
-`modlock publish` saves on both, and then link directly over WebRTC; no game
+other through hyperline.gg's signaling, which needs `modlock login` on both
+(`modlock publish` saves the same sign-in), and then link directly over WebRTC; no game
 traffic passes through hyperline.gg, and two PCs whose routers block a direct
 link cannot play together. The code carries the session's secret:
 anyone holding it can join until the host stops.
@@ -503,8 +503,9 @@ event within the limits. It then goes where `--to` says:
 | `archive`   | Write `SLUG-VERSION.zip` to `--out`: the mod, `modlock.exe` and `Play.cmd` to run it on Windows. |
 | `github`    | Attach that zip to the GitHub release `SLUG-vVERSION`, creating the release if needed.           |
 
-The first upload to hyperline.gg opens the browser to sign in and saves the
-session. Publishing there needs access during the alpha; ask for it in the
+`modlock login` opens the browser to sign in to hyperline.gg and saves the
+session for every later command, and `modlock logout` removes it; the first
+upload signs in the same way when no session is saved. Publishing there needs access during the alpha; ask for it in the
 [Hyperline Discord](https://discord.gg/cezb3jg4vd). `--origin` points it at
 another service with the same API. The `github` destination uses the
 [`gh`](https://cli.github.com) command line and its sign-in.

@@ -78,14 +78,9 @@ func publishCommand(out *printer) *cli.Command {
 // publishHyperline uploads mod to Hyperline and reports its review.
 func publishHyperline(c *cli.Context, out *printer, mod *modpublish.Mod, name string) error {
 	// Upload with the saved sign-in.
-	sessionFile, err := hyperlineSessionFile()
+	service, err := hyperlineService(c.String("origin"))
 	if err != nil {
 		return err
-	}
-	service := &modpublish.Hyperline{
-		Origin:      c.String("origin"),
-		SessionFile: sessionFile,
-		Output:      os.Stderr,
 	}
 	release, err := service.Publish(c.Context, mod)
 	if err != nil {

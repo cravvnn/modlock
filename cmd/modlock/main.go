@@ -54,6 +54,8 @@ func main() {
 			lfsCommand(out),
 			playCommand(out),
 			publishCommand(out),
+			loginCommand(out),
+			logoutCommand(out),
 			panoramaCommand(out),
 			vpkCommand(out),
 			kv3Command(),
