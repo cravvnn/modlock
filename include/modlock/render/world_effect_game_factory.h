@@ -1,11 +1,13 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <expected>
 #include <memory>
 #include <set>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "modlock/export.h"
 #include "modlock/gameinterop/entity_abi.h"
@@ -54,6 +56,14 @@ class MODLOCK_API WorldEffectGameFactory final : public WorldEffectFactory {
   // SetEntitySystem supplies the current world entity system after readiness.
   void SetEntitySystem(void* entity_system) { calls_.entity_system = entity_system; }
 
+  // Sweep removes each retired particle entity whose end cap has had time to
+  // play. It runs once per frame on the engine thread.
+  void Sweep(std::chrono::steady_clock::time_point now);
+
+  // InvalidateAfterEngineReset forgets the retired entities of a world that
+  // ended, without removing them.
+  void InvalidateAfterEngineReset() { retired_.clear(); }
+
   std::expected<std::unique_ptr<WorldEffect>, std::string> Create(
       const ParticleSettings& settings) override;
 
@@ -67,14 +77,15 @@ class MODLOCK_API WorldEffectGameFactory final : public WorldEffectFactory {
 
   // CreateFogController enables spatial volumetric fog; its volumes determine
   // where fog exists. Remove volumes before removing their controller.
-  std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogController(const geometry::Vec3& origin,
-                                                                               float draw_distance);
+  std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogController(
+      const geometry::Vec3& origin, float draw_distance);
 
   // CreateFogVolume creates an oriented box of tinted fog. Bounds are
   // local to origin, and density fades across the box's boundary.
   std::expected<std::unique_ptr<WorldEffect>, std::string> CreateFogVolume(
-      const geometry::Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
-      const std::array<float, 3>& maxs, float strength, const std::array<uint8_t, 3>& tint);
+      const geometry::Vec3& origin, const std::array<float, 3>& angles,
+      const std::array<float, 3>& mins, const std::array<float, 3>& maxs, float strength,
+      const std::array<uint8_t, 3>& tint);
 
  private:
   friend class GameWorldEffect;
@@ -88,8 +99,20 @@ class MODLOCK_API WorldEffectGameFactory final : public WorldEffectFactory {
   void TraceSuccess();
   std::expected<const ParticleFields*, std::string> ResolveParticleFields();
 
+  // Retire removes a stopped particle entity once its end cap has played. The
+  // client keeps a stopped system's particles until its end cap decays them,
+  // so the entity must outlive the stop by at least one network update.
+  void Retire(gameinterop::EntityRef entity);
+
+  // Retired is a particle entity waiting for its removal time.
+  struct Retired {
+    gameinterop::EntityRef entity;
+    std::chrono::steady_clock::time_point remove_at;
+  };
+
   WorldEffectGameCalls calls_;
   std::optional<ParticleFields> particle_fields_;
+  std::vector<Retired> retired_;
   std::set<std::string> trace_failures_;
   bool trace_success_logged_ = false;
 };

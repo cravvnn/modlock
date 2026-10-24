@@ -79,7 +79,29 @@ WorldEffectGameFactory::TryCreate(const modlock::gameinterop::ModuleImage& serve
 
 WorldEffectGameFactory::WorldEffectGameFactory(WorldEffectGameCalls calls) : calls_(calls) {}
 
-WorldEffectGameFactory::~WorldEffectGameFactory() = default;
+// kEndCapTime is how long a retired particle entity outlives its stop, so each
+// client receives the stop and plays the end cap before the entity goes.
+constexpr auto kEndCapTime = std::chrono::seconds(2);
+
+WorldEffectGameFactory::~WorldEffectGameFactory() {
+  Sweep(std::chrono::steady_clock::time_point::max());
+}
+
+void WorldEffectGameFactory::Retire(gameinterop::EntityRef entity) {
+  retired_.push_back({entity, std::chrono::steady_clock::now() + kEndCapTime});
+}
+
+void WorldEffectGameFactory::Sweep(std::chrono::steady_clock::time_point now) {
+  std::erase_if(retired_, [&](const Retired& retired) {
+    if (retired.remove_at > now) {
+      return false;
+    }
+    if (void* entity = retired.entity.Get()) {
+      calls_.util_remove(entity);
+    }
+    return true;
+  });
+}
 
 class GameWorldEffect final : public WorldParticle {
  public:
@@ -100,7 +122,9 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> Start() override { return Input("Start"); }
 
-  std::expected<void, std::string> Stop() override { return Input("Stop"); }
+  // Stop plays the end cap; the plain Stop input leaves particles that decay
+  // only on their end cap frozen in place.
+  std::expected<void, std::string> Stop() override { return Input("StopPlayEndCap"); }
 
   std::expected<void, std::string> Transform(const geometry::Vec3& origin,
                                              const std::array<float, 3>& angles) override {
@@ -195,7 +219,18 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> Detach() override { return Input("ClearParent"); }
 
+  // Remove stops the particle with its end cap and leaves the entity to the
+  // factory, which removes it once the end cap has played.
   void Remove() override {
+    if (entity_.Get()) {
+      static_cast<void>(Stop());
+      factory_.Retire(entity_);
+    }
+    entity_.Reset();
+  }
+
+  // Discard removes an entity that never finished spawning.
+  void Discard() {
     if (void* entity = entity_.Get()) {
       factory_.calls_.util_remove(entity);
     }
@@ -233,7 +268,6 @@ class GameWorldEffect final : public WorldParticle {
     };
     auto built = modlock::gameinterop::BuildEntityKeyValues(factory_.calls_.key_values, pairs);
     if (!built) {
-      Remove();
       return std::unexpected("effect: " + built.error());
     }
 
@@ -495,6 +529,7 @@ std::expected<std::unique_ptr<WorldParticle>, std::string> WorldEffectGameFactor
   // Spawn it, tracing the outcome.
   auto effect = std::make_unique<GameWorldEffect>(*this, settings);
   if (auto spawned = effect->Spawn(); !spawned) {
+    effect->Discard();
     TraceFailure(spawned.error());
     return std::unexpected(spawned.error());
   }

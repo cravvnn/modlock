@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -135,12 +136,20 @@ TEST_F(EffectTest, CreatesMovesAndRemovesOneNativeEffect) {
                        "kv:effect_name=particles/environment/powerup_spawner_ambient.vpcf",
                        "kv:start_active=1", "teleport:4", "queue", "execute", "input:Start"}));
 
-  // Move it, then remove it once.
+  // Move it, then remove it: the end cap plays and the entity stays until
+  // the end cap has had time to run.
   at.set_x(8);
   effect->get()->Move(at, std::nullopt);
   EXPECT_EQ(steps.back(), "teleport:8");
   effect->get()->Remove();
   effect->reset();
+  EXPECT_EQ(steps.back(), "input:StopPlayEndCap");
+  const auto now = std::chrono::steady_clock::now();
+  factory->Sweep(now);
+  EXPECT_EQ(removes, 0);
+  factory->Sweep(now + std::chrono::seconds(3));
+  EXPECT_EQ(removes, 1);
+  factory->Sweep(now + std::chrono::seconds(6));
   EXPECT_EQ(removes, 1);
 }
 
@@ -172,6 +181,7 @@ TEST_F(EffectTest, UsesTheNativeFreshMemberSurface) {
   ASSERT_TRUE(effect) << effect.error();
   EXPECT_EQ(steps.back(), "input:Start");
   effect->reset();
+  native_factory.Sweep(std::chrono::steady_clock::time_point::max());
   EXPECT_EQ(removes, 1);
 }
 
@@ -218,7 +228,7 @@ TEST_F(EffectTest, ConfiguredParticleCanStartPausedAndChangePlaybackWithoutRespa
   ASSERT_TRUE(particle->get()->Start());
   EXPECT_EQ(steps.back(), "input:Start");
   ASSERT_TRUE(particle->get()->Stop());
-  EXPECT_EQ(steps.back(), "input:Stop");
+  EXPECT_EQ(steps.back(), "input:StopPlayEndCap");
   ASSERT_TRUE(particle->get()->Detach());
   EXPECT_EQ(steps.back(), "input:ClearParent");
 
@@ -230,6 +240,7 @@ TEST_F(EffectTest, ConfiguredParticleCanStartPausedAndChangePlaybackWithoutRespa
   EXPECT_FALSE(particle->get()->Transform(settings.origin, settings.angles));
   EXPECT_EQ(steps.size(), count);
   particle->reset();
+  factory->Sweep(std::chrono::steady_clock::time_point::max());
   EXPECT_EQ(removes, 1);
 }
 
@@ -261,8 +272,8 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   // Each keyvalue was set before the spawn.
   for (const auto* expected :
        {"create:prop_dynamic_override", "kv:classname=prop_dynamic_override", "kv:solid=0",
-        "kv:spawnflags=1792", "kv:scales=0.220000", "kv:rendermode=1", "kv:renderamt=128", "kv:glowstate=3",
-        "kv:glowrange=0"}) {
+        "kv:spawnflags=1792", "kv:scales=0.220000", "kv:rendermode=1", "kv:renderamt=128",
+        "kv:glowstate=3", "kv:glowrange=0"}) {
     EXPECT_NE(std::find(steps.begin(), steps.end(), expected), steps.end()) << expected;
   }
   EXPECT_EQ(steps.back(), "execute");

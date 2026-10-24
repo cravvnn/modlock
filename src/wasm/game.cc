@@ -3,6 +3,7 @@
 #include "wasm/game.h"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -34,6 +35,9 @@ void Game::Frame() {
   TickRestores();
   TrackProjectiles();
   PruneAudiences();
+  if (services_.effects_) {
+    services_.effects_->Sweep(std::chrono::steady_clock::now());
+  }
 
   // Finish the entities spawned this frame together.
   if (!spawned_ || !world_) {
@@ -126,6 +130,9 @@ void Game::WorldEnding() {
   // Remove the world's objects and forget its entities.
   RemoveWorld();
   world_.reset();
+  if (services_.effects_) {
+    services_.effects_->InvalidateAfterEngineReset();
+  }
   spawned_ = false;
 
   // Drop the per-world player state.
@@ -330,7 +337,8 @@ std::expected<players::PlayersResponse, std::string> Game::Players() {
   return players;
 }
 
-std::expected<players::PawnResponse, std::string> Game::Pawn(const players::PlayerRequest& request) {
+std::expected<players::PawnResponse, std::string> Game::Pawn(
+    const players::PlayerRequest& request) {
   // Sample the player's pawn; a slot without one answers no pawn.
   players::PawnResponse response;
   const auto sample = observer_.Observe(request.player());

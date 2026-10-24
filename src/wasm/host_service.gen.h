@@ -436,8 +436,8 @@ class HostService {
     return std::unexpected("this host does not support CreateText");
   }
 
-  // CreateParticle starts a particle effect. Removing the object stops it;
-  // moving it moves the effect.
+  // CreateParticle starts a particle effect. Removing the object stops it
+  // and lets its end cap play out; moving it moves the effect.
   virtual std::expected<objects::ObjectResponse, std::string> CreateParticle(
       const objects::ParticleOptions& /*request*/) {
     return std::unexpected("this host does not support CreateParticle");

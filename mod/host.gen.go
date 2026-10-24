@@ -860,8 +860,8 @@ func CreateText(options *TextOptions) (WorldObject, error) {
 	return WorldObject{ID: response.GetObject()}, nil
 }
 
-// CreateParticle starts a particle effect. Removing the object stops it;
-// moving it moves the effect.
+// CreateParticle starts a particle effect. Removing the object stops it
+// and lets its end cap play out; moving it moves the effect.
 func CreateParticle(options *ParticleOptions) (WorldObject, error) {
 	response := &objectspb.ObjectResponse{}
 	if err := invoke("CreateParticle", options, response); err != nil {
