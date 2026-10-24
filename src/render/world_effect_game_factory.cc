@@ -40,7 +40,8 @@ bool IsShippedEffect(std::string_view effect_name) {
 }
 
 // Teleport places an effect entity at origin with angles and no motion.
-void Teleport(void* entity, const modlock::geometry::Vec3& origin, const std::array<float, 3>& angles) {
+void Teleport(void* entity, const modlock::geometry::Vec3& origin,
+              const std::array<float, 3>& angles) {
   gameinterop::TeleportEntity(entity,
                               {static_cast<float>(origin.x()), static_cast<float>(origin.y()),
                                static_cast<float>(origin.z())},
@@ -89,15 +90,13 @@ class GameWorldEffect final : public WorldParticle {
 
   void Move(const modlock::geometry::Vec3& origin,
             const std::optional<std::array<float, 3>>& angles) override {
-    if (entity_ == nullptr) {
+    if (!entity_.Get()) {
       return;
     }
     (void)Transform(origin, angles.value_or(settings_.angles));
   }
 
-  std::optional<std::uint32_t> Handle() const override {
-    return gameinterop::ReferenceHandleOf(entity_);
-  }
+  std::optional<std::uint32_t> Handle() const override { return entity_.Handle(); }
 
   std::expected<void, std::string> Start() override { return Input("Start"); }
 
@@ -106,14 +105,15 @@ class GameWorldEffect final : public WorldParticle {
   std::expected<void, std::string> Transform(const geometry::Vec3& origin,
                                              const std::array<float, 3>& angles) override {
     // Only a live particle with a finite pose moves.
-    if (!entity_) {
+    void* entity = entity_.Get();
+    if (!entity) {
       return std::unexpected("particle is no longer live");
     }
     if (!std::isfinite(origin.x()) || !std::isfinite(origin.y()) || !std::isfinite(origin.z()) ||
         !std::ranges::all_of(angles, [](float v) { return std::isfinite(v); })) {
       return std::unexpected("particle transform is not finite");
     }
-    Teleport(entity_, origin, angles);
+    Teleport(entity, origin, angles);
     settings_.origin = origin;
     settings_.angles = angles;
     return {};
@@ -121,7 +121,7 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> Tint(const ParticleTint& tint) override {
     // Only a live particle takes a tint, at a control point the effect has.
-    if (!entity_) {
+    if (!entity_.Get()) {
       return std::unexpected("particle is no longer live");
     }
     if (tint.control_point < 0 || tint.control_point >= 64) {
@@ -139,7 +139,7 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> Data(const ParticleData& data) override {
     // Only a live particle takes finite data, at a control point the effect has.
-    if (!entity_) {
+    if (!entity_.Get()) {
       return std::unexpected("particle is no longer live");
     }
     if (data.control_point < 0 || data.control_point >= 64 ||
@@ -158,7 +158,7 @@ class GameWorldEffect final : public WorldParticle {
 
   std::expected<void, std::string> ControlPoint(int index, std::uint32_t handle) override {
     // Only a live particle takes a control point.
-    if (!entity_) {
+    if (!entity_.Get()) {
       return std::unexpected("particle is no longer live");
     }
     auto fields = factory_.ResolveParticleFields();
@@ -183,7 +183,7 @@ class GameWorldEffect final : public WorldParticle {
   }
 
   std::expected<void, std::string> Attach(std::uint32_t parent_handle) override {
-    if (!entity_) {
+    if (!entity_.Get()) {
       return std::unexpected("particle is no longer live");
     }
     void* parent = gameinterop::EntityInstance(factory_.calls_.entity_system, parent_handle);
@@ -196,14 +196,13 @@ class GameWorldEffect final : public WorldParticle {
   std::expected<void, std::string> Detach() override { return Input("ClearParent"); }
 
   void Remove() override {
-    if (entity_ == nullptr) {
-      return;
+    if (void* entity = entity_.Get()) {
+      factory_.calls_.util_remove(entity);
     }
-    factory_.calls_.util_remove(entity_);
-    entity_ = nullptr;
+    entity_.Reset();
   }
 
-  void InvalidateAfterEngineReset() override { entity_ = nullptr; }
+  void InvalidateAfterEngineReset() override { entity_.Reset(); }
 
   std::expected<void, std::string> Spawn() {
     // Every engine call must be resolved.
@@ -218,10 +217,15 @@ class GameWorldEffect final : public WorldParticle {
           "accept-input, or remove)");
     }
 
-    // Create the entity and build its keyvalues.
-    entity_ = factory_.calls_.create_entity_by_name(nullptr, "info_particle_system", -1);
-    if (entity_ == nullptr) {
+    // Create the entity, hold it by handle, and build its keyvalues.
+    void* entity = factory_.calls_.create_entity_by_name(nullptr, "info_particle_system", -1);
+    if (entity == nullptr) {
       return std::unexpected("create info_particle_system returned null");
+    }
+    entity_ = gameinterop::EntityRef(factory_.calls_.entity_system, entity);
+    if (!entity_.Get()) {
+      factory_.calls_.util_remove(entity);
+      return std::unexpected("info_particle_system has no live handle");
     }
     const modlock::gameinterop::EntityKeyValue pairs[] = {
         {.key = "effect_name", .value = std::string_view(settings_.resource)},
@@ -255,7 +259,7 @@ class GameWorldEffect final : public WorldParticle {
       return moved;
     }
     factory_.calls_.queue_spawn_entity(factory_.calls_.entity_system,
-                                       modlock::gameinterop::IdentityOf(entity_), *built);
+                                       modlock::gameinterop::IdentityOf(entity), *built);
     factory_.calls_.execute_queued_creation(factory_.calls_.entity_system);
 
     // Start and attach it as configured.
@@ -275,11 +279,12 @@ class GameWorldEffect final : public WorldParticle {
  private:
   std::expected<void, std::string> Input(const char* name, void* activator = nullptr,
                                          const char* value = "") {
-    if (!entity_) {
+    void* entity = entity_.Get();
+    if (!entity) {
       return std::unexpected("particle is no longer live");
     }
     gameinterop::Variant variant{.pointer = value, .type = gameinterop::VariantType::kCString};
-    if (!factory_.calls_.accept_input(entity_, name, activator, nullptr, &variant, 0, nullptr)) {
+    if (!factory_.calls_.accept_input(entity, name, activator, nullptr, &variant, 0, nullptr)) {
       return std::unexpected(std::string("info_particle_system rejected ") + name);
     }
     return {};
@@ -288,7 +293,8 @@ class GameWorldEffect final : public WorldParticle {
   template <typename T>
   std::expected<void, std::string> Write(const gameinterop::SchemaField& field, const T& value) {
     // Only a live particle takes a write that fits its field.
-    if (!entity_) {
+    void* entity = entity_.Get();
+    if (!entity) {
       return std::unexpected("particle is no longer live");
     }
     if (field.size < sizeof(T)) {
@@ -296,8 +302,8 @@ class GameWorldEffect final : public WorldParticle {
     }
 
     // Write it, notifying the network when the field is networked.
-    std::memcpy(static_cast<std::byte*>(entity_) + field.offset, &value, sizeof(value));
-    if (field.networked && !gameinterop::NotifyEntityStateChanged(entity_)) {
+    std::memcpy(static_cast<std::byte*>(entity) + field.offset, &value, sizeof(value));
+    if (field.networked && !gameinterop::NotifyEntityStateChanged(entity)) {
       return std::unexpected("particle network state notification unavailable");
     }
     return {};
@@ -305,44 +311,44 @@ class GameWorldEffect final : public WorldParticle {
 
   WorldEffectGameFactory& factory_;
   ParticleSettings settings_;
-  void* entity_ = nullptr;
+  gameinterop::EntityRef entity_;
 };
 
 // GameWorldEntity owns a visual entity until removal or world invalidation.
 class GameWorldEntity final : public WorldEffect {
  public:
-  GameWorldEntity(WorldEffectGameFactory& factory, void* entity, std::array<float, 3> angles)
+  GameWorldEntity(WorldEffectGameFactory& factory, gameinterop::EntityRef entity,
+                  std::array<float, 3> angles)
       : factory_(factory), entity_(entity), angles_(angles) {}
 
   ~GameWorldEntity() override { Remove(); }
 
-  void Move(const geometry::Vec3& origin, const std::optional<std::array<float, 3>>& angles) override {
-    if (!entity_) {
+  void Move(const geometry::Vec3& origin,
+            const std::optional<std::array<float, 3>>& angles) override {
+    void* entity = entity_.Get();
+    if (!entity) {
       return;
     }
     if (angles) {
       angles_ = *angles;
     }
-    Teleport(entity_, origin, angles_);
+    Teleport(entity, origin, angles_);
   }
 
-  std::optional<std::uint32_t> Handle() const override {
-    return gameinterop::ReferenceHandleOf(entity_);
-  }
+  std::optional<std::uint32_t> Handle() const override { return entity_.Handle(); }
 
   void Remove() override {
-    if (!entity_) {
-      return;
+    if (void* entity = entity_.Get()) {
+      factory_.calls_.util_remove(entity);
     }
-    factory_.calls_.util_remove(entity_);
-    entity_ = nullptr;
+    entity_.Reset();
   }
 
-  void InvalidateAfterEngineReset() override { entity_ = nullptr; }
+  void InvalidateAfterEngineReset() override { entity_.Reset(); }
 
  private:
   WorldEffectGameFactory& factory_;
-  void* entity_;
+  gameinterop::EntityRef entity_;
   std::array<float, 3> angles_;
 };
 
@@ -371,8 +377,15 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
     return std::unexpected(std::string("create ") + class_name + " returned null");
   }
 
+  // Hold it by handle, so a removal by the engine leaves nothing dangling.
+  const gameinterop::EntityRef ref(calls_.entity_system, entity);
+  if (!ref.Get()) {
+    calls_.util_remove(entity);
+    return std::unexpected(std::string(class_name) + " has no live handle");
+  }
+
   // Place it, then spawn it.
-  auto effect = std::make_unique<GameWorldEntity>(*this, entity, angles);
+  auto effect = std::make_unique<GameWorldEntity>(*this, ref, angles);
   Teleport(entity, origin, angles);
   calls_.queue_spawn_entity(calls_.entity_system, gameinterop::IdentityOf(entity), *values);
   calls_.execute_queued_creation(calls_.entity_system);
@@ -396,8 +409,9 @@ WorldEffectGameFactory::CreateFogController(const geometry::Vec3& origin, float 
 }
 
 std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory::CreateFogVolume(
-    const geometry::Vec3& origin, const std::array<float, 3>& angles, const std::array<float, 3>& mins,
-    const std::array<float, 3>& maxs, float strength, const std::array<uint8_t, 3>& tint) {
+    const geometry::Vec3& origin, const std::array<float, 3>& angles,
+    const std::array<float, 3>& mins, const std::array<float, 3>& maxs, float strength,
+    const std::array<uint8_t, 3>& tint) {
   const gameinterop::EntityKeyValue properties[] = {
       {.key = "startdisabled", .value = false},
       {.key = "box_mins", .value = gameinterop::KeyValueVector{mins[0], mins[1], mins[2]}},

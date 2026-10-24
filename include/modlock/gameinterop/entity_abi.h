@@ -169,6 +169,36 @@ static_assert(sizeof(Variant) == 16);
 // EntityInstance resolves a serial-fenced handle in the current entity list.
 [[nodiscard]] MODLOCK_API void* EntityInstance(void* entity_system, uint32_t handle);
 
+// EntityRef names one entity an owner created by its serial-fenced handle and
+// resolves the instance on each use. The engine may remove the entity first,
+// as it removes a prop it rejects or everything on a map change; the reference
+// then resolves to null, never to freed memory, so its owner can still clean
+// up safely.
+class EntityRef {
+ public:
+  EntityRef() = default;
+
+  // EntityRef refers to entity, created in entity_system. An entity without a
+  // live handle yields an empty reference.
+  EntityRef(void* entity_system, void* entity)
+      : system_(entity_system), handle_(ReferenceHandleOf(entity).value_or(kInvalidEHandleIndex)) {}
+
+  // Get returns the live instance, or null once the entity is gone.
+  [[nodiscard]] void* Get() const { return EntityInstance(system_, handle_); }
+
+  // Handle returns the handle while the entity is live.
+  [[nodiscard]] std::optional<uint32_t> Handle() const {
+    return Get() ? std::optional(handle_) : std::nullopt;
+  }
+
+  // Reset forgets the entity without touching the engine.
+  void Reset() { handle_ = kInvalidEHandleIndex; }
+
+ private:
+  void* system_ = nullptr;
+  uint32_t handle_ = kInvalidEHandleIndex;
+};
+
 // EntitySystemFromResourceService reads CGameEntitySystem out of one live
 // IGameResourceService instance. A null service is an error; nothing here
 // guesses an address.

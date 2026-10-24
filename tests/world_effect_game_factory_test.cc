@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include "entity_list_fixture.h"
+
 namespace {
 using modlock::render::WorldEffectGameCalls;
 using modlock::render::WorldEffectGameFactory;
@@ -17,6 +19,7 @@ int removes = 0;
 bool accept_result = true;
 alignas(16) std::array<void*, 200> vtable;
 alignas(16) std::array<void*, 4> entity;
+modlock::test_support::FakeEntityList entity_list;
 
 void* Create(void*, const char* name, int) {
   steps.emplace_back(std::string("create:") + name);
@@ -65,17 +68,17 @@ void Remove(void*) {
 }
 
 WorldEffectGameCalls Calls() {
-  // Build a fake entity with Teleport in slot 163 and a sentinel identity.
+  // Build a fake entity with Teleport in slot 163, live in the entity list.
   vtable.fill(nullptr);
   vtable[163] = reinterpret_cast<void*>(&Teleport);
   entity.fill(nullptr);
   entity[0] = vtable.data();
-  entity[2] = reinterpret_cast<void*>(0x2300);
+  entity_list.Link(entity.data());
 
   // Point each engine call at its recorder.
   WorldEffectGameCalls calls;
   calls.create_entity_by_name = &Create;
-  calls.entity_system = reinterpret_cast<void*>(0x2100);
+  calls.entity_system = entity_list.System();
   calls.queue_spawn_entity = &Queue;
   calls.execute_queued_creation = &Execute;
   calls.accept_input = &Accept;
@@ -256,9 +259,9 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   ASSERT_TRUE(model) << model.error();
 
   // Each keyvalue was set before the spawn.
-  for (const auto* expected : {"create:prop_dynamic_override", "kv:classname=prop_dynamic_override",
-                               "kv:solid=0", "kv:spawnflags=1792", "kv:scales=0.220000",
-                               "kv:glowstate=3", "kv:glowrange=0"}) {
+  for (const auto* expected :
+       {"create:prop_dynamic_override", "kv:classname=prop_dynamic_override", "kv:solid=0",
+        "kv:spawnflags=1792", "kv:scales=0.220000", "kv:glowstate=3", "kv:glowrange=0"}) {
     EXPECT_NE(std::find(steps.begin(), steps.end(), expected), steps.end()) << expected;
   }
   EXPECT_EQ(steps.back(), "execute");
@@ -275,6 +278,16 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   model = factory->CreateModel(settings);
   ASSERT_TRUE(model);
   model->get()->InvalidateAfterEngineReset();
+  model->reset();
+  EXPECT_EQ(removes, 1);
+
+  // A model the engine removed first neither moves nor is removed again.
+  model = factory->CreateModel(settings);
+  ASSERT_TRUE(model);
+  entity_list.Delete();
+  model->get()->Move(origin, std::nullopt);
+  EXPECT_EQ(steps.back(), "execute");
+  EXPECT_FALSE(model->get()->Handle());
   model->reset();
   EXPECT_EQ(removes, 1);
 }

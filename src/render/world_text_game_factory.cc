@@ -16,7 +16,8 @@ using gameinterop::InteropTraceEnabled;
 constexpr size_t kMaxTraceFailures = 32;
 
 // PlaceEntity teleports a world-text entity to origin with angles and no motion.
-void PlaceEntity(void* entity, const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles) {
+void PlaceEntity(void* entity, const modlock::geometry::Vec3& origin,
+                 const modlock::geometry::EulerAngles& angles) {
   gameinterop::TeleportEntity(entity,
                               {static_cast<float>(origin.x()), static_cast<float>(origin.y()),
                                static_cast<float>(origin.z())},
@@ -98,8 +99,8 @@ WorldTextGameFactory::~WorldTextGameFactory() = default;
 class GameWorldTextEntity final : public WorldTextEntity {
  public:
   GameWorldTextEntity(WorldTextGameFactory& factory, std::string message,
-                      const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles,
-                      const WorldTextStyle& style)
+                      const modlock::geometry::Vec3& origin,
+                      const modlock::geometry::EulerAngles& angles, const WorldTextStyle& style)
       : factory_(factory),
         message_(std::move(message)),
         origin_(origin),
@@ -112,10 +113,11 @@ class GameWorldTextEntity final : public WorldTextEntity {
     // The stock input writes the networked text, which costs a fraction of a
     // spawn and keeps the entity's handle.
     std::string text(message);
-    if (entity_ != nullptr && factory_.calls_.accept_input != nullptr) {
+    void* entity = entity_.Get();
+    if (entity != nullptr && factory_.calls_.accept_input != nullptr) {
       gameinterop::Variant value{.pointer = text.c_str(),
                                  .type = gameinterop::VariantType::kCString};
-      if (factory_.calls_.accept_input(entity_, "SetMessage", nullptr, nullptr, &value, 0,
+      if (factory_.calls_.accept_input(entity, "SetMessage", nullptr, nullptr, &value, 0,
                                        nullptr)) {
         message_ = std::move(text);
         return;
@@ -134,36 +136,34 @@ class GameWorldTextEntity final : public WorldTextEntity {
     rebuilt->release();
     Remove();
     entity_ = replacement->entity_;
-    replacement->entity_ = nullptr;
+    replacement->entity_.Reset();
     delete replacement;
     message_ = std::string(message);
   }
 
-  void SetOrigin(const modlock::geometry::Vec3& position, const modlock::geometry::EulerAngles& angles) override {
-    if (entity_ == nullptr) {
+  void SetOrigin(const modlock::geometry::Vec3& position,
+                 const modlock::geometry::EulerAngles& angles) override {
+    void* entity = entity_.Get();
+    if (entity == nullptr) {
       return;
     }
-    PlaceEntity(entity_, position, angles);
+    PlaceEntity(entity, position, angles);
     origin_ = position;
     angles_ = angles;
   }
 
-  std::optional<std::uint32_t> Handle() const override {
-    return gameinterop::ReferenceHandleOf(entity_);
-  }
+  std::optional<std::uint32_t> Handle() const override { return entity_.Handle(); }
 
   void Remove() override {
-    if (entity_ == nullptr) {
-      return;
+    if (void* entity = entity_.Get()) {
+      factory_.calls_.util_remove(entity);
     }
-    factory_.calls_.util_remove(entity_);
-    entity_ = nullptr;
+    entity_.Reset();
   }
 
   void InvalidateAfterEngineReset() override {
-    // The engine already destroyed this entity. Clearing the handle prevents
-    // the destructor from calling UTIL_Remove on dead engine state.
-    entity_ = nullptr;
+    // The engine already destroyed this entity, and its entity system with it.
+    entity_.Reset();
     key_values_ = nullptr;
   }
 
@@ -197,7 +197,11 @@ class GameWorldTextEntity final : public WorldTextEntity {
     if (entity == nullptr) {
       return std::unexpected("create point_worldtext returned null");
     }
-    entity_ = entity;
+    entity_ = gameinterop::EntityRef(factory_.calls_.entity_system, entity);
+    if (!entity_.Get()) {
+      factory_.calls_.util_remove(entity);
+      return std::unexpected("point_worldtext has no live handle");
+    }
 
     // Apply its keyvalues.
     if (auto applied = ApplyKeyValues(); !applied) {
@@ -206,20 +210,20 @@ class GameWorldTextEntity final : public WorldTextEntity {
     }
 
     // Place it.
-    PlaceEntity(entity_, origin_, angles_);
+    PlaceEntity(entity, origin_, angles_);
 
     // Spawn it.
-    factory_.calls_.queue_spawn_entity(factory_.calls_.entity_system, IdentityOf(entity_),
+    factory_.calls_.queue_spawn_entity(factory_.calls_.entity_system, IdentityOf(entity),
                                        key_values_);
     key_values_ = nullptr;
     factory_.calls_.execute_queued_creation(factory_.calls_.entity_system);
 
     // Write its message and enable it.
-    if (!factory_.calls_.write_message(entity_, message_.c_str())) {
+    if (!factory_.calls_.write_message(entity, message_.c_str())) {
       return std::unexpected("point_worldtext message field was not writable after spawn");
     }
     gameinterop::Variant empty{.pointer = "", .type = gameinterop::VariantType::kCString};
-    if (!factory_.calls_.accept_input(entity_, "Enable", nullptr, nullptr, &empty, 0, nullptr)) {
+    if (!factory_.calls_.accept_input(entity, "Enable", nullptr, nullptr, &empty, 0, nullptr)) {
       return std::unexpected("point_worldtext rejected Enable after spawn");
     }
     return {};
@@ -261,13 +265,13 @@ class GameWorldTextEntity final : public WorldTextEntity {
   modlock::geometry::Vec3 origin_;
   modlock::geometry::EulerAngles angles_;
   WorldTextStyle style_;
-  void* entity_ = nullptr;
+  gameinterop::EntityRef entity_;
   void* key_values_ = nullptr;
 };
 
 std::expected<std::unique_ptr<WorldTextEntity>, std::string> WorldTextGameFactory::Create(
-    std::string_view message, const modlock::geometry::Vec3& origin, const modlock::geometry::EulerAngles& angles,
-    const WorldTextStyle& style) {
+    std::string_view message, const modlock::geometry::Vec3& origin,
+    const modlock::geometry::EulerAngles& angles, const WorldTextStyle& style) {
   auto entity = std::unique_ptr<GameWorldTextEntity>(
       new GameWorldTextEntity(*this, std::string(message), origin, angles, style));
   if (auto spawned = entity->Spawn(); !spawned) {
