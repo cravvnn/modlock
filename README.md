@@ -150,6 +150,7 @@ prints its address.
 | `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.                                                      |
 | `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.                                                       |
 | `modlock daemon`        | `status` shows the background process that holds this PC's mod store and peer; `probe PEER` measures the link to another PC; `stop` ends it. |
+| `modlock lfs setup`     | Keep this Git repository's LFS files in this PC's mod store; `git push` then sends the remote only their pointers.                           |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:
 
@@ -191,6 +192,14 @@ to read `FILE` from inside an archive, including the game's split
 ```sh
 modlock panorama decompile --archive pak01_dir.vpk panorama/layout/hud.vxml_c
 ```
+
+A mod that tracks large files, such as VPKs, with Git LFS can keep them out of
+its Git remote. Run `modlock lfs setup` in the repository once, after
+`git lfs track`; git-lfs then hands each file to modlock, which stores it in
+this PC's mod store, and a fresh clone runs the same setup before `git lfs
+pull`. Files are stored by content, so repositories that share a file keep it
+once. They stay on this PC: another PC's clone can pull them only from its own
+store.
 
 ## Tutorial
 

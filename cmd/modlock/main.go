@@ -51,6 +51,7 @@ func main() {
 			devCommand(out),
 			hostCommand(out),
 			joinCommand(out),
+			lfsCommand(out),
 			playCommand(out),
 			publishCommand(out),
 			panoramaCommand(out),

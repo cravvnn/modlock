@@ -10,8 +10,10 @@ import (
 	"github.com/aperturerobotics/cli"
 	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/paralin/modlock/daemon"
+	"github.com/paralin/modlock/lfs"
 	"github.com/paralin/modlock/peernet"
 	"github.com/paralin/modlock/publish"
+	"github.com/paralin/modlock/space"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -46,14 +48,22 @@ func daemonCommand(out *printer) *cli.Command {
 				return err
 			}
 
-			// Serve them, unless another daemon already does. The peer loads
-			// its key only once this daemon holds the directory.
+			// Register the Space's LFS objects beside it.
+			objects := lfs.NewServer()
+			if err := objects.Register(mux); err != nil {
+				return err
+			}
+
+			// Serve them, unless another daemon already does. The peer and
+			// the Space open their files only once this daemon holds the
+			// directory.
 			ctx, cancel := context.WithCancel(c.Context)
 			defer cancel()
 			le := logrus.NewEntry(logrus.StandardLogger())
 			err = daemon.Serve(ctx, dir, Version, c.Duration("idle"), mux, func() {
 				daemon.Ready()
 				go runPeer(ctx, le, peer)
+				go runSpace(ctx, le, filepath.Join(dir, "space.s4db"), objects)
 			})
 			if errors.Is(err, daemon.ErrRunning) {
 				out.note("a modlock daemon already runs; modlock daemon status shows it")
@@ -179,6 +189,25 @@ func newPeer(dir, origin string) (*peernet.Service, error) {
 func runPeer(ctx context.Context, le *logrus.Entry, peer *peernet.Service) {
 	if err := peer.Run(ctx, le); err != nil && ctx.Err() == nil {
 		le.WithError(err).Warn("the peer stopped")
+	}
+}
+
+// runSpace opens the Space at path and serves its LFS objects until ctx
+// ends, logging why it stopped early. The daemon keeps serving its other
+// services without it.
+func runSpace(ctx context.Context, le *logrus.Entry, path string, objects *lfs.Server) {
+	// Open the Space.
+	sp, err := space.Open(ctx, le, path)
+	if err != nil {
+		objects.Fail(err)
+	} else {
+		defer sp.Release()
+		err = objects.Serve(ctx, le, sp)
+	}
+
+	// Report a failure that was not the daemon stopping.
+	if err != nil && ctx.Err() == nil {
+		le.WithError(err).Warn("the mod store stopped")
 	}
 }
 
