@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Service runs a PC's peer with its admission and relay credentials, and
+// Service runs a PC's peer with its admission and its hosted lobby's relay, and
 // serves the PeerNet service for it. Its calls wait for Run to load the key,
 // so a daemon can register the service before it holds its state directory.
 type Service struct {
@@ -30,6 +30,8 @@ type Service struct {
 	local peer.ID
 	// admission holds the peer's admission to signaling.
 	admission *Admission
+	// relay offers the hosted lobby's relay servers to the peer's links.
+	relay *Relay
 	// ready closes once node is set.
 	ready chan struct{}
 	// node is the running peer.
@@ -71,17 +73,25 @@ func (s *Service) Run(ctx context.Context, le *logrus.Entry) error {
 		return err
 	}
 	s.admission = NewAdmission(s.origin, key, s.signIn)
+	s.relay = NewRelay(s.local)
 	close(s.started)
 
 	// Hold the admission beside the peer.
 	go s.admission.Run(ctx)
 	return Run(ctx, le, key, s.origin, func(ctx context.Context, node *Node) error {
-		// Answer probes, then publish the node to the service's calls.
+		// Answer probes and offer the relay.
 		release, err := node.GetBus().AddController(ctx, NewEcho(s.local), nil)
 		if err != nil {
 			return err
 		}
 		defer release()
+		releaseRelay, err := node.GetBus().AddController(ctx, s.relay, nil)
+		if err != nil {
+			return err
+		}
+		defer releaseRelay()
+
+		// Publish the node to the service's calls.
 		s.node = node
 		close(s.ready)
 		<-ctx.Done()

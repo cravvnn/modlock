@@ -335,6 +335,10 @@ type DevLobbyState struct {
 	//	*DevLobbyState_Url
 	//	*DevLobbyState_Refused
 	State isDevLobbyState_State `protobuf_oneof:"state"`
+	// Relay is the TURN servers the host session may link through while its
+	// lobby is open, unset when the service has none. The service sends the
+	// state again with fresh credentials before these expire.
+	Relay *Relay `protobuf:"bytes,3,opt,name=relay,proto3" json:"relay,omitempty"`
 }
 
 func (x *DevLobbyState) Reset() {
@@ -364,6 +368,13 @@ func (x *DevLobbyState) GetRefused() *Error {
 	return nil
 }
 
+func (x *DevLobbyState) GetRelay() *Relay {
+	if x != nil {
+		return x.Relay
+	}
+	return nil
+}
+
 type isDevLobbyState_State interface {
 	isDevLobbyState_State()
 }
@@ -381,6 +392,73 @@ type DevLobbyState_Refused struct {
 func (*DevLobbyState_Url) isDevLobbyState_State() {}
 
 func (*DevLobbyState_Refused) isDevLobbyState_State() {}
+
+// Relay is a set of TURN servers and the credentials they share.
+type Relay struct {
+	unknownFields []byte
+	// Servers are the relay servers.
+	Servers []*RelayServer `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
+	// ExpiresAt is when the credentials stop working, in Unix milliseconds.
+	ExpiresAt int64 `protobuf:"varint,2,opt,name=expires_at,json=expiresAt,proto3" json:"expiresAt,omitempty"`
+}
+
+func (x *Relay) Reset() {
+	*x = Relay{}
+}
+
+func (*Relay) ProtoMessage() {}
+
+func (x *Relay) GetServers() []*RelayServer {
+	if x != nil {
+		return x.Servers
+	}
+	return nil
+}
+
+func (x *Relay) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
+// RelayServer is one relay server's addresses and credential.
+type RelayServer struct {
+	unknownFields []byte
+	// Urls are the server's STUN and TURN addresses.
+	Urls []string `protobuf:"bytes,1,rep,name=urls,proto3" json:"urls,omitempty"`
+	// Username is the credential's identifier.
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// Credential is the credential's secret.
+	Credential string `protobuf:"bytes,3,opt,name=credential,proto3" json:"credential,omitempty"`
+}
+
+func (x *RelayServer) Reset() {
+	*x = RelayServer{}
+}
+
+func (*RelayServer) ProtoMessage() {}
+
+func (x *RelayServer) GetUrls() []string {
+	if x != nil {
+		return x.Urls
+	}
+	return nil
+}
+
+func (x *RelayServer) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *RelayServer) GetCredential() string {
+	if x != nil {
+		return x.Credential
+	}
+	return ""
+}
 
 // DevLobbyJoin asks for the host session of a dev lobby the signed-in player
 // is a member of, so their modlock join reaches its game.
@@ -566,6 +644,7 @@ func (m *DevLobbyState) CloneVT() *DevLobbyState {
 	if m.State != nil {
 		r.State = m.State.(interface{ CloneOneofVT() isDevLobbyState_State }).CloneOneofVT()
 	}
+	r.Relay = protobuf_go_lite.CloneVTValue(m.Relay)
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -599,6 +678,41 @@ func (m *DevLobbyState_Refused) CloneVT() *DevLobbyState_Refused {
 }
 
 func (m *DevLobbyState_Refused) CloneOneofVT() isDevLobbyState_State {
+	return m.CloneVT()
+}
+
+func (m *Relay) CloneVT() *Relay {
+	if m == nil {
+		return (*Relay)(nil)
+	}
+	r := new(Relay)
+	r.ExpiresAt = m.ExpiresAt
+	r.Servers = protobuf_go_lite.CloneVTSlice(m.Servers)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *Relay) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *RelayServer) CloneVT() *RelayServer {
+	if m == nil {
+		return (*RelayServer)(nil)
+	}
+	r := new(RelayServer)
+	r.Username = m.Username
+	r.Credential = m.Credential
+	r.Urls = protobuf_go_lite.CloneSlice(m.Urls)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *RelayServer) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -835,6 +949,9 @@ func (this *DevLobbyState) EqualVT(that *DevLobbyState) bool {
 			return false
 		}
 	}
+	if !protobuf_go_lite.IsEqualVT(this.Relay, that.Relay) {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -878,6 +995,55 @@ func (this *DevLobbyState_Refused) EqualVT(thatIface isDevLobbyState_State) bool
 		return false
 	}
 	return true
+}
+
+func (this *Relay) EqualVT(that *Relay) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTSliceImplicit(this.Servers, that.Servers, func() *RelayServer { return &RelayServer{} }) {
+		return false
+	}
+	if this.ExpiresAt != that.ExpiresAt {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *Relay) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*Relay)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *RelayServer) EqualVT(that *RelayServer) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualSlice(this.Urls, that.Urls) {
+		return false
+	}
+	if this.Username != that.Username {
+		return false
+	}
+	if this.Credential != that.Credential {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *RelayServer) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*RelayServer)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
 }
 
 func (this *DevLobbyJoin) EqualVT(that *DevLobbyJoin) bool {
@@ -1393,6 +1559,11 @@ func (x *DevLobbyState) MarshalProtoJSON(s *json.MarshalState) {
 			ov.Refused.MarshalProtoJSON(s.WithField("refused"))
 		}
 	}
+	if x.Relay != nil || s.HasField("relay") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("relay")
+		x.Relay.MarshalProtoJSON(s.WithField("relay"))
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1424,12 +1595,152 @@ func (x *DevLobbyState) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			}
 			ov.Refused = &Error{}
 			ov.Refused.UnmarshalProtoJSON(s.WithField("refused", true))
+		case "relay":
+			if s.ReadNil() {
+				x.Relay = nil
+				return
+			}
+			x.Relay = &Relay{}
+			x.Relay.UnmarshalProtoJSON(s.WithField("relay", true))
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the DevLobbyState from JSON.
 func (x *DevLobbyState) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the Relay message to JSON.
+func (x *Relay) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if len(x.Servers) > 0 || s.HasField("servers") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("servers")
+		s.WriteArrayStart()
+		var wroteElement bool
+		for _, element := range x.Servers {
+			s.WriteMoreIf(&wroteElement)
+			element.MarshalProtoJSON(s.WithField("servers"))
+		}
+		s.WriteArrayEnd()
+	}
+	if x.ExpiresAt != 0 || s.HasField("expiresAt") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("expiresAt")
+		s.WriteInt64(x.ExpiresAt)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the Relay to JSON.
+func (x *Relay) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the Relay message from JSON.
+func (x *Relay) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "servers":
+			s.AddField("servers")
+			if s.ReadNil() {
+				x.Servers = nil
+				return
+			}
+			s.ReadArray(func() {
+				if s.ReadNil() {
+					x.Servers = append(x.Servers, nil)
+					return
+				}
+				v := &RelayServer{}
+				v.UnmarshalProtoJSON(s.WithField("servers", false))
+				if s.Err() != nil {
+					return
+				}
+				x.Servers = append(x.Servers, v)
+			})
+		case "expires_at", "expiresAt":
+			s.AddField("expires_at")
+			x.ExpiresAt = s.ReadInt64()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the Relay from JSON.
+func (x *Relay) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the RelayServer message to JSON.
+func (x *RelayServer) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if len(x.Urls) > 0 || s.HasField("urls") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("urls")
+		s.WriteStringArray(x.Urls)
+	}
+	if x.Username != "" || s.HasField("username") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("username")
+		s.WriteString(x.Username)
+	}
+	if x.Credential != "" || s.HasField("credential") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("credential")
+		s.WriteString(x.Credential)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the RelayServer to JSON.
+func (x *RelayServer) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the RelayServer message from JSON.
+func (x *RelayServer) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "urls":
+			s.AddField("urls")
+			if s.ReadNil() {
+				x.Urls = nil
+				return
+			}
+			x.Urls = s.ReadStringArray()
+		case "username":
+			s.AddField("username")
+			x.Username = s.ReadString()
+		case "credential":
+			s.AddField("credential")
+			x.Credential = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the RelayServer from JSON.
+func (x *RelayServer) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1897,6 +2208,16 @@ func (m *DevLobbyState) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if m.Relay != nil {
+		size, err := m.Relay.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1933,6 +2254,104 @@ func (m *DevLobbyState_Refused) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
 		i--
 		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Relay) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Relay) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *Relay) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.ExpiresAt != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.ExpiresAt))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Servers) > 0 {
+		for iNdEx := len(m.Servers) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.Servers[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *RelayServer) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RelayServer) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *RelayServer) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Credential) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Credential)
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Username) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Username)
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Urls) > 0 {
+		for iNdEx := len(m.Urls) - 1; iNdEx >= 0; iNdEx-- {
+			i = protobuf_go_lite.EncodeString(dAtA, i, m.Urls[iNdEx])
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -2119,6 +2538,10 @@ func (m *DevLobbyState) SizeVT() (n int) {
 	if vtmsg, ok := m.State.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
 	}
+	if m.Relay != nil {
+		l = m.Relay.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -2145,6 +2568,34 @@ func (m *DevLobbyState_Refused) SizeVT() (n int) {
 	} else {
 		n += 2
 	}
+	return n
+}
+
+func (m *Relay) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	for _, e := range m.Servers {
+		l = e.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	}
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.ExpiresAt)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *RelayServer) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringSlice(1, m.Urls)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Username)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Credential)
+	n += len(m.unknownFields)
 	return n
 }
 
@@ -2344,10 +2795,66 @@ func (x *DevLobbyState) MarshalProtoText() string {
 			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Refused)
 		}
 	}
+	if x.Relay != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "relay")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Relay)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *DevLobbyState) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *Relay) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "Relay")
+	if len(x.Servers) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "servers")
+		for i, v := range x.Servers {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &RelayServer{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if x.ExpiresAt != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "expires_at")
+		protobuf_go_lite.TextWriteInt(&sb, x.ExpiresAt)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *Relay) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *RelayServer) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "RelayServer")
+	if len(x.Urls) > 0 {
+		protobuf_go_lite.TextWriteListStart(&sb, initialLen, "urls")
+		for i, v := range x.Urls {
+			protobuf_go_lite.TextWriteListSeparator(&sb, i)
+			protobuf_go_lite.TextWriteString(&sb, v)
+		}
+		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if x.Username != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "username")
+		protobuf_go_lite.TextWriteString(&sb, x.Username)
+	}
+	if x.Credential != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "credential")
+		protobuf_go_lite.TextWriteString(&sb, x.Credential)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *RelayServer) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -2946,6 +3453,159 @@ func (m *DevLobbyState) UnmarshalVT(dAtA []byte) error {
 				m.State = &DevLobbyState_Refused{Refused: v}
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Relay", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if m.Relay == nil {
+				m.Relay = &Relay{}
+			}
+			if err := m.Relay.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *Relay) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Relay: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Relay: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Servers", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Servers = append(m.Servers, &RelayServer{})
+			if err := m.Servers[len(m.Servers)-1].UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExpiresAt", wireType)
+			}
+			m.ExpiresAt = 0
+			m.ExpiresAt, iNdEx, err = protobuf_go_lite.DecodeVarintInt64(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *RelayServer) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RelayServer: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RelayServer: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Urls", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Urls = append(m.Urls, v)
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Username", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Username = v
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Credential", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Credential = v
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

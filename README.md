@@ -115,12 +115,18 @@ to `build/server.log`.
 On another PC, `modlock join CODE` links to the host, launches Deadlock and
 joins the host's server, so both players play each reload. The guest's game
 shows the mod's interface for the guest's own player, which the host streams to
-it over the same link. The two PCs find each
-other through hyperline.gg's signaling, which needs `modlock login` on both
-(`modlock publish` saves the same sign-in), and then link directly over WebRTC; no game
-traffic passes through hyperline.gg, and two PCs whose routers block a direct
-link cannot play together. The code carries the session's secret:
-anyone holding it can join until the host stops.
+it over the same link. The two PCs find each other through hyperline.gg's
+signaling, which needs `modlock login` on both (`modlock publish` saves the
+same sign-in), and then link directly over WebRTC. The code carries the
+session's secret: anyone holding it can join until the host stops.
+
+A creator who may publish mods also gets a dev lobby: `modlock host` prints the
+lobby's page on hyperline.gg in place of the code, and only the creator's
+friends can join it there, or with `modlock join LINK` after joining the lobby.
+While the lobby is open, links to the host may pass through hyperline.gg's
+relay when the routers block a direct link. Without a lobby, which
+`modlock host --no-lobby` skips, no game traffic passes through hyperline.gg
+and two PCs whose routers block a direct link cannot play together.
 
 ### Without the game
 
@@ -148,7 +154,7 @@ prints its address.
 | `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save.                                                     |
 | `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.                                                      |
 | `modlock host`          | Run the mod like `dev --watch` and print a join code that lets a player on another PC join.                                                  |
-| `modlock join CODE`     | Join a session another PC hosts and launch Deadlock into it.                                                                                 |
+| `modlock join CODE`     | Join a session another PC hosts, by its join code or its dev lobby's link, and launch Deadlock into it.                                      |
 | `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                                                                     |
 | `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.                                                      |
 | `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.                                                       |

@@ -109,14 +109,47 @@ func (f *fakeSignaling) serveDevLobby(w http.ResponseWriter, r *http.Request) {
 	f.mtx.Lock()
 	f.lobby = conn
 	f.mtx.Unlock()
-	state, _ := (&publish.DevLobbyState{State: &publish.DevLobbyState_Url{Url: testLobbyURL}}).MarshalVT()
-	if conn.Write(r.Context(), websocket.MessageBinary, state) != nil {
+	if f.refreshLobby(r.Context(), "first") != nil {
 		return
 	}
 
 	// Hold it until it closes.
 	_, _, err = conn.Read(r.Context())
 	f.lobbyCloses <- websocket.CloseStatus(err)
+}
+
+// refreshLobby sends the open dev lobby's page with a relay whose credential
+// is named username.
+func (f *fakeSignaling) refreshLobby(ctx context.Context, username string) error {
+	// Build the state, then send it on the open socket.
+	relay := &publish.Relay{
+		Servers:   []*publish.RelayServer{{Urls: []string{"stun:127.0.0.1:9", "turn:127.0.0.1:9"}, Username: username, Credential: "secret"}},
+		ExpiresAt: time.Now().Add(time.Hour).UnixMilli(),
+	}
+	state, _ := (&publish.DevLobbyState{State: &publish.DevLobbyState_Url{Url: testLobbyURL}, Relay: relay}).MarshalVT()
+	f.mtx.Lock()
+	conn := f.lobby
+	f.mtx.Unlock()
+	return conn.Write(ctx, websocket.MessageBinary, state)
+}
+
+// requireRelay waits for the TURN credential service's new links use to be
+// named username, or for none when username is empty.
+func requireRelay(t *testing.T, service *Service, username string) {
+	t.Helper()
+	for deadline := time.Now().Add(5 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		config, _ := service.relay.ICEConfig(t.Context())
+		var got string
+		if servers := config.GetIceServers(); len(servers) > 1 {
+			got = servers[1].GetUsername()
+		}
+		if got == username {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("relay credential %q, want %q", got, username)
+		}
+	}
 }
 
 // dropLobby drops the open dev lobby socket without a close.
@@ -330,12 +363,14 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service, signal
 		t.Fatal(err)
 	}
 
-	// The session's dev lobby opens with its secret, and a dropped socket
-	// reconnects to the same lobby.
+	// The session's dev lobby opens with its secret and relay, a refreshed
+	// relay replaces it without repeating the lobby's row, and a dropped
+	// socket reconnects to the same lobby.
 	open := <-signaling.lobbyOpens
 	if open.GetModName() != "Chess" || open.GetVersion() != "0.1.0" || open.GetSecret() != code.Session {
 		t.Fatalf("lobby request %v", open)
 	}
+
 	// requireLobby reads the next lobby state: the page url, or reconnecting
 	// when url is empty.
 	requireLobby := func(url string) {
@@ -347,6 +382,13 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service, signal
 		}
 	}
 	requireLobby(testLobbyURL)
+	requireRelay(t, host, "first")
+	if err := signaling.refreshLobby(ctx, "second"); err != nil {
+		t.Fatal(err)
+	}
+	requireRelay(t, host, "second")
+
+	// The refresh printed nothing, so the next state is the reconnect.
 	signaling.dropLobby()
 	if status := <-signaling.lobbyCloses; status != -1 {
 		t.Fatalf("dropped lobby closed with %v", status)
@@ -417,11 +459,12 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service, signal
 		}
 	}
 
-	// Ending the session closes its lobby normally.
+	// Ending the session closes its lobby normally and drops its relay.
 	endHost()
 	if status := <-signaling.lobbyCloses; status != websocket.StatusNormalClosure {
 		t.Fatalf("ended lobby closed with %v", status)
 	}
+	requireRelay(t, host, "")
 }
 
 // guestSteamID is the guest player's Steam ID.

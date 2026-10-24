@@ -524,6 +524,12 @@ export const DevLobbyOpen: MessageType<DevLobbyOpen> =
  */
 export interface DevLobbyState {
   /**
+   * Relay is the TURN servers the host session may link through while its
+   * lobby is open, unset when the service has none. The service sends the
+   * state again with fresh credentials before these expire.
+   */
+  relay?: Relay
+  /**
    * @generated from oneof modlock.publish.DevLobbyState.state
    */
   state?:
@@ -538,6 +544,7 @@ export const DevLobbyState: MessageType<DevLobbyState> =
     () => [
       [1, 'url', 9, 0, 0, 'state'],
       [2, 'refused', 11, 0, Error.codec, 'state'],
+      [3, 'relay', 11, 0, Relay.codec],
     ],
     {
       decode: (
@@ -562,6 +569,9 @@ export const DevLobbyState: MessageType<DevLobbyState> =
                 ),
               }
               break
+            case 3:
+              m.relay = Relay.decode(r, r.delimited(), m.relay ?? {})
+              break
             default:
               r.skip(t)
           }
@@ -577,6 +587,130 @@ export const DevLobbyState: MessageType<DevLobbyState> =
           const o = m.state
           if (o?.case === 'refused' && o.value != null)
             Error.writeField(w, 2, o.value)
+        }
+        {
+          const v = m.relay
+          if (v != null) Relay.writeField(w, 3, v)
+        }
+      },
+    },
+  )
+
+/**
+ * Relay is a set of TURN servers and the credentials they share.
+ *
+ * @generated from message modlock.publish.Relay
+ */
+export interface Relay {
+  /**
+   * Servers are the relay servers.
+   */
+  servers?: RelayServer[]
+  /**
+   * ExpiresAt is when the credentials stop working, in Unix milliseconds.
+   */
+  expiresAt?: bigint
+}
+
+export const Relay: MessageType<Relay> =
+  /* @__PURE__ */ createMessageType<Relay>(
+    'modlock.publish.Relay',
+    () => [
+      [1, 'servers', 11, 1, RelayServer.codec],
+      [2, 'expires_at', 3],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: Relay): Relay => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              ;(m.servers ??= []).push(RelayServer.decode(r, r.delimited(), {}))
+              break
+            case 2:
+              m.expiresAt = r.int64()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: Relay, w: Writer): void => {
+        {
+          const a = m.servers
+          if (a != null) for (const e of a) RelayServer.writeField(w, 1, e)
+        }
+        {
+          const v = m.expiresAt
+          if (v) w.uint32(16).int64(v)
+        }
+      },
+    },
+  )
+
+/**
+ * RelayServer is one relay server's addresses and credential.
+ *
+ * @generated from message modlock.publish.RelayServer
+ */
+export interface RelayServer {
+  /**
+   * Urls are the server's STUN and TURN addresses.
+   */
+  urls?: string[]
+  /**
+   * Username is the credential's identifier.
+   */
+  username?: string
+  /**
+   * Credential is the credential's secret.
+   */
+  credential?: string
+}
+
+export const RelayServer: MessageType<RelayServer> =
+  /* @__PURE__ */ createMessageType<RelayServer>(
+    'modlock.publish.RelayServer',
+    () => [
+      [1, 'urls', 9, 1],
+      [2, 'username', 9],
+      [3, 'credential', 9],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: RelayServer): RelayServer => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              ;(m.urls ??= []).push(r.string())
+              break
+            case 2:
+              m.username = r.string()
+              break
+            case 3:
+              m.credential = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: RelayServer, w: Writer): void => {
+        {
+          const a = m.urls
+          if (a != null) for (const e of a) w.uint32(10).string(e)
+        }
+        {
+          const v = m.username
+          if (v) w.uint32(18).string(v)
+        }
+        {
+          const v = m.credential
+          if (v) w.uint32(26).string(v)
         }
       },
     },

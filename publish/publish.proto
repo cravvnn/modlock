@@ -120,6 +120,32 @@ message DevLobbyState {
     // Refused explains why no lobby opened; the socket closes after it.
     Error refused = 2;
   }
+
+  // Relay is the TURN servers the host session may link through while its
+  // lobby is open, unset when the service has none. The service sends the
+  // state again with fresh credentials before these expire.
+  Relay relay = 3;
+}
+
+// Relay is a set of TURN servers and the credentials they share.
+message Relay {
+  // Servers are the relay servers.
+  repeated RelayServer servers = 1;
+
+  // ExpiresAt is when the credentials stop working, in Unix milliseconds.
+  int64 expires_at = 2;
+}
+
+// RelayServer is one relay server's addresses and credential.
+message RelayServer {
+  // Urls are the server's STUN and TURN addresses.
+  repeated string urls = 1;
+
+  // Username is the credential's identifier.
+  string username = 2;
+
+  // Credential is the credential's secret.
+  string credential = 3;
 }
 
 // DevLobbyJoin asks for the host session of a dev lobby the signed-in player

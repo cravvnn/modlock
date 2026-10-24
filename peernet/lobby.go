@@ -21,12 +21,16 @@ const lobbyAnswerTimeout = 30 * time.Second
 // service until ctx ends, reporting each change. It opens the socket again
 // after it drops, which resumes the lobby, and stops once the service refuses
 // or there is no sign-in. Ending ctx closes the socket normally, which ends
-// the lobby.
+// the lobby. The peer's new links use the lobby's relay until it returns.
 func (s *Service) holdLobby(ctx context.Context, req *LobbyRequest, secret uint64, report func(*LobbyState)) {
+	// Ask for the session's lobby, and drop its relay once it closes.
 	open := &publish.DevLobbyOpen{ModName: req.GetModName(), Version: req.GetVersion(), Secret: secret}
+	defer s.relay.Hold(nil)
 	retry := time.Second
+	var last *LobbyState
 	for {
-		// Hold the lobby with the current sign-in.
+		// Hold the lobby with the current sign-in, reporting only changes,
+		// since a refresh of the relay repeats the lobby's state.
 		token := s.signIn().Token
 		if token == "" {
 			report(&LobbyState{State: &LobbyState_SignedOut{SignedOut: true}})
@@ -34,7 +38,11 @@ func (s *Service) holdLobby(ctx context.Context, req *LobbyRequest, secret uint6
 		}
 		err := s.holdLobbySocket(ctx, token, open, func(state *publish.DevLobbyState) {
 			retry = time.Second
-			report(lobbyState(state))
+			s.relay.Hold(state.GetRelay())
+			if next := lobbyState(state); !next.EqualVT(last) {
+				last = next
+				report(next)
+			}
 		})
 		switch {
 		case ctx.Err() != nil:
@@ -47,7 +55,8 @@ func (s *Service) holdLobby(ctx context.Context, req *LobbyRequest, secret uint6
 		}
 
 		// Open it again after a growing wait.
-		report(&LobbyState{State: &LobbyState_Reconnecting{Reconnecting: err.Error()}})
+		last = &LobbyState{State: &LobbyState_Reconnecting{Reconnecting: err.Error()}}
+		report(last)
 		select {
 		case <-time.After(retry):
 		case <-ctx.Done():
@@ -60,9 +69,9 @@ func (s *Service) holdLobby(ctx context.Context, req *LobbyRequest, secret uint6
 // errLobbyRefused reports that the service answered with a refusal.
 var errLobbyRefused = errors.New("the service refused the lobby")
 
-// holdLobbySocket opens one dev lobby socket with token, passes the service's
-// answer to answered, and holds the socket until it drops or ctx ends. It
-// returns errLobbyRefused after a refusal.
+// holdLobbySocket opens one dev lobby socket with token, passes each of the
+// service's states to answered, and holds the socket until it drops or ctx
+// ends. It returns errLobbyRefused after a refusal.
 func (s *Service) holdLobbySocket(ctx context.Context, token string, open *publish.DevLobbyOpen, answered func(*publish.DevLobbyState)) error {
 	// Open the socket.
 	dial, cancel := context.WithTimeout(ctx, lobbyAnswerTimeout)
@@ -87,12 +96,8 @@ func (s *Service) holdLobbySocket(ctx context.Context, token string, open *publi
 	}
 
 	// Read the answer.
-	_, data, err = conn.Read(answer)
+	state, err := readLobbyState(answer, conn)
 	if err != nil {
-		return err
-	}
-	state := &publish.DevLobbyState{}
-	if err := state.UnmarshalVT(data); err != nil {
 		return err
 	}
 	answered(state)
@@ -100,8 +105,26 @@ func (s *Service) holdLobbySocket(ctx context.Context, token string, open *publi
 		return errLobbyRefused
 	}
 
-	// Ping it until either side closes it.
-	closed := conn.CloseRead(context.WithoutCancel(ctx))
+	// Read the service's later states until the socket closes.
+	states := make(chan *publish.DevLobbyState)
+	closed, lost := context.WithCancel(context.WithoutCancel(ctx))
+	defer lost()
+	go func() {
+		defer lost()
+		for {
+			state, err := readLobbyState(closed, conn)
+			if err != nil {
+				return
+			}
+			select {
+			case states <- state:
+			case <-closed.Done():
+				return
+			}
+		}
+	}()
+
+	// Ping it and pass on each state until either side closes it.
 	ticker := time.NewTicker(admitPing)
 	defer ticker.Stop()
 	for {
@@ -110,12 +133,24 @@ func (s *Service) holdLobbySocket(ctx context.Context, token string, open *publi
 			return conn.Close(websocket.StatusNormalClosure, "")
 		case <-closed.Done():
 			return errors.New("the connection to " + s.origin + " was lost")
+		case state := <-states:
+			answered(state)
 		case <-ticker.C:
 			if err := conn.Ping(closed); err != nil {
 				return err
 			}
 		}
 	}
+}
+
+// readLobbyState reads one DevLobbyState from conn.
+func readLobbyState(ctx context.Context, conn *websocket.Conn) (*publish.DevLobbyState, error) {
+	_, data, err := conn.Read(ctx)
+	if err != nil {
+		return nil, err
+	}
+	state := &publish.DevLobbyState{}
+	return state, state.UnmarshalVT(data)
 }
 
 // lobbyState reports the service's answer as a lobby state.
