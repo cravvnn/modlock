@@ -47,8 +47,11 @@ const Built = "built"
 var built embed.FS
 
 // Renderer is the built renderer's file name, which a client content package
-// installs as scripts/modlock/ui.js beside the layout in panorama/layout.
-const Renderer = "ui.js"
+// installs as scripts/modlock/ui.js beside the layout in panorama/layout. It
+// is not ui.js, since the library's declarations include ui.d.ts: a mod that
+// imported modlock/ui would type check and then run the renderer on the
+// server.
+const Renderer = "renderer.js"
 
 // Preview is the directory of the built library that holds the preview page
 // modlock dev serves.
