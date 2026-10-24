@@ -194,6 +194,7 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 
 	// Steam cannot connect a game that is already running, so name the
 	// console line that joins.
+	out.field("host", running.Executable)
 	out.field("console", logPath)
 	out.field("join", "connect 127.0.0.1:"+strconv.Itoa(int(c.Uint("port")))+" in a running game's console")
 	out.mark("…", dim, "starting the server")

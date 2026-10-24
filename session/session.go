@@ -27,6 +27,9 @@ const DefaultRelay = "https://hyperline.gg"
 // Session is a running play session: the host with the mods and, once the
 // server is ready, the Deadlock client joined to it.
 type Session struct {
+	// Executable is the modlock-host.exe the session runs: MODLOCK_HOST, or
+	// the downloaded release.
+	Executable string
 	// control is the link to the host.
 	control *Control
 	// host is the host process.
@@ -87,7 +90,7 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 
 	// Serve the mods' interfaces to the game. Another program on the port
 	// leaves them off without stopping the session.
-	session := &Session{control: link, host: host, controlled: make(chan struct{})}
+	session := &Session{Executable: executable, control: link, host: host, controlled: make(chan struct{})}
 	screens := NewScreens(steam.Account(), config.Relay)
 	if config.Interface != "" {
 		if listener, err := net.Listen("tcp", config.Interface); err != nil {
