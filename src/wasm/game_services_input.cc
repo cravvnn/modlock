@@ -305,6 +305,18 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
     ground_ = call.ground_entity;
   }
 
+  // A driven bot's axes reach movement here: the game rebuilds them, and the
+  // movement keys, from its own state after ProcessUsercmds, which keeps the
+  // buttons and view the drive wrote there. The step stays native.
+  const auto driven = std::ranges::find_if(
+      games_, [&](const Game* game) { return game->drives_.contains(call.slot); });
+  if (driven != games_.end()) {
+    const auto& drive = (*driven)->drives_.at(call.slot);
+    call.forward = drive.forward;
+    call.left = drive.left;
+    call.buttons[0] = (call.buttons[0] & ~kMoveKeys) | MoveKeys(drive.forward, drive.left);
+  }
+
   // Record the pawn's command for the mod to read.
   if (call.pawn) {
     // The tick's first command fixes its starting ground; later commands add
@@ -320,18 +332,17 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
     command.set_left(call.left);
     command.set_up(call.up);
   }
+  if (driven != games_.end()) {
+    return false;
+  }
 
   // Steer a bot that replays a recorded command.
   for (auto* game : games_) {
-    for (auto& [slot, steered] : game->steers_) {
-      // Steer the pawn this game replays.
-      if (steered.pawn != call.pawn) {
-        continue;
-      }
-
+    // Steer the player this game replays.
+    if (auto steered = game->steers_.find(call.slot); steered != game->steers_.end()) {
       // The recorded command drives the game's own movement, abilities and
       // animation for this step.
-      auto& steering = steered.steering;
+      auto& steering = steered->second;
       auto& command = *steering.mutable_command();
       call.buttons = {command.held(), command.changed(), command.scroll()};
       call.forward = command.forward();
@@ -370,21 +381,6 @@ bool GameServices::Step(gameinterop::MovementCall& call) {
     }
   }
 
-  // A driven bot's axes reach movement here: the game rebuilds them, and the
-  // movement keys, from its own state after ProcessUsercmds, which keeps the
-  // buttons and view the drive wrote there. The step stays native.
-  for (auto* game : games_) {
-    for (auto& [slot, drive] : game->drives_) {
-      // Drive the pawn this game drives.
-      if (game->observer_.PawnForSlot(slot) != call.pawn) {
-        continue;
-      }
-      call.forward = drive.forward;
-      call.left = drive.left;
-      call.buttons[0] = (call.buttons[0] & ~kMoveKeys) | MoveKeys(drive.forward, drive.left);
-      return false;
-    }
-  }
   return step_ && step_(call);
 }
 

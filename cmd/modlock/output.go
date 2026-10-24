@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/project"
@@ -20,6 +22,9 @@ import (
 type printer struct {
 	// json selects the event lines.
 	json bool
+	// brief keeps a person's output to short lines, for host and join: no
+	// header or fields, and progress without its symbol.
+	brief bool
 	// color and errColor are true when standard output and standard error
 	// show color.
 	color, errColor bool
@@ -39,6 +44,8 @@ type printer struct {
 	// once the person was told about it.
 	latest  string
 	noticed bool
+	// names holds each joined player's name by slot.
+	names map[int32]string
 }
 
 // header opens a session's output with the command line's release, the
@@ -49,30 +56,53 @@ func (p *printer) header(command, name string) {
 		return
 	}
 
-	// Name the session.
+	// Name the session, unless brief.
 	p.mu.Lock()
 	p.session, p.headed = true, true
+	if p.brief {
+		p.mu.Unlock()
+		p.notice()
+		return
+	}
 	_, _ = os.Stdout.WriteString("\n  " + paint(p.color, bold, "modlock "+p.current) + paint(p.color, dim, "  "+command+" "+name) + "\n\n")
 	p.mu.Unlock()
 	p.notice()
 }
 
 // field prints one labeled fact a person may need, such as an address.
+// Brief output leaves it out.
 func (p *printer) field(label, value string) {
-	if p.json {
+	switch {
+	case p.json:
 		p.note(strings.TrimSpace(label)+":", value)
+		return
+	case p.brief:
 		return
 	}
 	p.line(fmt.Sprintf("  %s %s", paint(p.color, dim, fmt.Sprintf("%-8s", label)), value))
 }
 
-// mark prints one line of a session's progress after a symbol in t.
+// mark prints one line of a session's progress after a symbol in t. Brief
+// output keeps the symbol only for a warning or a failure, and starts the
+// line with a capital.
 func (p *printer) mark(symbol string, t tone, text string) {
-	if p.json {
+	switch {
+	case p.json:
 		p.note(text)
-		return
+	case p.brief && t != yellow && t != red:
+		first, size := utf8.DecodeRuneInString(text)
+		p.line(string(unicode.ToUpper(first)) + text[size:])
+	default:
+		p.line(p.pad() + paint(p.color, t, symbol) + " " + text)
 	}
-	p.line("  " + paint(p.color, t, symbol) + " " + text)
+}
+
+// pad returns the indent of a session's lines, which brief output leaves out.
+func (p *printer) pad() string {
+	if p.brief {
+		return ""
+	}
+	return "  "
 }
 
 // line prints text as one whole line on standard output.
@@ -172,7 +202,7 @@ func (p *printer) built(dir string, err error) {
 	switch {
 	case p.json:
 		p.emit(event)
-	case session && err == nil:
+	case session && err == nil && !p.brief:
 		p.mark("✓", green, "built "+filepath.Base(dir))
 	}
 }
@@ -209,23 +239,48 @@ func (p *printer) host(event *control.HostEvent) {
 	}
 
 	// Describe the events a person follows.
-	switch {
+	switch name := p.name(event); {
 	case event.GetReady() != nil && event.GetReady().GetMap() == "":
 		p.mark("●", green, "ready")
 	case event.GetReady() != nil:
 		p.mark("●", green, "server ready on "+event.GetReady().GetMap())
 	case event.GetJoined() != nil:
-		p.mark("→", cyan, event.GetJoined().GetName()+" joined")
+		p.mark("→", cyan, name+" joined")
+	case event.GetLeft() != nil && name != "":
+		p.mark("←", dim, name+" left")
+	case event.GetChat() != nil:
+		p.line(p.pad() + paint(p.color, bold, event.GetChat().GetName()+":") + " " + event.GetChat().GetText())
 	case event.GetStarted() != nil && event.GetStarted().GetReloaded():
 		p.mark("↻", cyan, event.GetStarted().GetMod()+" reloaded")
 	case event.GetStarted() != nil:
 		p.mark("✓", green, event.GetStarted().GetMod()+" started")
 	case event.GetLog() != nil:
-		p.line("  " + paint(p.color, dim, "["+event.GetLog().GetMod()+"]") + " " + event.GetLog().GetText())
+		p.line(p.pad() + paint(p.color, dim, "["+event.GetLog().GetMod()+"]") + " " + event.GetLog().GetText())
 	case event.GetMessage() != nil:
-		p.line("  " + paint(p.color, dim, "["+event.GetMessage().GetMod()+"]") + " " + shown(event.GetMessage()))
+		p.line(p.pad() + paint(p.color, dim, "["+event.GetMessage().GetMod()+"]") + " " + shown(event.GetMessage()))
 	case event.GetFailed() != nil:
 		p.failed(event.GetFailed().GetMod(), event.GetFailed().GetError())
+	}
+}
+
+// name follows each player's name through joins and leaves, and returns the
+// name of the player who joined or left in event.
+func (p *printer) name(event *control.HostEvent) string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	switch {
+	case event.GetJoined() != nil:
+		if p.names == nil {
+			p.names = make(map[int32]string)
+		}
+		p.names[event.GetJoined().GetSlot()] = event.GetJoined().GetName()
+		return event.GetJoined().GetName()
+	case event.GetLeft() != nil:
+		name := p.names[event.GetLeft().GetSlot()]
+		delete(p.names, event.GetLeft().GetSlot())
+		return name
+	default:
+		return ""
 	}
 }
 
@@ -237,7 +292,7 @@ func (p *printer) failed(mod, text string) {
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	_, _ = os.Stderr.WriteString("  " + paint(p.errColor, red, "✗") + " " + text + "\n")
+	_, _ = os.Stderr.WriteString(p.pad() + paint(p.errColor, red, "✗") + " " + text + "\n")
 }
 
 // indent moves each line of text two columns right.

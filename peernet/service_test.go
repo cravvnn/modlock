@@ -306,6 +306,21 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 			mirror.Apply(frame.GetChanges(), frame.GetReset_())
 		}
 	}
+
+	// A line said in the game reaches the guest.
+	said := &control.PlayerChat{Name: "Host", Text: "gg"}
+	if err := hosted.Send(&HostInput{Body: &HostInput_Server{Server: &control.HostEvent{Body: &control.HostEvent_Chat{Chat: said}}}}); err != nil {
+		t.Fatal(err)
+	}
+	for line := (*control.PlayerChat)(nil); line == nil; {
+		event, err := joined.Recv()
+		if err != nil {
+			t.Fatalf("join event: %v", err)
+		}
+		if line = event.GetChat(); line != nil && line.GetName()+": "+line.GetText() != "Host: gg" {
+			t.Fatalf("chat line %v", line)
+		}
+	}
 }
 
 // guestSteamID is the guest player's Steam ID.

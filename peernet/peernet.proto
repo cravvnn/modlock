@@ -29,9 +29,10 @@ service PeerNet {
 // Session is the service a hosting PC's daemon serves to its guests' daemons
 // over their peer link, on SessionProtocolID.
 service Session {
-  // WatchScreen streams what the mods show the guest: the whole screen
-  // first, then only what changed.
-  rpc WatchScreen(WatchScreenRequest) returns (stream ScreenFrame);
+  // Watch streams what the guest sees: what the mods show them, the whole
+  // screen first and then only what changed, and each chat line said from
+  // the call on.
+  rpc Watch(WatchRequest) returns (stream SessionEvent);
 }
 
 // AdmissionState is where a peer stands with the signaling service, which
@@ -153,11 +154,13 @@ message JoinEvent {
     // screen changes what the mods show the guest. A reset frame carries
     // the whole screen.
     ScreenFrame screen = 3;
+    // chat is a line a player said in the game.
+    modlock.host_app.control.PlayerChat chat = 4;
   }
 }
 
-// WatchScreenRequest names the guest whose screen to stream.
-message WatchScreenRequest {
+// WatchRequest names the guest whose session to stream.
+message WatchRequest {
   // session is the join code's secret.
   fixed64 session = 1;
   // steam_id is the guest's Steam ID.
@@ -171,4 +174,14 @@ message ScreenFrame {
   // reset starts the screen over before the changes, as the first frame of
   // each watch does.
   bool reset = 2;
+}
+
+// SessionEvent is one thing a guest sees in a hosted session.
+message SessionEvent {
+  oneof body {
+    // screen changes what the mods show the guest.
+    ScreenFrame screen = 1;
+    // chat is a line a player said in the game.
+    modlock.host_app.control.PlayerChat chat = 2;
+  }
 }

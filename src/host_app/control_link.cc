@@ -175,6 +175,21 @@ std::expected<void, std::string> ControlLink::Watch(EngineHost& engine) {
     }
     connections_ = std::move(*connections);
     joining_ = true;
+
+    // Report chat; the session plays on without it.
+    auto chat = engine.OnChat([this](int32_t slot, std::string_view text) {
+      control::HostEvent event;
+      auto* line = event.mutable_chat();
+      line->set_slot(slot);
+      line->set_name(names_[slot]);
+      line->set_text(std::string(text));
+      Push(std::move(event));
+    });
+    if (!chat) {
+      std::cerr << "control: chat is unavailable: " << chat.error() << '\n';
+      return;
+    }
+    chat_ = std::move(*chat);
   });
   if (!world) {
     return std::unexpected(world.error());
@@ -256,10 +271,12 @@ void ControlLink::OnConnected(int32_t slot, uint64_t xuid, bool bot, const char*
   joined->set_slot(slot);
   joined->set_name(name ? name : "");
   joined->set_steam_id(xuid);
+  names_[slot] = joined->name();
   Push(std::move(event));
 }
 
 void ControlLink::OnDisconnecting(int32_t slot, uint64_t) {
+  names_.erase(slot);
   control::HostEvent event;
   event.mutable_left()->set_slot(slot);
   Push(std::move(event));

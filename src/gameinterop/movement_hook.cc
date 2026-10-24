@@ -4,6 +4,7 @@
 #include <cstring>
 #include <optional>
 
+#include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
 
@@ -39,6 +40,7 @@ struct Layout {
   size_t command = 0;
   size_t chain = 0;
   size_t services = 0;
+  size_t controller = 0;
   size_t ground = 0;
   size_t move_type = 0;
 };
@@ -60,6 +62,7 @@ std::expected<Layout, std::string> Resolve(const char* module, const char* entit
       {"CPlayer_MovementServices", "m_nLastCommandNumberProcessed", 0, &layout.command},
       {"CPlayerPawnComponent", "__m_pChainEntity", 0, &layout.chain},
       {pawn, "m_pMovementServices", 0, &layout.services},
+      {pawn, "m_hController", 0, &layout.controller},
       {entity, "m_hGroundEntity", 0, &layout.ground},
       {entity, "m_MoveType", 0, &layout.move_type},
   };
@@ -148,6 +151,12 @@ void Dispatch(Hook& hook, void* services, void* data) {
   if (call.pawn) {
     Read(static_cast<const unsigned char*>(call.pawn), hook.layout->ground, call.ground_entity);
     Read(static_cast<const unsigned char*>(call.pawn), hook.layout->move_type, call.move_type);
+    uint32_t controller = kInvalidEHandleIndex;
+    Read(static_cast<const unsigned char*>(call.pawn), hook.layout->controller, controller);
+    const auto slot = static_cast<int32_t>(EntityIndexOf(controller)) - 1;
+    if (controller != kInvalidEHandleIndex && IsPlayerSlot(slot)) {
+      call.slot = slot;
+    }
   }
 
   // The handler may rewrite buttons even when it leaves movement native. The

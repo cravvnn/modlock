@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/binary"
+	"math"
 	"net"
 	"strconv"
 	"strings"
@@ -169,8 +170,9 @@ func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 	}
 	defer s.hosting.Store(false)
 
-	// Follow the server's players and interfaces until the caller stops.
-	screens := session.NewScreens(0)
+	// Follow the server's players, interfaces and chat until the caller
+	// stops.
+	screens, chat := session.NewScreens(0), session.NewChat()
 	go func() {
 		defer cancel()
 		for {
@@ -178,7 +180,11 @@ func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 			if err != nil {
 				return
 			}
-			if event := in.GetServer(); event != nil {
+			event := in.GetServer()
+			if line := event.GetChat(); line != nil {
+				chat.Add(line)
+			}
+			if event != nil {
 				screens.Handle(event)
 			}
 		}
@@ -194,7 +200,8 @@ func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 	// Answer guests, sending each change in order.
 	events := make(chan *HostEvent, 16)
 	events <- &HostEvent{Body: &HostEvent_JoinCode{JoinCode: code.String()}}
-	h, err := s.newHosting(ctx, code.Session, int(port), screens, func(event *HostEvent) {
+	guests := &sessionServer{session: code.Session, screens: screens, chat: chat}
+	h, err := s.newHosting(ctx, int(port), guests, func(event *HostEvent) {
 		select {
 		case events <- event:
 		case <-ctx.Done():
@@ -223,16 +230,16 @@ func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
 }
 
 // newHosting returns the session that forwards guests to the server on port
-// and serves them their screens from screens.
-func (s *Service) newHosting(ctx context.Context, secret uint64, port int, screens *session.Screens, events func(*HostEvent)) (*hosting, error) {
+// and serves them what they see from guests.
+func (s *Service) newHosting(ctx context.Context, port int, guests *sessionServer, events func(*HostEvent)) (*hosting, error) {
 	mux := srpc.NewMux()
-	if err := SRPCRegisterSession(mux, &sessionServer{session: secret, screens: screens}); err != nil {
+	if err := SRPCRegisterSession(mux, guests); err != nil {
 		return nil, err
 	}
 	return &hosting{
 		ctx:      ctx,
 		local:    s.local,
-		session:  secret,
+		session:  guests.session,
 		target:   &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: port},
 		events:   events,
 		sessions: srpc.NewServer(mux),
@@ -245,40 +252,54 @@ type sessionServer struct {
 	session uint64
 	// screens holds every player's screen.
 	screens *session.Screens
+	// chat holds the newest lines said.
+	chat *session.Chat
 }
 
-// WatchScreen streams the guest's screen: the whole screen first, then at
-// most one frame of changes each FrameGap. Comparing screens instead of
-// queuing the mods' changes means a slow guest gets the newest screen, never
-// a backlog.
-func (s *sessionServer) WatchScreen(req *WatchScreenRequest, strm SRPCSession_WatchScreenStream) error {
+// Watch streams what the guest sees: the whole screen first, then at most
+// one frame of changes and new chat lines each FrameGap. Comparing screens
+// instead of queuing the mods' changes means a slow guest gets the newest
+// screen, never a backlog.
+func (s *sessionServer) Watch(req *WatchRequest, strm SRPCSession_WatchStream) error {
 	// Refuse a guest without the join code.
 	ctx := strm.Context()
 	if req.GetSession() != s.session {
 		return errors.New("the join code names another session")
 	}
 
-	// Send the screen whole, then each change.
+	// Send the screen whole, then each change and each line said from now on.
 	sent := &ui.Screen{}
+	_, said, _ := s.chat.Since(math.MaxUint64)
 	for reset := true; ; reset = false {
+		lines, next, spoken := s.chat.Since(said)
+		for _, line := range lines {
+			if err := strm.Send(&SessionEvent{Body: &SessionEvent_Chat{Chat: line}}); err != nil {
+				return err
+			}
+		}
+		said = next
+
+		// Send the screen's changes, if any.
 		screen, changed := s.screens.Player(req.GetSteamId())
 		if changes := session.Changes(sent, screen); reset || len(changes) != 0 {
-			if err := strm.Send(&ScreenFrame{Changes: changes, Reset_: reset}); err != nil {
+			frame := &ScreenFrame{Changes: changes, Reset_: reset}
+			if err := strm.Send(&SessionEvent{Body: &SessionEvent_Screen{Screen: frame}}); err != nil {
 				return err
 			}
 			sent = screen
 		}
-		if !waitFrame(ctx, changed) {
+		if !waitFrame(ctx, changed, spoken) {
 			return nil
 		}
 	}
 }
 
-// waitFrame waits for changed, then for the gap between frames, and reports
-// whether ctx is still open.
-func waitFrame(ctx context.Context, changed <-chan struct{}) bool {
+// waitFrame waits for changed or spoken, then for the gap between frames, and
+// reports whether ctx is still open.
+func waitFrame(ctx context.Context, changed, spoken <-chan struct{}) bool {
 	select {
 	case <-changed:
+	case <-spoken:
 	case <-ctx.Done():
 		return false
 	}
@@ -319,12 +340,12 @@ func (s *Service) Join(req *JoinRequest, strm SRPCPeerNet_JoinStream) error {
 		return err
 	}
 
-	// Stream the player's screen while the game plays.
+	// Stream what the player sees while the game plays.
 	if req.GetSteamId() != 0 {
 		watch, cancel := context.WithCancel(ctx)
 		defer cancel()
 		host := NewSRPCSessionClient(srpc.NewClient(stream_srpc.NewOpenStreamFunc(s.node.GetBus(), SessionProtocolID, s.local, code.Host, 0)))
-		go s.watchScreen(watch, host, &WatchScreenRequest{Session: code.Session, SteamId: req.GetSteamId()}, send)
+		go s.watch(watch, host, &WatchRequest{Session: code.Session, SteamId: req.GetSteamId()}, send)
 	}
 
 	// Report the game's arrival, then hold until it leaves.
@@ -341,17 +362,17 @@ func (s *Service) Join(req *JoinRequest, strm SRPCPeerNet_JoinStream) error {
 	return nil
 }
 
-// watchScreen forwards the player's screen from the host until ctx ends,
-// watching again after a lost stream. Each watch starts with the whole
-// screen, so the guest never applies a change to a screen it lacks.
-func (s *Service) watchScreen(ctx context.Context, host SRPCSessionClient, req *WatchScreenRequest, send func(*JoinEvent) error) {
+// watch forwards what the player sees from the host until ctx ends, watching
+// again after a lost stream. Each watch starts with the whole screen, so the
+// guest never applies a change to a screen it lacks.
+func (s *Service) watch(ctx context.Context, host SRPCSessionClient, req *WatchRequest, send func(*JoinEvent) error) {
 	for {
-		// Forward each frame until the stream ends.
-		frames, err := host.WatchScreen(ctx, req)
+		// Forward each frame and line until the stream ends.
+		events, err := host.Watch(ctx, req)
 		for err == nil {
-			var frame *ScreenFrame
-			if frame, err = frames.Recv(); err == nil {
-				err = send(&JoinEvent{Body: &JoinEvent_Screen{Screen: frame}})
+			var event *SessionEvent
+			if event, err = events.Recv(); err == nil {
+				err = send(joinEvent(event))
 			}
 		}
 
@@ -362,4 +383,12 @@ func (s *Service) watchScreen(ctx context.Context, host SRPCSessionClient, req *
 		case <-time.After(time.Second):
 		}
 	}
+}
+
+// joinEvent returns the Join event that reports a session event.
+func joinEvent(event *SessionEvent) *JoinEvent {
+	if line := event.GetChat(); line != nil {
+		return &JoinEvent{Body: &JoinEvent_Chat{Chat: line}}
+	}
+	return &JoinEvent{Body: &JoinEvent_Screen{Screen: event.GetScreen()}}
 }

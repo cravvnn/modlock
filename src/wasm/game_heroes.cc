@@ -817,8 +817,7 @@ std::expected<void, std::string> Game::Steer(const movement::SteerRequest& reque
   if (auto sample = Live(slot); !sample) {
     return std::unexpected(sample.error());
   }
-  steers_.insert_or_assign(
-      slot, Steered{.pawn = observer_.PawnForSlot(slot), .steering = request.steering()});
+  steers_.insert_or_assign(slot, request.steering());
   auto steps = services_.Steps();
   if (!steps) {
     steers_.erase(slot);

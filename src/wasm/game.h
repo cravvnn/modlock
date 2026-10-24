@@ -664,14 +664,8 @@ class Game : public HostService {
   // movers_ is the players whose movement the mod watches.
   std::set<int32_t> movers_;
 
-  // Steered is one hero's replayed command, with its pawn.
-  struct Steered {
-    void* pawn = nullptr;
-    movement::Steering steering;
-  };
-
   // steers_ maps each steered player to the command its hero replays.
-  std::map<int32_t, Steered> steers_;
+  std::map<int32_t, movement::Steering> steers_;
   // drives_ maps each driven bot's slot to the command its hero runs.
   std::map<int32_t, gameinterop::BotDrive::Command> drives_;
   // held_ is the modifier states the mod holds, by entity handle and name;

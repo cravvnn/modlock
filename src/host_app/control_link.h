@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "modlock/engine_host.h"
@@ -35,7 +36,7 @@ class ControlLink final : public WasmHostObserver, public gameinterop::Connectio
   [[nodiscard]] static std::expected<std::unique_ptr<ControlLink>, std::string> Dial(
       std::string_view address);
 
-  // Watch reports server readiness and player joins from engine, from the
+  // Watch reports server readiness, player joins and chat from engine, from the
   // next world load on. It runs once, before the engine starts; engine must
   // outlive the link.
   [[nodiscard]] std::expected<void, std::string> Watch(EngineHost& engine);
@@ -68,11 +69,14 @@ class ControlLink final : public WasmHostObserver, public gameinterop::Connectio
   // requests_ holds the requests to run; pending_ is true while it has any.
   std::vector<control::ControlRequest> requests_;
   std::atomic<bool> pending_ = false;
-  // world_ and connections_ follow the engine for the link's lifetime;
-  // joining_ is true once connections_ subscribed.
+  // world_, connections_ and chat_ follow the engine for the link's
+  // lifetime; joining_ is true once connections_ subscribed.
   Subscription world_;
   Subscription connections_;
+  Subscription chat_;
   bool joining_ = false;
+  // names_ holds each joined human's name by slot, on the engine thread.
+  std::unordered_map<int32_t, std::string> names_;
   // reader_ queues requests and sender_ sends events; the destructor stops
   // both before the connection closes.
   std::jthread reader_;

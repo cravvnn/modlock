@@ -32,14 +32,15 @@ func hostCommand(out *printer) *cli.Command {
 			},
 		),
 		Action: func(c *cli.Context) error {
+			out.brief = true
 			return runDev(c, out, "host", true)
 		},
 	}
 }
 
 // hostSession serves running to guests until the command ends, printing the
-// join code and each guest that joins or leaves, and sends the daemon each
-// player's interface from feed. Hosting is optional: when it cannot start,
+// join code, and sends the daemon each player's interface and chat from feed.
+// The server itself reports each player who joins or leaves. Hosting is optional: when it cannot start,
 // the session keeps running for this PC alone.
 func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
 	// Only a game server can take guests.
@@ -75,20 +76,15 @@ func hostSession(c *cli.Context, out *printer, running server, feed *hostFeed) {
 			}
 			return
 		}
-		switch body := event.GetBody().(type) {
-		case *peernet.HostEvent_JoinCode:
-			out.field("join code", body.JoinCode)
-			out.note("on the other PC: modlock join " + body.JoinCode)
-		case *peernet.HostEvent_Joined:
-			out.mark("+", green, "a guest joined: "+body.Joined)
-		case *peernet.HostEvent_Left:
-			out.mark("-", dim, "a guest left: "+body.Left)
+		if code := event.GetJoinCode(); code != "" {
+			out.mark("●", green, "hosting; on the other PC run: modlock join "+code)
 		}
 	}
 }
 
 // hostFeed keeps every player's interface from the session's first event, so
-// a daemon that starts hosting later gets the whole state, then each change.
+// a daemon that starts hosting later gets the whole state, then each change
+// and each chat line.
 type hostFeed struct {
 	// mu guards the fields below.
 	mu sync.Mutex
@@ -107,11 +103,11 @@ func newHostFeed() *hostFeed {
 	return &hostFeed{screens: session.NewScreens(0), wake: make(chan struct{}, 1)}
 }
 
-// observe follows the players and interfaces in event.
+// observe follows the players, interfaces and chat in event.
 func (f *hostFeed) observe(event *modcli.Event) {
-	// Take only the events that change a player's screen.
+	// Take only the events that change what a guest sees.
 	host := event.GetHost()
-	if host.GetJoined() == nil && host.GetLeft() == nil && host.GetUi() == nil {
+	if host.GetJoined() == nil && host.GetLeft() == nil && host.GetUi() == nil && host.GetChat() == nil {
 		return
 	}
 
@@ -184,6 +180,7 @@ func joinCommand(out *printer) *cli.Command {
 			if code == "" {
 				return errors.New("pass the join code modlock host printed")
 			}
+			out.brief = true
 			out.header("join", code)
 
 			// Serve this player's interfaces before the game starts.
@@ -203,34 +200,39 @@ func joinCommand(out *printer) *cli.Command {
 			}
 
 			// Launch the game at the endpoint, and hold until it leaves.
-			out.mark("…", dim, "linking to the host")
+			out.mark("…", dim, "joining…")
 			for {
 				event, err := stream.Recv()
-				if err != nil {
-					if c.Context.Err() != nil || errors.Is(err, io.EOF) {
-						return nil
-					}
+				switch {
+				case c.Context.Err() != nil:
+					return nil
+				case errors.Is(err, io.EOF):
+					out.mark("←", dim, "left")
+					return nil
+				case err != nil:
 					return err
 				}
 				switch body := event.GetBody().(type) {
 				case *peernet.JoinEvent_Address:
 					launchGuest(c, out, body.Address)
 				case *peernet.JoinEvent_Arrived:
-					out.mark("✓", green, "in the host's game")
+					out.mark("✓", green, "joined")
 				case *peernet.JoinEvent_Screen:
 					mirror.Apply(body.Screen.GetChanges(), body.Screen.GetReset_())
+				case *peernet.JoinEvent_Chat:
+					out.host(&control.HostEvent{Body: &control.HostEvent_Chat{Chat: body.Chat}})
 				}
 			}
 		},
 	}
 }
 
-// launchGuest names the console line that joins address and launches
-// Deadlock into it unless the guest joins by hand.
+// launchGuest launches Deadlock into address, or names the console line that
+// joins it when the guest joins by hand.
 func launchGuest(c *cli.Context, out *printer, address string) {
 	// Steam cannot connect a game that is already running, so name the line.
-	out.field("join", "connect "+address+" in a running game's console")
 	if c.Bool("no-game") {
+		out.mark("●", green, "in a running game's console, enter: connect "+address)
 		return
 	}
 
@@ -240,7 +242,7 @@ func launchGuest(c *cli.Context, out *printer, address string) {
 		err = steam.LaunchDeadlock(c.Context, "-console", "-condebug", "+connect", address)
 	}
 	if err != nil {
-		out.mark("!", yellow, "join from the console: "+err.Error())
+		out.mark("!", yellow, err.Error()+"; in a running game's console, enter: connect "+address)
 	}
 }
 

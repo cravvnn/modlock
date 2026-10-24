@@ -58,7 +58,22 @@ message HostEvent {
     // Message carries a message a mod showed a player: a chat line, center
     // text or an announcement.
     PlayerMessage message = 8;
+
+    // Chat carries a line a player said in chat.
+    PlayerChat chat = 9;
   }
+}
+
+// PlayerChat is a line a player said in chat, to everyone or to their team.
+message PlayerChat {
+  // Slot is the speaker's slot.
+  int32 slot = 1;
+
+  // Name is the speaker's name.
+  string name = 2;
+
+  // Text is what they said.
+  string text = 3;
 }
 
 // ModStarted identifies a mod that started.

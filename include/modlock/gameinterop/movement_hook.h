@@ -22,6 +22,9 @@ struct MovementCall {
   // or null when the component's owner cannot be verified.
   void* services = nullptr;
   void* pawn = nullptr;
+  // slot is the player slot of the pawn's controller, or -1 when the pawn or
+  // its controller is unknown.
+  int32_t slot = -1;
   // move_type is the pawn's native MoveType_t; preparation freezes use kNone.
   uint8_t move_type = 0;
   // command is the client command number on the client. The server stores the
