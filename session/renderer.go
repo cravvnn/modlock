@@ -90,8 +90,13 @@ func mountRenderer(gameDir string, renderer *Renderer, mods []string) (func() er
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(filepath.Join(dir, "pak01_dir.vpk"), archive.Bytes(), 0o644); err != nil {
-		return nil, err
+	// A running game holds the package open on Windows, so leave an
+	// unchanged package as it is.
+	pak := filepath.Join(dir, "pak01_dir.vpk")
+	if current, err := os.ReadFile(pak); err != nil || !bytes.Equal(current, archive.Bytes()) {
+		if err := os.WriteFile(pak, archive.Bytes(), 0o644); err != nil {
+			return nil, err
+		}
 	}
 	mounted, err := gameinfo.Mount(source, rendererMount, rendererDir)
 	if err != nil {
