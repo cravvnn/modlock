@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aperturerobotics/controllerbus/bus"
 	"github.com/aperturerobotics/controllerbus/controller"
 	"github.com/aperturerobotics/controllerbus/directive"
 	"github.com/aperturerobotics/starpc/srpc"
@@ -73,6 +74,8 @@ func ParseJoinCode(code string) (JoinCode, error) {
 type hosting struct {
 	// ctx ends the hosted session and every guest's forwarding.
 	ctx context.Context
+	// bus holds each guest's link while the host serves it.
+	bus bus.Bus
 	// local is the hosting peer.
 	local peer.ID
 	// session is the join code's secret.
@@ -112,11 +115,15 @@ func (h *hosting) HandleDirective(_ context.Context, inst directive.Instance) ([
 
 // HandleMountedStream serves a session stream's call, and forwards a guest
 // whose game stream names the session to the server until the guest or the
-// session ends, closing any other stream.
+// session ends, closing any other stream. Each stream holds the guest's link
+// while it is served.
 func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStream) error {
 	// Serve a session call; the call checks the join code.
 	if mounted.GetProtocolID() == SessionProtocolID {
-		go h.sessions.HandleStream(h.ctx, mounted.GetStream())
+		go func() {
+			defer h.holdLink(mounted.GetPeerID())()
+			h.sessions.HandleStream(h.ctx, mounted.GetStream())
+		}()
 		return nil
 	}
 
@@ -128,6 +135,8 @@ func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStr
 	}
 	guest := mounted.GetPeerID().String()
 	go func() {
+		defer h.holdLink(mounted.GetPeerID())()
+
 		// Refuse a guest without the join code.
 		control := messages.Control()
 		generation, err := gamelink.ReadGeneration(h.ctx, control)
@@ -142,6 +151,18 @@ func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStr
 		h.events(&HostEvent{Body: &HostEvent_Left{Left: guest}})
 	}()
 	return nil
+}
+
+// holdLink keeps the link to guest open until the returned release is called.
+// A link the guest dialed stays open only while a directive references it on
+// this side too; without one the transport closes it seconds after it opens,
+// in the middle of the guest's game.
+func (h *hosting) holdLink(guest peer.ID) func() {
+	_, ref, err := h.bus.AddDirective(link.NewEstablishLinkWithPeer(h.local, guest), nil)
+	if err != nil {
+		return func() {}
+	}
+	return ref.Release
 }
 
 // Host serves the local game server to guests holding the join code it sends
@@ -254,6 +275,7 @@ func (s *Service) newHosting(ctx context.Context, port int, guests *sessionServe
 	}
 	return &hosting{
 		ctx:      ctx,
+		bus:      s.node.GetBus(),
 		local:    s.local,
 		session:  guests.session,
 		target:   &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: port},
