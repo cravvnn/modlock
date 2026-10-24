@@ -1,6 +1,6 @@
 //go:build deps_only
 
-#include "wasm/ability_tuning.h"
+#include "wasm/definition_changes.h"
 
 #include <array>
 #include <cstring>

@@ -176,7 +176,7 @@ add_library(modlock_sdk SHARED
   src/render/world_text_game_factory.cc
   src/wasm/instance.cc
   src/wasm/runtime.cc
-  src/wasm/ability_tuning.cc
+  src/wasm/definition_changes.cc
   src/wasm/game.cc
   src/wasm/game_combat.cc
   src/wasm/game_effects.cc

@@ -12,7 +12,7 @@
 #include "modlock/gameinterop/connection_tracker.h"
 #include "modlock/gameinterop/entity_abi.h"
 #include "modlock/gameinterop/mapped_module_image.h"
-#include "wasm/ability_tuning.h"
+#include "wasm/definition_changes.h"
 
 namespace modlock::wasm {
 
