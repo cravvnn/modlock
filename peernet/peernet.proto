@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package modlock.peernet;
+
+option go_package = "github.com/paralin/modlock/peernet;peernet";
+
+// PeerNet is the service a modlock daemon serves for its peer: the PC's
+// identity on the peer network and the links it can open to other PCs.
+service PeerNet {
+  // GetPeer returns the daemon's peer and its admission to signaling.
+  rpc GetPeer(GetPeerRequest) returns (GetPeerResponse);
+
+  // Probe opens a stream to another peer and measures its round trip.
+  rpc Probe(ProbeRequest) returns (ProbeResponse);
+}
+
+// AdmissionState is where a peer stands with the signaling service, which
+// introduces it to peers it cannot reach on its own network.
+enum AdmissionState {
+  // ADMISSION_STATE_SIGNED_OUT means no sign-in is saved, so the service
+  // does not know the peer.
+  ADMISSION_STATE_SIGNED_OUT = 0;
+  // ADMISSION_STATE_CONNECTING means the peer is opening its admission
+  // socket, or waits to retry after it dropped.
+  ADMISSION_STATE_CONNECTING = 1;
+  // ADMISSION_STATE_ADMITTED means the service signals for the peer.
+  ADMISSION_STATE_ADMITTED = 2;
+  // ADMISSION_STATE_REFUSED means the service refused the saved sign-in,
+  // which has expired or was signed out.
+  ADMISSION_STATE_REFUSED = 3;
+}
+
+// GetPeerRequest asks for the daemon's peer.
+message GetPeerRequest {}
+
+// GetPeerResponse describes the daemon's peer.
+message GetPeerResponse {
+  // peer_id is the PC's peer on the network.
+  string peer_id = 1;
+  // origin is the signaling service, such as https://hyperline.gg.
+  string origin = 2;
+  // admission is the peer's standing with that service.
+  AdmissionState admission = 3;
+  // account is the signed-in name, when a sign-in is saved.
+  string account = 4;
+  // error says why the last admission attempt failed while connecting.
+  string error = 5;
+}
+
+// ProbeRequest names the peer to measure.
+message ProbeRequest {
+  // peer_id is the other PC's peer.
+  string peer_id = 1;
+}
+
+// ProbeResponse reports one measured link.
+message ProbeResponse {
+  // rtt_us is the shortest round trip of the probe's packets, in
+  // microseconds.
+  uint32 rtt_us = 1;
+  // relayed reports that the link runs through the service's relay rather
+  // than directly between the PCs.
+  bool relayed = 2;
+}
+
+// RelayCredentials answers GET /api/turn-credentials, which issues
+// short-lived relay credentials to a signed-in creator.
+message RelayCredentials {
+  // servers are the relay servers the peer may use.
+  repeated RelayServer servers = 1;
+  // expires_at is when the credentials stop working, in Unix milliseconds.
+  int64 expires_at = 2;
+}
+
+// RelayServer is one relay and its credential.
+message RelayServer {
+  // urls are the server's STUN and TURN addresses.
+  repeated string urls = 1;
+  // username is the credential's identifier.
+  string username = 2;
+  // credential is the credential's secret.
+  string credential = 3;
+}

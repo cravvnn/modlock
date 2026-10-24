@@ -45,6 +45,10 @@ aptre --rpc none --language go --language ts \
 # The daemon's service serves the modlock processes on one PC.
 aptre --rpc starpc --language go --targets './daemon/*.proto'
 
+# The peer's service serves the modlock processes on one PC; its relay
+# credentials mirror the answer of the service that issues them.
+aptre --rpc starpc --language go --targets './peernet/*.proto'
+
 # The game dump serves the host that writes it and the generators that read it.
 aptre --rpc none --language cpp --language go --targets './src/host_app/dump/*.proto'
 

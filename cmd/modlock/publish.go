@@ -78,13 +78,13 @@ func publishCommand(out *printer) *cli.Command {
 // publishHyperline uploads mod to Hyperline and reports its review.
 func publishHyperline(c *cli.Context, out *printer, mod *modpublish.Mod, name string) error {
 	// Upload with the saved sign-in.
-	config, err := os.UserConfigDir()
+	sessionFile, err := hyperlineSessionFile()
 	if err != nil {
-		return errors.Wrap(err, "find the configuration directory")
+		return err
 	}
 	service := &modpublish.Hyperline{
 		Origin:      c.String("origin"),
-		SessionFile: filepath.Join(config, "modlock", "hyperline-session.json"),
+		SessionFile: sessionFile,
 		Output:      os.Stderr,
 	}
 	release, err := service.Publish(c.Context, mod)
@@ -103,4 +103,13 @@ func publishHyperline(c *cli.Context, out *printer, mod *modpublish.Mod, name st
 		out.note("published " + name + "; it appears once a reviewer approves it")
 	}
 	return nil
+}
+
+// hyperlineSessionFile is where modlock saves the creator's Hyperline sign-in.
+func hyperlineSessionFile() (string, error) {
+	config, err := os.UserConfigDir()
+	if err != nil {
+		return "", errors.Wrap(err, "find the configuration directory")
+	}
+	return filepath.Join(config, "modlock", "hyperline-session.json"), nil
 }

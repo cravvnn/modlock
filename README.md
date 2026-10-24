@@ -128,16 +128,16 @@ prints its address.
 
 ### Commands
 
-| Command                 | Effect                                                                                   |
-| ----------------------- | ---------------------------------------------------------------------------------------- |
-| `modlock new DIR`       | Create a mod project in `DIR`.                                                           |
-| `modlock build`         | Check the mod and write the built mod to `build/`.                                       |
-| `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save. |
-| `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.  |
-| `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                 |
-| `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.  |
-| `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.   |
-| `modlock daemon`        | `status` shows the background process that holds this PC's mod store; `stop` ends it.    |
+| Command                 | Effect                                                                                                                                       |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modlock new DIR`       | Create a mod project in `DIR`.                                                                                                               |
+| `modlock build`         | Check the mod and write the built mod to `build/`.                                                                                           |
+| `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save.                                                     |
+| `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.                                                      |
+| `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                                                                     |
+| `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.                                                      |
+| `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.                                                       |
+| `modlock daemon`        | `status` shows the background process that holds this PC's mod store and peer; `probe PEER` measures the link to another PC; `stop` ends it. |
 
 `dev` and `play` fall back to the sandbox when the game is missing. They also take these options:
 

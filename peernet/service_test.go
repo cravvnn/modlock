@@ -1,0 +1,210 @@
+package peernet
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	"github.com/aperturerobotics/go-websocket"
+	"github.com/aperturerobotics/starpc/srpc"
+	api "github.com/s4wave/spacewave/core/provider/spacewave/api"
+	"github.com/s4wave/spacewave/net/peer"
+	signaling_rpc "github.com/s4wave/spacewave/net/signaling/rpc"
+	signaling_rpc_frame "github.com/s4wave/spacewave/net/signaling/rpc/frame"
+	signaling_server "github.com/s4wave/spacewave/net/signaling/rpc/server"
+	"github.com/sirupsen/logrus"
+)
+
+// signalPeerKey names a socket's peer on its RPC context.
+type signalPeerKey struct{}
+
+// fakeSignaling is a signaling service that admits a peer while it holds an
+// admission socket with the bearer token good. It trusts the peer header
+// instead of checking signatures.
+type fakeSignaling struct {
+	// good is the token the service accepts.
+	good string
+	// mux serves the signaling RPCs.
+	mux srpc.Mux
+
+	// mtx guards the fields below.
+	mtx sync.Mutex
+	// admitted counts each peer's open admission sockets.
+	admitted map[peer.ID]int
+	// tickets maps each unused ticket to its peer.
+	tickets map[string]peer.ID
+}
+
+// newFakeSignaling serves signaling that accepts the token good.
+func newFakeSignaling(t *testing.T, good string) *httptest.Server {
+	// Name each socket's caller by its ticket's peer.
+	f := &fakeSignaling{good: good, mux: srpc.NewMux(), admitted: make(map[peer.ID]int), tickets: make(map[string]peer.ID)}
+	server := signaling_server.NewServerWithIdentify(logrus.NewEntry(logrus.New()), func(ctx context.Context) (peer.ID, error) {
+		return ctx.Value(signalPeerKey{}).(peer.ID), nil
+	})
+	if err := signaling_rpc.SRPCRegisterSignaling(f.mux, server); err != nil {
+		t.Fatal(err)
+	}
+
+	// Route the admission, ticket and socket paths.
+	routes := http.NewServeMux()
+	routes.HandleFunc("GET "+AdmitPath, f.serveAdmit)
+	routes.HandleFunc("POST /api/signal/ticket", f.serveTicket)
+	routes.HandleFunc("GET /api/signal/ws", f.serveSocket)
+	service := httptest.NewServer(routes)
+	t.Cleanup(service.Close)
+	return service
+}
+
+// serveAdmit admits the peer while its socket with the good token is open.
+func (f *fakeSignaling) serveAdmit(w http.ResponseWriter, r *http.Request) {
+	// Refuse any other sign-in.
+	pid, err := peer.IDB58Decode(r.Header.Get("X-Peer-ID"))
+	if err != nil || r.Header.Get("Authorization") != "Bearer "+f.good {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	conn, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.CloseNow()
+
+	// Count the peer while the socket stays open.
+	f.mtx.Lock()
+	f.admitted[pid]++
+	f.mtx.Unlock()
+	defer func() {
+		f.mtx.Lock()
+		f.admitted[pid]--
+		f.mtx.Unlock()
+	}()
+	<-conn.CloseRead(r.Context()).Done()
+}
+
+// serveTicket issues a ticket to an admitted peer, refusing others with 403
+// so they retry.
+func (f *fakeSignaling) serveTicket(w http.ResponseWriter, r *http.Request) {
+	// Refuse a peer without an open admission.
+	pid, err := peer.IDB58Decode(r.Header.Get("X-Peer-ID"))
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	if err != nil || f.admitted[pid] == 0 {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Issue a random ticket for it.
+	var token [16]byte
+	_, _ = rand.Read(token[:])
+	encoded := base64.RawURLEncoding.EncodeToString(token[:])
+	f.tickets[encoded] = pid
+	data, _ := (&api.SignalTicketResponse{Token: encoded}).MarshalVT()
+	_, _ = w.Write(data)
+}
+
+// serveSocket redeems a ticket and serves its peer's signaling RPCs.
+func (f *fakeSignaling) serveSocket(w http.ResponseWriter, r *http.Request) {
+	// Redeem the ticket once.
+	f.mtx.Lock()
+	pid, ok := f.tickets[r.URL.Query().Get("tk")]
+	delete(f.tickets, r.URL.Query().Get("tk"))
+	f.mtx.Unlock()
+	if !ok {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Serve the peer's RPCs until either side closes.
+	conn, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.CloseNow()
+	ctx, cancel := context.WithCancel(context.WithValue(r.Context(), signalPeerKey{}, pid))
+	defer cancel()
+	_ = signaling_rpc_frame.NewConn(ctx, conn).ReadPump(signaling_rpc_frame.NewServerAccept(ctx, f.mux))
+}
+
+// awaitAdmission asks s for its peer until its admission reaches want.
+func awaitAdmission(ctx context.Context, t *testing.T, s *Service, want AdmissionState) *GetPeerResponse {
+	t.Helper()
+	for {
+		got, err := s.GetPeer(ctx, &GetPeerRequest{})
+		if err != nil {
+			t.Fatalf("waiting for %v: %v", want, err)
+		}
+		if got.GetAdmission() == want {
+			return got
+		}
+		select {
+		case <-time.After(20 * time.Millisecond):
+		case <-ctx.Done():
+			t.Fatalf("admission stayed %v (%s), want %v", got.GetAdmission(), got.GetError(), want)
+		}
+	}
+}
+
+// TestServiceProbe walks two PCs' peers through signing in, a refused
+// sign-in that a new one replaces, and a probe that needs signaling to link
+// them.
+func TestServiceProbe(t *testing.T) {
+	// Serve signaling.
+	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+	defer cancel()
+	le := logrus.NewEntry(logrus.New())
+	origin := newFakeSignaling(t, "good").URL
+
+	// Give each PC a key file and a sign-in; the guest's has expired.
+	keyPath := filepath.Join(t.TempDir(), "peer.pem")
+	host := NewService(origin, keyPath, func() SignIn { return SignIn{Token: "good", Account: "host"} })
+	var guestToken atomic.Value
+	guestToken.Store("expired")
+	guest := NewService(origin, filepath.Join(t.TempDir(), "peer.pem"), func() SignIn {
+		return SignIn{Token: guestToken.Load().(string), Account: "guest"}
+	})
+
+	// Run both peers.
+	for _, s := range []*Service{host, guest} {
+		go func() {
+			if err := s.Run(ctx, le); err != nil && ctx.Err() == nil {
+				t.Error(err)
+			}
+		}()
+	}
+
+	// The host is admitted; the guest's sign-in is refused until it signs in
+	// again.
+	hostPeer := awaitAdmission(ctx, t, host, AdmissionState_ADMISSION_STATE_ADMITTED)
+	if hostPeer.GetAccount() != "host" || hostPeer.GetOrigin() != origin {
+		t.Fatalf("host peer is %v", hostPeer)
+	}
+	awaitAdmission(ctx, t, guest, AdmissionState_ADMISSION_STATE_REFUSED)
+	guestToken.Store("good")
+	awaitAdmission(ctx, t, guest, AdmissionState_ADMISSION_STATE_ADMITTED)
+
+	// The guest probes the host over a direct link.
+	probe, err := guest.Probe(ctx, &ProbeRequest{PeerId: hostPeer.GetPeerId()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if probe.GetRttUs() == 0 || probe.GetRelayed() {
+		t.Fatalf("probe is %v", probe)
+	}
+
+	// The host's key stays the same for its next run.
+	key, err := LoadKey(keyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id, _ := peer.IDFromPrivateKey(key); id.String() != hostPeer.GetPeerId() {
+		t.Fatalf("reloaded key is %s, want %s", id, hostPeer.GetPeerId())
+	}
+}

@@ -130,13 +130,26 @@ func (h *Hyperline) send(ctx context.Context, path, token string, body []byte, o
 	return errors.New(refusal.GetMessage())
 }
 
+// SavedSession returns the session saved at path for origin, or nil when
+// none is saved, it is for another origin, or it has expired.
+func SavedSession(path, origin string) *Session {
+	// Read the saved session, then keep it only while it is usable here.
+	saved := &Session{}
+	data, err := os.ReadFile(path)
+	if err != nil || saved.UnmarshalJSON(data) != nil {
+		return nil
+	}
+	if saved.GetOrigin() != origin || saved.GetToken() == "" || saved.GetExpiresAt() <= time.Now().UnixMilli() {
+		return nil
+	}
+	return saved
+}
+
 // token returns the saved session's credential, signing in when it is
 // missing, expired, from another origin, or refused.
 func (h *Hyperline) token(ctx context.Context, refused bool) (string, error) {
 	// Reuse the saved session while the service still takes it.
-	saved := &Session{}
-	if data, err := os.ReadFile(h.SessionFile); err == nil && !refused && saved.UnmarshalJSON(data) == nil &&
-		saved.GetOrigin() == h.Origin && saved.GetToken() != "" && saved.GetExpiresAt() > time.Now().UnixMilli() {
+	if saved := SavedSession(h.SessionFile, h.Origin); saved != nil && !refused {
 		return saved.GetToken(), nil
 	}
 	session, err := h.signIn(ctx)
