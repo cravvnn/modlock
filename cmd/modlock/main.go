@@ -49,6 +49,8 @@ func main() {
 			newCommand(out),
 			buildCommand(out),
 			devCommand(out),
+			hostCommand(out),
+			joinCommand(out),
 			playCommand(out),
 			publishCommand(out),
 			panoramaCommand(out),

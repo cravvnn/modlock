@@ -18,6 +18,12 @@ type SRPCPeerNetClient interface {
 	GetPeer(ctx context.Context, in *GetPeerRequest) (*GetPeerResponse, error)
 	// Probe opens a stream to another peer and measures its round trip.
 	Probe(ctx context.Context, in *ProbeRequest) (*ProbeResponse, error)
+	// Host serves the local game server to guests holding the join code it
+	// sends first, for as long as the call stays open.
+	Host(ctx context.Context, in *HostRequest) (SRPCPeerNet_HostClient, error)
+	// Join links to a hosted game server and serves it to the local game on a
+	// loopback port until the game leaves or the call ends.
+	Join(ctx context.Context, in *JoinRequest) (SRPCPeerNet_JoinClient, error)
 }
 
 type srpcPeerNetClient struct {
@@ -56,11 +62,83 @@ func (c *srpcPeerNetClient) Probe(ctx context.Context, in *ProbeRequest) (*Probe
 	return out, nil
 }
 
+func (c *srpcPeerNetClient) Host(ctx context.Context, in *HostRequest) (SRPCPeerNet_HostClient, error) {
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "Host", in)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcPeerNet_HostClient{stream}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = strm.CloseSend()
+	return strm, nil
+}
+
+type SRPCPeerNet_HostClient interface {
+	srpc.Stream
+	Recv() (*HostEvent, error)
+	RecvTo(*HostEvent) error
+}
+
+type srpcPeerNet_HostClient struct {
+	srpc.Stream
+}
+
+func (x *srpcPeerNet_HostClient) Recv() (*HostEvent, error) {
+	m := new(HostEvent)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcPeerNet_HostClient) RecvTo(m *HostEvent) error {
+	return x.MsgRecv(m)
+}
+
+func (c *srpcPeerNetClient) Join(ctx context.Context, in *JoinRequest) (SRPCPeerNet_JoinClient, error) {
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "Join", in)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcPeerNet_JoinClient{stream}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = strm.CloseSend()
+	return strm, nil
+}
+
+type SRPCPeerNet_JoinClient interface {
+	srpc.Stream
+	Recv() (*JoinEvent, error)
+	RecvTo(*JoinEvent) error
+}
+
+type srpcPeerNet_JoinClient struct {
+	srpc.Stream
+}
+
+func (x *srpcPeerNet_JoinClient) Recv() (*JoinEvent, error) {
+	m := new(JoinEvent)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcPeerNet_JoinClient) RecvTo(m *JoinEvent) error {
+	return x.MsgRecv(m)
+}
+
 type SRPCPeerNetServer interface {
 	// GetPeer returns the daemon's peer and its admission to signaling.
 	GetPeer(context.Context, *GetPeerRequest) (*GetPeerResponse, error)
 	// Probe opens a stream to another peer and measures its round trip.
 	Probe(context.Context, *ProbeRequest) (*ProbeResponse, error)
+	// Host serves the local game server to guests holding the join code it
+	// sends first, for as long as the call stays open.
+	Host(*HostRequest, SRPCPeerNet_HostStream) error
+	// Join links to a hosted game server and serves it to the local game on a
+	// loopback port until the game leaves or the call ends.
+	Join(*JoinRequest, SRPCPeerNet_JoinStream) error
 }
 
 const SRPCPeerNetServiceID = "modlock.peernet.PeerNet"
@@ -91,6 +169,8 @@ func (SRPCPeerNetHandler) GetMethodIDs() []string {
 	return []string{
 		"GetPeer",
 		"Probe",
+		"Host",
+		"Join",
 	}
 }
 
@@ -107,6 +187,10 @@ func (d *SRPCPeerNetHandler) InvokeMethod(
 		return true, d.InvokeMethod_GetPeer(d.impl, strm)
 	case "Probe":
 		return true, d.InvokeMethod_Probe(d.impl, strm)
+	case "Host":
+		return true, d.InvokeMethod_Host(d.impl, strm)
+	case "Join":
+		return true, d.InvokeMethod_Join(d.impl, strm)
 	default:
 		return false, nil
 	}
@@ -136,6 +220,24 @@ func (SRPCPeerNetHandler) InvokeMethod_Probe(impl SRPCPeerNetServer, strm srpc.S
 	return strm.MsgSend(out)
 }
 
+func (SRPCPeerNetHandler) InvokeMethod_Host(impl SRPCPeerNetServer, strm srpc.Stream) error {
+	req := new(HostRequest)
+	if err := strm.MsgRecv(req); err != nil {
+		return err
+	}
+	serverStrm := &srpcPeerNet_HostStream{strm}
+	return impl.Host(req, serverStrm)
+}
+
+func (SRPCPeerNetHandler) InvokeMethod_Join(impl SRPCPeerNetServer, strm srpc.Stream) error {
+	req := new(JoinRequest)
+	if err := strm.MsgRecv(req); err != nil {
+		return err
+	}
+	serverStrm := &srpcPeerNet_JoinStream{strm}
+	return impl.Join(req, serverStrm)
+}
+
 type SRPCPeerNet_GetPeerStream interface {
 	srpc.Stream
 }
@@ -150,4 +252,50 @@ type SRPCPeerNet_ProbeStream interface {
 
 type srpcPeerNet_ProbeStream struct {
 	srpc.Stream
+}
+
+type SRPCPeerNet_HostStream interface {
+	srpc.Stream
+	Send(*HostEvent) error
+	SendAndClose(*HostEvent) error
+}
+
+type srpcPeerNet_HostStream struct {
+	srpc.Stream
+}
+
+func (x *srpcPeerNet_HostStream) Send(m *HostEvent) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcPeerNet_HostStream) SendAndClose(m *HostEvent) error {
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
+	}
+	return x.CloseSend()
+}
+
+type SRPCPeerNet_JoinStream interface {
+	srpc.Stream
+	Send(*JoinEvent) error
+	SendAndClose(*JoinEvent) error
+}
+
+type srpcPeerNet_JoinStream struct {
+	srpc.Stream
+}
+
+func (x *srpcPeerNet_JoinStream) Send(m *JoinEvent) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcPeerNet_JoinStream) SendAndClose(m *JoinEvent) error {
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
+	}
+	return x.CloseSend()
 }

@@ -12,6 +12,14 @@ service PeerNet {
 
   // Probe opens a stream to another peer and measures its round trip.
   rpc Probe(ProbeRequest) returns (ProbeResponse);
+
+  // Host serves the local game server to guests holding the join code it
+  // sends first, for as long as the call stays open.
+  rpc Host(HostRequest) returns (stream HostEvent);
+
+  // Join links to a hosted game server and serves it to the local game on a
+  // loopback port until the game leaves or the call ends.
+  rpc Join(JoinRequest) returns (stream JoinEvent);
 }
 
 // AdmissionState is where a peer stands with the signaling service, which
@@ -80,4 +88,40 @@ message RelayServer {
   string username = 2;
   // credential is the credential's secret.
   string credential = 3;
+}
+
+// HostRequest names the game server to serve.
+message HostRequest {
+  // port is the server's UDP game port on loopback.
+  uint32 port = 1;
+}
+
+// HostEvent is one change to a hosted session.
+message HostEvent {
+  oneof body {
+    // join_code is the code a guest passes to modlock join. It names the
+    // host's peer and the session, and comes first.
+    string join_code = 1;
+    // joined is the peer of a guest whose game stream the host accepted.
+    string joined = 2;
+    // left is the peer of a guest whose game stream ended.
+    string left = 3;
+  }
+}
+
+// JoinRequest names the session to join.
+message JoinRequest {
+  // code is the host's join code.
+  string code = 1;
+}
+
+// JoinEvent is one step of joining a hosted session.
+message JoinEvent {
+  oneof body {
+    // address is the loopback endpoint the local game connects to, sent once
+    // the host accepted the guest.
+    string address = 1;
+    // arrived reports the game's first packet through address.
+    bool arrived = 2;
+  }
 }

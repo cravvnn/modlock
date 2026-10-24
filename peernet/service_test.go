@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -153,8 +154,8 @@ func awaitAdmission(ctx context.Context, t *testing.T, s *Service, want Admissio
 }
 
 // TestServiceProbe walks two PCs' peers through signing in, a refused
-// sign-in that a new one replaces, and a probe that needs signaling to link
-// them.
+// sign-in that a new one replaces, a probe that needs signaling to link them,
+// and a guest joining the host's game.
 func TestServiceProbe(t *testing.T) {
 	// Serve signaling.
 	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
@@ -199,6 +200,9 @@ func TestServiceProbe(t *testing.T) {
 		t.Fatalf("probe is %v", probe)
 	}
 
+	// The guest joins the host's session and its game reaches the server.
+	joinSession(ctx, t, host, guest)
+
 	// The host's key stays the same for its next run.
 	key, err := LoadKey(keyPath)
 	if err != nil {
@@ -207,4 +211,77 @@ func TestServiceProbe(t *testing.T) {
 	if id, _ := peer.IDFromPrivateKey(key); id.String() != hostPeer.GetPeerId() {
 		t.Fatalf("reloaded key is %s, want %s", id, hostPeer.GetPeerId())
 	}
+}
+
+// joinSession hosts a game server on host, refuses a guest with the wrong
+// session, and walks guest's game through joining it.
+func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
+	// Run a game server and host it.
+	server, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
+	server.SetDeadline(time.Now().Add(10 * time.Second))
+	hostClient := NewSRPCPeerNetClient(rpcClient(t, host))
+	hosted, err := hostClient.Host(ctx, &HostRequest{Port: uint32(server.LocalAddr().(*net.UDPAddr).Port)})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read the join code; a guest with another session is refused.
+	first, err := hosted.Recv()
+	if err != nil {
+		t.Fatal(err)
+	}
+	code, err := ParseJoinCode(first.GetJoinCode())
+	if err != nil {
+		t.Fatal(err)
+	}
+	guestClient := NewSRPCPeerNetClient(rpcClient(t, guest))
+	wrong := JoinCode{Host: code.Host, Session: code.Session + 1}
+	if refused, err := guestClient.Join(ctx, &JoinRequest{Code: wrong.String()}); err == nil {
+		if _, err := refused.Recv(); err == nil {
+			t.Fatal("the host admitted the wrong session")
+		}
+	}
+
+	// The guest joins and the host reports it.
+	joined, err := guestClient.Join(ctx, &JoinRequest{Code: code.String()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint, err := joined.Recv()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if event, err := hosted.Recv(); err != nil || event.GetJoined() != guest.local.String() {
+		t.Fatalf("host event %v: %v", event, err)
+	}
+
+	// The guest's game reaches the server and the guest sees it arrive.
+	game, err := net.Dial("udp4", endpoint.GetAddress())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer game.Close()
+	if _, err := game.Write([]byte("hello")); err != nil {
+		t.Fatal(err)
+	}
+	packet := make([]byte, 64)
+	if n, _, err := server.ReadFromUDP(packet); err != nil || string(packet[:n]) != "hello" {
+		t.Fatalf("server read %q: %v", packet[:n], err)
+	}
+	if event, err := joined.Recv(); err != nil || !event.GetArrived() {
+		t.Fatalf("join event %v: %v", event, err)
+	}
+}
+
+// rpcClient calls s's PeerNet service in memory.
+func rpcClient(t *testing.T, s *Service) srpc.Client {
+	mux := srpc.NewMux()
+	if err := s.Register(mux); err != nil {
+		t.Fatal(err)
+	}
+	return srpc.NewClient(srpc.NewServerPipe(srpc.NewServer(mux)))
 }

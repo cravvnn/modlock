@@ -43,84 +43,94 @@ func devCommand(out *printer) *cli.Command {
 			},
 		),
 		Action: func(c *cli.Context) error {
-			// Open the project.
-			opened, err := openProject(c)
-			if err != nil {
-				return err
-			}
-			out.header("dev", opened.Manifest.GetSlug())
-
-			// Serve the preview page, which takes the player's input once
-			// the mods run in the sandbox.
-			watch := c.Bool("watch")
-			var box atomic.Pointer[sandbox.Sandbox]
-			if port := c.Uint("preview-port"); port != 0 {
-				servePreview(c.Context, out, int(port), opened.Output(), watch, func(ctx context.Context, in *modcli.Input) string {
-					if box := box.Load(); box != nil {
-						return deliver(ctx, box, in)
-					}
-					return "the preview passes input to the mods only in the sandbox, once they run"
-				})
-			}
-
-			// Build now and, with --watch, after each save. The first good
-			// build starts the server and each later one reloads the mod; a
-			// failed build keeps the running one. Watch calls rebuild on one
-			// goroutine.
-			var running server
-			started := make(chan error, 1)
-			rebuild := func() {
-				// Keep the running mod when the build fails.
-				if err := out.build(c.Context, opened, project.Dev); err != nil {
-					if watch {
-						out.mark("✗", red, "the build failed; fix it and save to try again")
-					} else {
-						out.mark("✗", red, "the build failed; fix it and run again, or pass --watch to rebuild on each save")
-					}
-					return
-				}
-
-				// Reload a running server, or start the first one.
-				if running != nil {
-					_ = running.Reload(c.Context, opened.Output())
-					return
-				}
-				var err error
-				running, err = startSession(c, out, []string{opened.Output()}, filepath.Join(opened.Output(), "server.log"))
-				if sandboxed, ok := running.(*sandbox.Sandbox); ok {
-					box.Store(sandboxed)
-				}
-				started <- err
-			}
-
-			// Build once, then after each save when watching.
-			go func() {
-				rebuild()
-				if !watch {
-					return
-				}
-				err := opened.Watch(c.Context, func() {
-					out.mark("…", dim, "rebuilding "+opened.Manifest.GetSlug())
-					rebuild()
-				})
-				if err != nil && c.Context.Err() == nil {
-					out.mark("!", yellow, errors.Wrap(err, "stopped watching").Error())
-				}
-			}()
-
-			// Run the session once it starts.
-			select {
-			case <-c.Context.Done():
-				return nil
-			case err := <-started:
-				if err != nil {
-					return err
-				}
-			}
-			defer running.Stop()
-			return waitSession(c, out, running)
+			return runDev(c, out, "dev", false)
 		},
 	}
+}
+
+// runDev runs command, which builds the mod and runs it in a local server,
+// rebuilding and reloading it on each save when watching. A host session
+// always watches and serves the server to guests.
+func runDev(c *cli.Context, out *printer, command string, host bool) error {
+	// Open the project.
+	opened, err := openProject(c)
+	if err != nil {
+		return err
+	}
+	out.header(command, opened.Manifest.GetSlug())
+
+	// Serve the preview page, which takes the player's input once
+	// the mods run in the sandbox.
+	watch := host || c.Bool("watch")
+	var box atomic.Pointer[sandbox.Sandbox]
+	if port := c.Uint("preview-port"); port != 0 {
+		servePreview(c.Context, out, int(port), opened.Output(), watch, func(ctx context.Context, in *modcli.Input) string {
+			if box := box.Load(); box != nil {
+				return deliver(ctx, box, in)
+			}
+			return "the preview passes input to the mods only in the sandbox, once they run"
+		})
+	}
+
+	// Build now and, with --watch, after each save. The first good
+	// build starts the server and each later one reloads the mod; a
+	// failed build keeps the running one. Watch calls rebuild on one
+	// goroutine.
+	var running server
+	started := make(chan error, 1)
+	rebuild := func() {
+		// Keep the running mod when the build fails.
+		if err := out.build(c.Context, opened, project.Dev); err != nil {
+			if watch {
+				out.mark("✗", red, "the build failed; fix it and save to try again")
+			} else {
+				out.mark("✗", red, "the build failed; fix it and run again, or pass --watch to rebuild on each save")
+			}
+			return
+		}
+
+		// Reload a running server, or start the first one.
+		if running != nil {
+			_ = running.Reload(c.Context, opened.Output())
+			return
+		}
+		var err error
+		running, err = startSession(c, out, []string{opened.Output()}, filepath.Join(opened.Output(), "server.log"))
+		if sandboxed, ok := running.(*sandbox.Sandbox); ok {
+			box.Store(sandboxed)
+		}
+		started <- err
+	}
+
+	// Build once, then after each save when watching.
+	go func() {
+		rebuild()
+		if !watch {
+			return
+		}
+		err := opened.Watch(c.Context, func() {
+			out.mark("…", dim, "rebuilding "+opened.Manifest.GetSlug())
+			rebuild()
+		})
+		if err != nil && c.Context.Err() == nil {
+			out.mark("!", yellow, errors.Wrap(err, "stopped watching").Error())
+		}
+	}()
+
+	// Run the session once it starts.
+	select {
+	case <-c.Context.Done():
+		return nil
+	case err := <-started:
+		if err != nil {
+			return err
+		}
+	}
+	defer running.Stop()
+	if host {
+		go hostSession(c, out, running)
+	}
+	return waitSession(c, out, running)
 }
 
 // servePreview serves the preview page on the loopback port until ctx ends,

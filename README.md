@@ -109,6 +109,16 @@ running. The watch skips `build/`, `node_modules`, hidden files and `*.log`. The
 terminal shows the mod's log, reloads and player joins; the server console goes
 to `build/server.log`.
 
+### With a second player
+
+`modlock host` runs the mod like `modlock dev --watch` and prints a join code.
+On another PC, `modlock join CODE` links to the host, launches Deadlock and
+joins the host's server, so both players play each reload. The two PCs find each
+other through hyperline.gg's signaling, which needs the sign in that
+`modlock publish` saves on both, and then link directly, or through its relay
+when their routers block a direct link. The code carries the session's secret:
+anyone holding it can join until the host stops.
+
 ### Without the game
 
 On macOS, or on a computer without Deadlock, `modlock dev` runs the mod in the
@@ -134,6 +144,8 @@ prints its address.
 | `modlock build`         | Check the mod and write the built mod to `build/`.                                                                                           |
 | `modlock dev`           | Build the mod, run it in a local server, and join it; `--watch` reloads it on each save.                                                     |
 | `modlock play [MOD...]` | Run built mods in a local server and join it, building a project that has no build yet.                                                      |
+| `modlock host`          | Run the mod like `dev --watch` and print a join code that lets a player on another PC join.                                                  |
+| `modlock join CODE`     | Join a session another PC hosts and launch Deadlock into it.                                                                                 |
 | `modlock publish`       | Build and check the mod, then [publish it](#publishing).                                                                                     |
 | `modlock update`        | Install the newest release over this `modlock`; `--check` only says whether one is out.                                                      |
 | `modlock config`        | List the settings; `modlock config set update-check off` stops the check for releases.                                                       |

@@ -2,6 +2,7 @@ package peernet
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/aperturerobotics/controllerbus/core"
 	"github.com/aperturerobotics/starpc/srpc"
@@ -31,6 +32,9 @@ type Service struct {
 	ready chan struct{}
 	// node is the running peer.
 	node *Node
+	// hosting keeps the daemon to one hosted session at a time, since two
+	// would answer the same game streams.
+	hosting atomic.Bool
 }
 
 // NewService constructs the peer whose key lives at keyPath, signaling at

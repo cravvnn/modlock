@@ -248,6 +248,171 @@ func (x *RelayServer) GetCredential() string {
 	return ""
 }
 
+// HostRequest names the game server to serve.
+type HostRequest struct {
+	unknownFields []byte
+	// port is the server's UDP game port on loopback.
+	Port uint32 `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+}
+
+func (x *HostRequest) Reset() {
+	*x = HostRequest{}
+}
+
+func (*HostRequest) ProtoMessage() {}
+
+func (x *HostRequest) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+// HostEvent is one change to a hosted session.
+type HostEvent struct {
+	unknownFields []byte
+	// Types that are assignable to Body:
+	//	*HostEvent_JoinCode
+	//	*HostEvent_Joined
+	//	*HostEvent_Left
+	Body isHostEvent_Body `protobuf_oneof:"body"`
+}
+
+func (x *HostEvent) Reset() {
+	*x = HostEvent{}
+}
+
+func (*HostEvent) ProtoMessage() {}
+
+func (m *HostEvent) GetBody() isHostEvent_Body {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+func (x *HostEvent) GetJoinCode() string {
+	if x, ok := x.GetBody().(*HostEvent_JoinCode); ok {
+		return x.JoinCode
+	}
+	return ""
+}
+
+func (x *HostEvent) GetJoined() string {
+	if x, ok := x.GetBody().(*HostEvent_Joined); ok {
+		return x.Joined
+	}
+	return ""
+}
+
+func (x *HostEvent) GetLeft() string {
+	if x, ok := x.GetBody().(*HostEvent_Left); ok {
+		return x.Left
+	}
+	return ""
+}
+
+type isHostEvent_Body interface {
+	isHostEvent_Body()
+}
+
+type HostEvent_JoinCode struct {
+	// join_code is the code a guest passes to modlock join. It names the
+	// host's peer and the session, and comes first.
+	JoinCode string `protobuf:"bytes,1,opt,name=join_code,json=joinCode,proto3,oneof"`
+}
+
+type HostEvent_Joined struct {
+	// joined is the peer of a guest whose game stream the host accepted.
+	Joined string `protobuf:"bytes,2,opt,name=joined,proto3,oneof"`
+}
+
+type HostEvent_Left struct {
+	// left is the peer of a guest whose game stream ended.
+	Left string `protobuf:"bytes,3,opt,name=left,proto3,oneof"`
+}
+
+func (*HostEvent_JoinCode) isHostEvent_Body() {}
+
+func (*HostEvent_Joined) isHostEvent_Body() {}
+
+func (*HostEvent_Left) isHostEvent_Body() {}
+
+// JoinRequest names the session to join.
+type JoinRequest struct {
+	unknownFields []byte
+	// code is the host's join code.
+	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+}
+
+func (x *JoinRequest) Reset() {
+	*x = JoinRequest{}
+}
+
+func (*JoinRequest) ProtoMessage() {}
+
+func (x *JoinRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+// JoinEvent is one step of joining a hosted session.
+type JoinEvent struct {
+	unknownFields []byte
+	// Types that are assignable to Body:
+	//	*JoinEvent_Address
+	//	*JoinEvent_Arrived
+	Body isJoinEvent_Body `protobuf_oneof:"body"`
+}
+
+func (x *JoinEvent) Reset() {
+	*x = JoinEvent{}
+}
+
+func (*JoinEvent) ProtoMessage() {}
+
+func (m *JoinEvent) GetBody() isJoinEvent_Body {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+func (x *JoinEvent) GetAddress() string {
+	if x, ok := x.GetBody().(*JoinEvent_Address); ok {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *JoinEvent) GetArrived() bool {
+	if x, ok := x.GetBody().(*JoinEvent_Arrived); ok {
+		return x.Arrived
+	}
+	return false
+}
+
+type isJoinEvent_Body interface {
+	isJoinEvent_Body()
+}
+
+type JoinEvent_Address struct {
+	// address is the loopback endpoint the local game connects to, sent once
+	// the host accepted the guest.
+	Address string `protobuf:"bytes,1,opt,name=address,proto3,oneof"`
+}
+
+type JoinEvent_Arrived struct {
+	// arrived reports the game's first packet through address.
+	Arrived bool `protobuf:"varint,2,opt,name=arrived,proto3,oneof"`
+}
+
+func (*JoinEvent_Address) isJoinEvent_Body() {}
+
+func (*JoinEvent_Arrived) isJoinEvent_Body() {}
+
 func (m *GetPeerRequest) CloneVT() *GetPeerRequest {
 	if m == nil {
 		return (*GetPeerRequest)(nil)
@@ -348,6 +513,139 @@ func (m *RelayServer) CloneVT() *RelayServer {
 }
 
 func (m *RelayServer) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *HostRequest) CloneVT() *HostRequest {
+	if m == nil {
+		return (*HostRequest)(nil)
+	}
+	r := new(HostRequest)
+	r.Port = m.Port
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *HostRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *HostEvent) CloneVT() *HostEvent {
+	if m == nil {
+		return (*HostEvent)(nil)
+	}
+	r := new(HostEvent)
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneOneofVT() isHostEvent_Body }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *HostEvent) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *HostEvent_JoinCode) CloneVT() *HostEvent_JoinCode {
+	if m == nil {
+		return (*HostEvent_JoinCode)(nil)
+	}
+	r := new(HostEvent_JoinCode)
+	r.JoinCode = m.JoinCode
+	return r
+}
+
+func (m *HostEvent_JoinCode) CloneOneofVT() isHostEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *HostEvent_Joined) CloneVT() *HostEvent_Joined {
+	if m == nil {
+		return (*HostEvent_Joined)(nil)
+	}
+	r := new(HostEvent_Joined)
+	r.Joined = m.Joined
+	return r
+}
+
+func (m *HostEvent_Joined) CloneOneofVT() isHostEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *HostEvent_Left) CloneVT() *HostEvent_Left {
+	if m == nil {
+		return (*HostEvent_Left)(nil)
+	}
+	r := new(HostEvent_Left)
+	r.Left = m.Left
+	return r
+}
+
+func (m *HostEvent_Left) CloneOneofVT() isHostEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *JoinRequest) CloneVT() *JoinRequest {
+	if m == nil {
+		return (*JoinRequest)(nil)
+	}
+	r := new(JoinRequest)
+	r.Code = m.Code
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *JoinRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *JoinEvent) CloneVT() *JoinEvent {
+	if m == nil {
+		return (*JoinEvent)(nil)
+	}
+	r := new(JoinEvent)
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneOneofVT() isJoinEvent_Body }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *JoinEvent) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *JoinEvent_Address) CloneVT() *JoinEvent_Address {
+	if m == nil {
+		return (*JoinEvent_Address)(nil)
+	}
+	r := new(JoinEvent_Address)
+	r.Address = m.Address
+	return r
+}
+
+func (m *JoinEvent_Address) CloneOneofVT() isJoinEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *JoinEvent_Arrived) CloneVT() *JoinEvent_Arrived {
+	if m == nil {
+		return (*JoinEvent_Arrived)(nil)
+	}
+	r := new(JoinEvent_Arrived)
+	r.Arrived = m.Arrived
+	return r
+}
+
+func (m *JoinEvent_Arrived) CloneOneofVT() isJoinEvent_Body {
 	return m.CloneVT()
 }
 
@@ -490,6 +788,185 @@ func (this *RelayServer) EqualMessageVT(thatMsg any) bool {
 		return false
 	}
 	return this.EqualVT(that)
+}
+
+func (this *HostRequest) EqualVT(that *HostRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Port != that.Port {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *HostRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*HostRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *HostEvent) EqualVT(that *HostEvent) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Body == nil && that.Body != nil {
+		return false
+	} else if this.Body != nil {
+		if that.Body == nil {
+			return false
+		}
+		if !this.Body.(interface{ EqualVT(isHostEvent_Body) bool }).EqualVT(that.Body) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *HostEvent) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*HostEvent)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *HostEvent_JoinCode) EqualVT(thatIface isHostEvent_Body) bool {
+	that, ok := thatIface.(*HostEvent_JoinCode)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.JoinCode != that.JoinCode {
+		return false
+	}
+	return true
+}
+
+func (this *HostEvent_Joined) EqualVT(thatIface isHostEvent_Body) bool {
+	that, ok := thatIface.(*HostEvent_Joined)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Joined != that.Joined {
+		return false
+	}
+	return true
+}
+
+func (this *HostEvent_Left) EqualVT(thatIface isHostEvent_Body) bool {
+	that, ok := thatIface.(*HostEvent_Left)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Left != that.Left {
+		return false
+	}
+	return true
+}
+
+func (this *JoinRequest) EqualVT(that *JoinRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Code != that.Code {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *JoinRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*JoinRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *JoinEvent) EqualVT(that *JoinEvent) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Body == nil && that.Body != nil {
+		return false
+	} else if this.Body != nil {
+		if that.Body == nil {
+			return false
+		}
+		if !this.Body.(interface{ EqualVT(isJoinEvent_Body) bool }).EqualVT(that.Body) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *JoinEvent) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*JoinEvent)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *JoinEvent_Address) EqualVT(thatIface isJoinEvent_Body) bool {
+	that, ok := thatIface.(*JoinEvent_Address)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Address != that.Address {
+		return false
+	}
+	return true
+}
+
+func (this *JoinEvent_Arrived) EqualVT(thatIface isJoinEvent_Body) bool {
+	that, ok := thatIface.(*JoinEvent_Arrived)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if this.Arrived != that.Arrived {
+		return false
+	}
+	return true
 }
 
 // MarshalProtoJSON marshals the AdmissionState to JSON.
@@ -861,6 +1338,211 @@ func (x *RelayServer) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the HostRequest message to JSON.
+func (x *HostRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Port != 0 || s.HasField("port") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("port")
+		s.WriteUint32(x.Port)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the HostRequest to JSON.
+func (x *HostRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the HostRequest message from JSON.
+func (x *HostRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "port":
+			s.AddField("port")
+			x.Port = s.ReadUint32()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the HostRequest from JSON.
+func (x *HostRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the HostEvent message to JSON.
+func (x *HostEvent) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Body != nil {
+		switch ov := x.Body.(type) {
+		case *HostEvent_JoinCode:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("joinCode")
+			s.WriteString(ov.JoinCode)
+		case *HostEvent_Joined:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("joined")
+			s.WriteString(ov.Joined)
+		case *HostEvent_Left:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("left")
+			s.WriteString(ov.Left)
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the HostEvent to JSON.
+func (x *HostEvent) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the HostEvent message from JSON.
+func (x *HostEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "join_code", "joinCode":
+			s.AddField("join_code")
+			ov := &HostEvent_JoinCode{}
+			x.Body = ov
+			ov.JoinCode = s.ReadString()
+		case "joined":
+			s.AddField("joined")
+			ov := &HostEvent_Joined{}
+			x.Body = ov
+			ov.Joined = s.ReadString()
+		case "left":
+			s.AddField("left")
+			ov := &HostEvent_Left{}
+			x.Body = ov
+			ov.Left = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the HostEvent from JSON.
+func (x *HostEvent) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the JoinRequest message to JSON.
+func (x *JoinRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Code != "" || s.HasField("code") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("code")
+		s.WriteString(x.Code)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the JoinRequest to JSON.
+func (x *JoinRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the JoinRequest message from JSON.
+func (x *JoinRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "code":
+			s.AddField("code")
+			x.Code = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the JoinRequest from JSON.
+func (x *JoinRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the JoinEvent message to JSON.
+func (x *JoinEvent) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Body != nil {
+		switch ov := x.Body.(type) {
+		case *JoinEvent_Address:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("address")
+			s.WriteString(ov.Address)
+		case *JoinEvent_Arrived:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("arrived")
+			s.WriteBool(ov.Arrived)
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the JoinEvent to JSON.
+func (x *JoinEvent) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the JoinEvent message from JSON.
+func (x *JoinEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "address":
+			s.AddField("address")
+			ov := &JoinEvent_Address{}
+			x.Body = ov
+			ov.Address = s.ReadString()
+		case "arrived":
+			s.AddField("arrived")
+			ov := &JoinEvent_Arrived{}
+			x.Body = ov
+			ov.Arrived = s.ReadBool()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the JoinEvent from JSON.
+func (x *JoinEvent) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 func (m *GetPeerRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -1127,6 +1809,227 @@ func (m *RelayServer) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *HostRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *HostRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Port != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Port))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *HostEvent) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *HostEvent) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostEvent) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Body.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *HostEvent_JoinCode) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostEvent_JoinCode) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.JoinCode)
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *HostEvent_Joined) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostEvent_Joined) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Joined)
+	i--
+	dAtA[i] = 0x12
+	return len(dAtA) - i, nil
+}
+
+func (m *HostEvent_Left) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostEvent_Left) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Left)
+	i--
+	dAtA[i] = 0x1a
+	return len(dAtA) - i, nil
+}
+
+func (m *JoinRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *JoinRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Code) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Code)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *JoinEvent) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *JoinEvent) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinEvent) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Body.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *JoinEvent_Address) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinEvent_Address) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeString(dAtA, i, m.Address)
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *JoinEvent_Arrived) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinEvent_Arrived) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i = protobuf_go_lite.EncodeBool(dAtA, i, m.Arrived)
+	i--
+	dAtA[i] = 0x10
+	return len(dAtA) - i, nil
+}
+
 func (m *GetPeerRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -1200,6 +2103,104 @@ func (m *RelayServer) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Username)
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Credential)
 	n += len(m.unknownFields)
+	return n
+}
+
+func (m *HostRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Port)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *HostEvent) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Body.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *HostEvent_JoinCode) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.JoinCode)
+	return n
+}
+
+func (m *HostEvent_Joined) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Joined)
+	return n
+}
+
+func (m *HostEvent_Left) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Left)
+	return n
+}
+
+func (m *JoinRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Code)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *JoinEvent) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Body.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *JoinEvent_Address) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringValue(1, m.Address)
+	return n
+}
+
+func (m *JoinEvent_Arrived) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeBoolValue(1)
 	return n
 }
 
@@ -1328,6 +2329,73 @@ func (x *RelayServer) MarshalProtoText() string {
 }
 
 func (x *RelayServer) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *HostRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "HostRequest")
+	if x.Port != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "port")
+		protobuf_go_lite.TextWriteUint(&sb, x.Port)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *HostRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *HostEvent) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "HostEvent")
+	switch body := x.Body.(type) {
+	case *HostEvent_JoinCode:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "join_code")
+		protobuf_go_lite.TextWriteString(&sb, body.JoinCode)
+	case *HostEvent_Joined:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "joined")
+		protobuf_go_lite.TextWriteString(&sb, body.Joined)
+	case *HostEvent_Left:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "left")
+		protobuf_go_lite.TextWriteString(&sb, body.Left)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *HostEvent) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *JoinRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "JoinRequest")
+	if x.Code != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "code")
+		protobuf_go_lite.TextWriteString(&sb, x.Code)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *JoinRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *JoinEvent) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "JoinEvent")
+	switch body := x.Body.(type) {
+	case *JoinEvent_Address:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "address")
+		protobuf_go_lite.TextWriteString(&sb, body.Address)
+	case *JoinEvent_Arrived:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "arrived")
+		protobuf_go_lite.TextWriteBool(&sb, body.Arrived)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *JoinEvent) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -1698,6 +2766,248 @@ func (m *RelayServer) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Credential = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *HostRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: HostRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: HostRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Port", wireType)
+			}
+			m.Port = 0
+			m.Port, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *HostEvent) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: HostEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: HostEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field JoinCode", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Body = &HostEvent_JoinCode{JoinCode: v}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Joined", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Body = &HostEvent_Joined{Joined: v}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Left", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Body = &HostEvent_Left{Left: v}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: JoinRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: JoinRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Code", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Code = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *JoinEvent) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: JoinEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: JoinEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Body = &JoinEvent_Address{Address: v}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Arrived", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			b := bool(v)
+			m.Body = &JoinEvent_Arrived{Arrived: b}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
