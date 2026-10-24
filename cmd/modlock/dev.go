@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -83,8 +84,11 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 	// Build now and, with --watch, after each save. The first good
 	// build starts the server and each later one reloads the mod; a
 	// failed build keeps the running one, and without --watch ends the
-	// command. Watch calls rebuild on one goroutine.
+	// command. A build that made the same mod as the running one, after a
+	// save outside its inputs such as a note, leaves the game alone. Watch
+	// calls rebuild on one goroutine.
 	var running server
+	var loaded [sha256.Size]byte
 	started := make(chan error, 1)
 	rebuild := func() {
 		// Keep the running mod when the build fails.
@@ -96,13 +100,22 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 			out.mark("✗", red, "the build failed; fix it and save to try again")
 			return
 		}
+		built, err := opened.Fingerprint()
+		if err != nil {
+			out.mark("!", yellow, err.Error())
+		}
 
-		// Reload a running server, or start the first one.
+		// Reload a running server when the mod changed, or start the first one.
 		if running != nil {
+			if err == nil && built == loaded {
+				out.mark("·", dim, "the mod did not change; the game keeps running it")
+				return
+			}
+			loaded = built
 			_ = running.Reload(c.Context, opened.Output())
 			return
 		}
-		var err error
+		loaded = built
 		running, err = startSession(c, out, []string{opened.Output()}, filepath.Join(opened.Output(), "server.log"))
 		if sandboxed, ok := running.(*sandbox.Sandbox); ok {
 			box.Store(sandboxed)

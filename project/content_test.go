@@ -14,7 +14,8 @@ import (
 // TestContent builds a project's content, compiled models included, into its
 // addon's directories with the addon named in its paths, passes the publishing check, tells content
 // that runs code from content that only draws, refuses a file outside a
-// kind's directory, and removes the content once the project has none.
+// kind's directory, fingerprints the built mod apart from notes and logs, and
+// removes the content once the project has none.
 func TestContent(t *testing.T) {
 	// Lay out a project with a layout that loads its script, and an editor's
 	// hidden file that must stay out.
@@ -87,6 +88,31 @@ func TestContent(t *testing.T) {
 	scripted("panorama/layout/parry-1.2.0/panel.vxml_c")
 	write("content/layout/panel.xml", `<root><styles><include src="s2r://panorama/styles/hud.vcss_c" /></styles><Panel><Label text="Ready" /></Panel></root>`)
 	scripted("")
+
+	// A note in the project and the server's log leave the built mod's
+	// fingerprint alone, so a watch does not reload the game for them; a
+	// content change moves it.
+	fingerprint := func() [32]byte {
+		t.Helper()
+		if err := p.buildContent(); err != nil {
+			t.Fatal(err)
+		}
+		sum, err := p.Fingerprint()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return sum
+	}
+	before := fingerprint()
+	write("guides/evidence.tsv", "hash\tfile")
+	write(BuildDir+"/server.log", "line")
+	if fingerprint() != before {
+		t.Error("a note or a log changed the fingerprint")
+	}
+	write("content/layout/panel.xml", `<root><Panel><Label text="Go" /></Panel></root>`)
+	if fingerprint() == before {
+		t.Error("a content change kept the fingerprint")
+	}
 
 	// A file outside a kind's directory fails the build and keeps the last
 	// content.
