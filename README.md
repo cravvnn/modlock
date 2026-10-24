@@ -342,6 +342,10 @@ calls back into the mod when a player presses it.
 each an object to move, change or remove. A new map removes everything, so
 forget your objects in `onWorld`, which runs as each world loads.
 
+Models use `prop_dynamic_override`, so shipped props with physics prop data
+can serve as scenery. They stay fixed in place; `solid` controls collision
+through the model's physics shape.
+
 ```ts
 import { command, createText, onWorld, type WorldObject } from 'modlock'
 
