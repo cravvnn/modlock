@@ -10,18 +10,14 @@ import (
 	"testing/fstest"
 
 	"github.com/paralin/modlock/check"
+	"github.com/paralin/modlock/devmount"
 	"github.com/paralin/modlock/panorama"
-	"github.com/paralin/modlock/source2/gameinfo"
 	s2panorama "github.com/paralin/modlock/source2/panorama"
 	"github.com/paralin/modlock/source2/vpk"
 	"github.com/pkg/errors"
 )
 
 const (
-	// rendererMount names the session's block in gameinfo.gi.
-	rendererMount = "MODLOCK DEV"
-	// rendererDir is the game-relative directory of the renderer package.
-	rendererDir = "citadel/modlock_dev"
 	// newsLayout is the stock layout the package shadows. The game loads it
 	// at startup inside the hideout HUD and keeps it for the whole process,
 	// so a script it includes can draw over the HUD in every match.
@@ -51,11 +47,13 @@ type Renderer struct {
 // mountRenderer mounts a package in the Deadlock installation at gameDir that
 // draws the mods' interfaces in the player's game and carries each mod's
 // content addon, and returns the call that unmounts it. renderer is the built
-// renderer, or nil to leave the interfaces out, and mods are the built mods. The renderer shadows the stock news layout, read from the installed
-// game so it follows game updates, with one script added. The package
-// outranks every other mounted package while the session runs, and the server
-// and the game load it only when they start. A block left by a session that
-// did not end cleanly is replaced.
+// renderer, or nil to leave the interfaces out, and mods are the built mods.
+// The renderer shadows the stock news layout, read from the installed game so
+// it follows game updates, with one script added. The package outranks every
+// other mounted package while the session runs, and the server and the game
+// load it only when they start. The session holds the mount live until it
+// unmounts, so another program clears the block only after a session that did
+// not end cleanly, and the next session replaces such a block too.
 func mountRenderer(gameDir string, renderer *Renderer, mods []string) (func() error, error) {
 	// Build the package from the renderer and the mods' content.
 	citadel := filepath.Join(gameDir, "game", "citadel")
@@ -76,36 +74,33 @@ func mountRenderer(gameDir string, renderer *Renderer, mods []string) (func() er
 		return func() error { return nil }, nil
 	}
 
-	// Write the package, then mount it.
-	info := filepath.Join(citadel, "gameinfo.gi")
-	source, err := os.ReadFile(info)
-	if err != nil {
-		return nil, err
-	}
+	// Hold the mount live, write the package, then mount it.
 	var archive bytes.Buffer
 	if err := vpk.Write(&archive, files); err != nil {
 		return nil, err
 	}
-	dir := filepath.Join(gameDir, "game", filepath.FromSlash(rendererDir))
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, err
-	}
-	// A running game holds the package open on Windows, so leave an
-	// unchanged package as it is.
-	pak := filepath.Join(dir, "pak01_dir.vpk")
-	if current, err := os.ReadFile(pak); err != nil || !bytes.Equal(current, archive.Bytes()) {
-		if err := os.WriteFile(pak, archive.Bytes(), 0o644); err != nil {
-			return nil, err
-		}
-	}
-	mounted, err := gameinfo.Mount(source, rendererMount, rendererDir)
+	held, err := devmount.Hold(gameDir)
 	if err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(info, mounted, 0o644); err != nil {
+	unmount := func() error {
+		defer held.Close()
+		return devmount.Unmount(gameDir)
+	}
+	// A running game holds the package open on Windows, so leave an
+	// unchanged package as it is.
+	pak := filepath.Join(devmount.Path(gameDir), "pak01_dir.vpk")
+	if current, err := os.ReadFile(pak); err != nil || !bytes.Equal(current, archive.Bytes()) {
+		if err := os.WriteFile(pak, archive.Bytes(), 0o644); err != nil {
+			_ = held.Close()
+			return nil, err
+		}
+	}
+	if err := devmount.Mount(gameDir); err != nil {
+		_ = held.Close()
 		return nil, err
 	}
-	return func() error { return unmountRenderer(info) }, nil
+	return unmount, nil
 }
 
 // rendererFiles compiles the renderer's files: the installed news layout
@@ -161,20 +156,6 @@ func addContent(files fstest.MapFS, dir string) error {
 		}
 	}
 	return nil
-}
-
-// unmountRenderer removes the session's block from the gameinfo.gi at info,
-// as it reads now, keeping every change another program made since.
-func unmountRenderer(info string) error {
-	source, err := os.ReadFile(info)
-	if err != nil {
-		return err
-	}
-	unmounted, err := gameinfo.Unmount(source, rendererMount)
-	if err != nil || bytes.Equal(unmounted, source) {
-		return err
-	}
-	return os.WriteFile(info, unmounted, 0o644)
 }
 
 // withScript adds an include of the script at src to a layout's scripts.

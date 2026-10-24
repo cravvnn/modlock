@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/paralin/modlock/devmount"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/pkg/errors"
 )
@@ -46,7 +47,7 @@ func StartInterface(config Interface) (stop func()) {
 	} else {
 		unmount = func() {
 			if err := mounted(); err != nil {
-				config.fail(errors.Wrapf(err, "remove the %s block from gameinfo.gi; the next session replaces it", rendererMount))
+				config.fail(errors.Wrapf(err, "remove the %s block from gameinfo.gi; the next session replaces it", devmount.Name))
 			}
 		}
 	}

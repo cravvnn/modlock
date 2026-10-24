@@ -39,8 +39,6 @@ var (
 	// ErrRunning reports that another daemon already holds the state
 	// directory.
 	ErrRunning = errors.New("a modlock daemon already runs for this state directory")
-	// errLocked reports that another process holds a lock file.
-	errLocked = errors.New("locked by another process")
 )
 
 // Dir returns the state directory: $MODLOCK_STATE, or modlock/state in the

@@ -3,6 +3,8 @@ package daemon
 import (
 	"context"
 	"os"
+
+	"github.com/paralin/modlock/internal/filelock"
 )
 
 // lockFileContext waits for an exclusive lock on path until ctx ends. A lock
@@ -15,7 +17,7 @@ func lockFileContext(ctx context.Context, path string) (*os.File, error) {
 	}
 	ch := make(chan result, 1)
 	go func() {
-		f, err := lockFile(path, true)
+		f, err := filelock.Lock(path, true, true)
 		ch <- result{f, err}
 	}()
 

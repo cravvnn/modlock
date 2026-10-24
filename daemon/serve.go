@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/paralin/modlock/internal/filelock"
 )
 
 // Serve runs the daemon of release version for dir. It takes the directory's
@@ -95,8 +96,8 @@ func bindStarting(ctx context.Context, dir string) (net.Listener, func(), error)
 // lock.
 func bind(dir string) (net.Listener, func(), error) {
 	// Take the directory, or report the daemon that holds it.
-	held, err := lockFile(filepath.Join(dir, lockName), false)
-	if err == errLocked {
+	held, err := filelock.Lock(filepath.Join(dir, lockName), true, false)
+	if err == filelock.ErrLocked {
 		return nil, nil, ErrRunning
 	}
 	if err != nil {
