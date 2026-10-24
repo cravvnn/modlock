@@ -7,21 +7,31 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/aperturerobotics/controllerbus/controller"
 	"github.com/aperturerobotics/controllerbus/directive"
+	"github.com/aperturerobotics/starpc/srpc"
 	"github.com/paralin/modlock/gamelink"
+	"github.com/paralin/modlock/session"
+	"github.com/paralin/modlock/src/wasm/ui"
 	"github.com/pkg/errors"
 	"github.com/s4wave/spacewave/net/link"
 	"github.com/s4wave/spacewave/net/peer"
 	"github.com/s4wave/spacewave/net/protocol"
 	"github.com/s4wave/spacewave/net/stream"
+	stream_srpc "github.com/s4wave/spacewave/net/stream/srpc"
 )
 
 // GameProtocolID identifies game streams between modlock peers, which
 // gamelink forwards. The handshake's generation is the hosted session, so
 // only a guest holding the join code reaches the server.
 const GameProtocolID = protocol.ID("modlock/game/1")
+
+// SessionProtocolID identifies the Session service a host serves its guests'
+// daemons, one call per stream.
+const SessionProtocolID = protocol.ID("modlock/session/1")
 
 // JoinCode names a hosted session: the host's peer and the session's secret.
 type JoinCode struct {
@@ -70,6 +80,8 @@ type hosting struct {
 	target *net.UDPAddr
 	// events receives each guest that joins or leaves.
 	events func(*HostEvent)
+	// sessions serves the Session service to guests.
+	sessions *srpc.Server
 }
 
 // GetControllerInfo identifies the hosted session.
@@ -83,18 +95,30 @@ func (h *hosting) Execute(context.Context) error { return nil }
 // Close does nothing; forwarding ends with ctx.
 func (h *hosting) Close() error { return nil }
 
-// HandleDirective accepts game streams to the local peer.
+// HandleDirective accepts game and session streams to the local peer.
 func (h *hosting) HandleDirective(_ context.Context, inst directive.Instance) ([]directive.Resolver, error) {
 	d, ok := inst.GetDirective().(link.HandleMountedStream)
-	if !ok || d.HandleMountedStreamLocalPeerID() != h.local || d.HandleMountedStreamProtocolID() != GameProtocolID {
+	if !ok || d.HandleMountedStreamLocalPeerID() != h.local {
 		return nil, nil
 	}
-	return directive.Resolvers(directive.NewValueResolver([]link.MountedStreamHandler{h})), nil
+	switch d.HandleMountedStreamProtocolID() {
+	case GameProtocolID, SessionProtocolID:
+		return directive.Resolvers(directive.NewValueResolver([]link.MountedStreamHandler{h})), nil
+	default:
+		return nil, nil
+	}
 }
 
-// HandleMountedStream forwards a guest that names the session to the server
-// until the guest or the session ends, and closes any other stream.
+// HandleMountedStream serves a session stream's call, and forwards a guest
+// whose game stream names the session to the server until the guest or the
+// session ends, closing any other stream.
 func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStream) error {
+	// Serve a session call; the call checks the join code.
+	if mounted.GetProtocolID() == SessionProtocolID {
+		go h.sessions.HandleStream(h.ctx, mounted.GetStream())
+		return nil
+	}
+
 	// Take the guest's game stream.
 	messages, ok := mounted.GetStream().(stream.MessageStream)
 	if !ok {
@@ -120,13 +144,23 @@ func (h *hosting) HandleMountedStream(_ context.Context, mounted link.MountedStr
 }
 
 // Host serves the local game server to guests holding the join code it sends
-// first, until the call ends.
-func (s *Service) Host(req *HostRequest, strm SRPCPeerNet_HostStream) error {
-	// Hold the daemon's one session.
-	ctx := strm.Context()
-	if req.GetPort() == 0 || req.GetPort() > 65535 {
+// first, until the call ends. The caller names the server, then sends its
+// players and interfaces, which the host streams to each guest as their own
+// screen.
+func (s *Service) Host(strm SRPCPeerNet_HostStream) error {
+	// Read the server's port.
+	ctx, cancel := context.WithCancel(strm.Context())
+	defer cancel()
+	start, err := strm.Recv()
+	if err != nil {
+		return err
+	}
+	port := start.GetStart().GetPort()
+	if port == 0 || port > 65535 {
 		return errors.New("name the game server's port")
 	}
+
+	// Hold the daemon's one session once its peer is up.
 	if err := await(ctx, s.ready); err != nil {
 		return err
 	}
@@ -134,6 +168,21 @@ func (s *Service) Host(req *HostRequest, strm SRPCPeerNet_HostStream) error {
 		return errors.New("this PC already hosts a session")
 	}
 	defer s.hosting.Store(false)
+
+	// Follow the server's players and interfaces until the caller stops.
+	screens := session.NewScreens(0)
+	go func() {
+		defer cancel()
+		for {
+			in, err := strm.Recv()
+			if err != nil {
+				return
+			}
+			if event := in.GetServer(); event != nil {
+				screens.Handle(event)
+			}
+		}
+	}()
 
 	// Pick the session's secret.
 	var secret [8]byte
@@ -145,13 +194,15 @@ func (s *Service) Host(req *HostRequest, strm SRPCPeerNet_HostStream) error {
 	// Answer guests, sending each change in order.
 	events := make(chan *HostEvent, 16)
 	events <- &HostEvent{Body: &HostEvent_JoinCode{JoinCode: code.String()}}
-	target := &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: int(req.GetPort())}
-	h := &hosting{ctx: ctx, local: s.local, session: code.Session, target: target, events: func(event *HostEvent) {
+	h, err := s.newHosting(ctx, code.Session, int(port), screens, func(event *HostEvent) {
 		select {
 		case events <- event:
 		case <-ctx.Done():
 		}
-	}}
+	})
+	if err != nil {
+		return err
+	}
 	release, err := s.node.GetBus().AddController(ctx, h, nil)
 	if err != nil {
 		return err
@@ -168,6 +219,74 @@ func (s *Service) Host(req *HostRequest, strm SRPCPeerNet_HostStream) error {
 				return err
 			}
 		}
+	}
+}
+
+// newHosting returns the session that forwards guests to the server on port
+// and serves them their screens from screens.
+func (s *Service) newHosting(ctx context.Context, secret uint64, port int, screens *session.Screens, events func(*HostEvent)) (*hosting, error) {
+	mux := srpc.NewMux()
+	if err := SRPCRegisterSession(mux, &sessionServer{session: secret, screens: screens}); err != nil {
+		return nil, err
+	}
+	return &hosting{
+		ctx:      ctx,
+		local:    s.local,
+		session:  secret,
+		target:   &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: port},
+		events:   events,
+		sessions: srpc.NewServer(mux),
+	}, nil
+}
+
+// sessionServer serves a hosted session's Session service.
+type sessionServer struct {
+	// session is the join code's secret.
+	session uint64
+	// screens holds every player's screen.
+	screens *session.Screens
+}
+
+// WatchScreen streams the guest's screen: the whole screen first, then at
+// most one frame of changes each FrameGap. Comparing screens instead of
+// queuing the mods' changes means a slow guest gets the newest screen, never
+// a backlog.
+func (s *sessionServer) WatchScreen(req *WatchScreenRequest, strm SRPCSession_WatchScreenStream) error {
+	// Refuse a guest without the join code.
+	ctx := strm.Context()
+	if req.GetSession() != s.session {
+		return errors.New("the join code names another session")
+	}
+
+	// Send the screen whole, then each change.
+	sent := &ui.Screen{}
+	for reset := true; ; reset = false {
+		screen, changed := s.screens.Player(req.GetSteamId())
+		if changes := session.Changes(sent, screen); reset || len(changes) != 0 {
+			if err := strm.Send(&ScreenFrame{Changes: changes, Reset_: reset}); err != nil {
+				return err
+			}
+			sent = screen
+		}
+		if !waitFrame(ctx, changed) {
+			return nil
+		}
+	}
+}
+
+// waitFrame waits for changed, then for the gap between frames, and reports
+// whether ctx is still open.
+func waitFrame(ctx context.Context, changed <-chan struct{}) bool {
+	select {
+	case <-changed:
+	case <-ctx.Done():
+		return false
+	}
+	select {
+	case <-time.After(session.FrameGap):
+		return true
+	case <-ctx.Done():
+		return false
 	}
 }
 
@@ -190,14 +309,28 @@ func (s *Service) Join(req *JoinRequest, strm SRPCPeerNet_JoinStream) error {
 		return err
 	}
 	defer client.Close()
-	if err := strm.Send(&JoinEvent{Body: &JoinEvent_Address{Address: client.Address()}}); err != nil {
+	var sending sync.Mutex
+	send := func(event *JoinEvent) error {
+		sending.Lock()
+		defer sending.Unlock()
+		return strm.Send(event)
+	}
+	if err := send(&JoinEvent{Body: &JoinEvent_Address{Address: client.Address()}}); err != nil {
 		return err
+	}
+
+	// Stream the player's screen while the game plays.
+	if req.GetSteamId() != 0 {
+		watch, cancel := context.WithCancel(ctx)
+		defer cancel()
+		host := NewSRPCSessionClient(srpc.NewClient(stream_srpc.NewOpenStreamFunc(s.node.GetBus(), SessionProtocolID, s.local, code.Host, 0)))
+		go s.watchScreen(watch, host, &WatchScreenRequest{Session: code.Session, SteamId: req.GetSteamId()}, send)
 	}
 
 	// Report the game's arrival, then hold until it leaves.
 	select {
 	case <-client.Arrived():
-		if err := strm.Send(&JoinEvent{Body: &JoinEvent_Arrived{Arrived: true}}); err != nil {
+		if err := send(&JoinEvent{Body: &JoinEvent_Arrived{Arrived: true}}); err != nil {
 			return err
 		}
 	case <-client.Done():
@@ -206,4 +339,27 @@ func (s *Service) Join(req *JoinRequest, strm SRPCPeerNet_JoinStream) error {
 		return err
 	}
 	return nil
+}
+
+// watchScreen forwards the player's screen from the host until ctx ends,
+// watching again after a lost stream. Each watch starts with the whole
+// screen, so the guest never applies a change to a screen it lacks.
+func (s *Service) watchScreen(ctx context.Context, host SRPCSessionClient, req *WatchScreenRequest, send func(*JoinEvent) error) {
+	for {
+		// Forward each frame until the stream ends.
+		frames, err := host.WatchScreen(ctx, req)
+		for err == nil {
+			var frame *ScreenFrame
+			if frame, err = frames.Recv(); err == nil {
+				err = send(&JoinEvent{Body: &JoinEvent_Screen{Screen: frame}})
+			}
+		}
+
+		// Watch again after a pause, unless the call ended.
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Second):
+		}
+	}
 }

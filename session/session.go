@@ -2,9 +2,6 @@ package session
 
 import (
 	"context"
-	"net"
-	"net/http"
-	"os"
 	"runtime"
 	"strconv"
 	"sync/atomic"
@@ -34,10 +31,9 @@ type Session struct {
 	control *Control
 	// host is the host process.
 	host *Host
-	// screens serves the mods' interfaces to the player's game, if it runs.
-	screens *http.Server
-	// unmount removes the renderer from the game, if the session mounted it.
-	unmount func() error
+	// stopInterface stops serving the mods' interfaces to the player's game,
+	// if the session serves them.
+	stopInterface func()
 	// controlled is closed when the control link ends.
 	controlled chan struct{}
 }
@@ -53,11 +49,9 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 	if err != nil {
 		return nil, noGame(err)
 	}
-	gameDir := os.Getenv("DEADLOCK_DIR")
-	if gameDir == "" {
-		if gameDir, err = steam.Deadlock(); err != nil {
-			return nil, noGame(err)
-		}
+	gameDir, err := steam.Deadlock()
+	if err != nil {
+		return nil, noGame(err)
 	}
 
 	// Find the host.
@@ -88,29 +82,18 @@ func Start(ctx context.Context, config Config) (*Session, error) {
 		return nil, err
 	}
 
-	// Serve the mods' interfaces to the game. Another program on the port
-	// leaves them off without stopping the session.
+	// Serve the mods' interfaces to the game.
 	session := &Session{Executable: executable, control: link, host: host, controlled: make(chan struct{})}
-	screens := NewScreens(steam.Account(), config.Relay)
+	screens := NewScreens(steam.Account())
 	if config.Interface != "" {
-		if listener, err := net.Listen("tcp", config.Interface); err != nil {
-			config.Events(&control.HostEvent{Body: &control.HostEvent_Failed{Failed: &control.ModFailed{
-				Error: errors.Wrap(err, "mod interfaces are off").Error(),
-			}}})
-		} else {
-			session.screens = &http.Server{Handler: screens}
-			go func() { _ = session.screens.Serve(listener) }()
-		}
-	}
-
-	// Mount the renderer before the client starts, so the game draws them.
-	// Without it the interfaces show only in the browser preview.
-	if session.screens != nil && config.Renderer != nil {
-		if session.unmount, err = mountRenderer(gameDir, config.Renderer); err != nil {
-			config.Events(&control.HostEvent{Body: &control.HostEvent_Failed{Failed: &control.ModFailed{
-				Error: errors.Wrap(err, "mod interfaces show only in the browser preview").Error(),
-			}}})
-		}
+		session.stopInterface = StartInterface(Interface{
+			Address:  config.Interface,
+			Relay:    config.Relay,
+			Renderer: config.Renderer,
+			GameDir:  gameDir,
+			Screen:   screens.Screen,
+			Events:   config.Events,
+		})
 	}
 
 	// Pass events on, launching the client at the first ready server.
@@ -144,11 +127,8 @@ func (s *Session) Wait() error {
 	// Wait for the host, then close the link and the interfaces it fed.
 	err := s.host.Wait()
 	_ = s.control.Close()
-	if s.screens != nil {
-		_ = s.screens.Close()
-	}
-	if s.unmount != nil {
-		_ = s.unmount()
+	if s.stopInterface != nil {
+		s.stopInterface()
 	}
 	<-s.controlled
 	return err

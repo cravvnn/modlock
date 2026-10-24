@@ -15,6 +15,9 @@ import (
 
 	"github.com/aperturerobotics/go-websocket"
 	"github.com/aperturerobotics/starpc/srpc"
+	"github.com/paralin/modlock/session"
+	"github.com/paralin/modlock/src/host_app/control"
+	"github.com/paralin/modlock/src/wasm/ui"
 	api "github.com/s4wave/spacewave/core/provider/spacewave/api"
 	"github.com/s4wave/spacewave/net/peer"
 	signaling_rpc "github.com/s4wave/spacewave/net/signaling/rpc"
@@ -216,17 +219,35 @@ func TestServiceProbe(t *testing.T) {
 // joinSession hosts a game server on host, refuses a guest with the wrong
 // session, and walks guest's game through joining it.
 func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
-	// Run a game server and host it.
+	// Run a game server.
 	server, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer server.Close()
 	server.SetDeadline(time.Now().Add(10 * time.Second))
+
+	// Host it on its port.
 	hostClient := NewSRPCPeerNetClient(rpcClient(t, host))
-	hosted, err := hostClient.Host(ctx, &HostRequest{Port: uint32(server.LocalAddr().(*net.UDPAddr).Port)})
+	hosted, err := hostClient.Host(ctx)
 	if err != nil {
 		t.Fatal(err)
+	}
+	start := &HostRequest{Port: uint32(server.LocalAddr().(*net.UDPAddr).Port)}
+	if err := hosted.Send(&HostInput{Body: &HostInput_Start{Start: start}}); err != nil {
+		t.Fatal(err)
+	}
+
+	// The guest's player is in slot 1, where a mod shows a label.
+	joinedSlot := &control.PlayerJoined{Slot: 1, SteamId: guestSteamID}
+	label := &ui.Change{Reset_: true, Set: []*ui.Node{{Id: "title", Text: "your turn"}}}
+	for _, event := range []*control.HostEvent{
+		{Body: &control.HostEvent_Joined{Joined: joinedSlot}},
+		{Body: &control.HostEvent_Ui{Ui: &control.UiChanged{Mod: "chess", Slot: 1, Change: label}}},
+	} {
+		if err := hosted.Send(&HostInput{Body: &HostInput_Server{Server: event}}); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	// Read the join code; a guest with another session is refused.
@@ -247,7 +268,7 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 	}
 
 	// The guest joins and the host reports it.
-	joined, err := guestClient.Join(ctx, &JoinRequest{Code: code.String()})
+	joined, err := guestClient.Join(ctx, &JoinRequest{Code: code.String(), SteamId: guestSteamID})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -272,9 +293,35 @@ func joinSession(ctx context.Context, t *testing.T, host, guest *Service) {
 	if n, _, err := server.ReadFromUDP(packet); err != nil || string(packet[:n]) != "hello" {
 		t.Fatalf("server read %q: %v", packet[:n], err)
 	}
-	if event, err := joined.Recv(); err != nil || !event.GetArrived() {
-		t.Fatalf("join event %v: %v", event, err)
+
+	// The guest sees its game arrive and its own screen.
+	mirror := session.NewMirror()
+	for arrived := false; !arrived || mirrorText(mirror) != "your turn"; {
+		event, err := joined.Recv()
+		if err != nil {
+			t.Fatalf("join event: %v", err)
+		}
+		arrived = arrived || event.GetArrived()
+		if frame := event.GetScreen(); frame != nil {
+			mirror.Apply(frame.GetChanges(), frame.GetReset_())
+		}
 	}
+}
+
+// guestSteamID is the guest player's Steam ID.
+const guestSteamID = 76561198000000007
+
+// mirrorText returns the text of the chess mod's title on mirror's screen.
+func mirrorText(mirror *session.Mirror) string {
+	screen, _ := mirror.Screen()
+	for _, tree := range screen.GetTrees() {
+		for _, node := range tree.GetNodes() {
+			if tree.GetMod() == "chess" && node.GetId() == "title" {
+				return node.GetText()
+			}
+		}
+	}
+	return ""
 }
 
 // rpcClient calls s's PeerNet service in memory.

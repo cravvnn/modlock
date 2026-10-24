@@ -72,6 +72,13 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 		})
 	}
 
+	// Keep every player's interface from the first event, for guests.
+	var feed *hostFeed
+	if host {
+		feed = newHostFeed()
+		out.tap(feed.observe)
+	}
+
 	// Build now and, with --watch, after each save. The first good
 	// build starts the server and each later one reloads the mod; a
 	// failed build keeps the running one. Watch calls rebuild on one
@@ -128,7 +135,7 @@ func runDev(c *cli.Context, out *printer, command string, host bool) error {
 	}
 	defer running.Stop()
 	if host {
-		go hostSession(c, out, running)
+		go hostSession(c, out, running, feed)
 	}
 	return waitSession(c, out, running)
 }
@@ -157,7 +164,7 @@ func servePreview(ctx context.Context, out *printer, port int, built string, wat
 		out.mark("!", yellow, "the preview page is off: "+err.Error())
 		return
 	}
-	out.watch = page.Observe
+	out.tap(page.Observe)
 	server := &http.Server{Handler: page, ReadHeaderTimeout: 10 * time.Second}
 	context.AfterFunc(ctx, func() { _ = server.Close() })
 	go func() { _ = server.Serve(listener) }()

@@ -74,7 +74,7 @@ func New(dir, built string, watch bool, input Input) *Page {
 		files:   http.FileServer(http.Dir(dir)),
 		built:   os.DirFS(built),
 		input:   input,
-		screens: session.NewScreens(0, ""),
+		screens: session.NewScreens(0),
 		watch:   watch,
 		logs:    make(map[string][]string),
 		state:   &cli.Preview{},

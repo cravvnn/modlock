@@ -7,11 +7,14 @@ package peernet
 import (
 	fmt "fmt"
 	io "io"
+	maps "maps"
 	slices "slices"
 	strconv "strconv"
 
 	protobuf_go_lite "github.com/aperturerobotics/protobuf-go-lite"
 	json "github.com/aperturerobotics/protobuf-go-lite/json"
+	control "github.com/paralin/modlock/src/host_app/control"
+	ui "github.com/paralin/modlock/src/wasm/ui"
 )
 
 // AdmissionState is where a peer stands with the signaling service, which
@@ -248,6 +251,62 @@ func (x *RelayServer) GetCredential() string {
 	return ""
 }
 
+// HostInput is one message of a Host call.
+type HostInput struct {
+	unknownFields []byte
+	// Types that are assignable to Body:
+	//	*HostInput_Start
+	//	*HostInput_Server
+	Body isHostInput_Body `protobuf_oneof:"body"`
+}
+
+func (x *HostInput) Reset() {
+	*x = HostInput{}
+}
+
+func (*HostInput) ProtoMessage() {}
+
+func (m *HostInput) GetBody() isHostInput_Body {
+	if m != nil {
+		return m.Body
+	}
+	return nil
+}
+
+func (x *HostInput) GetStart() *HostRequest {
+	if x, ok := x.GetBody().(*HostInput_Start); ok {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *HostInput) GetServer() *control.HostEvent {
+	if x, ok := x.GetBody().(*HostInput_Server); ok {
+		return x.Server
+	}
+	return nil
+}
+
+type isHostInput_Body interface {
+	isHostInput_Body()
+}
+
+type HostInput_Start struct {
+	// start names the server, and comes first.
+	Start *HostRequest `protobuf:"bytes,1,opt,name=start,proto3,oneof"`
+}
+
+type HostInput_Server struct {
+	// server is a change to the server's players or interfaces: a join, a
+	// leave or an interface change. The first ones after start bring the
+	// daemon to the server's state.
+	Server *control.HostEvent `protobuf:"bytes,2,opt,name=server,proto3,oneof"`
+}
+
+func (*HostInput_Start) isHostInput_Body() {}
+
+func (*HostInput_Server) isHostInput_Body() {}
+
 // HostRequest names the game server to serve.
 type HostRequest struct {
 	unknownFields []byte
@@ -343,6 +402,9 @@ type JoinRequest struct {
 	unknownFields []byte
 	// code is the host's join code.
 	Code string `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	// steam_id is the guest's Steam ID, whose screen the guest is sent; zero
+	// sends no screen.
+	SteamId uint64 `protobuf:"fixed64,2,opt,name=steam_id,json=steamId,proto3" json:"steamId,omitempty"`
 }
 
 func (x *JoinRequest) Reset() {
@@ -358,12 +420,20 @@ func (x *JoinRequest) GetCode() string {
 	return ""
 }
 
+func (x *JoinRequest) GetSteamId() uint64 {
+	if x != nil {
+		return x.SteamId
+	}
+	return 0
+}
+
 // JoinEvent is one step of joining a hosted session.
 type JoinEvent struct {
 	unknownFields []byte
 	// Types that are assignable to Body:
 	//	*JoinEvent_Address
 	//	*JoinEvent_Arrived
+	//	*JoinEvent_Screen
 	Body isJoinEvent_Body `protobuf_oneof:"body"`
 }
 
@@ -394,6 +464,13 @@ func (x *JoinEvent) GetArrived() bool {
 	return false
 }
 
+func (x *JoinEvent) GetScreen() *ScreenFrame {
+	if x, ok := x.GetBody().(*JoinEvent_Screen); ok {
+		return x.Screen
+	}
+	return nil
+}
+
 type isJoinEvent_Body interface {
 	isJoinEvent_Body()
 }
@@ -409,9 +486,102 @@ type JoinEvent_Arrived struct {
 	Arrived bool `protobuf:"varint,2,opt,name=arrived,proto3,oneof"`
 }
 
+type JoinEvent_Screen struct {
+	// screen changes what the mods show the guest. A reset frame carries
+	// the whole screen.
+	Screen *ScreenFrame `protobuf:"bytes,3,opt,name=screen,proto3,oneof"`
+}
+
 func (*JoinEvent_Address) isJoinEvent_Body() {}
 
 func (*JoinEvent_Arrived) isJoinEvent_Body() {}
+
+func (*JoinEvent_Screen) isJoinEvent_Body() {}
+
+// WatchScreenRequest names the guest whose screen to stream.
+type WatchScreenRequest struct {
+	unknownFields []byte
+	// session is the join code's secret.
+	Session uint64 `protobuf:"fixed64,1,opt,name=session,proto3" json:"session,omitempty"`
+	// steam_id is the guest's Steam ID.
+	SteamId uint64 `protobuf:"fixed64,2,opt,name=steam_id,json=steamId,proto3" json:"steamId,omitempty"`
+}
+
+func (x *WatchScreenRequest) Reset() {
+	*x = WatchScreenRequest{}
+}
+
+func (*WatchScreenRequest) ProtoMessage() {}
+
+func (x *WatchScreenRequest) GetSession() uint64 {
+	if x != nil {
+		return x.Session
+	}
+	return 0
+}
+
+func (x *WatchScreenRequest) GetSteamId() uint64 {
+	if x != nil {
+		return x.SteamId
+	}
+	return 0
+}
+
+// ScreenFrame is one change to a player's screen.
+type ScreenFrame struct {
+	unknownFields []byte
+	// changes holds each changed mod's change to its tree, by mod name.
+	Changes map[string]*ui.Change `protobuf:"bytes,1,rep,name=changes,proto3" json:"changes,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	// reset starts the screen over before the changes, as the first frame of
+	// each watch does.
+	Reset_ bool `protobuf:"varint,2,opt,name=reset,proto3" json:"reset,omitempty"`
+}
+
+func (x *ScreenFrame) Reset() {
+	*x = ScreenFrame{}
+}
+
+func (*ScreenFrame) ProtoMessage() {}
+
+func (x *ScreenFrame) GetChanges() map[string]*ui.Change {
+	if x != nil {
+		return x.Changes
+	}
+	return nil
+}
+
+func (x *ScreenFrame) GetReset_() bool {
+	if x != nil {
+		return x.Reset_
+	}
+	return false
+}
+
+type ScreenFrame_ChangesEntry struct {
+	unknownFields []byte
+	Key           string     `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value         *ui.Change `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (x *ScreenFrame_ChangesEntry) Reset() {
+	*x = ScreenFrame_ChangesEntry{}
+}
+
+func (*ScreenFrame_ChangesEntry) ProtoMessage() {}
+
+func (x *ScreenFrame_ChangesEntry) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *ScreenFrame_ChangesEntry) GetValue() *ui.Change {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
 
 func (m *GetPeerRequest) CloneVT() *GetPeerRequest {
 	if m == nil {
@@ -516,6 +686,50 @@ func (m *RelayServer) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *HostInput) CloneVT() *HostInput {
+	if m == nil {
+		return (*HostInput)(nil)
+	}
+	r := new(HostInput)
+	if m.Body != nil {
+		r.Body = m.Body.(interface{ CloneOneofVT() isHostInput_Body }).CloneOneofVT()
+	}
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *HostInput) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *HostInput_Start) CloneVT() *HostInput_Start {
+	if m == nil {
+		return (*HostInput_Start)(nil)
+	}
+	r := new(HostInput_Start)
+	r.Start = protobuf_go_lite.CloneVTValue(m.Start)
+	return r
+}
+
+func (m *HostInput_Start) CloneOneofVT() isHostInput_Body {
+	return m.CloneVT()
+}
+
+func (m *HostInput_Server) CloneVT() *HostInput_Server {
+	if m == nil {
+		return (*HostInput_Server)(nil)
+	}
+	r := new(HostInput_Server)
+	r.Server = protobuf_go_lite.CloneVTValue(m.Server)
+	return r
+}
+
+func (m *HostInput_Server) CloneOneofVT() isHostInput_Body {
+	return m.CloneVT()
+}
+
 func (m *HostRequest) CloneVT() *HostRequest {
 	if m == nil {
 		return (*HostRequest)(nil)
@@ -595,6 +809,7 @@ func (m *JoinRequest) CloneVT() *JoinRequest {
 	}
 	r := new(JoinRequest)
 	r.Code = m.Code
+	r.SteamId = m.SteamId
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = slices.Clone(m.unknownFields)
 	}
@@ -646,6 +861,53 @@ func (m *JoinEvent_Arrived) CloneVT() *JoinEvent_Arrived {
 }
 
 func (m *JoinEvent_Arrived) CloneOneofVT() isJoinEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *JoinEvent_Screen) CloneVT() *JoinEvent_Screen {
+	if m == nil {
+		return (*JoinEvent_Screen)(nil)
+	}
+	r := new(JoinEvent_Screen)
+	r.Screen = protobuf_go_lite.CloneVTValue(m.Screen)
+	return r
+}
+
+func (m *JoinEvent_Screen) CloneOneofVT() isJoinEvent_Body {
+	return m.CloneVT()
+}
+
+func (m *WatchScreenRequest) CloneVT() *WatchScreenRequest {
+	if m == nil {
+		return (*WatchScreenRequest)(nil)
+	}
+	r := new(WatchScreenRequest)
+	r.Session = m.Session
+	r.SteamId = m.SteamId
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *WatchScreenRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *ScreenFrame) CloneVT() *ScreenFrame {
+	if m == nil {
+		return (*ScreenFrame)(nil)
+	}
+	r := new(ScreenFrame)
+	r.Reset_ = m.Reset_
+	r.Changes = protobuf_go_lite.CloneVTMap(m.Changes)
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *ScreenFrame) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -790,6 +1052,67 @@ func (this *RelayServer) EqualMessageVT(thatMsg any) bool {
 	return this.EqualVT(that)
 }
 
+func (this *HostInput) EqualVT(that *HostInput) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Body == nil && that.Body != nil {
+		return false
+	} else if this.Body != nil {
+		if that.Body == nil {
+			return false
+		}
+		if !this.Body.(interface{ EqualVT(isHostInput_Body) bool }).EqualVT(that.Body) {
+			return false
+		}
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *HostInput) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*HostInput)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *HostInput_Start) EqualVT(thatIface isHostInput_Body) bool {
+	that, ok := thatIface.(*HostInput_Start)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Start, that.Start, func() *HostRequest { return &HostRequest{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *HostInput_Server) EqualVT(thatIface isHostInput_Body) bool {
+	that, ok := thatIface.(*HostInput_Server)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Server, that.Server, func() *control.HostEvent { return &control.HostEvent{} }) {
+		return false
+	}
+	return true
+}
+
 func (this *HostRequest) EqualVT(that *HostRequest) bool {
 	if this == that {
 		return true
@@ -897,6 +1220,9 @@ func (this *JoinRequest) EqualVT(that *JoinRequest) bool {
 	if this.Code != that.Code {
 		return false
 	}
+	if this.SteamId != that.SteamId {
+		return false
+	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
@@ -967,6 +1293,69 @@ func (this *JoinEvent_Arrived) EqualVT(thatIface isJoinEvent_Body) bool {
 		return false
 	}
 	return true
+}
+
+func (this *JoinEvent_Screen) EqualVT(thatIface isJoinEvent_Body) bool {
+	that, ok := thatIface.(*JoinEvent_Screen)
+	if !ok {
+		return false
+	}
+	if this == that {
+		return true
+	}
+	if this == nil && that != nil || this != nil && that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTImplicit(this.Screen, that.Screen, func() *ScreenFrame { return &ScreenFrame{} }) {
+		return false
+	}
+	return true
+}
+
+func (this *WatchScreenRequest) EqualVT(that *WatchScreenRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Session != that.Session {
+		return false
+	}
+	if this.SteamId != that.SteamId {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *WatchScreenRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*WatchScreenRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *ScreenFrame) EqualVT(that *ScreenFrame) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !protobuf_go_lite.EqualVTMapImplicit(this.Changes, that.Changes, func() *ui.Change { return &ui.Change{} }) {
+		return false
+	}
+	if this.Reset_ != that.Reset_ {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ScreenFrame) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*ScreenFrame)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
 }
 
 // MarshalProtoJSON marshals the AdmissionState to JSON.
@@ -1338,6 +1727,70 @@ func (x *RelayServer) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the HostInput message to JSON.
+func (x *HostInput) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Body != nil {
+		switch ov := x.Body.(type) {
+		case *HostInput_Start:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("start")
+			ov.Start.MarshalProtoJSON(s.WithField("start"))
+		case *HostInput_Server:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("server")
+			ov.Server.MarshalProtoJSON(s.WithField("server"))
+		}
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the HostInput to JSON.
+func (x *HostInput) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the HostInput message from JSON.
+func (x *HostInput) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "start":
+			ov := &HostInput_Start{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Start = nil
+				return
+			}
+			ov.Start = &HostRequest{}
+			ov.Start.UnmarshalProtoJSON(s.WithField("start", true))
+		case "server":
+			ov := &HostInput_Server{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Server = nil
+				return
+			}
+			ov.Server = &control.HostEvent{}
+			ov.Server.UnmarshalProtoJSON(s.WithField("server", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the HostInput from JSON.
+func (x *HostInput) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 // MarshalProtoJSON marshals the HostRequest message to JSON.
 func (x *HostRequest) MarshalProtoJSON(s *json.MarshalState) {
 	if x == nil {
@@ -1458,6 +1911,11 @@ func (x *JoinRequest) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("code")
 		s.WriteString(x.Code)
 	}
+	if x.SteamId != 0 || s.HasField("steamId") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("steamId")
+		s.WriteUint64(x.SteamId)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1478,6 +1936,9 @@ func (x *JoinRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "code":
 			s.AddField("code")
 			x.Code = s.ReadString()
+		case "steam_id", "steamId":
+			s.AddField("steam_id")
+			x.SteamId = s.ReadUint64()
 		}
 	})
 }
@@ -1505,6 +1966,10 @@ func (x *JoinEvent) MarshalProtoJSON(s *json.MarshalState) {
 			s.WriteMoreIf(&wroteField)
 			s.WriteObjectField("arrived")
 			s.WriteBool(ov.Arrived)
+		case *JoinEvent_Screen:
+			s.WriteMoreIf(&wroteField)
+			s.WriteObjectField("screen")
+			ov.Screen.MarshalProtoJSON(s.WithField("screen"))
 		}
 	}
 	s.WriteObjectEnd()
@@ -1534,12 +1999,192 @@ func (x *JoinEvent) UnmarshalProtoJSON(s *json.UnmarshalState) {
 			ov := &JoinEvent_Arrived{}
 			x.Body = ov
 			ov.Arrived = s.ReadBool()
+		case "screen":
+			ov := &JoinEvent_Screen{}
+			x.Body = ov
+			if s.ReadNil() {
+				ov.Screen = nil
+				return
+			}
+			ov.Screen = &ScreenFrame{}
+			ov.Screen.UnmarshalProtoJSON(s.WithField("screen", true))
 		}
 	})
 }
 
 // UnmarshalJSON unmarshals the JoinEvent from JSON.
 func (x *JoinEvent) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the WatchScreenRequest message to JSON.
+func (x *WatchScreenRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Session != 0 || s.HasField("session") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("session")
+		s.WriteUint64(x.Session)
+	}
+	if x.SteamId != 0 || s.HasField("steamId") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("steamId")
+		s.WriteUint64(x.SteamId)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the WatchScreenRequest to JSON.
+func (x *WatchScreenRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the WatchScreenRequest message from JSON.
+func (x *WatchScreenRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "session":
+			s.AddField("session")
+			x.Session = s.ReadUint64()
+		case "steam_id", "steamId":
+			s.AddField("steam_id")
+			x.SteamId = s.ReadUint64()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the WatchScreenRequest from JSON.
+func (x *WatchScreenRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ScreenFrame_ChangesEntry message to JSON.
+func (x *ScreenFrame_ChangesEntry) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Key != "" || s.HasField("key") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("key")
+		s.WriteString(x.Key)
+	}
+	if x.Value != nil || s.HasField("value") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("value")
+		x.Value.MarshalProtoJSON(s.WithField("value"))
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ScreenFrame_ChangesEntry to JSON.
+func (x *ScreenFrame_ChangesEntry) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ScreenFrame_ChangesEntry message from JSON.
+func (x *ScreenFrame_ChangesEntry) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "key":
+			s.AddField("key")
+			x.Key = s.ReadString()
+		case "value":
+			if s.ReadNil() {
+				x.Value = nil
+				return
+			}
+			x.Value = &ui.Change{}
+			x.Value.UnmarshalProtoJSON(s.WithField("value", true))
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ScreenFrame_ChangesEntry from JSON.
+func (x *ScreenFrame_ChangesEntry) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ScreenFrame message to JSON.
+func (x *ScreenFrame) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Changes != nil || s.HasField("changes") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("changes")
+		s.WriteObjectStart()
+		var wroteElement bool
+		for _, k := range slices.Sorted(maps.Keys(x.Changes)) {
+			v := x.Changes[k]
+			s.WriteMoreIf(&wroteElement)
+			s.WriteObjectStringField(k)
+			v.MarshalProtoJSON(s.WithField("changes"))
+		}
+		s.WriteObjectEnd()
+	}
+	if x.Reset_ || s.HasField("reset") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("reset")
+		s.WriteBool(x.Reset_)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ScreenFrame to JSON.
+func (x *ScreenFrame) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ScreenFrame message from JSON.
+func (x *ScreenFrame) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "changes":
+			s.AddField("changes")
+			if s.ReadNil() {
+				x.Changes = nil
+				return
+			}
+			x.Changes = make(map[string]*ui.Change)
+			s.ReadStringMap(func(key string) {
+				var v ui.Change
+				v.UnmarshalProtoJSON(s)
+				x.Changes[key] = &v
+			})
+		case "reset":
+			s.AddField("reset")
+			x.Reset_ = s.ReadBool()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ScreenFrame from JSON.
+func (x *ScreenFrame) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1809,6 +2454,95 @@ func (m *RelayServer) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *HostInput) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *HostInput) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostInput) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if vtmsg, ok := m.Body.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *HostInput_Start) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostInput_Start) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Start != nil {
+		size, err := m.Start.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *HostInput_Server) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *HostInput_Server) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Server != nil {
+		size, err := m.Server.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *HostRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -1955,6 +2689,11 @@ func (m *JoinRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if m.SteamId != 0 {
+		i = protobuf_go_lite.EncodeFixed64(dAtA, i, uint64(m.SteamId))
+		i--
+		dAtA[i] = 0x11
+	}
 	if len(m.Code) > 0 {
 		i = protobuf_go_lite.EncodeString(dAtA, i, m.Code)
 		i--
@@ -2027,6 +2766,129 @@ func (m *JoinEvent_Arrived) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	i = protobuf_go_lite.EncodeBool(dAtA, i, m.Arrived)
 	i--
 	dAtA[i] = 0x10
+	return len(dAtA) - i, nil
+}
+
+func (m *JoinEvent_Screen) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *JoinEvent_Screen) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.Screen != nil {
+		size, err := m.Screen.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1a
+	} else {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *WatchScreenRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *WatchScreenRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *WatchScreenRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.SteamId != 0 {
+		i = protobuf_go_lite.EncodeFixed64(dAtA, i, uint64(m.SteamId))
+		i--
+		dAtA[i] = 0x11
+	}
+	if m.Session != 0 {
+		i = protobuf_go_lite.EncodeFixed64(dAtA, i, uint64(m.Session))
+		i--
+		dAtA[i] = 0x9
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ScreenFrame) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ScreenFrame) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ScreenFrame) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Reset_ {
+		i = protobuf_go_lite.EncodeBool(dAtA, i, m.Reset_)
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Changes) > 0 {
+		for k := range m.Changes {
+			v := m.Changes[k]
+			baseI := i
+			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x12
+			i = protobuf_go_lite.EncodeString(dAtA, i, k)
+			i--
+			dAtA[i] = 0xa
+			i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
+		}
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -2106,6 +2968,49 @@ func (m *RelayServer) SizeVT() (n int) {
 	return n
 }
 
+func (m *HostInput) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if vtmsg, ok := m.Body.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *HostInput_Start) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Start != nil {
+		l = m.Start.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *HostInput_Server) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Server != nil {
+		l = m.Server.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
 func (m *HostRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2167,6 +3072,7 @@ func (m *JoinRequest) SizeVT() (n int) {
 	var l int
 	_ = l
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Code)
+	n += protobuf_go_lite.SizeFixed64NonZero(1, m.SteamId)
 	n += len(m.unknownFields)
 	return n
 }
@@ -2201,6 +3107,54 @@ func (m *JoinEvent_Arrived) SizeVT() (n int) {
 	var l int
 	_ = l
 	n += protobuf_go_lite.SizeBoolValue(1)
+	return n
+}
+
+func (m *JoinEvent_Screen) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Screen != nil {
+		l = m.Screen.SizeVT()
+		n += protobuf_go_lite.SizeMessage(1, l)
+	} else {
+		n += 2
+	}
+	return n
+}
+
+func (m *WatchScreenRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeFixed64NonZero(1, m.Session)
+	n += protobuf_go_lite.SizeFixed64NonZero(1, m.SteamId)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ScreenFrame) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	for k, v := range m.Changes {
+		_ = k
+		_ = v
+		l = 0
+		if v != nil {
+			l = v.SizeVT()
+		}
+		mapEntrySize := protobuf_go_lite.SizeStringValue(1, k) + protobuf_go_lite.SizeMessage(1, l)
+		n += protobuf_go_lite.SizeMessage(1, mapEntrySize)
+	}
+	n += protobuf_go_lite.SizeBoolNonZero(1, m.Reset_)
+	n += len(m.unknownFields)
 	return n
 }
 
@@ -2332,6 +3286,32 @@ func (x *RelayServer) String() string {
 	return x.MarshalProtoText()
 }
 
+func (x *HostInput) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "HostInput")
+	switch body := x.Body.(type) {
+	case *HostInput_Start:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "start")
+		if body.Start == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &HostRequest{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Start)
+		}
+	case *HostInput_Server:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "server")
+		if body.Server == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &control.HostEvent{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Server)
+		}
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *HostInput) String() string {
+	return x.MarshalProtoText()
+}
+
 func (x *HostRequest) MarshalProtoText() string {
 	var sb protobuf_go_lite.TextBuilder
 	initialLen := protobuf_go_lite.TextStartMessage(&sb, "HostRequest")
@@ -2374,6 +3354,10 @@ func (x *JoinRequest) MarshalProtoText() string {
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "code")
 		protobuf_go_lite.TextWriteString(&sb, x.Code)
 	}
+	if x.SteamId != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "steam_id")
+		protobuf_go_lite.TextWriteUint(&sb, x.SteamId)
+	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
@@ -2391,11 +3375,83 @@ func (x *JoinEvent) MarshalProtoText() string {
 	case *JoinEvent_Arrived:
 		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "arrived")
 		protobuf_go_lite.TextWriteBool(&sb, body.Arrived)
+	case *JoinEvent_Screen:
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "screen")
+		if body.Screen == nil {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, &ScreenFrame{})
+		} else {
+			protobuf_go_lite.TextWriteTextMarshaler(&sb, body.Screen)
+		}
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
 
 func (x *JoinEvent) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *WatchScreenRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "WatchScreenRequest")
+	if x.Session != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "session")
+		protobuf_go_lite.TextWriteUint(&sb, x.Session)
+	}
+	if x.SteamId != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "steam_id")
+		protobuf_go_lite.TextWriteUint(&sb, x.SteamId)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *WatchScreenRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *ScreenFrame_ChangesEntry) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ChangesEntry")
+	if x.Key != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "key")
+		protobuf_go_lite.TextWriteString(&sb, x.Key)
+	}
+	if x.Value != nil {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "value")
+		protobuf_go_lite.TextWriteTextMarshaler(&sb, x.Value)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ScreenFrame_ChangesEntry) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *ScreenFrame) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ScreenFrame")
+	if len(x.Changes) > 0 {
+		protobuf_go_lite.TextWriteMapStart(&sb, initialLen, "changes")
+		for _, k := range slices.Sorted(maps.Keys(x.Changes)) {
+			v := x.Changes[k]
+			protobuf_go_lite.TextWriteMapEntryPrefix(&sb)
+			protobuf_go_lite.TextWriteString(&sb, k)
+			protobuf_go_lite.TextWriteMapKeyValueSeparator(&sb)
+			if v == nil {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, &ui.Change{})
+			} else {
+				protobuf_go_lite.TextWriteTextMarshaler(&sb, v)
+			}
+		}
+		protobuf_go_lite.TextWriteMapEnd(&sb)
+	}
+	if x.Reset_ != false {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "reset")
+		protobuf_go_lite.TextWriteBool(&sb, x.Reset_)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ScreenFrame) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -2789,6 +3845,89 @@ func (m *RelayServer) UnmarshalVT(dAtA []byte) error {
 	return nil
 }
 
+func (m *HostInput) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: HostInput: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: HostInput: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Start", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*HostInput_Start); ok {
+				if err := oneof.Start.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &HostRequest{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &HostInput_Start{Start: v}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Server", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*HostInput_Server); ok {
+				if err := oneof.Server.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &control.HostEvent{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &HostInput_Server{Server: v}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
 func (m *HostRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2944,6 +4083,17 @@ func (m *JoinRequest) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			m.Code = v
+		case 2:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SteamId", wireType)
+			}
+			m.SteamId = 0
+			var _v64 uint64
+			_v64, iNdEx, err = protobuf_go_lite.DecodeFixed64(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.SteamId = uint64(_v64)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
@@ -3008,6 +4158,191 @@ func (m *JoinEvent) UnmarshalVT(dAtA []byte) error {
 			}
 			b := bool(v)
 			m.Body = &JoinEvent_Arrived{Arrived: b}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Screen", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			if oneof, ok := m.Body.(*JoinEvent_Screen); ok {
+				if err := oneof.Screen.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &ScreenFrame{}
+				if err := v.UnmarshalVT(dAtA[msgStart:postIndex]); err != nil {
+					return err
+				}
+				m.Body = &JoinEvent_Screen{Screen: v}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *WatchScreenRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: WatchScreenRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: WatchScreenRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Session", wireType)
+			}
+			m.Session = 0
+			var _v64 uint64
+			_v64, iNdEx, err = protobuf_go_lite.DecodeFixed64(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Session = uint64(_v64)
+		case 2:
+			if wireType != 1 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SteamId", wireType)
+			}
+			m.SteamId = 0
+			var _v64 uint64
+			_v64, iNdEx, err = protobuf_go_lite.DecodeFixed64(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.SteamId = uint64(_v64)
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *ScreenFrame) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ScreenFrame: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ScreenFrame: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Changes", wireType)
+			}
+			msgStart, postIndex, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			iNdEx = msgStart
+			if m.Changes == nil {
+				m.Changes = make(map[string]*ui.Change)
+			}
+			var mapkey string
+			var mapvalue *ui.Change
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+				if err != nil {
+					return err
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					mapkey, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+					if err != nil {
+						return err
+					}
+				} else if fieldNum == 2 {
+					msgStartmapvalue, postmsgIndexmapvalue, err := protobuf_go_lite.DecodeLengthDelimited(dAtA, iNdEx)
+					if err != nil {
+						return err
+					}
+					mapvalue = &ui.Change{}
+					if err := mapvalue.UnmarshalVT(dAtA[msgStartmapvalue:postmsgIndexmapvalue]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndexmapvalue
+				} else {
+					iNdEx = entryPreIndex
+					iNdEx, err = protobuf_go_lite.SkipWithin(dAtA, iNdEx, postIndex)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			m.Changes[mapkey] = mapvalue
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reset_", wireType)
+			}
+			var v bool
+			v, iNdEx, err = protobuf_go_lite.DecodeVarintBool(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Reset_ = bool(v)
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

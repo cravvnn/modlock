@@ -113,7 +113,9 @@ to `build/server.log`.
 
 `modlock host` runs the mod like `modlock dev --watch` and prints a join code.
 On another PC, `modlock join CODE` links to the host, launches Deadlock and
-joins the host's server, so both players play each reload. The two PCs find each
+joins the host's server, so both players play each reload. The guest's game
+shows the mod's interface for the guest's own player, which the host streams to
+it over the same link. The two PCs find each
 other through hyperline.gg's signaling, which needs the sign in that
 `modlock publish` saves on both, and then link directly, or through its relay
 when their routers block a direct link. The code carries the session's secret:

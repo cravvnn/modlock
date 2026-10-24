@@ -2,109 +2,150 @@ package session
 
 import (
 	"maps"
-	"net"
-	"net/http"
 	"slices"
-	"strings"
 	"sync"
-	"time"
 
-	"github.com/paralin/modlock/panorama"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/paralin/modlock/src/wasm/ui"
 )
 
-// RelayAgent marks the game's own HTML panels in their User-Agent. Requiring
-// it keeps the relay page, opened in an ordinary browser, from reading the
-// player's screen. A Steam beta client names its
-// branch after the marker, as "Source2 HTML [Steam Beta Update]/".
-const RelayAgent = "Source2 HTML"
-
-// frameGap is the least time between two frames on one stream. The relay page
-// acknowledges each frame before it reads the next, so a mod that changes its
-// interface every server frame would otherwise queue frames in the socket
-// faster than the game draws them; the stream sends the newest screen instead.
-const frameGap = 50 * time.Millisecond
-
-// Screens keeps what the mods show the local player and serves it to the
-// player's game on loopback. Deadlock loads only https pages into its HTML
-// panels, so the game's renderer reads through a relay page from another
-// origin: the page streams the screen from GET /panorama/stream, one binary
-// ui.Screen per line, packed by panorama.AppendPackedLine. The game presses buttons with a console command to the
-// server, not through this page.
+// Screens keeps what the mods show each player on a server, following the
+// host's events. It serves the local player's screen to a Relay, and any
+// player's screen to a host that streams it to a guest.
 type Screens struct {
 	// account is the local player's Steam ID, or zero to take the first
 	// person who joins.
 	account uint64
-	// origin is the relay page's origin.
-	origin string
 
 	// mu guards the fields below.
 	mu sync.Mutex
 	// slot is the local player's slot, or -1 while they are not in the server.
 	slot int32
-	// trees holds each mod's nodes by id, per slot.
-	trees map[int32]map[string]map[string]*ui.Node
-	// changed is closed and replaced whenever the local player's screen
-	// changes.
+	// players holds the Steam ID of each joined person, by slot.
+	players map[int32]uint64
+	// trees holds each mod's tree, per slot.
+	trees map[int32]trees
+	// changed is closed and replaced whenever any player's screen changes.
 	changed chan struct{}
 }
 
-// NewScreens returns screens for the player with the Steam ID account, read
-// through the relay page from origin.
-func NewScreens(account uint64, origin string) *Screens {
+// NewScreens returns screens whose local player has the Steam ID account.
+func NewScreens(account uint64) *Screens {
 	return &Screens{
 		account: account,
-		origin:  origin,
 		slot:    -1,
-		trees:   make(map[int32]map[string]map[string]*ui.Node),
+		players: make(map[int32]uint64),
+		trees:   make(map[int32]trees),
 		changed: make(chan struct{}),
 	}
 }
 
-// Handle follows one host event: a join that binds the local player's slot,
-// a leave that frees it, or a mod's change to a player's interface.
+// Handle follows one host event: a join that binds a person's slot, a leave
+// that frees it, or a mod's change to a player's interface.
 func (s *Screens) Handle(event *control.HostEvent) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	switch {
 	case event.GetJoined() != nil:
-		joined := event.GetJoined()
-		person := joined.GetSteamId()
-		switch {
-		case person != 0 && (person == s.account || s.account == 0 && s.slot < 0):
-			s.slot = joined.GetSlot()
-		case joined.GetSlot() == s.slot:
-			// Someone else took the slot, so the local player left.
-			s.slot = -1
-		default:
-			return
-		}
-		s.notify()
+		s.join(event.GetJoined())
 	case event.GetLeft() != nil:
-		if event.GetLeft().GetSlot() != s.slot {
-			return
+		slot := event.GetLeft().GetSlot()
+		delete(s.players, slot)
+		if slot == s.slot {
+			s.slot = -1
 		}
-		s.slot = -1
-		s.notify()
 	case event.GetUi() != nil:
 		update := event.GetUi()
-		s.apply(update.GetSlot(), update.GetMod(), update.GetChange())
-		if update.GetSlot() == s.slot {
-			s.notify()
+		mods := s.trees[update.GetSlot()]
+		if mods == nil {
+			mods = make(trees)
+			s.trees[update.GetSlot()] = mods
 		}
+		mods.apply(update.GetMod(), update.GetChange())
+	default:
+		return
+	}
+	s.notify()
+}
+
+// join binds a person to their slot, and the local player to theirs. Callers
+// hold mu.
+func (s *Screens) join(joined *control.PlayerJoined) {
+	// Record the person, who replaces whoever held the slot; a bot is no one.
+	person, slot := joined.GetSteamId(), joined.GetSlot()
+	if person != 0 {
+		s.players[slot] = person
+	} else {
+		delete(s.players, slot)
+	}
+
+	// Follow the local player, who left when someone else took their slot.
+	switch {
+	case person != 0 && (person == s.account || s.account == 0 && s.slot < 0):
+		s.slot = slot
+	case slot == s.slot:
+		s.slot = -1
 	}
 }
 
-// apply applies change to mod's tree for slot.
-func (s *Screens) apply(slot int32, mod string, change *ui.Change) {
-	// Find the player's trees, and start the mod's tree over on a reset.
-	mods := s.trees[slot]
-	if mods == nil {
-		mods = make(map[string]map[string]*ui.Node)
-		s.trees[slot] = mods
+// notify wakes every stream. Callers hold mu.
+func (s *Screens) notify() {
+	close(s.changed)
+	s.changed = make(chan struct{})
+}
+
+// Screen returns the local player's screen and a channel that closes when it
+// may have changed.
+func (s *Screens) Screen() (*ui.Screen, <-chan struct{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.trees[s.slot].screen(), s.changed
+}
+
+// Player returns the screen of the person with the Steam ID account, empty
+// while they are not in the server, and a channel that closes when it may
+// have changed.
+func (s *Screens) Player(account uint64) (*ui.Screen, <-chan struct{}) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for slot, person := range s.players {
+		if person == account {
+			return s.trees[slot].screen(), s.changed
+		}
 	}
-	nodes := mods[mod]
+	return &ui.Screen{}, s.changed
+}
+
+// Snapshot returns the events that bring new Screens to this one's state:
+// each person's join, then each tree as a reset change.
+func (s *Screens) Snapshot() []*control.HostEvent {
+	// Join each person, in slot order.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var events []*control.HostEvent
+	for _, slot := range slices.Sorted(maps.Keys(s.players)) {
+		joined := &control.PlayerJoined{Slot: slot, SteamId: s.players[slot]}
+		events = append(events, &control.HostEvent{Body: &control.HostEvent_Joined{Joined: joined}})
+	}
+
+	// Send every tree whole.
+	for _, slot := range slices.Sorted(maps.Keys(s.trees)) {
+		for _, tree := range s.trees[slot].screen().GetTrees() {
+			change := &ui.Change{Reset_: true, Set: tree.GetNodes()}
+			update := &control.UiChanged{Mod: tree.GetMod(), Slot: slot, Change: change}
+			events = append(events, &control.HostEvent{Body: &control.HostEvent_Ui{Ui: update}})
+		}
+	}
+	return events
+}
+
+// trees holds one player's mod trees: each mod's nodes by id.
+type trees map[string]map[string]*ui.Node
+
+// apply applies change to mod's tree.
+func (t trees) apply(mod string, change *ui.Change) {
+	// Start the mod's tree over on a reset.
+	nodes := t[mod]
 	if nodes == nil || change.GetReset_() {
 		nodes = make(map[string]*ui.Node)
 	}
@@ -119,126 +160,22 @@ func (s *Screens) apply(slot int32, mod string, change *ui.Change) {
 
 	// Keep only a tree that still has nodes.
 	if len(nodes) == 0 {
-		delete(mods, mod)
+		delete(t, mod)
 		return
 	}
-	mods[mod] = nodes
+	t[mod] = nodes
 }
 
-// notify wakes every stream. Callers hold mu.
-func (s *Screens) notify() {
-	close(s.changed)
-	s.changed = make(chan struct{})
-}
-
-// Screen returns the local player's screen and a channel that closes when it
-// changes.
-func (s *Screens) Screen() (*ui.Screen, <-chan struct{}) {
-	// Collect the local player's trees in a stable order.
-	s.mu.Lock()
-	defer s.mu.Unlock()
+// screen returns the trees as a screen, in a stable order. The nodes are
+// shared, so callers do not change them.
+func (t trees) screen() *ui.Screen {
 	screen := &ui.Screen{}
-	mods := s.trees[s.slot]
-	for _, mod := range slices.Sorted(maps.Keys(mods)) {
+	for _, mod := range slices.Sorted(maps.Keys(t)) {
 		tree := &ui.Tree{Mod: mod}
-		for _, id := range slices.Sorted(maps.Keys(mods[mod])) {
-			tree.Nodes = append(tree.Nodes, mods[mod][id])
+		for _, id := range slices.Sorted(maps.Keys(t[mod])) {
+			tree.Nodes = append(tree.Nodes, t[mod][id])
 		}
 		screen.Trees = append(screen.Trees, tree)
 	}
-	return screen, s.changed
+	return screen
 }
-
-// ServeHTTP serves the screen stream to the relay page.
-func (s *Screens) ServeHTTP(w http.ResponseWriter, request *http.Request) {
-	if !s.admit(w, request) {
-		return
-	}
-	switch {
-	case request.Method == http.MethodGet && request.URL.Path == "/panorama/stream":
-		s.stream(w, request)
-	default:
-		http.NotFound(w, request)
-	}
-}
-
-// admit refuses requests from anything but the game's relay page or a
-// same-origin page on loopback, and answers the relay's preflight. It reports
-// whether the request needs more.
-func (s *Screens) admit(w http.ResponseWriter, request *http.Request) bool {
-	// Admit only loopback host names, which keeps DNS rebinding out, and
-	// only the relay or a same-origin page.
-	origin := request.Header.Get("Origin")
-	relay := origin != "" && origin == s.origin && strings.Contains(request.UserAgent(), RelayAgent)
-	if !Loopback(request) || !relay && !SameOrigin(request) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return false
-	}
-
-	// Answer the relay under CORS and Private Network Access.
-	if relay {
-		// The relay is a public https page reaching a private address, so the
-		// browser asks first under CORS and Private Network Access.
-		w.Header().Set("Access-Control-Allow-Origin", s.origin)
-		w.Header().Set("Access-Control-Allow-Private-Network", "true")
-		w.Header().Set("Vary", "Origin")
-		if request.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Methods", "GET")
-			w.WriteHeader(http.StatusNoContent)
-			return false
-		}
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	return true
-}
-
-// stream writes the local player's screen, then each changed screen, until
-// the page goes away.
-func (s *Screens) stream(w http.ResponseWriter, request *http.Request) {
-	controller := http.NewResponseController(w)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	var line []byte
-	for sequence := uint64(1); ; sequence++ {
-		// Send the current screen as one packed line.
-		screen, changed := s.Screen()
-		frame, err := screen.MarshalVT()
-		if err != nil {
-			return
-		}
-		line = panorama.AppendPackedLine(line[:0], sequence, frame)
-		if _, err := w.Write(line); err != nil {
-			return
-		}
-		if controller.Flush() != nil {
-			return
-		}
-
-		// Wait for a change, then let the page draw before the next frame.
-		select {
-		case <-changed:
-		case <-request.Context().Done():
-			return
-		}
-		select {
-		case <-time.After(frameGap):
-		case <-request.Context().Done():
-			return
-		}
-	}
-}
-
-// Loopback reports whether request names a loopback host, which keeps DNS
-// rebinding from reaching a server that listens on loopback.
-func Loopback(request *http.Request) bool {
-	host, _, err := net.SplitHostPort(request.Host)
-	return err == nil && (host == "127.0.0.1" || strings.EqualFold(host, "localhost"))
-}
-
-// SameOrigin reports whether request comes from a page this server served, or
-// from no page at all.
-func SameOrigin(request *http.Request) bool {
-	origin := request.Header.Get("Origin")
-	return origin == "" || origin == "http://"+request.Host
-}
-
-var _ http.Handler = (*Screens)(nil)

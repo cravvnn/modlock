@@ -14,17 +14,18 @@ import (
 // relayOrigin is the relay page's origin in these tests.
 const relayOrigin = "https://relay.example"
 
-// TestScreensServeTheLocalPlayer streams only the local player's screen to the
-// relay page and follows its changes.
-func TestScreensServeTheLocalPlayer(t *testing.T) {
-	screens := NewScreens(76561198000000001, relayOrigin)
-	server := httptest.NewServer(screens)
-	defer server.Close()
-
+// TestScreensServeEachPlayer streams the local player's screen to the relay
+// page, and carries another player's screen to a mirror as changes, as a host
+// does for a guest.
+func TestScreensServeEachPlayer(t *testing.T) {
 	// Another player joins and is shown a panel; the local player is not.
-	screens.Handle(joined(0, 76561198000000002))
+	const local, guest = 76561198000000001, 76561198000000002
+	screens := NewScreens(local)
+	server := httptest.NewServer(NewRelay(relayOrigin, screens.Screen))
+	defer server.Close()
+	screens.Handle(joined(0, guest))
 	screens.Handle(shown(0, "arena", "Other"))
-	screens.Handle(joined(1, 76561198000000001))
+	screens.Handle(joined(1, local))
 
 	// The stream starts with the local player's empty screen.
 	request := relayRequest(t, server.URL+"/panorama/stream")
@@ -41,19 +42,48 @@ func TestScreensServeTheLocalPlayer(t *testing.T) {
 		t.Fatalf("the local player saw another player's screen: %v", first)
 	}
 
-	// A change to the local player's interface arrives as the next screen.
+	// A change to the local player's interface arrives as the next screen,
+	// and the other player's change sends no frame.
+	screens.Handle(shown(0, "arena", "Still other"))
 	screens.Handle(shown(1, "arena", "Ready"))
-	screen := next(t, lines)
-	if len(screen.GetTrees()) != 1 || screen.GetTrees()[0].GetMod() != "arena" ||
-		screen.GetTrees()[0].GetNodes()[1].GetText() != "Ready" {
+	if screen := next(t, lines); label(screen) != "Ready" {
 		t.Fatalf("unexpected screen %v", screen)
+	}
+
+	// The other player's screen reaches a mirror whole.
+	mirror := NewMirror()
+	sent, _ := screens.Player(guest)
+	mirror.Apply(Changes(&ui.Screen{}, sent), true)
+
+	// A later change reaches it as the one node that changed.
+	screens.Handle(shown(0, "arena", "Go"))
+	now, _ := screens.Player(guest)
+	changes := Changes(sent, now)
+	if len(changes) != 1 || changes["arena"].GetReset_() || len(changes["arena"].GetSet()) != 1 {
+		t.Fatalf("the change was not one node: %v", changes)
+	}
+	mirror.Apply(changes, false)
+	if screen, _ := mirror.Screen(); label(screen) != "Go" || !screen.EqualVT(now) {
+		t.Fatalf("the mirror shows %v", screen)
+	}
+
+	// A tree the mod hides is cleared on the mirror, and a player who
+	// leaves has an empty screen.
+	screens.Handle(&control.HostEvent{Body: &control.HostEvent_Ui{Ui: &control.UiChanged{Mod: "arena", Change: &ui.Change{Reset_: true}}}})
+	gone, _ := screens.Player(guest)
+	mirror.Apply(Changes(now, gone), false)
+	if screen, _ := mirror.Screen(); len(screen.GetTrees()) != 0 {
+		t.Fatalf("the hidden tree stayed: %v", screen)
+	}
+	screens.Handle(&control.HostEvent{Body: &control.HostEvent_Left{Left: &control.PlayerLeft{Slot: 1}}})
+	if screen, _ := screens.Player(local); len(screen.GetTrees()) != 0 {
+		t.Fatalf("a player who left kept a screen: %v", screen)
 	}
 }
 
 // TestScreensRefuseOtherPages refuses pages that are not the game's relay.
 func TestScreensRefuseOtherPages(t *testing.T) {
-	screens := NewScreens(0, relayOrigin)
-	server := httptest.NewServer(screens)
+	server := httptest.NewServer(NewRelay(relayOrigin, NewMirror().Screen))
 	defer server.Close()
 	for name, header := range map[string]http.Header{
 		"another site":      {"Origin": {"https://other.example"}, "User-Agent": {RelayAgent}},
@@ -81,6 +111,7 @@ func TestScreensRefuseOtherPages(t *testing.T) {
 
 // relayRequest returns a request as the game's relay page sends it.
 func relayRequest(t *testing.T, url string) *http.Request {
+	// Name the relay's origin and the game's panel.
 	t.Helper()
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -93,6 +124,7 @@ func relayRequest(t *testing.T, url string) *http.Request {
 
 // next reads the next screen from the stream.
 func next(t *testing.T, lines *bufio.Scanner) *ui.Screen {
+	// Read one packed line.
 	t.Helper()
 	if !lines.Scan() {
 		t.Fatalf("the stream ended: %v", lines.Err())
@@ -101,6 +133,8 @@ func next(t *testing.T, lines *bufio.Scanner) *ui.Screen {
 	if !ok || sequence == "" {
 		t.Fatalf("not a packed line: %q", lines.Text())
 	}
+
+	// Unpack it into a screen.
 	var frame []byte
 	for _, char := range packed {
 		if char >= 0x100 {
@@ -113,6 +147,18 @@ func next(t *testing.T, lines *bufio.Scanner) *ui.Screen {
 		t.Fatal(err)
 	}
 	return screen
+}
+
+// label returns the text of the button the arena mod shows, if any.
+func label(screen *ui.Screen) string {
+	for _, tree := range screen.GetTrees() {
+		for _, node := range tree.GetNodes() {
+			if tree.GetMod() == "arena" && node.GetId() == "b" {
+				return node.GetText()
+			}
+		}
+	}
+	return ""
 }
 
 // joined is the event of a person joining in slot.

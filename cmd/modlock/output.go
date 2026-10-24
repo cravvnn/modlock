@@ -25,9 +25,9 @@ type printer struct {
 	color, errColor bool
 	// current is the running command line's release.
 	current string
-	// watch, when set, also receives every event the printer reports. Set it
-	// before the first report.
-	watch func(*cli.Event)
+	// watchers also receive every event the printer reports. Add them with
+	// tap before the first report.
+	watchers []func(*cli.Event)
 
 	// mu keeps lines from the build and the server whole, and guards the
 	// fields below.
@@ -257,10 +257,15 @@ func shown(message *control.PlayerMessage) string {
 	}
 }
 
-// observe passes event to the watcher, if any.
+// tap adds watch to the watchers. Call it before the first report.
+func (p *printer) tap(watch func(*cli.Event)) {
+	p.watchers = append(p.watchers, watch)
+}
+
+// observe passes event to each watcher.
 func (p *printer) observe(event *cli.Event) {
-	if p.watch != nil {
-		p.watch(event)
+	for _, watch := range p.watchers {
+		watch(event)
 	}
 }
 

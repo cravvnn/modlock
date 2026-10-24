@@ -18,7 +18,7 @@ import (
 )
 
 // sessionFlags configure the server and client of a session.
-var sessionFlags = []cli.Flag{
+var sessionFlags = append([]cli.Flag{
 	&cli.UintFlag{Name: "port", Value: session.DefaultPort, Usage: "the server's UDP port"},
 	&cli.BoolFlag{Name: "no-game", Usage: "run only the server; join it yourself"},
 	&cli.BoolFlag{
@@ -26,6 +26,10 @@ var sessionFlags = []cli.Flag{
 		Usage: "run the mods without the game, with a stand-in player, even where the game runs",
 	},
 	&cli.StringSliceFlag{Name: "arg", Usage: "pass an argument to the mods' start handlers; repeat for several"},
+}, interfaceFlags...)
+
+// interfaceFlags configure how the game shows the mods' interfaces.
+var interfaceFlags = []cli.Flag{
 	&cli.UintFlag{
 		Name:  "ui-port",
 		Value: session.DefaultInterfacePort,

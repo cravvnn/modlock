@@ -74,8 +74,12 @@ func (s *Steam) App(name string) (string, bool) {
 	return "", false
 }
 
-// Deadlock returns the Deadlock installation directory.
+// Deadlock returns the Deadlock installation directory: DEADLOCK_DIR, or the
+// one in the Steam libraries.
 func (s *Steam) Deadlock() (string, error) {
+	if dir := os.Getenv("DEADLOCK_DIR"); dir != "" {
+		return dir, nil
+	}
 	dir, ok := s.App("Deadlock")
 	if !ok {
 		return "", errors.New("cannot find Deadlock in the Steam libraries; set DEADLOCK_DIR")

@@ -4,6 +4,9 @@ package modlock.peernet;
 
 option go_package = "github.com/paralin/modlock/peernet;peernet";
 
+import "github.com/paralin/modlock/src/host_app/control/control.proto";
+import "github.com/paralin/modlock/src/wasm/ui/ui.proto";
+
 // PeerNet is the service a modlock daemon serves for its peer: the PC's
 // identity on the peer network and the links it can open to other PCs.
 service PeerNet {
@@ -14,12 +17,21 @@ service PeerNet {
   rpc Probe(ProbeRequest) returns (ProbeResponse);
 
   // Host serves the local game server to guests holding the join code it
-  // sends first, for as long as the call stays open.
-  rpc Host(HostRequest) returns (stream HostEvent);
+  // sends first, for as long as the call stays open. The caller sends the
+  // server first, then the server's players and interfaces.
+  rpc Host(stream HostInput) returns (stream HostEvent);
 
   // Join links to a hosted game server and serves it to the local game on a
   // loopback port until the game leaves or the call ends.
   rpc Join(JoinRequest) returns (stream JoinEvent);
+}
+
+// Session is the service a hosting PC's daemon serves to its guests' daemons
+// over their peer link, on SessionProtocolID.
+service Session {
+  // WatchScreen streams what the mods show the guest: the whole screen
+  // first, then only what changed.
+  rpc WatchScreen(WatchScreenRequest) returns (stream ScreenFrame);
 }
 
 // AdmissionState is where a peer stands with the signaling service, which
@@ -90,6 +102,18 @@ message RelayServer {
   string credential = 3;
 }
 
+// HostInput is one message of a Host call.
+message HostInput {
+  oneof body {
+    // start names the server, and comes first.
+    HostRequest start = 1;
+    // server is a change to the server's players or interfaces: a join, a
+    // leave or an interface change. The first ones after start bring the
+    // daemon to the server's state.
+    modlock.host_app.control.HostEvent server = 2;
+  }
+}
+
 // HostRequest names the game server to serve.
 message HostRequest {
   // port is the server's UDP game port on loopback.
@@ -113,6 +137,9 @@ message HostEvent {
 message JoinRequest {
   // code is the host's join code.
   string code = 1;
+  // steam_id is the guest's Steam ID, whose screen the guest is sent; zero
+  // sends no screen.
+  fixed64 steam_id = 2;
 }
 
 // JoinEvent is one step of joining a hosted session.
@@ -123,5 +150,25 @@ message JoinEvent {
     string address = 1;
     // arrived reports the game's first packet through address.
     bool arrived = 2;
+    // screen changes what the mods show the guest. A reset frame carries
+    // the whole screen.
+    ScreenFrame screen = 3;
   }
+}
+
+// WatchScreenRequest names the guest whose screen to stream.
+message WatchScreenRequest {
+  // session is the join code's secret.
+  fixed64 session = 1;
+  // steam_id is the guest's Steam ID.
+  fixed64 steam_id = 2;
+}
+
+// ScreenFrame is one change to a player's screen.
+message ScreenFrame {
+  // changes holds each changed mod's change to its tree, by mod name.
+  map<string, modlock.wasm.ui.Change> changes = 1;
+  // reset starts the screen over before the changes, as the first frame of
+  // each watch does.
+  bool reset = 2;
 }

@@ -19,8 +19,9 @@ type SRPCPeerNetClient interface {
 	// Probe opens a stream to another peer and measures its round trip.
 	Probe(ctx context.Context, in *ProbeRequest) (*ProbeResponse, error)
 	// Host serves the local game server to guests holding the join code it
-	// sends first, for as long as the call stays open.
-	Host(ctx context.Context, in *HostRequest) (SRPCPeerNet_HostClient, error)
+	// sends first, for as long as the call stays open. The caller sends the
+	// server first, then the server's players and interfaces.
+	Host(ctx context.Context) (SRPCPeerNet_HostClient, error)
 	// Join links to a hosted game server and serves it to the local game on a
 	// loopback port until the game leaves or the call ends.
 	Join(ctx context.Context, in *JoinRequest) (SRPCPeerNet_JoinClient, error)
@@ -62,25 +63,31 @@ func (c *srpcPeerNetClient) Probe(ctx context.Context, in *ProbeRequest) (*Probe
 	return out, nil
 }
 
-func (c *srpcPeerNetClient) Host(ctx context.Context, in *HostRequest) (SRPCPeerNet_HostClient, error) {
-	stream, err := c.cc.NewStream(ctx, c.serviceID, "Host", in)
+func (c *srpcPeerNetClient) Host(ctx context.Context) (SRPCPeerNet_HostClient, error) {
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "Host", nil)
 	if err != nil {
 		return nil, err
 	}
 	strm := &srpcPeerNet_HostClient{stream}
-	// A failed half-close means the call ended; MsgRecv reports its outcome.
-	_ = strm.CloseSend()
 	return strm, nil
 }
 
 type SRPCPeerNet_HostClient interface {
 	srpc.Stream
+	Send(*HostInput) error
 	Recv() (*HostEvent, error)
 	RecvTo(*HostEvent) error
 }
 
 type srpcPeerNet_HostClient struct {
 	srpc.Stream
+}
+
+func (x *srpcPeerNet_HostClient) Send(m *HostInput) error {
+	if m == nil {
+		return nil
+	}
+	return x.MsgSend(m)
 }
 
 func (x *srpcPeerNet_HostClient) Recv() (*HostEvent, error) {
@@ -134,8 +141,9 @@ type SRPCPeerNetServer interface {
 	// Probe opens a stream to another peer and measures its round trip.
 	Probe(context.Context, *ProbeRequest) (*ProbeResponse, error)
 	// Host serves the local game server to guests holding the join code it
-	// sends first, for as long as the call stays open.
-	Host(*HostRequest, SRPCPeerNet_HostStream) error
+	// sends first, for as long as the call stays open. The caller sends the
+	// server first, then the server's players and interfaces.
+	Host(SRPCPeerNet_HostStream) error
 	// Join links to a hosted game server and serves it to the local game on a
 	// loopback port until the game leaves or the call ends.
 	Join(*JoinRequest, SRPCPeerNet_JoinStream) error
@@ -221,12 +229,8 @@ func (SRPCPeerNetHandler) InvokeMethod_Probe(impl SRPCPeerNetServer, strm srpc.S
 }
 
 func (SRPCPeerNetHandler) InvokeMethod_Host(impl SRPCPeerNetServer, strm srpc.Stream) error {
-	req := new(HostRequest)
-	if err := strm.MsgRecv(req); err != nil {
-		return err
-	}
-	serverStrm := &srpcPeerNet_HostStream{strm}
-	return impl.Host(req, serverStrm)
+	clientStrm := &srpcPeerNet_HostStream{strm}
+	return impl.Host(clientStrm)
 }
 
 func (SRPCPeerNetHandler) InvokeMethod_Join(impl SRPCPeerNetServer, strm srpc.Stream) error {
@@ -258,6 +262,8 @@ type SRPCPeerNet_HostStream interface {
 	srpc.Stream
 	Send(*HostEvent) error
 	SendAndClose(*HostEvent) error
+	Recv() (*HostInput, error)
+	RecvTo(*HostInput) error
 }
 
 type srpcPeerNet_HostStream struct {
@@ -277,6 +283,18 @@ func (x *srpcPeerNet_HostStream) SendAndClose(m *HostEvent) error {
 	return x.CloseSend()
 }
 
+func (x *srpcPeerNet_HostStream) Recv() (*HostInput, error) {
+	m := new(HostInput)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcPeerNet_HostStream) RecvTo(m *HostInput) error {
+	return x.MsgRecv(m)
+}
+
 type SRPCPeerNet_JoinStream interface {
 	srpc.Stream
 	Send(*JoinEvent) error
@@ -292,6 +310,150 @@ func (x *srpcPeerNet_JoinStream) Send(m *JoinEvent) error {
 }
 
 func (x *srpcPeerNet_JoinStream) SendAndClose(m *JoinEvent) error {
+	if m != nil {
+		if err := x.MsgSend(m); err != nil {
+			return err
+		}
+	}
+	return x.CloseSend()
+}
+
+type SRPCSessionClient interface {
+	// SRPCClient returns the underlying SRPC client.
+	SRPCClient() srpc.Client
+
+	// WatchScreen streams what the mods show the guest: the whole screen
+	// first, then only what changed.
+	WatchScreen(ctx context.Context, in *WatchScreenRequest) (SRPCSession_WatchScreenClient, error)
+}
+
+type srpcSessionClient struct {
+	cc        srpc.Client
+	serviceID string
+}
+
+func NewSRPCSessionClient(cc srpc.Client) SRPCSessionClient {
+	return &srpcSessionClient{cc: cc, serviceID: SRPCSessionServiceID}
+}
+
+func NewSRPCSessionClientWithServiceID(cc srpc.Client, serviceID string) SRPCSessionClient {
+	if serviceID == "" {
+		serviceID = SRPCSessionServiceID
+	}
+	return &srpcSessionClient{cc: cc, serviceID: serviceID}
+}
+
+func (c *srpcSessionClient) SRPCClient() srpc.Client { return c.cc }
+
+func (c *srpcSessionClient) WatchScreen(ctx context.Context, in *WatchScreenRequest) (SRPCSession_WatchScreenClient, error) {
+	stream, err := c.cc.NewStream(ctx, c.serviceID, "WatchScreen", in)
+	if err != nil {
+		return nil, err
+	}
+	strm := &srpcSession_WatchScreenClient{stream}
+	// A failed half-close means the call ended; MsgRecv reports its outcome.
+	_ = strm.CloseSend()
+	return strm, nil
+}
+
+type SRPCSession_WatchScreenClient interface {
+	srpc.Stream
+	Recv() (*ScreenFrame, error)
+	RecvTo(*ScreenFrame) error
+}
+
+type srpcSession_WatchScreenClient struct {
+	srpc.Stream
+}
+
+func (x *srpcSession_WatchScreenClient) Recv() (*ScreenFrame, error) {
+	m := new(ScreenFrame)
+	if err := x.MsgRecv(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (x *srpcSession_WatchScreenClient) RecvTo(m *ScreenFrame) error {
+	return x.MsgRecv(m)
+}
+
+type SRPCSessionServer interface {
+	// WatchScreen streams what the mods show the guest: the whole screen
+	// first, then only what changed.
+	WatchScreen(*WatchScreenRequest, SRPCSession_WatchScreenStream) error
+}
+
+const SRPCSessionServiceID = "modlock.peernet.Session"
+
+type SRPCSessionHandler struct {
+	serviceID string
+	impl      SRPCSessionServer
+}
+
+// NewSRPCSessionHandler constructs a new RPC handler.
+// serviceID: if empty, uses default: modlock.peernet.Session
+func NewSRPCSessionHandler(impl SRPCSessionServer, serviceID string) srpc.Handler {
+	if serviceID == "" {
+		serviceID = SRPCSessionServiceID
+	}
+	return &SRPCSessionHandler{impl: impl, serviceID: serviceID}
+}
+
+// SRPCRegisterSession registers the implementation with the mux.
+// Uses the default serviceID: modlock.peernet.Session
+func SRPCRegisterSession(mux srpc.Mux, impl SRPCSessionServer) error {
+	return mux.Register(NewSRPCSessionHandler(impl, ""))
+}
+
+func (d *SRPCSessionHandler) GetServiceID() string { return d.serviceID }
+
+func (SRPCSessionHandler) GetMethodIDs() []string {
+	return []string{
+		"WatchScreen",
+	}
+}
+
+func (d *SRPCSessionHandler) InvokeMethod(
+	serviceID, methodID string,
+	strm srpc.Stream,
+) (bool, error) {
+	if serviceID != "" && serviceID != d.GetServiceID() {
+		return false, nil
+	}
+
+	switch methodID {
+	case "WatchScreen":
+		return true, d.InvokeMethod_WatchScreen(d.impl, strm)
+	default:
+		return false, nil
+	}
+}
+
+func (SRPCSessionHandler) InvokeMethod_WatchScreen(impl SRPCSessionServer, strm srpc.Stream) error {
+	req := new(WatchScreenRequest)
+	if err := strm.MsgRecv(req); err != nil {
+		return err
+	}
+	serverStrm := &srpcSession_WatchScreenStream{strm}
+	return impl.WatchScreen(req, serverStrm)
+}
+
+type SRPCSession_WatchScreenStream interface {
+	srpc.Stream
+	Send(*ScreenFrame) error
+	SendAndClose(*ScreenFrame) error
+}
+
+type srpcSession_WatchScreenStream struct {
+	srpc.Stream
+}
+
+func (x *srpcSession_WatchScreenStream) Send(m *ScreenFrame) error {
+	return x.MsgSend(m)
+}
+
+func (x *srpcSession_WatchScreenStream) SendAndClose(m *ScreenFrame) error {
 	if m != nil {
 		if err := x.MsgSend(m); err != nil {
 			return err
