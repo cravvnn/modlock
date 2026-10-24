@@ -1949,6 +1949,16 @@ _SCHEMA: wire.Schema = {
             wire.Field(4, "type", "enum", enum=_FieldType),
         ],
     ),
+    "ReadModifierFieldRequest": (
+        None,
+        [
+            wire.Field(1, "entity", "uint32"),
+            wire.Field(2, "modifier", "string"),
+            wire.Field(3, "class_name", "string"),
+            wire.Field(4, "field", "string"),
+            wire.Field(5, "type", "enum", enum=_FieldType),
+        ],
+    ),
     "FieldResponse": (
         None,
         [
@@ -3013,6 +3023,20 @@ def read_field(entity: int, class_name: str, field: str, type: FieldType) -> Fie
     citadel_gamerules entity reads.
     """
     response = _call("ReadField", "ReadFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type}, "FieldResponse")
+    if response is None:
+        return None
+    return response["value"]
+
+
+def read_modifier_field(entity: int, modifier: str, class_name: str, field: str, type: FieldType) -> FieldValue | None:
+    """read_modifier_field reads one schema field of a modifier the entity holds,
+    such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+    pawn holding modifier_citadel_orbit_camera. The answer holds no value
+    while the entity lacks the modifier. The host cannot check the modifier's
+    class, so a wrong class reads the wrong bytes, though never past readable
+    memory.
+    """
+    response = _call("ReadModifierField", "ReadModifierFieldRequest", {"entity": entity, "modifier": modifier, "class_name": class_name, "field": field, "type": type}, "FieldResponse")
     if response is None:
         return None
     return response["value"]

@@ -780,6 +780,21 @@ func ReadField(entity uint32, className, field string, kind FieldType) (any, err
 	return fromFieldValue(response.GetValue()), nil
 }
 
+// ReadModifierField reads one schema field of a modifier the entity holds,
+// such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+// pawn holding modifier_citadel_orbit_camera. The answer holds no value
+// while the entity lacks the modifier. The host cannot check the modifier's
+// class, so a wrong class reads the wrong bytes, though never past readable
+// memory.
+func ReadModifierField(entity uint32, modifier, className, field string, kind FieldType) (any, error) {
+	request := &fieldspb.ReadModifierFieldRequest{Entity: entity, Modifier: modifier, ClassName: className, Field: field, Type: kind}
+	response := &fieldspb.FieldResponse{}
+	if err := invoke("ReadModifierField", request, response); err != nil {
+		return nil, err
+	}
+	return fromFieldValue(response.GetValue()), nil
+}
+
 // WriteField writes one schema field of a live entity and sends the change
 // to the players. The value takes the form ReadField returns for the type;
 // text fields cannot be written. A write to the match's state sends all of

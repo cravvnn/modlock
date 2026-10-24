@@ -379,10 +379,14 @@ std::expected<GameServices::ModifierLayout, std::string> GameServices::Modifiers
     return *modifiers_;
   }
 
-  // Resolve the modifier property and its two state masks.
+  // Resolve the modifier property, its list and its two state masks.
   auto property = Field("CBaseEntity", "m_pModifierProp");
   if (!property) {
     return std::unexpected(property.error());
+  }
+  auto list = Field("CModifierProperty", "m_vecModifiers");
+  if (!list) {
+    return std::unexpected(list.error());
   }
   auto mask = Field("CModifierProperty", "m_bvEnabledStateMask");
   if (!mask) {
@@ -396,6 +400,7 @@ std::expected<GameServices::ModifierLayout, std::string> GameServices::Modifiers
   // Cache the offsets every modifier state read uses.
   modifiers_ = ModifierLayout{
       .property = property->offset,
+      .list = list->offset,
       .mask = mask->offset,
       .predicted_mask = predicted->offset,
       .mask_size = std::min(mask->size, predicted->size),

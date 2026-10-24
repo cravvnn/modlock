@@ -86,9 +86,10 @@ class GameServices {
   // FieldKey names one schema field as class and field.
   using FieldKey = std::pair<std::string, std::string>;
 
-  // ModifierLayout locates an entity's modifier state masks.
+  // ModifierLayout locates an entity's modifier list and state masks.
   struct ModifierLayout {
     size_t property = 0;
+    size_t list = 0;
     size_t mask = 0;
     size_t predicted_mask = 0;
     size_t mask_size = 0;
@@ -426,6 +427,8 @@ class Game : public HostService {
   std::expected<void, std::string> WriteField(const fields::WriteFieldRequest& request) override;
   std::expected<fields::FieldListResponse, std::string> ReadFieldList(
       const fields::ReadFieldRequest& request) override;
+  std::expected<fields::FieldResponse, std::string> ReadModifierField(
+      const fields::ReadModifierFieldRequest& request) override;
   std::expected<void, std::string> WriteFieldList(
       const fields::WriteFieldListRequest& request) override;
   std::expected<entities::EntityClassResponse, std::string> EntityClass(

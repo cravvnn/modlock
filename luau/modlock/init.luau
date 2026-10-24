@@ -1893,6 +1893,13 @@ schema.ReadFieldRequest = {
 	{ number = 3, name = "field", kind = "string" },
 	{ number = 4, name = "type", kind = "enum", enum = FieldType },
 }
+schema.ReadModifierFieldRequest = {
+	{ number = 1, name = "entity", kind = "uint32" },
+	{ number = 2, name = "modifier", kind = "string" },
+	{ number = 3, name = "className", kind = "string" },
+	{ number = 4, name = "field", kind = "string" },
+	{ number = 5, name = "type", kind = "enum", enum = FieldType },
+}
 schema.FieldResponse = {
 	{ number = 1, name = "value", kind = "message", message = "FieldValue", union = "value" },
 }
@@ -2584,6 +2591,20 @@ end
 -- citadel_gamerules entity reads.
 function modlock.readField(entity: number, className: string, field: string, type: FieldType): FieldValue?
 	local response = call("ReadField", "ReadFieldRequest", { entity = entity, className = className, field = field, type = type }, "FieldResponse")
+	if response == nil then
+		return nil
+	end
+	return response.value
+end
+
+-- readModifierField reads one schema field of a modifier the entity holds,
+-- such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+-- pawn holding modifier_citadel_orbit_camera. The answer holds no value
+-- while the entity lacks the modifier. The host cannot check the modifier's
+-- class, so a wrong class reads the wrong bytes, though never past readable
+-- memory.
+function modlock.readModifierField(entity: number, modifier: string, className: string, field: string, type: FieldType): FieldValue?
+	local response = call("ReadModifierField", "ReadModifierFieldRequest", { entity = entity, modifier = modifier, className = className, field = field, type = type }, "FieldResponse")
 	if response == nil then
 		return nil
 	end

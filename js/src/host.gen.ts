@@ -2376,6 +2376,21 @@ export function readField(entity: number, className: string, field: string, type
 }
 
 /**
+ * readModifierField reads one schema field of a modifier the entity holds,
+ * such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+ * pawn holding modifier_citadel_orbit_camera. The answer holds no value
+ * while the entity lacks the modifier. The host cannot check the modifier's
+ * class, so a wrong class reads the wrong bytes, though never past readable
+ * memory.
+ */
+export function readModifierField(entity: number, modifier: string, className: string, field: string, type: FieldType): FieldValue | undefined {
+  const reply = call('ReadModifierField', fieldsPb.ReadModifierFieldRequest.toBinary({ entity, modifier, className, field, type: fieldTypeValues[type] }))
+  if (reply === undefined) return undefined
+  const response = fieldsPb.FieldResponse.fromBinary(reply)
+  return fromFieldValue(response.value)
+}
+
+/**
  * writeField writes one schema field of a live entity and sends the change
  * to the players. The value takes the form ReadField returns for the type;
  * text fields cannot be written. A write to the match's state sends all of

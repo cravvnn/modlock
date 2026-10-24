@@ -145,6 +145,64 @@ func (x *ReadFieldRequest) GetType() FieldType {
 	return FieldType_FIELD_TYPE_UNKNOWN
 }
 
+// ReadModifierFieldRequest names one schema field of a modifier on a live
+// entity.
+type ReadModifierFieldRequest struct {
+	unknownFields []byte
+	// Entity is the handle of the entity that holds the modifier.
+	Entity uint32 `protobuf:"varint,1,opt,name=entity,proto3" json:"entity,omitempty"`
+	// Modifier is the modifier's name, such as modifier_citadel_orbit_camera.
+	Modifier string `protobuf:"bytes,2,opt,name=modifier,proto3" json:"modifier,omitempty"`
+	// ClassName is the server class of the modifier that declares the field,
+	// such as CCitadel_Modifier_OrbitCamera.
+	ClassName string `protobuf:"bytes,3,opt,name=class_name,json=className,proto3" json:"className,omitempty"`
+	// Field is the field's schema name, such as m_nCameraLevel.
+	Field string `protobuf:"bytes,4,opt,name=field,proto3" json:"field,omitempty"`
+	// Type is how to read the field.
+	Type FieldType `protobuf:"varint,5,opt,name=type,proto3" json:"type,omitempty"`
+}
+
+func (x *ReadModifierFieldRequest) Reset() {
+	*x = ReadModifierFieldRequest{}
+}
+
+func (*ReadModifierFieldRequest) ProtoMessage() {}
+
+func (x *ReadModifierFieldRequest) GetEntity() uint32 {
+	if x != nil {
+		return x.Entity
+	}
+	return 0
+}
+
+func (x *ReadModifierFieldRequest) GetModifier() string {
+	if x != nil {
+		return x.Modifier
+	}
+	return ""
+}
+
+func (x *ReadModifierFieldRequest) GetClassName() string {
+	if x != nil {
+		return x.ClassName
+	}
+	return ""
+}
+
+func (x *ReadModifierFieldRequest) GetField() string {
+	if x != nil {
+		return x.Field
+	}
+	return ""
+}
+
+func (x *ReadModifierFieldRequest) GetType() FieldType {
+	if x != nil {
+		return x.Type
+	}
+	return FieldType_FIELD_TYPE_UNKNOWN
+}
+
 // FieldResponse holds the value ReadField read.
 type FieldResponse struct {
 	unknownFields []byte
@@ -461,6 +519,26 @@ func (m *ReadFieldRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
+func (m *ReadModifierFieldRequest) CloneVT() *ReadModifierFieldRequest {
+	if m == nil {
+		return (*ReadModifierFieldRequest)(nil)
+	}
+	r := new(ReadModifierFieldRequest)
+	r.Entity = m.Entity
+	r.Modifier = m.Modifier
+	r.ClassName = m.ClassName
+	r.Field = m.Field
+	r.Type = m.Type
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *ReadModifierFieldRequest) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
 func (m *FieldResponse) CloneVT() *FieldResponse {
 	if m == nil {
 		return (*FieldResponse)(nil)
@@ -658,6 +736,38 @@ func (this *ReadFieldRequest) EqualVT(that *ReadFieldRequest) bool {
 
 func (this *ReadFieldRequest) EqualMessageVT(thatMsg any) bool {
 	that, ok := thatMsg.(*ReadFieldRequest)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *ReadModifierFieldRequest) EqualVT(that *ReadModifierFieldRequest) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Entity != that.Entity {
+		return false
+	}
+	if this.Modifier != that.Modifier {
+		return false
+	}
+	if this.ClassName != that.ClassName {
+		return false
+	}
+	if this.Field != that.Field {
+		return false
+	}
+	if this.Type != that.Type {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ReadModifierFieldRequest) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*ReadModifierFieldRequest)
 	if !ok {
 		return false
 	}
@@ -1012,6 +1122,80 @@ func (x *ReadFieldRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
 
 // UnmarshalJSON unmarshals the ReadFieldRequest from JSON.
 func (x *ReadFieldRequest) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the ReadModifierFieldRequest message to JSON.
+func (x *ReadModifierFieldRequest) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Entity != 0 || s.HasField("entity") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("entity")
+		s.WriteUint32(x.Entity)
+	}
+	if x.Modifier != "" || s.HasField("modifier") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("modifier")
+		s.WriteString(x.Modifier)
+	}
+	if x.ClassName != "" || s.HasField("className") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("className")
+		s.WriteString(x.ClassName)
+	}
+	if x.Field != "" || s.HasField("field") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("field")
+		s.WriteString(x.Field)
+	}
+	if x.Type != 0 || s.HasField("type") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("type")
+		x.Type.MarshalProtoJSON(s)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the ReadModifierFieldRequest to JSON.
+func (x *ReadModifierFieldRequest) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the ReadModifierFieldRequest message from JSON.
+func (x *ReadModifierFieldRequest) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "entity":
+			s.AddField("entity")
+			x.Entity = s.ReadUint32()
+		case "modifier":
+			s.AddField("modifier")
+			x.Modifier = s.ReadString()
+		case "class_name", "className":
+			s.AddField("class_name")
+			x.ClassName = s.ReadString()
+		case "field":
+			s.AddField("field")
+			x.Field = s.ReadString()
+		case "type":
+			s.AddField("type")
+			x.Type.UnmarshalProtoJSON(s)
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the ReadModifierFieldRequest from JSON.
+func (x *ReadModifierFieldRequest) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
@@ -1506,6 +1690,63 @@ func (m *ReadFieldRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *ReadModifierFieldRequest) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ReadModifierFieldRequest) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ReadModifierFieldRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Type != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Type))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.Field) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Field)
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.ClassName) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.ClassName)
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Modifier) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Modifier)
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Entity != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Entity))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *FieldResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -1906,6 +2147,21 @@ func (m *ReadFieldRequest) SizeVT() (n int) {
 	return n
 }
 
+func (m *ReadModifierFieldRequest) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Entity)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Modifier)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.ClassName)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Field)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Type)
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *FieldResponse) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -2082,6 +2338,36 @@ func (x *ReadFieldRequest) MarshalProtoText() string {
 }
 
 func (x *ReadFieldRequest) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *ReadModifierFieldRequest) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "ReadModifierFieldRequest")
+	if x.Entity != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "entity")
+		protobuf_go_lite.TextWriteUint(&sb, x.Entity)
+	}
+	if x.Modifier != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "modifier")
+		protobuf_go_lite.TextWriteString(&sb, x.Modifier)
+	}
+	if x.ClassName != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "class_name")
+		protobuf_go_lite.TextWriteString(&sb, x.ClassName)
+	}
+	if x.Field != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "field")
+		protobuf_go_lite.TextWriteString(&sb, x.Field)
+	}
+	if x.Type != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "type")
+		protobuf_go_lite.TextWriteStringer(&sb, FieldType(x.Type))
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *ReadModifierFieldRequest) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -2296,6 +2582,99 @@ func (m *ReadFieldRequest) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Field = v
 		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
+			}
+			m.Type = 0
+			var _v uint64
+			_v, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			m.Type = FieldType(_v)
+			if err != nil {
+				return err
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *ReadModifierFieldRequest) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ReadModifierFieldRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ReadModifierFieldRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Entity", wireType)
+			}
+			m.Entity = 0
+			m.Entity, iNdEx, err = protobuf_go_lite.DecodeVarintUint32(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Modifier", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Modifier = v
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClassName", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.ClassName = v
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Field = v
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
 			}

@@ -56,6 +56,22 @@ message ReadFieldRequest {
   FieldType type = 4;
 }
 
+// ReadModifierFieldRequest names one schema field of a modifier on a live
+// entity.
+message ReadModifierFieldRequest {
+  // Entity is the handle of the entity that holds the modifier.
+  uint32 entity = 1;
+  // Modifier is the modifier's name, such as modifier_citadel_orbit_camera.
+  string modifier = 2;
+  // ClassName is the server class of the modifier that declares the field,
+  // such as CCitadel_Modifier_OrbitCamera.
+  string class_name = 3;
+  // Field is the field's schema name, such as m_nCameraLevel.
+  string field = 4;
+  // Type is how to read the field.
+  FieldType type = 5;
+}
+
 // FieldResponse holds the value ReadField read.
 message FieldResponse {
   FieldValue value = 1;

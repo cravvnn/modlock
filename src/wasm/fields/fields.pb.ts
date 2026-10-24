@@ -170,6 +170,102 @@ export const ReadFieldRequest: MessageType<ReadFieldRequest> =
   )
 
 /**
+ * ReadModifierFieldRequest names one schema field of a modifier on a live
+ * entity.
+ *
+ * @generated from message modlock.wasm.fields.ReadModifierFieldRequest
+ */
+export interface ReadModifierFieldRequest {
+  /**
+   * Entity is the handle of the entity that holds the modifier.
+   */
+  entity?: number
+  /**
+   * Modifier is the modifier's name, such as modifier_citadel_orbit_camera.
+   */
+  modifier?: string
+  /**
+   * ClassName is the server class of the modifier that declares the field,
+   * such as CCitadel_Modifier_OrbitCamera.
+   */
+  className?: string
+  /**
+   * Field is the field's schema name, such as m_nCameraLevel.
+   */
+  field?: string
+  /**
+   * Type is how to read the field.
+   */
+  type?: FieldType
+}
+
+export const ReadModifierFieldRequest: MessageType<ReadModifierFieldRequest> =
+  /* @__PURE__ */ createMessageType<ReadModifierFieldRequest>(
+    'modlock.wasm.fields.ReadModifierFieldRequest',
+    () => [
+      [1, 'entity', 13],
+      [2, 'modifier', 9],
+      [3, 'class_name', 9],
+      [4, 'field', 9],
+      [5, 'type', 14, 0, FieldType_Enum],
+    ],
+    {
+      decode: (
+        r: BinaryReader,
+        end: number,
+        m: ReadModifierFieldRequest,
+      ): ReadModifierFieldRequest => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.entity = r.uint32()
+              break
+            case 2:
+              m.modifier = r.string()
+              break
+            case 3:
+              m.className = r.string()
+              break
+            case 4:
+              m.field = r.string()
+              break
+            case 5:
+              m.type = r.int32()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: ReadModifierFieldRequest, w: Writer): void => {
+        {
+          const v = m.entity
+          if (v) w.uint32(8).uint32(v)
+        }
+        {
+          const v = m.modifier
+          if (v) w.uint32(18).string(v)
+        }
+        {
+          const v = m.className
+          if (v) w.uint32(26).string(v)
+        }
+        {
+          const v = m.field
+          if (v) w.uint32(34).string(v)
+        }
+        {
+          const v = m.type
+          if (v) w.uint32(40).int32(v)
+        }
+      },
+    },
+  )
+
+/**
  * FieldResponse holds the value ReadField read.
  *
  * @generated from message modlock.wasm.fields.FieldResponse

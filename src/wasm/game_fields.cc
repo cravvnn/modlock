@@ -237,6 +237,42 @@ std::expected<std::array<unsigned char, 12>, std::string> Encode(fields::FieldTy
   return bytes;
 }
 
+// ReadValue copies the field of type at address through the operating system,
+// so a field the object lacks fails instead of faulting the server, and
+// decodes it. Name names the field in an error.
+std::expected<fields::FieldResponse, std::string> ReadValue(const unsigned char* address,
+                                                            fields::FieldType type,
+                                                            const std::string& name) {
+  std::array<unsigned char, 12> bytes{};
+  if (!gameinterop::ReadNative(address, bytes.data(), Size(type))) {
+    return std::unexpected("cannot read " + name);
+  }
+  auto value = Decode(type, bytes.data());
+  if (!value) {
+    return std::unexpected(value.error());
+  }
+  fields::FieldResponse response;
+  *response.mutable_value() = std::move(*value);
+  return response;
+}
+
+// ModifierName copies the name of the modifier at modifier: its definition,
+// at +0x10 as in Deadworks CBaseModifier, keeps its interned name at +0x10, as
+// every CEntitySubclassVDataBase does. An unreadable name is empty.
+std::string ModifierName(const unsigned char* modifier) {
+  const unsigned char* definition = nullptr;
+  const char* interned = nullptr;
+  if (!gameinterop::ReadNative(modifier + 0x10, &definition, sizeof(definition)) || !definition ||
+      !gameinterop::ReadNative(definition + 0x10, &interned, sizeof(interned)) || !interned) {
+    return {};
+  }
+  std::array<char, 128> name{};
+  if (!gameinterop::ReadNative(interned, name.data(), name.size() - 1)) {
+    return {};
+  }
+  return name.data();
+}
+
 }  // namespace
 
 std::expected<unsigned char*, std::string> Game::FieldAddress(void* entity,
@@ -309,20 +345,59 @@ std::expected<fields::FieldResponse, std::string> Game::ReadField(const fields::
   if (!address) {
     return std::unexpected(address.error());
   }
+  return ReadValue(*address, request.type(), request.class_name() + "." + request.field());
+}
 
-  // Copy through the operating system, so a field the entity lacks fails
-  // instead of faulting the server.
-  std::array<unsigned char, 12> bytes{};
-  if (!gameinterop::ReadNative(*address, bytes.data(), Size(request.type()))) {
-    return std::unexpected("cannot read " + request.class_name() + "." + request.field());
+std::expected<fields::FieldResponse, std::string> Game::ReadModifierField(
+    const fields::ReadModifierFieldRequest& request) {
+  // Find the entity, the field and the entity's modifier list.
+  auto entity = Entity(request.entity());
+  if (!entity) {
+    return std::unexpected(entity.error());
   }
-  auto value = Decode(request.type(), bytes.data());
-  if (!value) {
-    return std::unexpected(value.error());
+  const auto size = Size(request.type());
+  if (size == 0) {
+    return std::unexpected("the field type is unknown");
   }
-  fields::FieldResponse response;
-  *response.mutable_value() = std::move(*value);
-  return response;
+  auto found = services_.Field(request.class_name(), request.field());
+  if (!found) {
+    return std::unexpected(found.error());
+  }
+  if (found->size < size) {
+    return std::unexpected(request.class_name() + "." + request.field() +
+                           " is smaller than its requested type");
+  }
+  auto layout = services_.Modifiers();
+  if (!layout) {
+    return std::unexpected(layout.error());
+  }
+  const unsigned char* property = nullptr;
+  if (!gameinterop::ReadNative(static_cast<unsigned char*>(*entity) + layout->property, &property,
+                               sizeof(property))) {
+    return std::unexpected("cannot read the entity's modifiers");
+  }
+  if (!property) {
+    return fields::FieldResponse{};
+  }
+  auto list = ReadList(property + layout->list);
+  if (!list) {
+    return std::unexpected(list.error());
+  }
+
+  // Read the field of the first modifier with the name; without one, answer
+  // no value.
+  std::vector<unsigned char*> modifiers(static_cast<size_t>(list->size));
+  if (!modifiers.empty() && !gameinterop::ReadNative(list->elements, modifiers.data(),
+                                                     modifiers.size() * sizeof(unsigned char*))) {
+    return std::unexpected("cannot read the entity's modifiers");
+  }
+  for (auto* modifier : modifiers) {
+    if (modifier && ModifierName(modifier) == request.modifier()) {
+      return ReadValue(modifier + found->offset, request.type(),
+                       request.modifier() + "." + request.field());
+    }
+  }
+  return fields::FieldResponse{};
 }
 
 std::expected<void, std::string> Game::WriteField(const fields::WriteFieldRequest& request) {

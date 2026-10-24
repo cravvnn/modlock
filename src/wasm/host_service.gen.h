@@ -383,6 +383,17 @@ class HostService {
     return std::unexpected("this host does not support ReadField");
   }
 
+  // ReadModifierField reads one schema field of a modifier the entity holds,
+  // such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+  // pawn holding modifier_citadel_orbit_camera. The answer holds no value
+  // while the entity lacks the modifier. The host cannot check the modifier's
+  // class, so a wrong class reads the wrong bytes, though never past readable
+  // memory.
+  virtual std::expected<fields::FieldResponse, std::string> ReadModifierField(
+      const fields::ReadModifierFieldRequest& /*request*/) {
+    return std::unexpected("this host does not support ReadModifierField");
+  }
+
   // WriteField writes one schema field of a live entity and sends the change
   // to the players. The value takes the form ReadField returns for the type;
   // text fields cannot be written. A write to the match's state sends all of
@@ -1146,6 +1157,14 @@ class HostService {
              return detail::Fail("the ReadField request is malformed");
            }
            return detail::Answer(host.ReadField(request));
+         }},
+        {"ReadModifierField",
+         [](HostService& host, const std::string& bytes) {
+           fields::ReadModifierFieldRequest request;
+           if (!request.ParseFromString(bytes)) {
+             return detail::Fail("the ReadModifierField request is malformed");
+           }
+           return detail::Answer(host.ReadModifierField(request));
          }},
         {"WriteField",
          [](HostService& host, const std::string& bytes) {

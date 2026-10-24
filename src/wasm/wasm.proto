@@ -282,6 +282,14 @@ service Host {
   // citadel_gamerules entity reads.
   rpc ReadField(modlock.wasm.fields.ReadFieldRequest) returns (modlock.wasm.fields.FieldResponse);
 
+  // ReadModifierField reads one schema field of a modifier the entity holds,
+  // such as the int32 m_nCameraLevel of CCitadel_Modifier_OrbitCamera on a
+  // pawn holding modifier_citadel_orbit_camera. The answer holds no value
+  // while the entity lacks the modifier. The host cannot check the modifier's
+  // class, so a wrong class reads the wrong bytes, though never past readable
+  // memory.
+  rpc ReadModifierField(modlock.wasm.fields.ReadModifierFieldRequest) returns (modlock.wasm.fields.FieldResponse);
+
   // WriteField writes one schema field of a live entity and sends the change
   // to the players. The value takes the form ReadField returns for the type;
   // text fields cannot be written. A write to the match's state sends all of
