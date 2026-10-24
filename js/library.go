@@ -53,6 +53,12 @@ var built embed.FS
 // server.
 const Renderer = "renderer.js"
 
+// LayoutLibrary is the built library a mod's layout script includes to read
+// its data and routes, which a client content package installs as
+// scripts/modlock/layout.js beside the renderer. Its bundle defines the global
+// Modlock.
+const LayoutLibrary = "layout.js"
+
 // Preview is the directory of the built library that holds the preview page
 // modlock dev serves.
 const Preview = "preview"
@@ -367,6 +373,7 @@ func Build(ctx context.Context, source, out string) error {
 		{"entities.js", api.BuildOptions{EntryPoints: []string{"js/src/entities.ts"}, Format: api.FormatESModule, Target: api.ES2023, External: []string{"modlock"}}},
 		{"console.js", api.BuildOptions{EntryPoints: []string{"js/src/console.ts"}, Format: api.FormatESModule, Target: api.ES2023, External: []string{"modlock"}}},
 		{Renderer, api.BuildOptions{EntryPoints: []string{"panorama/src/main.ts"}, Format: api.FormatIIFE, Target: api.ES2020, MinifyWhitespace: true, MinifyIdentifiers: true, MinifySyntax: true}},
+		{LayoutLibrary, api.BuildOptions{EntryPoints: []string{"panorama/src/layout.ts"}, Format: api.FormatIIFE, GlobalName: "Modlock", Target: api.ES2020, MinifySyntax: true}},
 		{Preview + "/preview.js", api.BuildOptions{EntryPoints: []string{"panorama/browser/preview.ts"}, Format: api.FormatIIFE, Target: api.ES2022, MinifySyntax: true}},
 	}
 	for _, bundle := range bundles {

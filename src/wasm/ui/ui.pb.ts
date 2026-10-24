@@ -78,6 +78,12 @@ export enum Kind {
    * it; Modlock's renderer draws an empty panel.
    */
   LAYOUT = 4,
+
+  /**
+   * KIND_ROUTE draws nothing: it hands its data to every layout of the mod
+   * under its route's name. No parent lists it.
+   */
+  ROUTE = 5,
 }
 
 export const Kind_Enum = /* @__PURE__ */ createEnumType(
@@ -88,6 +94,7 @@ export const Kind_Enum = /* @__PURE__ */ createEnumType(
     [2, 'KIND_IMAGE'],
     [3, 'KIND_BUTTON'],
     [4, 'KIND_LAYOUT'],
+    [5, 'KIND_ROUTE'],
   ],
 )
 
@@ -231,11 +238,14 @@ export interface Node {
    */
   layout?: string
   /**
-   * Data is the string a layout's script reads. The renderer sets it as the
-   * modlock_data attribute of the layout's panel before loading the layout,
-   * and after each change it plays the sound event "modlock_data_changed",
+   * Data is the JSON value a layout's script reads, or a route's value. The
+   * renderer sets a layout's data as the modlock_data attribute of its panel
+   * before loading the layout, and each route as the attribute
+   * modlock_route_<route> of every layout of the mod. After a draw that
+   * changes any of them it plays the sound event "modlock_data_changed",
    * which no sound has, so a script that registers for the unhandled
-   * PlaySoundEffect event hears it and reads the attribute again.
+   * PlaySoundEffect event hears it and reads its attributes again. The
+   * Panorama library scripts/modlock/layout.js does both for a layout.
    */
   data?: string
   /**
@@ -245,6 +255,11 @@ export interface Node {
    * leaves all bring it back.
    */
   hideHud?: HudPart[]
+  /**
+   * Route names a route node's data route: one or more letters, digits, '_',
+   * '-' and '.'.
+   */
+  route?: string
 }
 
 export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
@@ -259,6 +274,7 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
     [7, 'layout', 9],
     [8, 'data', 9],
     [9, 'hide_hud', 14, 3, HudPart_Enum],
+    [10, 'route', 9],
   ],
   {
     decode: (r: BinaryReader, end: number, m: Node): Node => {
@@ -293,6 +309,9 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
           case 9:
             for (const e = r.run(t), a = (m.hideHud ??= []); r.pos < e;)
               a.push(r.int32())
+            break
+          case 10:
+            m.route = r.string()
             break
           default:
             r.skip(t)
@@ -340,6 +359,10 @@ export const Node: MessageType<Node> = /* @__PURE__ */ createMessageType<Node>(
           for (const e of a) w.int32(e)
           w.join(s)
         }
+      }
+      {
+        const v = m.route
+        if (v) w.uint32(82).string(v)
       }
     },
   },

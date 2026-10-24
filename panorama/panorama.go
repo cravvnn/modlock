@@ -10,7 +10,7 @@ import "embed"
 
 // Sources holds the drawing's TypeScript source and its browser stand-in.
 //
-//go:embed src/draw.ts browser/dom.ts browser/panels.css
+//go:embed src/draw.ts src/data.ts browser/dom.ts browser/panels.css
 var Sources embed.FS
 
 // Layout is the renderer's layout, which a client content package installs

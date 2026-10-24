@@ -40,11 +40,14 @@ message Node {
   // '.', none of them "..", ending in ".xml".
   string layout = 7;
 
-  // Data is the string a layout's script reads. The renderer sets it as the
-  // modlock_data attribute of the layout's panel before loading the layout,
-  // and after each change it plays the sound event "modlock_data_changed",
+  // Data is the JSON value a layout's script reads, or a route's value. The
+  // renderer sets a layout's data as the modlock_data attribute of its panel
+  // before loading the layout, and each route as the attribute
+  // modlock_route_<route> of every layout of the mod. After a draw that
+  // changes any of them it plays the sound event "modlock_data_changed",
   // which no sound has, so a script that registers for the unhandled
-  // PlaySoundEffect event hears it and reads the attribute again.
+  // PlaySoundEffect event hears it and reads its attributes again. The
+  // Panorama library scripts/modlock/layout.js does both for a layout.
   string data = 8;
 
   // HideHud lists the parts of the game's own HUD the renderer hides while
@@ -52,6 +55,10 @@ message Node {
   // no mod's root lists it, so a mod that stops, a reset and a player who
   // leaves all bring it back.
   repeated HudPart hide_hud = 9;
+
+  // Route names a route node's data route: one or more letters, digits, '_',
+  // '-' and '.'.
+  string route = 10;
 }
 
 // HudPart is a part of the game's own HUD a mod may hide from a player.
@@ -89,6 +96,10 @@ enum Kind {
   // console commands. Only a host that has reviewed the mod's content loads
   // it; Modlock's renderer draws an empty panel.
   KIND_LAYOUT = 4;
+
+  // KIND_ROUTE draws nothing: it hands its data to every layout of the mod
+  // under its route's name. No parent lists it.
+  KIND_ROUTE = 5;
 }
 
 // Style is the closed set of layout and paint properties a node may set. A

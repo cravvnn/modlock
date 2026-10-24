@@ -36,14 +36,23 @@ const bootSource = `(function () {
 })()
 `
 
+// Renderer is the built scripts that draw the mods' interfaces in the game.
+type Renderer struct {
+	// Script draws each mod's tree; it installs as scripts/modlock/ui.js.
+	Script []byte
+	// Layout is the library a mod's layout includes to read its data and
+	// routes; it installs as scripts/modlock/layout.js.
+	Layout []byte
+}
+
 // mountRenderer mounts a package in the Deadlock installation at gameDir that
 // draws the mods' interfaces in the player's game, and returns the call that
-// unmounts it. renderer is the built renderer script. The package shadows the
+// unmounts it. The package shadows the
 // stock news layout, read from the installed game so it follows game updates,
 // with one script added, and outranks every other mounted package while the
 // session runs. A game already running loads it at its next start. A block
 // left by a session that did not end cleanly is replaced.
-func mountRenderer(gameDir string, renderer []byte) (func() error, error) {
+func mountRenderer(gameDir string, renderer *Renderer) (func() error, error) {
 	// Build the package from the installed news layout.
 	citadel := filepath.Join(gameDir, "game", "citadel")
 	stock, err := vpk.OpenArchive(filepath.Join(citadel, "pak01_dir.vpk"))
@@ -63,10 +72,11 @@ func mountRenderer(gameDir string, renderer []byte) (func() error, error) {
 		return nil, err
 	}
 	files, err := s2panorama.CompileTree("modlock_dev", fstest.MapFS{
-		newsLayout:                       {Data: []byte(news)},
-		bootScript:                       {Data: []byte(bootSource)},
-		"panorama/layout/modlock/ui.xml": {Data: panorama.Layout},
-		"panorama/scripts/modlock/ui.js": {Data: renderer},
+		newsLayout:                           {Data: []byte(news)},
+		bootScript:                           {Data: []byte(bootSource)},
+		"panorama/layout/modlock/ui.xml":     {Data: panorama.Layout},
+		"panorama/scripts/modlock/ui.js":     {Data: renderer.Script},
+		"panorama/scripts/modlock/layout.js": {Data: renderer.Layout},
 	})
 	if err != nil {
 		return nil, err

@@ -76,6 +76,9 @@ const (
 	// console commands. Only a host that has reviewed the mod's content loads
 	// it; Modlock's renderer draws an empty panel.
 	Kind_KIND_LAYOUT Kind = 4
+	// KIND_ROUTE draws nothing: it hands its data to every layout of the mod
+	// under its route's name. No parent lists it.
+	Kind_KIND_ROUTE Kind = 5
 )
 
 // Enum value maps for Kind.
@@ -86,6 +89,7 @@ var (
 		2: "KIND_IMAGE",
 		3: "KIND_BUTTON",
 		4: "KIND_LAYOUT",
+		5: "KIND_ROUTE",
 	}
 	Kind_value = map[string]int32{
 		"KIND_PANEL":  0,
@@ -93,6 +97,7 @@ var (
 		"KIND_IMAGE":  2,
 		"KIND_BUTTON": 3,
 		"KIND_LAYOUT": 4,
+		"KIND_ROUTE":  5,
 	}
 )
 
@@ -257,17 +262,23 @@ type Node struct {
 	// "inventory.xml": one or more segments of letters, digits, '_', '-' and
 	// '.', none of them "..", ending in ".xml".
 	Layout string `protobuf:"bytes,7,opt,name=layout,proto3" json:"layout,omitempty"`
-	// Data is the string a layout's script reads. The renderer sets it as the
-	// modlock_data attribute of the layout's panel before loading the layout,
-	// and after each change it plays the sound event "modlock_data_changed",
+	// Data is the JSON value a layout's script reads, or a route's value. The
+	// renderer sets a layout's data as the modlock_data attribute of its panel
+	// before loading the layout, and each route as the attribute
+	// modlock_route_<route> of every layout of the mod. After a draw that
+	// changes any of them it plays the sound event "modlock_data_changed",
 	// which no sound has, so a script that registers for the unhandled
-	// PlaySoundEffect event hears it and reads the attribute again.
+	// PlaySoundEffect event hears it and reads its attributes again. The
+	// Panorama library scripts/modlock/layout.js does both for a layout.
 	Data string `protobuf:"bytes,8,opt,name=data,proto3" json:"data,omitempty"`
 	// HideHud lists the parts of the game's own HUD the renderer hides while
 	// the root holds them; only the root's list counts. A part shows again once
 	// no mod's root lists it, so a mod that stops, a reset and a player who
 	// leaves all bring it back.
 	HideHud []HudPart `protobuf:"varint,9,rep,packed,name=hide_hud,json=hideHud,proto3" json:"hideHud,omitempty"`
+	// Route names a route node's data route: one or more letters, digits, '_',
+	// '-' and '.'.
+	Route string `protobuf:"bytes,10,opt,name=route,proto3" json:"route,omitempty"`
 }
 
 func (x *Node) Reset() {
@@ -337,6 +348,13 @@ func (x *Node) GetHideHud() []HudPart {
 		return x.HideHud
 	}
 	return nil
+}
+
+func (x *Node) GetRoute() string {
+	if x != nil {
+		return x.Route
+	}
+	return ""
 }
 
 // Style is the closed set of layout and paint properties a node may set. A
@@ -823,6 +841,7 @@ func (m *Node) CloneVT() *Node {
 	r.Image = m.Image
 	r.Layout = m.Layout
 	r.Data = m.Data
+	r.Route = m.Route
 	r.Children = protobuf_go_lite.CloneSlice(m.Children)
 	r.Style = protobuf_go_lite.CloneVTValue(m.Style)
 	r.HideHud = protobuf_go_lite.CloneSlice(m.HideHud)
@@ -1076,6 +1095,9 @@ func (this *Node) EqualVT(that *Node) bool {
 		return false
 	}
 	if !protobuf_go_lite.EqualSlice(this.HideHud, that.HideHud) {
+		return false
+	}
+	if this.Route != that.Route {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -1664,6 +1686,11 @@ func (x *Node) MarshalProtoJSON(s *json.MarshalState) {
 		}
 		s.WriteArrayEnd()
 	}
+	if x.Route != "" || s.HasField("route") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("route")
+		s.WriteString(x.Route)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -1724,6 +1751,9 @@ func (x *Node) UnmarshalProtoJSON(s *json.UnmarshalState) {
 				v.UnmarshalProtoJSON(s)
 				x.HideHud = append(x.HideHud, v)
 			})
+		case "route":
+			s.AddField("route")
+			x.Route = s.ReadString()
 		}
 	})
 }
@@ -2438,6 +2468,11 @@ func (m *Node) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
 	}
+	if len(m.Route) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Route)
+		i--
+		dAtA[i] = 0x52
+	}
 	if len(m.HideHud) > 0 {
 		i = protobuf_go_lite.EncodeVarintPacked(dAtA, i, m.HideHud)
 		i--
@@ -3056,6 +3091,7 @@ func (m *Node) SizeVT() (n int) {
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Layout)
 	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Data)
 	n += protobuf_go_lite.SizeVarintPacked(1, m.HideHud)
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Route)
 	n += len(m.unknownFields)
 	return n
 }
@@ -3307,6 +3343,10 @@ func (x *Node) MarshalProtoText() string {
 			protobuf_go_lite.TextWriteStringer(&sb, HudPart(v))
 		}
 		protobuf_go_lite.TextWriteListEnd(&sb)
+	}
+	if x.Route != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "route")
+		protobuf_go_lite.TextWriteString(&sb, x.Route)
 	}
 	return protobuf_go_lite.TextFinishMessage(&sb)
 }
@@ -3713,6 +3753,16 @@ func (m *Node) UnmarshalVT(dAtA []byte) error {
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field HideHud", wireType)
 			}
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Route", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Route = v
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

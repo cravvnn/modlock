@@ -173,6 +173,7 @@ enum Kind : int {
   KIND_IMAGE = 2,
   KIND_BUTTON = 3,
   KIND_LAYOUT = 4,
+  KIND_ROUTE = 5,
   Kind_INT_MIN_SENTINEL_DO_NOT_USE_ =
       ::std::numeric_limits<::int32_t>::min(),
   Kind_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -183,11 +184,11 @@ extern const uint32_t Kind_internal_data_[];
 inline constexpr Kind Kind_MIN =
     static_cast<Kind>(0);
 inline constexpr Kind Kind_MAX =
-    static_cast<Kind>(4);
+    static_cast<Kind>(5);
 inline bool Kind_IsValid(int value) {
-  return 0 <= value && value <= 4;
+  return 0 <= value && value <= 5;
 }
-inline constexpr int Kind_ARRAYSIZE = 4 + 1;
+inline constexpr int Kind_ARRAYSIZE = 5 + 1;
 const ::google::protobuf::EnumDescriptor* PROTOBUF_NONNULL Kind_descriptor();
 template <typename T>
 const ::std::string& Kind_Name(T value) {
@@ -198,7 +199,7 @@ const ::std::string& Kind_Name(T value) {
 }
 template <>
 inline const ::std::string& Kind_Name(Kind value) {
-  return ::google::protobuf::internal::NameOfDenseEnum<Kind_descriptor, 0, 4>(
+  return ::google::protobuf::internal::NameOfDenseEnum<Kind_descriptor, 0, 5>(
       static_cast<int>(value));
 }
 inline bool Kind_Parse(
@@ -1594,6 +1595,7 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
     kImageFieldNumber = 5,
     kLayoutFieldNumber = 7,
     kDataFieldNumber = 8,
+    kRouteFieldNumber = 10,
     kStyleFieldNumber = 6,
     kKindFieldNumber = 2,
   };
@@ -1713,6 +1715,21 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
   ::std::string* PROTOBUF_NONNULL _internal_mutable_data();
 
   public:
+  // string route = 10;
+  void clear_route() ;
+  const ::std::string& route() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_route(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_route();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_route();
+  void set_allocated_route(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_route() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_route(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_route();
+
+  public:
   // .modlock.wasm.ui.Style style = 6;
   bool has_style() const;
   void clear_style() ;
@@ -1742,8 +1759,8 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 9,
-                                   1, 66,
+  static const ::google::protobuf::internal::TcParseTable<4, 10,
+                                   1, 71,
                                    2>
       _table_;
 
@@ -1772,6 +1789,7 @@ class MODLOCK_API Node final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr image_;
     ::google::protobuf::internal::ArenaStringPtr layout_;
     ::google::protobuf::internal::ArenaStringPtr data_;
+    ::google::protobuf::internal::ArenaStringPtr route_;
     ::modlock::wasm::ui::Style* PROTOBUF_NULLABLE style_;
     int kind_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -2719,7 +2737,7 @@ inline void Node::clear_kind() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.kind_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000100U);
+                  0x00000200U);
 }
 inline ::modlock::wasm::ui::Kind Node::kind() const {
   // @@protoc_insertion_point(field_get:modlock.wasm.ui.Node.kind)
@@ -2727,7 +2745,7 @@ inline ::modlock::wasm::ui::Kind Node::kind() const {
 }
 inline void Node::set_kind(::modlock::wasm::ui::Kind value) {
   _internal_set_kind(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
   // @@protoc_insertion_point(field_set:modlock.wasm.ui.Node.kind)
 }
 inline ::modlock::wasm::ui::Kind Node::_internal_kind() const {
@@ -2943,7 +2961,7 @@ inline void Node::set_allocated_image(::std::string* PROTOBUF_NULLABLE value) {
 
 // .modlock.wasm.ui.Style style = 6;
 inline bool Node::has_style() const {
-  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000080U);
+  bool value = CheckHasBit(_impl_._has_bits_[0], 0x00000100U);
   PROTOBUF_ASSUME(!value || _impl_.style_ != nullptr);
   return value;
 }
@@ -2951,7 +2969,7 @@ inline void Node::clear_style() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   if (_impl_.style_ != nullptr) _impl_.style_->Clear();
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
+                  0x00000100U);
 }
 inline const ::modlock::wasm::ui::Style& Node::_internal_style() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
@@ -2970,16 +2988,16 @@ inline void Node::unsafe_arena_set_allocated_style(
   }
   _impl_.style_ = reinterpret_cast<::modlock::wasm::ui::Style*>(value);
   if (value != nullptr) {
-    SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000100U);
   }
   // @@protoc_insertion_point(field_unsafe_arena_set_allocated:modlock.wasm.ui.Node.style)
 }
 inline ::modlock::wasm::ui::Style* PROTOBUF_NULLABLE Node::release_style() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000100U);
   ::modlock::wasm::ui::Style* released = _impl_.style_;
   _impl_.style_ = nullptr;
   if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
@@ -2999,7 +3017,7 @@ inline ::modlock::wasm::ui::Style* PROTOBUF_NULLABLE Node::unsafe_arena_release_
   ::google::protobuf::internal::TSanWrite(&_impl_);
   // @@protoc_insertion_point(field_release:modlock.wasm.ui.Node.style)
 
-  ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+  ClearHasBit(_impl_._has_bits_[0], 0x00000100U);
   ::modlock::wasm::ui::Style* temp = _impl_.style_;
   _impl_.style_ = nullptr;
   return temp;
@@ -3014,7 +3032,7 @@ inline ::modlock::wasm::ui::Style* PROTOBUF_NONNULL Node::_internal_mutable_styl
 }
 inline ::modlock::wasm::ui::Style* PROTOBUF_NONNULL Node::mutable_style()
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   ::modlock::wasm::ui::Style* _msg = _internal_mutable_style();
   // @@protoc_insertion_point(field_mutable:modlock.wasm.ui.Node.style)
   return _msg;
@@ -3031,9 +3049,9 @@ inline void Node::set_allocated_style(::modlock::wasm::ui::Style* PROTOBUF_NULLA
     if (message_arena != submessage_arena) {
       value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
     }
-    SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+    SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   } else {
-    ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+    ClearHasBit(_impl_._has_bits_[0], 0x00000100U);
   }
 
   _impl_.style_ = reinterpret_cast<::modlock::wasm::ui::Style*>(value);
@@ -3218,6 +3236,71 @@ inline ::google::protobuf::RepeatedField<int>* PROTOBUF_NONNULL
 Node::_internal_mutable_hide_hud() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.hide_hud_;
+}
+
+// string route = 10;
+inline void Node::clear_route() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.route_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000080U);
+}
+inline const ::std::string& Node::route() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:modlock.wasm.ui.Node.route)
+  return _internal_route();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void Node::set_route(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  _impl_.route_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:modlock.wasm.ui.Node.route)
+}
+inline ::std::string* PROTOBUF_NONNULL Node::mutable_route()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  ::std::string* _s = _internal_mutable_route();
+  // @@protoc_insertion_point(field_mutable:modlock.wasm.ui.Node.route)
+  return _s;
+}
+inline const ::std::string& Node::_internal_route() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.route_.Get();
+}
+inline void Node::_internal_set_route(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.route_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL Node::_internal_mutable_route() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.route_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE Node::release_route() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:modlock.wasm.ui.Node.route)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000080U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+  auto* released = _impl_.route_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.route_.Set("", GetArena());
+  }
+  return released;
+}
+inline void Node::set_allocated_route(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000080U);
+  }
+  _impl_.route_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.route_.IsDefault()) {
+    _impl_.route_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:modlock.wasm.ui.Node.route)
 }
 
 // -------------------------------------------------------------------

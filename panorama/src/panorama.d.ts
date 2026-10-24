@@ -17,6 +17,7 @@ interface Panel {
   SetURL(url: string): void
   SetPanelEvent(event: string, handler: () => void): void
   SetAttributeString(name: string, value: string): void
+  GetAttributeString(name: string, fallback: string): string
   BLoadLayout(
     path: string,
     overrideExisting: boolean,
@@ -37,6 +38,10 @@ declare const $: {
     panel: Panel,
     handler: (...args: never[]) => boolean | void,
   ): void
+  RegisterForUnhandledEvent(
+    event: string,
+    handler: (...args: never[]) => boolean | void,
+  ): number
   Schedule(seconds: number, callback: () => void): number
   CancelScheduled(handle: number): void
   DispatchEvent(event: string, ...args: string[]): void

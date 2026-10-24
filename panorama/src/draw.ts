@@ -3,8 +3,10 @@
 // one of four stock panel types. A layout node is the one exception: a host
 // that has reviewed a mod's content addon passes Layouts, and the drawing
 // loads the mod's layout into the node's panel; without Layouts the panel
-// stays empty. It reaches the game only through the Panorama it is given, so a
-// host's own interface script may draw the screens it receives another way.
+// stays empty. A route node draws nothing and hands its value to each of the
+// mod's layouts. It reaches the game only through the Panorama it is given,
+// so a host's own interface script may draw the screens it receives another
+// way.
 
 import {
   Align,
@@ -17,6 +19,19 @@ import {
   type Screen,
   type Style,
 } from '../../src/wasm/ui/ui.pb.js'
+import {
+  isRouteName,
+  layoutDataAttribute,
+  layoutDataChanged,
+  routeAttribute,
+} from './data.js'
+
+export {
+  isRouteName,
+  layoutDataAttribute,
+  layoutDataChanged,
+  routeAttribute,
+} from './data.js'
 
 /** Panel is the part of a game panel the drawing uses. */
 export interface Panel {
@@ -68,16 +83,6 @@ export interface Layouts {
   unloaded(): void
 }
 
-/** layoutDataAttribute names the attribute holding a layout node's data. */
-export const layoutDataAttribute = 'modlock_data'
-
-/**
- * layoutDataChanged is the sound event the drawing plays after it changes a
- * layout's data. The game refuses custom events and delivers the stock
- * PlaySoundEffect to every script; no sound has this name, so none plays.
- */
-export const layoutDataChanged = 'modlock_data_changed'
-
 /**
  * isLayoutPath reports whether path names a layout inside a mod's addon: one
  * or more segments of letters, digits, '_', '-' and '.', none of them "..",
@@ -107,6 +112,7 @@ const panelTypes: Record<Kind, string> = {
   [Kind.IMAGE]: 'Image',
   [Kind.BUTTON]: 'Button',
   [Kind.LAYOUT]: 'Panel',
+  [Kind.ROUTE]: 'Panel',
 }
 
 /**
@@ -128,6 +134,9 @@ export class Drawing {
   /** mods holds each mod's drawn nodes by id; the root's id is empty. */
   private readonly mods = new Map<string, Map<string, Drawn>>()
 
+  /** routes holds each mod's routes, the value of each by name. */
+  private readonly routes = new Map<string, Map<string, string>>()
+
   constructor(
     private readonly panorama: Panorama,
     private readonly parent: Panel,
@@ -137,6 +146,9 @@ export class Drawing {
 
   /** unloaded records that this draw deleted a layout's panel. */
   private unloaded = false
+
+  /** changed records that this draw changed a loaded layout's data or routes. */
+  private changed = false
 
   /** draw makes the panels match screen, keeping each panel whose node stays. */
   draw(screen: Screen | null): void {
@@ -151,6 +163,7 @@ export class Drawing {
           (each) => each.layout !== null,
         )
         this.mods.delete(mod)
+        this.routes.delete(mod)
       }
     }
 
@@ -159,7 +172,12 @@ export class Drawing {
       this.drawTree(mod, new Map(nodes.map((node) => [node.id ?? '', node])))
     }
 
-    // Let the host bind its keys again once layouts are gone.
+    // Tell the layouts to read again, and let the host bind its keys again
+    // once layouts are gone.
+    if (this.changed) {
+      this.changed = false
+      this.panorama.DispatchEvent('PlaySoundEffect', layoutDataChanged)
+    }
     if (this.unloaded) {
       this.unloaded = false
       this.layouts?.unloaded()
@@ -168,11 +186,43 @@ export class Drawing {
 
   /** drawTree draws one mod's nodes from its root down. */
   private drawTree(mod: string, nodes: Map<string, Node>): void {
+    // Read the mod's routes; a layout that loads now starts with them all.
+    const routes = new Map<string, string>()
+    for (const node of nodes.values()) {
+      if (node.kind === Kind.ROUTE && isRouteName(node.route ?? '')) {
+        routes.set(node.route!, node.data ?? '')
+      }
+    }
+    const sent = this.routes.get(mod) ?? new Map<string, string>()
+    this.routes.set(mod, routes)
+
     // Draw the mod's tree from its root, reusing the panels drawn last time.
     const previous = this.mods.get(mod) ?? new Map<string, Drawn>()
     const drawn = new Map<string, Drawn>()
     const root = nodes.get('') ?? { id: '' }
     this.drawNode(mod, root, this.parent, previous, drawn, nodes)
+
+    // Hand each layout loaded before this draw the routes that changed, an
+    // empty value for one the mod no longer sends.
+    const changed = [...new Set([...sent.keys(), ...routes.keys()])].filter(
+      (name) => sent.get(name) !== routes.get(name),
+    )
+    for (const [id, each] of drawn) {
+      const before = previous.get(id)
+      if (
+        changed.length !== 0 &&
+        before?.loaded &&
+        before.panel === each.panel
+      ) {
+        for (const name of changed) {
+          each.panel.SetAttributeString(
+            routeAttribute(name),
+            routes.get(name) ?? '',
+          )
+        }
+        this.changed = true
+      }
+    }
 
     // A node no parent reaches is not drawn; its panel goes with its old parent.
     for (const [id, old] of previous) {
@@ -244,13 +294,16 @@ export class Drawing {
     // data. A layout whose addon has not mounted yet loads on a later draw.
     if (layout && !loaded) {
       panel.SetAttributeString(layoutDataAttribute, data)
+      for (const [name, value] of this.routes.get(mod) ?? []) {
+        panel.SetAttributeString(routeAttribute(name), value)
+      }
       loaded = panel.BLoadLayout(layout, false, false)
       if (!loaded) {
         this.panorama.Msg(`[Modlock] ${mod} layout ${path} is unavailable`)
       }
     } else if (layout && data !== given) {
       panel.SetAttributeString(layoutDataAttribute, data)
-      this.panorama.DispatchEvent('PlaySoundEffect', layoutDataChanged)
+      this.changed = true
     }
     drawn.set(id, { panel, parent, style, layout, loaded, data })
 

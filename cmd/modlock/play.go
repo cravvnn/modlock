@@ -171,7 +171,7 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 	// Start the server, which launches the client once it is ready, serving
 	// the mods' interfaces unless they are off.
 	var ui string
-	var renderer []byte
+	var renderer *session.Renderer
 	if port := c.Uint("ui-port"); port != 0 {
 		ui = "127.0.0.1:" + strconv.Itoa(int(port))
 		renderer, err = readRenderer(c.Context)
@@ -207,14 +207,22 @@ func startServer(c *cli.Context, out *printer, mods []string, mapName, logPath s
 	return running, nil
 }
 
-// readRenderer returns the built renderer script the game draws the mods'
+// readRenderer returns the built renderer the game draws the mods'
 // interfaces with.
-func readRenderer(ctx context.Context) ([]byte, error) {
+func readRenderer(ctx context.Context) (*session.Renderer, error) {
 	library, err := js.Library(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return os.ReadFile(filepath.Join(library, js.Renderer))
+	script, err := os.ReadFile(filepath.Join(library, js.Renderer))
+	if err != nil {
+		return nil, err
+	}
+	layout, err := os.ReadFile(filepath.Join(library, js.LayoutLibrary))
+	if err != nil {
+		return nil, err
+	}
+	return &session.Renderer{Script: script, Layout: layout}, nil
 }
 
 // configPath returns name in Modlock's configuration directory, which keeps

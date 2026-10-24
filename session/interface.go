@@ -14,9 +14,9 @@ type Interface struct {
 	Address string
 	// Relay is the relay page's origin.
 	Relay string
-	// Renderer is the built renderer script; nil leaves the game without it,
-	// so the interfaces show only in the browser preview.
-	Renderer []byte
+	// Renderer is the built renderer; nil leaves the game without it, so the
+	// interfaces show only in the browser preview.
+	Renderer *Renderer
 	// GameDir is the Deadlock installation the renderer mounts in.
 	GameDir string
 	// Screen is the player's screen.

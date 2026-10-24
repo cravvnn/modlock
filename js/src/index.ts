@@ -92,6 +92,7 @@ export {
   type LayoutProps,
   type Length,
   type PanelProps,
+  route,
   show,
   type Style,
   toast,

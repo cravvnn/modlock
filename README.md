@@ -885,11 +885,12 @@ vector or a color has no typed setter; set it with `serverCommand`.
 
 ### Interfaces
 
-| Call                                    | Effect                                                   |
-| --------------------------------------- | -------------------------------------------------------- |
-| `show(player, element)`, `hide(player)` | Show a player an interface written in JSX, or remove it. |
-| `toast(player, text, seconds?)`         | Show a player a short notice that fades.                 |
+| Call                                    | Effect                                                    |
+| --------------------------------------- | --------------------------------------------------------- |
+| `show(player, element)`, `hide(player)` | Show a player an interface written in JSX, or remove it.  |
+| `toast(player, text, seconds?)`         | Show a player a short notice that fades.                  |
 | `hideHud(player, parts)`                | Hide `'levelUp'` notices or `'ownHealth'`; `[]` restores. |
+| `route(player, name, value)`            | Hand every layout of the mod `value` under `name`.        |
 
 Style `panel`, `label`, `image`, `button` and `layout` with `width`,
 `height`, `flow`, `horizontalAlign`, `verticalAlign`, `margin`, `padding`,
@@ -902,21 +903,45 @@ An interface travels as the typed tree in
 and runs no mod code, and a button press comes back to its `onPress`. The host
 clears it when the player leaves or the mod stops.
 
-`<layout src="shop.xml" data={JSON.stringify(stock)} />` is the one element
-that runs code in the player's game: it loads a layout from the mod's content
-addon. Only a host that has reviewed the mod's content loads it, by passing
-`Layouts` to the `Drawing` in `panorama/src/draw.ts`; Modlock's own renderer
-draws an empty panel. The `modlock dev` preview page draws the layout from the
-mod's latest build, with its panels and inline styles, but runs none of its
-scripts or style sheets. The layout's script reads `data` from its panel's
-`modlock_data` attribute and reads it again whenever it hears the unhandled
-`PlaySoundEffect` event `modlock_data_changed`. It answers the mod with its own
+`<layout src="shop.xml" data={stock} />` is the one element that runs code in
+the player's game: it loads a layout from the mod's content addon. Only a host
+that has reviewed the mod's content loads it, by passing `Layouts` to the
+`Drawing` in `panorama/src/draw.ts`; Modlock's own renderer draws an empty
+panel. The `modlock dev` preview page draws the layout from the mod's latest
+build, with its panels and inline styles, but runs none of its scripts or style
+sheets.
+
+A layout gets values from the mod two ways: the `data` of its own element, and
+routes, which `route(player, 'scores', scores)` hands to every layout the mod
+shows that player, so several layouts share one value without a parent passing
+it down. A value travels as JSON and changes only when the mod sends a
+different one; `route(player, name, undefined)` removes it. The layout's
+script includes the library `scripts/modlock/layout.js` and reads them:
+
+```xml
+<scripts>
+  <include src="file://{resources}/scripts/modlock/layout.js" />
+  <include src="file://{resources}/scripts/{addon}/shop.js" />
+</scripts>
+```
+
+```js
+Modlock.data((stock) => drawShop(stock))
+Modlock.route('scores', (scores) => drawScores(scores))
+```
+
+Each handler runs at once with the current value and again after each change,
+with `undefined` while the mod sends none. The library reads the panel's
+`modlock_data` and `modlock_route_<name>` attributes and rereads them on the
+unhandled `PlaySoundEffect` event `modlock_data_changed`, which the renderer
+sends once per draw that changes any. The layout answers the mod with its own
 console commands.
 
 The game draws interfaces with the renderer in [`panorama/`](panorama):
 
 - The layout `panorama/layout/modlock/ui.xml` and its script, which a client
-  content package installs as `scripts/modlock/ui.js`. A release's command
+  content package installs as `scripts/modlock/ui.js`, beside the layout
+  library `scripts/modlock/layout.js`. A release's command
   line carries it built in; `go run ./cmd/modlock-library` builds it from
   source into `js/built` for the next build of the command line to embed.
 - A client content package keeps the layout loaded through matches, and the
