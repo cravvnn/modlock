@@ -581,3 +581,98 @@ export const DevLobbyState: MessageType<DevLobbyState> =
       },
     },
   )
+
+/**
+ * DevLobbyJoin asks for the host session of a dev lobby the signed-in player
+ * is a member of, so their modlock join reaches its game.
+ *
+ * @generated from message modlock.publish.DevLobbyJoin
+ */
+export interface DevLobbyJoin {
+  /**
+   * Lobby is the lobby's ID, from its page's lobby parameter.
+   */
+  lobby?: string
+}
+
+export const DevLobbyJoin: MessageType<DevLobbyJoin> =
+  /* @__PURE__ */ createMessageType<DevLobbyJoin>(
+    'modlock.publish.DevLobbyJoin',
+    () => [[1, 'lobby', 9]],
+    {
+      decode: (r: BinaryReader, end: number, m: DevLobbyJoin): DevLobbyJoin => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.lobby = r.string()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DevLobbyJoin, w: Writer): void => {
+        {
+          const v = m.lobby
+          if (v) w.uint32(10).string(v)
+        }
+      },
+    },
+  )
+
+/**
+ * DevLobbyHost names a dev lobby's host session.
+ *
+ * @generated from message modlock.publish.DevLobbyHost
+ */
+export interface DevLobbyHost {
+  /**
+   * PeerId is the host session's peer.
+   */
+  peerId?: string
+  /**
+   * Secret admits the guest's game to the host session.
+   */
+  secret?: bigint
+}
+
+export const DevLobbyHost: MessageType<DevLobbyHost> =
+  /* @__PURE__ */ createMessageType<DevLobbyHost>(
+    'modlock.publish.DevLobbyHost',
+    () => [
+      [1, 'peer_id', 9],
+      [2, 'secret', 4],
+    ],
+    {
+      decode: (r: BinaryReader, end: number, m: DevLobbyHost): DevLobbyHost => {
+        while (r.pos < end) {
+          const t = r.tag()
+          if ((t & 7) === 4) return m
+          switch (t >>> 3) {
+            case 1:
+              m.peerId = r.string()
+              break
+            case 2:
+              m.secret = r.uint64()
+              break
+            default:
+              r.skip(t)
+          }
+        }
+        return m
+      },
+      encode: (m: DevLobbyHost, w: Writer): void => {
+        {
+          const v = m.peerId
+          if (v) w.uint32(10).string(v)
+        }
+        {
+          const v = m.secret
+          if (v) w.uint32(16).uint64(v)
+        }
+      },
+    },
+  )

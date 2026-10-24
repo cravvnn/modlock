@@ -382,6 +382,56 @@ func (*DevLobbyState_Url) isDevLobbyState_State() {}
 
 func (*DevLobbyState_Refused) isDevLobbyState_State() {}
 
+// DevLobbyJoin asks for the host session of a dev lobby the signed-in player
+// is a member of, so their modlock join reaches its game.
+type DevLobbyJoin struct {
+	unknownFields []byte
+	// Lobby is the lobby's ID, from its page's lobby parameter.
+	Lobby string `protobuf:"bytes,1,opt,name=lobby,proto3" json:"lobby,omitempty"`
+}
+
+func (x *DevLobbyJoin) Reset() {
+	*x = DevLobbyJoin{}
+}
+
+func (*DevLobbyJoin) ProtoMessage() {}
+
+func (x *DevLobbyJoin) GetLobby() string {
+	if x != nil {
+		return x.Lobby
+	}
+	return ""
+}
+
+// DevLobbyHost names a dev lobby's host session.
+type DevLobbyHost struct {
+	unknownFields []byte
+	// PeerId is the host session's peer.
+	PeerId string `protobuf:"bytes,1,opt,name=peer_id,json=peerId,proto3" json:"peerId,omitempty"`
+	// Secret admits the guest's game to the host session.
+	Secret uint64 `protobuf:"varint,2,opt,name=secret,proto3" json:"secret,omitempty"`
+}
+
+func (x *DevLobbyHost) Reset() {
+	*x = DevLobbyHost{}
+}
+
+func (*DevLobbyHost) ProtoMessage() {}
+
+func (x *DevLobbyHost) GetPeerId() string {
+	if x != nil {
+		return x.PeerId
+	}
+	return ""
+}
+
+func (x *DevLobbyHost) GetSecret() uint64 {
+	if x != nil {
+		return x.Secret
+	}
+	return 0
+}
+
 func (m *SignInExchange) CloneVT() *SignInExchange {
 	if m == nil {
 		return (*SignInExchange)(nil)
@@ -549,6 +599,39 @@ func (m *DevLobbyState_Refused) CloneVT() *DevLobbyState_Refused {
 }
 
 func (m *DevLobbyState_Refused) CloneOneofVT() isDevLobbyState_State {
+	return m.CloneVT()
+}
+
+func (m *DevLobbyJoin) CloneVT() *DevLobbyJoin {
+	if m == nil {
+		return (*DevLobbyJoin)(nil)
+	}
+	r := new(DevLobbyJoin)
+	r.Lobby = m.Lobby
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *DevLobbyJoin) CloneMessageVT() protobuf_go_lite.CloneMessage {
+	return m.CloneVT()
+}
+
+func (m *DevLobbyHost) CloneVT() *DevLobbyHost {
+	if m == nil {
+		return (*DevLobbyHost)(nil)
+	}
+	r := new(DevLobbyHost)
+	r.PeerId = m.PeerId
+	r.Secret = m.Secret
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = slices.Clone(m.unknownFields)
+	}
+	return r
+}
+
+func (m *DevLobbyHost) CloneMessageVT() protobuf_go_lite.CloneMessage {
 	return m.CloneVT()
 }
 
@@ -795,6 +878,49 @@ func (this *DevLobbyState_Refused) EqualVT(thatIface isDevLobbyState_State) bool
 		return false
 	}
 	return true
+}
+
+func (this *DevLobbyJoin) EqualVT(that *DevLobbyJoin) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.Lobby != that.Lobby {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *DevLobbyJoin) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*DevLobbyJoin)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
+
+func (this *DevLobbyHost) EqualVT(that *DevLobbyHost) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if this.PeerId != that.PeerId {
+		return false
+	}
+	if this.Secret != that.Secret {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *DevLobbyHost) EqualMessageVT(thatMsg any) bool {
+	that, ok := thatMsg.(*DevLobbyHost)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
 }
 
 // MarshalProtoJSON marshals the ReviewState to JSON.
@@ -1307,6 +1433,98 @@ func (x *DevLobbyState) UnmarshalJSON(b []byte) error {
 	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the DevLobbyJoin message to JSON.
+func (x *DevLobbyJoin) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Lobby != "" || s.HasField("lobby") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("lobby")
+		s.WriteString(x.Lobby)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the DevLobbyJoin to JSON.
+func (x *DevLobbyJoin) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the DevLobbyJoin message from JSON.
+func (x *DevLobbyJoin) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "lobby":
+			s.AddField("lobby")
+			x.Lobby = s.ReadString()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the DevLobbyJoin from JSON.
+func (x *DevLobbyJoin) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the DevLobbyHost message to JSON.
+func (x *DevLobbyHost) MarshalProtoJSON(s *json.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.PeerId != "" || s.HasField("peerId") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("peerId")
+		s.WriteString(x.PeerId)
+	}
+	if x.Secret != 0 || s.HasField("secret") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("secret")
+		s.WriteUint64(x.Secret)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the DevLobbyHost to JSON.
+func (x *DevLobbyHost) MarshalJSON() ([]byte, error) {
+	return json.DefaultMarshalerConfig.Marshal(x)
+}
+
+// UnmarshalProtoJSON unmarshals the DevLobbyHost message from JSON.
+func (x *DevLobbyHost) UnmarshalProtoJSON(s *json.UnmarshalState) {
+	if s.ReadNil() {
+		return
+	}
+	s.ReadObject(func(key string) {
+		switch key {
+		default:
+			s.Skip() // ignore unknown field
+		case "peer_id", "peerId":
+			s.AddField("peer_id")
+			x.PeerId = s.ReadString()
+		case "secret":
+			s.AddField("secret")
+			x.Secret = s.ReadUint64()
+		}
+	})
+}
+
+// UnmarshalJSON unmarshals the DevLobbyHost from JSON.
+func (x *DevLobbyHost) UnmarshalJSON(b []byte) error {
+	return json.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
 func (m *SignInExchange) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -1719,6 +1937,85 @@ func (m *DevLobbyState_Refused) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+func (m *DevLobbyJoin) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DevLobbyJoin) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *DevLobbyJoin) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if len(m.Lobby) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.Lobby)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DevLobbyHost) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DevLobbyHost) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *DevLobbyHost) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i = protobuf_go_lite.EncodeRawBytes(dAtA, i, m.unknownFields)
+	}
+	if m.Secret != 0 {
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(m.Secret))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.PeerId) > 0 {
+		i = protobuf_go_lite.EncodeString(dAtA, i, m.PeerId)
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *SignInExchange) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -1848,6 +2145,29 @@ func (m *DevLobbyState_Refused) SizeVT() (n int) {
 	} else {
 		n += 2
 	}
+	return n
+}
+
+func (m *DevLobbyJoin) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.Lobby)
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *DevLobbyHost) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	n += protobuf_go_lite.SizeStringNonEmpty(1, m.PeerId)
+	n += protobuf_go_lite.SizeVarintNonZero(1, m.Secret)
+	n += len(m.unknownFields)
 	return n
 }
 
@@ -2028,6 +2348,38 @@ func (x *DevLobbyState) MarshalProtoText() string {
 }
 
 func (x *DevLobbyState) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *DevLobbyJoin) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "DevLobbyJoin")
+	if x.Lobby != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "lobby")
+		protobuf_go_lite.TextWriteString(&sb, x.Lobby)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *DevLobbyJoin) String() string {
+	return x.MarshalProtoText()
+}
+
+func (x *DevLobbyHost) MarshalProtoText() string {
+	var sb protobuf_go_lite.TextBuilder
+	initialLen := protobuf_go_lite.TextStartMessage(&sb, "DevLobbyHost")
+	if x.PeerId != "" {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "peer_id")
+		protobuf_go_lite.TextWriteString(&sb, x.PeerId)
+	}
+	if x.Secret != 0 {
+		protobuf_go_lite.TextWriteFieldPrefix(&sb, initialLen, "secret")
+		protobuf_go_lite.TextWriteUint(&sb, x.Secret)
+	}
+	return protobuf_go_lite.TextFinishMessage(&sb)
+}
+
+func (x *DevLobbyHost) String() string {
 	return x.MarshalProtoText()
 }
 
@@ -2594,6 +2946,121 @@ func (m *DevLobbyState) UnmarshalVT(dAtA []byte) error {
 				m.State = &DevLobbyState_Refused{Refused: v}
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *DevLobbyJoin) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DevLobbyJoin: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DevLobbyJoin: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lobby", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.Lobby = v
+		default:
+			iNdEx = preIndex
+			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+
+func (m *DevLobbyHost) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	var err error
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		wire, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+		if err != nil {
+			return err
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DevLobbyHost: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DevLobbyHost: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PeerId", wireType)
+			}
+			var v string
+			v, iNdEx, err = protobuf_go_lite.DecodeString(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
+			m.PeerId = v
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Secret", wireType)
+			}
+			m.Secret = 0
+			m.Secret, iNdEx, err = protobuf_go_lite.DecodeVarint(dAtA, iNdEx)
+			if err != nil {
+				return err
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protobuf_go_lite.Skip(dAtA[iNdEx:])

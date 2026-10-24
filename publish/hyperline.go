@@ -30,6 +30,9 @@ const DefaultOrigin = "https://hyperline.gg"
 // releasesPath is where the service takes a release.
 const releasesPath = "/api/mods/releases"
 
+// devLobbyJoinPath is where the service names a dev lobby's host session.
+const devLobbyJoinPath = "/api/dev-lobby/join"
+
 // maxUploadBytes is the largest compressed mod the service takes.
 const maxUploadBytes = 96 << 20
 
@@ -52,10 +55,7 @@ type Hyperline struct {
 // Publish uploads mod with its notes and returns the release the service
 // recorded. It signs in through the browser when no saved session is valid.
 func (h *Hyperline) Publish(ctx context.Context, mod *Mod) (*Release, error) {
-	// Pack the build for a service that can take it.
-	if err := checkOrigin(h.Origin); err != nil {
-		return nil, err
-	}
+	// Pack the build for the service.
 	body, err := packTar(mod)
 	if err != nil {
 		return nil, err
@@ -64,30 +64,48 @@ func (h *Hyperline) Publish(ctx context.Context, mod *Mod) (*Release, error) {
 		return nil, errors.New("the built mod exceeds 96 MiB compressed")
 	}
 
-	// Upload with the saved session, signing in again once if it was refused.
-	token, err := h.token(ctx, false)
+	// Upload it.
+	release := &Release{}
+	path := releasesPath + "?" + url.Values{"notes": {mod.Notes}}.Encode()
+	return release, h.signedSend(ctx, path, body, release)
+}
+
+// JoinDevLobby returns the host session of the dev lobby with id lobby, whose
+// member the signed-in player is. It signs in through the browser when no
+// saved session is valid.
+func (h *Hyperline) JoinDevLobby(ctx context.Context, lobby string) (*DevLobbyHost, error) {
+	body, err := (&DevLobbyJoin{Lobby: lobby}).MarshalVT()
 	if err != nil {
 		return nil, err
 	}
-	path := releasesPath + "?" + url.Values{"notes": {mod.Notes}}.Encode()
-	release, err := h.upload(ctx, path, token, body)
-	if errors.Is(err, errSignIn) {
-		if token, err = h.token(ctx, true); err != nil {
-			return nil, err
-		}
-		release, err = h.upload(ctx, path, token, body)
-	}
-	return release, err
+	host := &DevLobbyHost{}
+	return host, h.signedSend(ctx, devLobbyJoinPath, body, host)
 }
 
 // errSignIn reports that the service refused the session.
 var errSignIn = errors.New("sign in again")
 
-// upload sends one release to path.
-func (h *Hyperline) upload(ctx context.Context, path, token string, body []byte) (*Release, error) {
-	release := &Release{}
-	err := h.send(ctx, path, token, body, release)
-	return release, err
+// signedSend posts body to path with the saved session and decodes the answer
+// into out, signing in again once when the service refuses the session.
+func (h *Hyperline) signedSend(ctx context.Context, path string, body []byte, out interface{ UnmarshalVT([]byte) error }) error {
+	// Send with the saved session, or a new one.
+	if err := checkOrigin(h.Origin); err != nil {
+		return err
+	}
+	token, err := h.token(ctx, false)
+	if err != nil {
+		return err
+	}
+	err = h.send(ctx, path, token, body, out)
+
+	// Sign in again once if the service refused it.
+	if errors.Is(err, errSignIn) {
+		if token, err = h.token(ctx, true); err != nil {
+			return err
+		}
+		err = h.send(ctx, path, token, body, out)
+	}
+	return err
 }
 
 // send posts body to path on the service and decodes the answer into out.

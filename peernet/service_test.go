@@ -98,22 +98,23 @@ func (f *fakeSignaling) serveDevLobby(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.CloseNow()
 
-	// Answer the request with the lobby's page.
+	// Answer the request with the lobby's page, keeping the socket for
+	// dropLobby first.
 	_, data, err := conn.Read(r.Context())
 	open := &publish.DevLobbyOpen{}
 	if err != nil || open.UnmarshalVT(data) != nil {
 		return
 	}
 	f.lobbyOpens <- open
+	f.mtx.Lock()
+	f.lobby = conn
+	f.mtx.Unlock()
 	state, _ := (&publish.DevLobbyState{State: &publish.DevLobbyState_Url{Url: testLobbyURL}}).MarshalVT()
 	if conn.Write(r.Context(), websocket.MessageBinary, state) != nil {
 		return
 	}
 
 	// Hold it until it closes.
-	f.mtx.Lock()
-	f.lobby = conn
-	f.mtx.Unlock()
 	_, _, err = conn.Read(r.Context())
 	f.lobbyCloses <- websocket.CloseStatus(err)
 }

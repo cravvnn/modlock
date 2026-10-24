@@ -121,3 +121,19 @@ message DevLobbyState {
     Error refused = 2;
   }
 }
+
+// DevLobbyJoin asks for the host session of a dev lobby the signed-in player
+// is a member of, so their modlock join reaches its game.
+message DevLobbyJoin {
+  // Lobby is the lobby's ID, from its page's lobby parameter.
+  string lobby = 1;
+}
+
+// DevLobbyHost names a dev lobby's host session.
+message DevLobbyHost {
+  // PeerId is the host session's peer.
+  string peer_id = 1;
+
+  // Secret admits the guest's game to the host session.
+  uint64 secret = 2;
+}

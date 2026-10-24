@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"io"
+	"net/url"
 	"slices"
 	"strconv"
 	"sync"
@@ -10,10 +11,12 @@ import (
 	"github.com/aperturerobotics/cli"
 	modcli "github.com/paralin/modlock/cli"
 	"github.com/paralin/modlock/peernet"
+	modpublish "github.com/paralin/modlock/publish"
 	"github.com/paralin/modlock/sandbox"
 	"github.com/paralin/modlock/session"
 	"github.com/paralin/modlock/src/host_app/control"
 	"github.com/pkg/errors"
+	"github.com/s4wave/spacewave/net/peer"
 )
 
 // hostCommand runs a mod like modlock dev --watch and serves its server to
@@ -243,19 +246,24 @@ func (f *hostFeed) stop() {
 func joinCommand(out *printer) *cli.Command {
 	return &cli.Command{
 		Name:      "join",
-		Usage:     "join a session another PC hosts with modlock host, and launch Deadlock into it",
-		ArgsUsage: "CODE",
+		Usage:     "join a session another PC hosts with modlock host, by its join code or lobby link, and launch Deadlock into it",
+		ArgsUsage: "CODE|LINK",
 		Flags: append([]cli.Flag{
 			&cli.BoolFlag{Name: "no-game", Usage: "only serve the session; join it yourself with the console line"},
+			&cli.StringFlag{Name: "origin", Value: modpublish.DefaultOrigin, Usage: "the Hyperline service whose lobby links join takes"},
 		}, interfaceFlags...),
 		Action: func(c *cli.Context) error {
-			// Read the code.
-			code := c.Args().First()
-			if code == "" {
-				return errors.New("pass the join code modlock host printed")
+			// Read the code, or the lobby link that names it.
+			arg := c.Args().First()
+			if arg == "" {
+				return errors.New("pass the join code or lobby link modlock host printed")
 			}
 			out.brief = true
-			out.header("join", code)
+			out.header("join", arg)
+			code, err := joinCode(c.Context, arg, c.String("origin"))
+			if err != nil {
+				return err
+			}
 
 			// Serve this player's interfaces before the game starts.
 			mirror := session.NewMirror()
@@ -299,6 +307,36 @@ func joinCommand(out *printer) *cli.Command {
 			}
 		},
 	}
+}
+
+// joinCode returns the join code arg names: a code modlock host printed, or
+// the link of a dev lobby at origin, whose host session the service names to
+// a member. The saved sign-in goes only to origin.
+func joinCode(ctx context.Context, arg, origin string) (string, error) {
+	// Take a join code as it is.
+	link, err := url.Parse(arg)
+	if err != nil || link.Scheme == "" {
+		return arg, nil
+	}
+	lobby := link.Query().Get("lobby")
+	if link.Scheme+"://"+link.Host != origin || lobby == "" {
+		return "", errors.Errorf("a lobby link is a lobby page on %s", origin)
+	}
+
+	// Ask the service for the lobby's host session.
+	service, err := hyperlineService(origin)
+	if err != nil {
+		return "", err
+	}
+	host, err := service.JoinDevLobby(ctx, lobby)
+	if err != nil {
+		return "", err
+	}
+	id, err := peer.IDB58Decode(host.GetPeerId())
+	if err != nil {
+		return "", errors.Wrap(err, "read the lobby's host")
+	}
+	return peernet.JoinCode{Host: id, Session: host.GetSecret()}.String(), nil
 }
 
 // launchGuest launches Deadlock into address, or names the console line that
