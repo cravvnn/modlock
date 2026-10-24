@@ -516,10 +516,16 @@ class Game : public HostService {
 
   // FieldAddress resolves a schema field of entity that holds at least size
   // bytes, refusing an entity that is not of class_name. A game rules class
-  // resolves on the game rules proxy entity to the field of the rules object.
+  // resolves on the game rules proxy entity to the field of the rules object,
+  // and a model part class through the entity's body component.
   std::expected<unsigned char*, std::string> FieldAddress(void* entity,
                                                           const std::string& class_name,
                                                           const std::string& field, size_t size);
+  // ModelPart returns the address of the part of entity's model that
+  // class_name names, as IsModelClass lists, through its body component.
+  // actual is the entity's schema class.
+  std::expected<unsigned char*, std::string> ModelPart(void* entity, const void* actual,
+                                                       const std::string& class_name);
 
   // StoreField writes a schema field of entity without telling the network
   // it changed.

@@ -770,7 +770,10 @@ func (p Player) ClearScreenEffect(effect ScreenEffect) error {
 // survives game updates that move it, and refuses an entity that is not of
 // the named class or a subclass. The match's state, such as the gold of each
 // team or the winning team, is a field of CCitadelGameRules, which the
-// citadel_gamerules entity reads.
+// citadel_gamerules entity reads. The parts of an entity's model that its
+// body component holds read through the entity too: CGameSceneNode, and for
+// a model entity CSkeletonInstance and CModelState, such as the uint64
+// m_MeshGroupMask of CModelState that chooses which mesh groups draw.
 func ReadField(entity uint32, className, field string, kind FieldType) (any, error) {
 	request := &fieldspb.ReadFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
 	response := &fieldspb.FieldResponse{}
@@ -798,7 +801,8 @@ func ReadModifierField(entity uint32, modifier, className, field string, kind Fi
 // WriteField writes one schema field of a live entity and sends the change
 // to the players. The value takes the form ReadField returns for the type;
 // text fields cannot be written. A write to the match's state sends all of
-// it, so players already in the match see the change.
+// it, so players already in the match see the change, and a write to a
+// model part, as ReadField names them, sends the entity.
 func WriteField(entity uint32, className, field string, kind FieldType, value any) error {
 	request := &fieldspb.WriteFieldRequest{Entity: entity, ClassName: className, Field: field, Type: kind}
 	encoded, err := toFieldValue(value)

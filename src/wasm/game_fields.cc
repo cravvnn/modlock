@@ -29,6 +29,14 @@ bool IsRulesClass(const std::string& class_name) {
          class_name == "CCitadelGameRules";
 }
 
+// IsModelClass reports whether class_name is a part of an entity's model that
+// its body component holds: the scene node, a model entity's skeleton
+// instance, or the model state within it. The entity sends their fields.
+bool IsModelClass(const std::string& class_name) {
+  return class_name == "CGameSceneNode" || class_name == "CSkeletonInstance" ||
+         class_name == "CModelState";
+}
+
 // ListHeader is the layout of a list field: a CUtlVector, which the game's
 // networked lists share. The elements are an array of capacity entries.
 struct ListHeader {
@@ -81,7 +89,8 @@ size_t Size(fields::FieldType type) {
 }
 
 // Decode converts the bytes of one field to its value.
-std::expected<fields::FieldValue, std::string> Decode(fields::FieldType type, const unsigned char* bytes) {
+std::expected<fields::FieldValue, std::string> Decode(fields::FieldType type,
+                                                      const unsigned char* bytes) {
   // Copy a scalar of type T out of the field's bytes.
   auto as = [bytes]<typename T>(T) {
     T value;
@@ -303,12 +312,59 @@ std::expected<unsigned char*, std::string> Game::FieldAddress(void* entity,
     }
     return static_cast<unsigned char*>(*rules) + found->offset;
   }
+  if (IsModelClass(class_name)) {
+    auto part = ModelPart(entity, *actual, class_name);
+    if (!part) {
+      return std::unexpected(part.error());
+    }
+    return *part + found->offset;
+  }
   if (!services_.Derives(*actual, class_name)) {
     return std::unexpected("the entity is a " +
                            std::string(gameinterop::SchemaClassNameOf(*actual)) + ", not a " +
                            class_name);
   }
   return static_cast<unsigned char*>(entity) + found->offset;
+}
+
+std::expected<unsigned char*, std::string> Game::ModelPart(void* entity, const void* actual,
+                                                           const std::string& class_name) {
+  // Only a model entity's scene node is a skeleton instance holding a model
+  // state; any entity has a scene node.
+  if (class_name != "CGameSceneNode" && !services_.Derives(actual, "CBaseModelEntity")) {
+    return std::unexpected("the entity is a " +
+                           std::string(gameinterop::SchemaClassNameOf(actual)) + ", which has no " +
+                           class_name);
+  }
+  auto body = services_.Field("CBaseEntity", "m_CBodyComponent");
+  if (!body) {
+    return std::unexpected(body.error());
+  }
+  auto node = services_.Field("CBodyComponent", "m_pSceneNode");
+  if (!node) {
+    return std::unexpected(node.error());
+  }
+
+  // Follow the body component to the scene node.
+  unsigned char* component = nullptr;
+  unsigned char* scene = nullptr;
+  if (!gameinterop::ReadNative(static_cast<unsigned char*>(entity) + body->offset, &component,
+                               sizeof(component)) ||
+      component == nullptr ||
+      !gameinterop::ReadNative(component + node->offset, &scene, sizeof(scene)) ||
+      scene == nullptr) {
+    return std::unexpected("the entity has no scene node");
+  }
+  if (class_name != "CModelState") {
+    return scene;
+  }
+
+  // The skeleton instance embeds the model state.
+  auto state = services_.Field("CSkeletonInstance", "m_modelState");
+  if (!state) {
+    return std::unexpected(state.error());
+  }
+  return scene + state->offset;
 }
 
 std::expected<void, std::string> Game::StoreField(void* entity, const std::string& class_name,
@@ -331,7 +387,8 @@ std::expected<void, std::string> Game::StoreField(void* entity, const std::strin
   return {};
 }
 
-std::expected<fields::FieldResponse, std::string> Game::ReadField(const fields::ReadFieldRequest& request) {
+std::expected<fields::FieldResponse, std::string> Game::ReadField(
+    const fields::ReadFieldRequest& request) {
   // Find the entity and the field's address.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -419,7 +476,8 @@ std::expected<void, std::string> Game::WriteField(const fields::WriteFieldReques
   return {};
 }
 
-std::expected<fields::FieldListResponse, std::string> Game::ReadFieldList(const fields::ReadFieldRequest& request) {
+std::expected<fields::FieldListResponse, std::string> Game::ReadFieldList(
+    const fields::ReadFieldRequest& request) {
   // Find the entity, the list field's address and its header.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -454,7 +512,8 @@ std::expected<fields::FieldListResponse, std::string> Game::ReadFieldList(const 
   return response;
 }
 
-std::expected<void, std::string> Game::WriteFieldList(const fields::WriteFieldListRequest& request) {
+std::expected<void, std::string> Game::WriteFieldList(
+    const fields::WriteFieldListRequest& request) {
   // Find the entity and encode every value.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -517,7 +576,8 @@ std::expected<void, std::string> Game::WriteFieldList(const fields::WriteFieldLi
   return {};
 }
 
-std::expected<entities::EntityClassResponse, std::string> Game::EntityClass(const entities::EntityRequest& request) {
+std::expected<entities::EntityClassResponse, std::string> Game::EntityClass(
+    const entities::EntityRequest& request) {
   // Find the entity and its schema class.
   auto entity = Entity(request.entity());
   if (!entity) {
@@ -564,7 +624,8 @@ std::expected<abilities::ActiveResponse, std::string> Game::ModifierState(
   return response;
 }
 
-std::expected<void, std::string> Game::HoldModifierState(const abilities::HoldModifierStateRequest& request) {
+std::expected<void, std::string> Game::HoldModifierState(
+    const abilities::HoldModifierStateRequest& request) {
   // Releasing a hold clears the state the hold set.
   auto hold = std::pair(request.entity(), request.state());
   if (request.has_active() && !request.active()) {

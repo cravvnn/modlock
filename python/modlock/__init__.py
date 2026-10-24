@@ -3020,7 +3020,10 @@ def read_field(entity: int, class_name: str, field: str, type: FieldType) -> Fie
     survives game updates that move it, and refuses an entity that is not of
     the named class or a subclass. The match's state, such as the gold of each
     team or the winning team, is a field of CCitadelGameRules, which the
-    citadel_gamerules entity reads.
+    citadel_gamerules entity reads. The parts of an entity's model that its
+    body component holds read through the entity too: CGameSceneNode, and for
+    a model entity CSkeletonInstance and CModelState, such as the uint64
+    m_MeshGroupMask of CModelState that chooses which mesh groups draw.
     """
     response = _call("ReadField", "ReadFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type}, "FieldResponse")
     if response is None:
@@ -3046,7 +3049,8 @@ def write_field(entity: int, class_name: str, field: str, type: FieldType, value
     """write_field writes one schema field of a live entity and sends the change
     to the players. The value takes the form ReadField returns for the type;
     text fields cannot be written. A write to the match's state sends all of
-    it, so players already in the match see the change.
+    it, so players already in the match see the change, and a write to a
+    model part, as ReadField names them, sends the entity.
     """
     return _call("WriteField", "WriteFieldRequest", {"entity": entity, "class_name": class_name, "field": field, "type": type, "value": value}) is not None
 

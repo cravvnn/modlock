@@ -377,7 +377,10 @@ class HostService {
   // survives game updates that move it, and refuses an entity that is not of
   // the named class or a subclass. The match's state, such as the gold of each
   // team or the winning team, is a field of CCitadelGameRules, which the
-  // citadel_gamerules entity reads.
+  // citadel_gamerules entity reads. The parts of an entity's model that its
+  // body component holds read through the entity too: CGameSceneNode, and for
+  // a model entity CSkeletonInstance and CModelState, such as the uint64
+  // m_MeshGroupMask of CModelState that chooses which mesh groups draw.
   virtual std::expected<fields::FieldResponse, std::string> ReadField(
       const fields::ReadFieldRequest& /*request*/) {
     return std::unexpected("this host does not support ReadField");
@@ -397,7 +400,8 @@ class HostService {
   // WriteField writes one schema field of a live entity and sends the change
   // to the players. The value takes the form ReadField returns for the type;
   // text fields cannot be written. A write to the match's state sends all of
-  // it, so players already in the match see the change.
+  // it, so players already in the match see the change, and a write to a
+  // model part, as ReadField names them, sends the entity.
   virtual std::expected<void, std::string> WriteField(
       const fields::WriteFieldRequest& /*request*/) {
     return std::unexpected("this host does not support WriteField");
