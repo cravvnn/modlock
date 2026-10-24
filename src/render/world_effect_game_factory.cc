@@ -7,7 +7,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <optional>
+#include <string_view>
 #include <utility>
+#include <vector>
 
 #include "modlock/gameinterop/entity_abi.h"
 
@@ -353,8 +355,14 @@ std::expected<std::unique_ptr<WorldEffect>, std::string> WorldEffectGameFactory:
     return std::unexpected("visual entity: native entity creation is unavailable");
   }
 
-  // Build the keyvalues and create the entity.
-  auto values = gameinterop::BuildEntityKeyValues(calls_.key_values, properties);
+  // Build the keyvalues with the classname a map would give, and create the
+  // entity. Spawn reads the key, not the factory: prop_dynamic_override marks
+  // itself an override prop only when its classname key names it.
+  std::vector<gameinterop::EntityKeyValue> keyed;
+  keyed.reserve(properties.size() + 1);
+  keyed.push_back({.key = "classname", .value = std::string_view(class_name)});
+  keyed.insert(keyed.end(), properties.begin(), properties.end());
+  auto values = gameinterop::BuildEntityKeyValues(calls_.key_values, keyed);
   if (!values) {
     return std::unexpected(std::string(class_name) + ": " + values.error());
   }

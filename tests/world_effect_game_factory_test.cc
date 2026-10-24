@@ -256,8 +256,9 @@ TEST_F(EffectTest, VisualModelDisablesCollisionAndOwnsItsLifetime) {
   ASSERT_TRUE(model) << model.error();
 
   // Each keyvalue was set before the spawn.
-  for (const auto* expected : {"create:prop_dynamic_override", "kv:solid=0", "kv:spawnflags=1792",
-                               "kv:scales=0.220000", "kv:glowstate=3", "kv:glowrange=0"}) {
+  for (const auto* expected : {"create:prop_dynamic_override", "kv:classname=prop_dynamic_override",
+                               "kv:solid=0", "kv:spawnflags=1792", "kv:scales=0.220000",
+                               "kv:glowstate=3", "kv:glowrange=0"}) {
     EXPECT_NE(std::find(steps.begin(), steps.end(), expected), steps.end()) << expected;
   }
   EXPECT_EQ(steps.back(), "execute");
